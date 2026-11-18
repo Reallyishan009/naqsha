@@ -77,3 +77,40 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **Credits left:** Not recorded.
 
 **Commit:** see the commit that adds this entry; work today spans `909d940` to `a3dee72`.
+
+## 2026-11-18 (simulator phase 1)
+
+**Goal today:** Simulator spec and phase 1 (first render).
+
+**Prompts run in Kiro:** Not recorded by number. In order, the requests were:
+- start the simulator spec (requirements first);
+- answer the review: own slot type `CardGrid | null`, no tie-up plus a horizontal repeat count, no face-down setting, extra zari wefts out of scope;
+- approve the design with decisions: minimum thread size 3 px and R6.4 dropped; measure speed first and do not change requirements if the budget is missed; shed height, 4096 px cap and fixed colours accepted;
+- approve tasks;
+- run phase 1 to the checkpoint.
+
+**What Kiro produced:**
+- `.kiro/specs/simulator/`: 14 requirements, a design with 24 numbered properties (16 marked Demo and 8 Cut last), and a 23-task plan.
+- `src/simulator`: `types.ts`, `prepare.ts` (`prepareCloth`), `settings.ts` (`parseColour`, `parseRenderSettings`), `style.ts`, `render.ts` (`renderFrame` for rest frames, with zari highlight), `index.ts`.
+- `tests/support/slots.ts`; tests for prepare, settings and render.
+- `scripts/png_rgba.ts` (zero-dependency RGBA PNG encoder), `scripts/render_sample.ts` and the `sample-cloth` package script.
+- `media/sample-cloth.png`: 1152 x 324 px, 48 demo picks, maroon plain weft and gold zari, deterministic SHA-1 `d6c87d08...`.
+- Test suite at the end of phase 1: 25 files, 183 tests passing.
+- One 1920 x 1080 rest frame took 7 to 11 ms in Node on an Apple M1 (informational).
+
+**What failed or surprised me:**
+- **Property 5 (R2.3, task 1.4) failed** after the zari highlight was added. For odd thread sizes its crossing-centre sample lands on a zari highlight pixel (counterexample: warp `#000000`, gold zari weft, t=3, 8x8 viewport, seed 20240611). The fix computes the expected zari colour at that pixel from the same highlight rule, so the check stays exact; arbitraries, numRuns and seed are unchanged. The agent applied the fix before reporting the failure, which the orchestrator had allowed in advance for exactly this case.
+- **Property 1 (R1.2):** the first generator used `name: 42` as an invalid profile, but `parseCardProfile` only checks that `name` is present, so the profile stayed valid. The generator was changed to remove `name` instead. This exposed a codec gap, fixed next (`name` must be a string).
+- Property 5 uses a filter that drops settings where a shaded warp colour equals a shaded weft colour.
+- A non-array `slots` returns `invalid-settings` with setting `slots`. This is an interpretation, because no failure reason fits exactly.
+- In the design review, the count of cut-last properties was first reported as 7; it is 8 (Properties 3, 7, 8, 9, 13, 15, 20, 24).
+
+**What I changed by hand:** No files edited by hand; the user reviewed and approved the sample image.
+
+**Kiro features used:** spec, steering, property tests.
+
+**Evidence saved:** `media/sample-cloth.png`.
+
+**Credits left:** Not recorded.
+
+**Commit:** `6adcc26`, `43d116c`, `2d01a98`, `a51b281`, `7b146f8`, `784e768` (range `6adcc26` to `784e768`).

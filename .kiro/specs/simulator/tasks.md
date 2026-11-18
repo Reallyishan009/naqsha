@@ -25,7 +25,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Types, preparation, settings, the basic frame and a sample PNG to look at.
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 2.1, 2.2, 2.3, 2.4, 2.5, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 6.1, 6.2, 6.3, 7.1, 7.2, 7.4, 7.5, 8.1, 8.2, 8.3, 8.4, 9.4, 11.1, 11.2, 11.3, 12.3, 12.4, 12.5, 13.2_
 
-- [ ] 1.1 Types and `prepareCloth`
+- [x] 1.1 Types and `prepareCloth`
   - **Demo-essential.**
   - Files: `src/simulator/types.ts`, `src/simulator/prepare.ts`, `src/simulator/index.ts`, `tests/support/slots.ts`, `tests/simulator/prepare.test.ts`.
   - Write the types from the design. Implement `prepareCloth(profile: unknown, slots: unknown)`: `parseCardProfile`, then per slot `null`/`undefined` is missing, a value failing `validateCardGrid` is damaged, otherwise the lift set comes from `encodeCardGrid`. Never throw; copy what is kept.
@@ -34,7 +34,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 2.2, 11.3, 12.3, 12.4, 12.5, 13.2_
 
-- [ ] 1.2 Render settings
+- [x] 1.2 Render settings
   - **Demo-essential.**
   - Files: `src/simulator/settings.ts`, `src/simulator/index.ts`, `tests/support/slots.ts`, `tests/simulator/settings.test.ts`.
   - Implement `parseColour` and `parseRenderSettings` with the design's ranges: thread size 3 to 16, repeat 1 to 64 (default 1), viewport sides 1 to 4,096, highlight limit 1 to 64, non-empty weft plan, `#rrggbb` colours. Add `weftPlanArbitrary` and `renderSettingsArbitrary` (small viewports).
@@ -42,7 +42,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 6.3, 11.1, 11.2, 14.1_
 
-- [ ] 1.3 Basic `renderFrame` for rest frames
+- [x] 1.3 Basic `renderFrame` for rest frames
   - **Demo-essential.**
   - Files: `src/simulator/style.ts`, `src/simulator/render.ts`, `src/simulator/index.ts`, `tests/simulator/render.test.ts`.
   - Implement `shadeTable`, the layout (fell, woven rows above it, plain warp in the shed, loom background), crossing cells with warp-or-weft-on-face shading, and the weft plan cycle, for `rest(p)` frames. Write through a `Uint32Array` view. Validate the frame (`pick-out-of-range`). Gap picks may draw as background for now; task 2.1 adds the hatch.
@@ -50,7 +50,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 2.1, 2.3, 2.4, 2.5, 5.2, 6.1, 6.2, 7.1, 7.2, 7.4, 7.5, 8.1, 8.2, 8.3, 8.4, 9.4_
 
-- [ ] 1.4 Zari weft
+- [x] 1.4 Zari weft
   - **Demo-essential.**
   - Files: `src/simulator/style.ts`, `src/simulator/render.ts`, `tests/simulator/render.test.ts`.
   - Add the zari base colours and the highlight rule from the design (centre row of each weft-on-face cell, columns where `x mod 4 = 0`).
@@ -58,7 +58,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 5.3, 5.5, 5.6_
 
-- [ ] 1.5 Sample cloth PNG
+- [x] 1.5 Sample cloth PNG
   - **Demo-essential.**
   - Files: `scripts/render_sample.ts`, `scripts/png_rgba.ts`, `package.json`, `media/sample-cloth.png`, `tests/scripts/render_sample.test.ts`.
   - The generator's `encodePng` writes greyscale only, so add a small zero-dependency RGBA PNG encoder (`node:zlib`) in `scripts/png_rgba.ts`.
@@ -67,13 +67,13 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 5.5, 8.1_
 
-- [ ] 1.6 Checkpoint: look at the first render
+- [x] 1.6 Checkpoint: look at the first render
   - **Demo-essential.**
   - Generate `media/sample-cloth.png` and report its path, size, the settings used, and the render time. Check by eye that warp and weft read as threads, the over-under order is visible, and zari picks are distinct.
   - Stop and wait for the user to look at the image before phase 2.
   - _Requirements: 6.1, 6.2, 5.5_
 
-- [ ] 1.7 Phase 1 log and push
+- [-] 1.7 Phase 1 log and push
   - Files: `docs/BUILD_LOG.md`.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), and the commit range. Push.
   - _Requirements: 13.4_
