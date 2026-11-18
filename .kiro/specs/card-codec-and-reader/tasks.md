@@ -317,7 +317,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 9.3, 18.5_
 
-- [-] 5.19 Profile name must be a string
+- [x] 5.19 Profile name must be a string
   - Found in the simulator spec (task 1.1): `parseCardProfile` accepted `name: 42` because it only checked that `name` is present.
   - Files: `src/codec/types.ts`, `src/codec/validateCardProfile.ts`, `tests/codec/validateCardProfile.test.ts`.
   - Add the violation kind `not-a-string` and report it at `name` when `name` is present and not a string. Add an example test and Property 84.

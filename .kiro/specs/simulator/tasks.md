@@ -21,7 +21,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
 
 ## Tasks
 
-- [ ] 1. First render
+- [x] 1. First render
   - Types, preparation, settings, the basic frame and a sample PNG to look at.
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 2.1, 2.2, 2.3, 2.4, 2.5, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 6.1, 6.2, 6.3, 7.1, 7.2, 7.4, 7.5, 8.1, 8.2, 8.3, 8.4, 9.4, 11.1, 11.2, 11.3, 12.3, 12.4, 12.5, 13.2_
 
@@ -73,7 +73,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Stop and wait for the user to look at the image before phase 2.
   - _Requirements: 6.1, 6.2, 5.5_
 
-- [-] 1.7 Phase 1 log and push
+- [x] 1.7 Phase 1 log and push
   - Files: `docs/BUILD_LOG.md`.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), and the commit range. Push.
   - _Requirements: 13.4_
@@ -81,7 +81,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
 - [ ] 2. Gaps, floats and repeat
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 4.1, 4.2, 4.3, 4.4, 4.5, 14.1, 14.2, 14.3, 14.4_
 
-- [ ] 2.1 Gap rows
+- [x] 2.1 Gap rows
   - **Demo-essential.**
   - Files: `src/simulator/style.ts`, `src/simulator/render.ts`, `tests/simulator/render.test.ts`.
   - Draw missing picks with the `/` hatch and damaged picks with the `X` cross-hatch, from the fixed palette, across the full width, never partly drawing a damaged card.
@@ -89,21 +89,21 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 2.2 Floats
+- [x] 2.2 Floats
   - Files: `src/simulator/floats.ts`, `src/simulator/index.ts`, `tests/simulator/floats.test.ts`.
   - Implement `computeFloats` (weft runs per woven pick, warp runs per end, both stopping at gap picks).
   - Add Properties 7 and 8. Both are **Cut last**, but keep at least one, because `computeFloats` needs a property for the naming and coverage test.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 3.1, 3.2, 3.4_
 
-- [ ] 2.3 Float highlighting
+- [x] 2.3 Float highlighting
   - Files: `src/simulator/floats.ts`, `src/simulator/render.ts`, `tests/simulator/render.test.ts`.
   - Implement the window-bounded float length scan and the highlight blend.
   - Add Property 9 (**Cut last**).
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 3.3_
 
-- [ ] 2.4 Horizontal repeat
+- [x] 2.4 Horizontal repeat
   - **Demo-essential.**
   - Files: `src/simulator/render.ts`, `tests/simulator/render.test.ts`.
   - Build each row for one base width and copy it across with `copyWithin`; measure weft floats across the tiled width when highlighting is on.
@@ -111,7 +111,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 14.2, 14.3, 14.4_
 
-- [ ] 2.5 Phase 2 log and push
+- [-] 2.5 Phase 2 log and push
   - Files: `docs/BUILD_LOG.md`.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), and the commit range. Push.
   - _Requirements: 13.4_
