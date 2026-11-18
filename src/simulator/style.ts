@@ -8,6 +8,17 @@ export const ZARI_SILVER_HIGHLIGHT_COLOUR = '#ffffff';
 /** A zari weft cell gets a highlight pixel in its centre row at every absolute column x with x mod 4 = 0. */
 export const ZARI_HIGHLIGHT_COLUMN_STEP = 4;
 
+/** Float highlight colour (R3.3). */
+export const FLOAT_HIGHLIGHT_COLOUR = '#ff00c8';
+
+/**
+ * Blends one colour channel halfway toward a target channel, integer only: (channel + target) >> 1.
+ * A highlighted cell has every pixel blended this way with the target #ff00c8, zari highlight pixels included.
+ */
+export function blendHalfway(channel: number, target: number): number {
+  return (channel + target) >> 1;
+}
+
 /** Gap row colours (R4.2, R4.3): grey `/` hatch for a missing card, dark red `X` cross-hatch for a damaged card, on white. */
 export const GAP_WHITE_COLOUR = '#ffffff';
 export const GAP_MISSING_COLOUR = '#808080';

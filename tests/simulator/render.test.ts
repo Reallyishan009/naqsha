@@ -58,6 +58,43 @@ function sameColour(a: Rgb, b: Rgb): boolean {
   return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
 }
 
+type Face = 'warp' | 'weft' | 'gap';
+
+/** Halfway blend towards the float highlight colour #ff00c8. */
+function blendHalfwayRef(rgb: Rgb): Rgb {
+  return [(rgb[0] + 0xff) >> 1, (rgb[1] + 0x00) >> 1, (rgb[2] + 0xc8) >> 1];
+}
+
+/**
+ * Reference: a dense face matrix over picks 0..p-1 (rows only for picks already in the cloth), tiled across the repeat,
+ * and the float length of any cell in it. Shared by Property 5 and Property 9.
+ */
+function floatReference(cloth: PreparedCloth, settings: RenderSettings, p: number) {
+  const tiledEnds = cloth.baseEnds * settings.repeat;
+  const face: Face[][] = [];
+  for (let pick = 0; pick < p; pick++) {
+    const row = cloth.picks[pick];
+    const cells: Face[] = [];
+    for (let e = 0; e < tiledEnds; e++) {
+      cells.push(row.kind !== 'woven' ? 'gap' : row.lift[e % cloth.baseEnds] === 1 ? 'warp' : 'weft');
+    }
+    face.push(cells);
+  }
+  const floatLength = (pick: number, e: number): number => {
+    const own = face[pick][e];
+    let length = 1;
+    if (own === 'weft') {
+      for (let k = e - 1; k >= 0 && face[pick][k] === 'weft'; k--) length++;
+      for (let k = e + 1; k < tiledEnds && face[pick][k] === 'weft'; k++) length++;
+    } else {
+      for (let k = pick - 1; k >= 0 && face[k][e] === 'warp'; k--) length++;
+      for (let k = pick + 1; k < p && face[k][e] === 'warp'; k++) length++;
+    }
+    return length;
+  };
+  return { face, floatLength };
+}
+
 /** Settings whose warp colour, shaded at a thread centre, differs from every weft colour shaded there. */
 const distinctSettingsArbitrary = renderSettingsArbitrary.filter((settings) => {
   const centreShade = shadeTable(settings.threadSizePx)[Math.floor(settings.threadSizePx / 2)];
@@ -80,6 +117,7 @@ describe('renderFrame', () => {
         const centre = Math.floor(t / 2);
         const shade = shadeTable(t)[centre];
         const fellY = image.height - Math.min(6 * t, Math.floor(image.height / 3));
+        const { floatLength } = floatReference(cloth, settings, p);
         for (let rowIndex = 0; rowIndex * t < fellY; rowIndex++) {
           const pick = p - 1 - rowIndex;
           if (pick < 0) break;
@@ -96,6 +134,9 @@ describe('renderFrame', () => {
             // A zari weft cell has an unshaded highlight on its centre row where x mod 4 = 0 (R5.5).
             const highlight = highlightHex(weft);
             if (!lifted && highlight !== undefined && x % 4 === 0) expected = parseColour(highlight)!;
+            if (settings.floatHighlight !== null && floatLength(pick, col) > settings.floatHighlight.maxLength) {
+              expected = blendHalfwayRef(expected);
+            }
             expect(pixelAt(image, x, y)).toEqual(expected);
           }
         }
@@ -144,6 +185,45 @@ describe('renderFrame', () => {
             }
           }
           if (highlight !== undefined && wideWeftCell && top + centre >= 0) expect(highlightSeen).toBe(true);
+        }
+      }),
+      { numRuns: IMAGE_RUNS, seed: IMAGE_SEED },
+    );
+  });
+
+  it('R3.3 highlighted pixels are exactly the cells of floats longer than the limit', () => {
+    const limitArbitrary = fc.integer({ min: 1, max: 8 });
+    fc.assert(
+      fc.property(profileAndSlots, renderSettingsArbitrary, limitArbitrary, fc.nat(), ({ profile, samples }, base, limit, seedPick) => {
+        const settings: RenderSettings = { ...base, floatHighlight: { maxLength: limit } };
+        const cloth = prepared(profile, samples.map((sample) => sample.slot));
+        const p = seedPick % (cloth.picks.length + 1);
+        const image = rest(cloth, settings, p);
+        const t = settings.threadSizePx;
+        const centre = Math.floor(t / 2);
+        const shade = shadeTable(t)[centre];
+        const fellY = image.height - Math.min(6 * t, Math.floor(image.height / 3));
+        const tiledEnds = cloth.baseEnds * settings.repeat;
+
+        const { face, floatLength } = floatReference(cloth, settings, p);
+
+        for (let rowIndex = 0; rowIndex * t < fellY; rowIndex++) {
+          const pick = p - 1 - rowIndex;
+          if (pick < 0) break;
+          if (cloth.picks[pick].kind !== 'woven') continue;
+          const y = fellY - (rowIndex + 1) * t + centre;
+          if (y < 0) continue;
+          const weft = settings.weftPlan[pick % settings.weftPlan.length];
+          for (let col = 0; col < tiledEnds; col++) {
+            const x = col * t + centre;
+            if (x >= image.width) break;
+            const warpOnFace = face[pick][col] === 'warp';
+            let expected = warpOnFace ? shaded(settings.warpColour, shade) : shaded(weftHex(weft), shade);
+            const highlight = highlightHex(weft);
+            if (!warpOnFace && highlight !== undefined && x % 4 === 0) expected = parseColour(highlight)!;
+            if (floatLength(pick, col) > limit) expected = blendHalfwayRef(expected);
+            expect(pixelAt(image, x, y)).toEqual(expected);
+          }
         }
       }),
       { numRuns: IMAGE_RUNS, seed: IMAGE_SEED },
@@ -264,7 +344,9 @@ describe('renderFrame', () => {
 
   it('R2.5 changing one slot changes only that pick\'s row', () => {
     fc.assert(
-      fc.property(scenarioArbitrary, renderSettingsArbitrary, fc.nat(), fc.nat(), (scenario, settings, pSeed, qSeed) => {
+      fc.property(scenarioArbitrary, renderSettingsArbitrary, fc.nat(), fc.nat(), (scenario, generated, pSeed, qSeed) => {
+        // Highlighting is off: R2.5 is about interlacement; a highlight legitimately spans neighbouring picks of a float. Property 9 checks highlighting.
+        const settings: RenderSettings = { ...generated, floatHighlight: null };
         const slots = scenario.samples.map((sample) => sample.slot);
         if (slots.length === 0) return; // no pick to replace
         const p = pSeed % slots.length;

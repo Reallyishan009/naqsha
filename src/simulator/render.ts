@@ -1,6 +1,9 @@
+import { floatLengthAt } from './floats.ts';
 import { parseColour } from './settings.ts';
 import {
   BACKGROUND_COLOUR,
+  blendHalfway,
+  FLOAT_HIGHLIGHT_COLOUR,
   GAP_DAMAGED_COLOUR,
   GAP_MISSING_COLOUR,
   GAP_WHITE_COLOUR,
@@ -85,6 +88,8 @@ export function renderFrame(cloth: PreparedCloth, settings: RenderSettings, fram
   const centreRow = Math.floor(t / 2);
 
   const baseEnds = cloth.baseEnds;
+  const limit = settings.floatHighlight === null ? 0 : settings.floatHighlight.maxLength;
+  const highlightTarget = parseColour(FLOAT_HIGHLIGHT_COLOUR) ?? [255, 0, 200];
   const clothWidth = Math.min(width, baseEnds * settings.repeat * t);
   const shedHeight = Math.min(6 * t, Math.floor(height / 3));
   const fellY = height - shedHeight;
@@ -131,6 +136,16 @@ export function renderFrame(cloth: PreparedCloth, settings: RenderSettings, fram
         if (highlight !== undefined) {
           const first = Math.ceil(x0 / ZARI_HIGHLIGHT_COLUMN_STEP) * ZARI_HIGHLIGHT_COLUMN_STEP;
           for (let x = first; x < xEnd; x += ZARI_HIGHLIGHT_COLUMN_STEP) pixels[rowStart + x] = highlight;
+        }
+      }
+      // Float highlighting (R3.3): only woven picks already in the cloth (0..p-1) count. Every pixel of a cell in a
+      // float longer than the limit, zari highlight pixels included, is blended halfway toward the highlight colour.
+      if (settings.floatHighlight !== null && floatLengthAt(cloth, pick, cell, settings.repeat, limit, p - 1) > limit) {
+        for (let x = x0; x < xEnd; x++) {
+          const o = (rowStart + x) * 4;
+          data[o] = blendHalfway(data[o], highlightTarget[0]);
+          data[o + 1] = blendHalfway(data[o + 1], highlightTarget[1]);
+          data[o + 2] = blendHalfway(data[o + 2], highlightTarget[2]);
         }
       }
     }

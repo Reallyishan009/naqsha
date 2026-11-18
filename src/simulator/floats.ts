@@ -8,6 +8,49 @@ import type { PreparedCloth } from './types.ts';
 export type Float = { set: 'warp' | 'weft'; pick: number; end: number; length: number };
 
 /**
+ * Length of the float that the woven cell at (`pick`, tiled end `end`) belongs to, scanning at most
+ * `maxLength + 1` cells in each direction, so the cost depends on `maxLength` only, never on the pick index (R3.3).
+ *
+ * The cell is warp-on-face when its end is lifted. Then the run is of warp-on-face picks at the same end, going down
+ * to pick 0 and up to `lastPick`; a gap pick or a weft-on-face pick ends the run. Otherwise the run is of weft-on-face
+ * ends in the same pick across the tiled width `baseEnds * repeat` (repeat boundaries join, R14.4); the run stops at
+ * the first and last tiled end.
+ *
+ * The result is exact when it is at most `maxLength`, and larger than `maxLength` exactly when the true length is.
+ * A run of 1 is not a float but is returned as 1. Returns 0 when the cell is not a woven cell in range.
+ */
+export function floatLengthAt(
+  cloth: PreparedCloth,
+  pick: number,
+  end: number,
+  repeat: number,
+  maxLength: number,
+  lastPick: number,
+): number {
+  const { baseEnds, picks } = cloth;
+  const row = picks[pick];
+  const tiledEnds = baseEnds * repeat;
+  if (row === undefined || row.kind !== 'woven' || pick > lastPick || end < 0 || end >= tiledEnds) return 0;
+  const reach = maxLength + 1;
+  const warpOnFace = row.lift[end % baseEnds] === 1;
+  let length = 1;
+
+  if (warpOnFace) {
+    const baseEnd = end % baseEnds;
+    const isWarp = (q: number): boolean => {
+      const other = picks[q];
+      return other !== undefined && other.kind === 'woven' && other.lift[baseEnd] === 1;
+    };
+    for (let q = pick - 1, n = 0; q >= 0 && n < reach && isWarp(q); q--, n++) length++;
+    for (let q = pick + 1, n = 0; q <= lastPick && q < picks.length && n < reach && isWarp(q); q++, n++) length++;
+  } else {
+    for (let e = end - 1, n = 0; e >= 0 && n < reach && row.lift[e % baseEnds] === 0; e--, n++) length++;
+    for (let e = end + 1, n = 0; e < tiledEnds && n < reach && row.lift[e % baseEnds] === 0; e++, n++) length++;
+  }
+  return length;
+}
+
+/**
  * Finds every float in the cloth (R3.1, R3.2). Pure: the cloth is not changed.
  *
  * A weft float is a run of 2 or more adjacent ends with the weft on the face (lift 0) in one woven pick.

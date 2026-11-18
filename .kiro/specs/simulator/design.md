@@ -241,7 +241,7 @@ Each property is a fast-check property. The test title is the heading text after
 
 ### Property 6: R2.5 changing one slot changes only that pick's row.
 
-**Demo.** For any slot list, pick `p` and replacement slot (another card, `null`, or a damaged value), the two renders differ only inside pick `p`'s row and, for frames of pick `p`, the shed. This also checks that a gap keeps its place (R4.4).
+**Demo.** For any slot list, pick `p` and replacement slot (another card, `null`, or a damaged value), the two renders differ only inside pick `p`'s row and, for frames of pick `p`, the shed. This also checks that a gap keeps its place (R4.4). Float highlighting is off in this property; highlighting depends on neighbouring picks by design and is checked by Property 9.
 
 **Validates: Requirements 2.5**
 
