@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { CardProfile } from '../../src/codec/index.ts';
 import {
   parseColour,
+  PASS_STEPS,
   prepareCloth,
   renderFrame,
   shadeTable,
@@ -11,7 +12,7 @@ import {
   ZARI_SILVER_COLOUR,
   ZARI_SILVER_HIGHLIGHT_COLOUR,
 } from '../../src/simulator/index.ts';
-import type { PreparedCloth, RenderSettings, SimImage, Weft } from '../../src/simulator/index.ts';
+import type { Frame, PreparedCloth, RenderSettings, SimImage, Weft } from '../../src/simulator/index.ts';
 import { cardGridArbitrary, profileArbitrary } from '../support/profiles.ts';
 import { damagedSlotArbitrary, renderSettingsArbitrary, slotListArbitrary } from '../support/slots.ts';
 
@@ -31,6 +32,25 @@ function rest(cloth: PreparedCloth, settings: RenderSettings, pick: number): Sim
   const result = renderFrame(cloth, settings, { pick, phase: 'rest' });
   if (!result.ok) throw new Error(`test setup: renderFrame failed for pick ${pick}`);
   return result.value;
+}
+
+function frameImage(cloth: PreparedCloth, settings: RenderSettings, frame: Frame): SimImage {
+  const result = renderFrame(cloth, settings, frame);
+  if (!result.ok) throw new Error(`test setup: renderFrame failed for ${JSON.stringify(frame)}`);
+  return result.value;
+}
+
+/**
+ * A frame that exists for the cloth, from three numbers. kind 0 gives rest(pick mod (slotCount + 1)); otherwise
+ * the pick is a woven pick chosen by pickSeed, and kind 1 gives lift, kind 2 gives pass with step stepSeed mod PASS_STEPS.
+ * A cloth with no woven pick always gets a rest frame.
+ */
+function frameFor(cloth: PreparedCloth, kind: number, pickSeed: number, stepSeed: number): Frame {
+  const woven = cloth.picks.flatMap((row, pick) => (row.kind === 'woven' ? [pick] : []));
+  if (kind % 3 === 0 || woven.length === 0) return { pick: pickSeed % (cloth.picks.length + 1), phase: 'rest' };
+  const pick = woven[pickSeed % woven.length];
+  if (kind % 3 === 1) return { pick, phase: 'lift' };
+  return { pick, phase: 'pass', step: stepSeed % PASS_STEPS };
 }
 
 function pixelAt(image: SimImage, x: number, y: number): Rgb {
@@ -268,6 +288,39 @@ describe('renderFrame', () => {
     );
   });
 
+  it('R7.5 lift and pass frames of gap picks, of pick = slotCount or with a bad step are out of range; woven ones are accepted', () => {
+    const badStep = fc.oneof(
+      fc.integer({ min: -100, max: -1 }),
+      fc.integer({ min: PASS_STEPS, max: PASS_STEPS + 100 }),
+      fc.integer({ min: 0, max: PASS_STEPS - 1 }).map((n) => n + 0.5),
+      fc.constantFrom<unknown>(NaN, Infinity, '0', null, undefined, {}),
+    );
+    fc.assert(
+      fc.property(profileAndSlots, renderSettingsArbitrary, badStep, fc.nat(), ({ profile, samples }, settings, step, stepSeed) => {
+        const cloth = prepared(profile, samples.map((sample) => sample.slot));
+        const count = cloth.picks.length;
+        const outOfRange = (frame: unknown): void => {
+          const result = renderFrame(cloth, settings, frame);
+          expect(result.ok).toBe(false);
+          if (!result.ok) expect(result.failure.reason).toBe('pick-out-of-range');
+        };
+        outOfRange({ pick: count, phase: 'lift' });
+        outOfRange({ pick: count, phase: 'pass', step: stepSeed % PASS_STEPS });
+        cloth.picks.forEach((row, pick) => {
+          if (row.kind === 'woven') {
+            expect(renderFrame(cloth, settings, { pick, phase: 'lift' }).ok).toBe(true);
+            expect(renderFrame(cloth, settings, { pick, phase: 'pass', step: stepSeed % PASS_STEPS }).ok).toBe(true);
+            outOfRange({ pick, phase: 'pass', step });
+            outOfRange({ pick, phase: 'pass' });
+          } else {
+            outOfRange({ pick, phase: 'lift' });
+            outOfRange({ pick, phase: 'pass', step: stepSeed % PASS_STEPS });
+          }
+        });
+      }),
+    );
+  });
+
   it('R8.1 the same input renders identical bytes every time, also with other renders in between', () => {
     fc.assert(
       fc.property(
@@ -277,15 +330,18 @@ describe('renderFrame', () => {
         renderSettingsArbitrary,
         fc.nat(),
         fc.nat(),
-        (first, second, settings, otherSettings, n1, n2) => {
+        fc.nat(),
+        fc.nat(),
+        (first, second, settings, otherSettings, n1, n2, kind, stepSeed) => {
           const cloth = prepared(first.profile, first.samples.map((sample) => sample.slot));
           const other = prepared(second.profile, second.samples.map((sample) => sample.slot));
-          const p = n1 % (cloth.picks.length + 1);
-          const before = rest(cloth, settings, p);
+          // The frame is a rest, lift or pass frame of a woven pick.
+          const frame = frameFor(cloth, kind, n1, stepSeed);
+          const before = frameImage(cloth, settings, frame);
           const snapshot = Uint8ClampedArray.from(before.data);
-          rest(cloth, otherSettings, n2 % (cloth.picks.length + 1));
-          rest(other, settings, n2 % (other.picks.length + 1));
-          const after = rest(cloth, settings, p);
+          frameImage(cloth, otherSettings, frameFor(cloth, kind + 1, n2, stepSeed + 1));
+          frameImage(other, settings, frameFor(other, kind + 2, n2, stepSeed + 2));
+          const after = frameImage(cloth, settings, frame);
           expect(after.width).toBe(before.width);
           expect(after.height).toBe(before.height);
           expect(Array.from(after.data)).toEqual(Array.from(snapshot));
@@ -344,24 +400,50 @@ describe('renderFrame', () => {
 
   it('R2.5 changing one slot changes only that pick\'s row', () => {
     fc.assert(
-      fc.property(scenarioArbitrary, renderSettingsArbitrary, fc.nat(), fc.nat(), (scenario, generated, pSeed, qSeed) => {
-        // Highlighting is off: R2.5 is about interlacement; a highlight legitimately spans neighbouring picks of a float. Property 9 checks highlighting.
-        const settings: RenderSettings = { ...generated, floatHighlight: null };
-        const slots = scenario.samples.map((sample) => sample.slot);
-        if (slots.length === 0) return; // no pick to replace
-        const p = pSeed % slots.length;
-        const q = qSeed % (slots.length + 1);
-        const before = rest(prepared(scenario.profile, slots), settings, q);
-        const after = rest(prepared(scenario.profile, withSlot(slots, p, scenario.replacement)), settings, q);
-        const rows = pickRows(settings, p, q);
-        for (let y = 0; y < before.height; y++) {
-          if (rows !== null && y >= rows.from && y < rows.to) continue;
-          for (let x = 0; x < before.width; x++) {
-            expect(pixelAt(after, x, y)).toEqual(pixelAt(before, x, y));
+      fc.property(
+        scenarioArbitrary,
+        renderSettingsArbitrary,
+        fc.nat(),
+        fc.nat(),
+        fc.nat(),
+        fc.nat(),
+        (scenario, generated, pSeed, qSeed, kind, stepSeed) => {
+          // Highlighting is off: R2.5 is about interlacement; a highlight legitimately spans neighbouring picks of a float. Property 9 checks highlighting.
+          const settings: RenderSettings = { ...generated, floatHighlight: null };
+          const slots = scenario.samples.map((sample) => sample.slot);
+          if (slots.length === 0) return; // no pick to replace
+          const p = pSeed % slots.length;
+          const beforeCloth = prepared(scenario.profile, slots);
+          const afterCloth = prepared(scenario.profile, withSlot(slots, p, scenario.replacement));
+          // The frame is rest(q), or lift/pass of a pick that is woven both before and after the replacement.
+          // The replacement may turn pick p into a gap, so a lift/pass frame of p exists only when it is woven in both;
+          // otherwise a lift/pass frame is generated for another woven pick, or falls back to a rest frame.
+          const bothWoven = beforeCloth.picks.flatMap((row, pick) =>
+            row.kind === 'woven' && afterCloth.picks[pick].kind === 'woven' ? [pick] : [],
+          );
+          let frame: Frame = { pick: qSeed % (slots.length + 1), phase: 'rest' };
+          if (kind % 3 !== 0 && bothWoven.length > 0) {
+            const pick = bothWoven[qSeed % bothWoven.length];
+            frame = kind % 3 === 1 ? { pick, phase: 'lift' } : { pick, phase: 'pass', step: stepSeed % PASS_STEPS };
           }
-        }
-        if (rows === null) expect(Array.from(after.data)).toEqual(Array.from(before.data));
-      }),
+          const before = frameImage(beforeCloth, settings, frame);
+          const after = frameImage(afterCloth, settings, frame);
+          const rows = pickRows(settings, p, frame.pick);
+          // For frames of pick p (lift and pass), the shed may differ too.
+          const { height } = settings.viewport;
+          const t = settings.threadSizePx;
+          const fellY = height - Math.min(6 * t, Math.floor(height / 3));
+          const shedMayDiffer = frame.phase !== 'rest' && frame.pick === p;
+          for (let y = 0; y < before.height; y++) {
+            if (rows !== null && y >= rows.from && y < rows.to) continue;
+            if (shedMayDiffer && y >= fellY) continue;
+            for (let x = 0; x < before.width; x++) {
+              expect(pixelAt(after, x, y)).toEqual(pixelAt(before, x, y));
+            }
+          }
+          if (rows === null && !shedMayDiffer) expect(Array.from(after.data)).toEqual(Array.from(before.data));
+        },
+      ),
       { numRuns: IMAGE_RUNS, seed: IMAGE_SEED },
     );
   });
@@ -525,6 +607,38 @@ describe('renderFrame', () => {
       expect(pixelAt(two, 5, 13)).toEqual([152, 45, 30]); // pick 1, end 1 lifted: warp, column 1 shade 244
       expect(pixelAt(two, 5, 9)).toEqual([30, 61, 122]); // pick 0 moved up one row: end 1 down, plain weft 0
       expect(pixelAt(two, 0, 9)).toEqual([100, 30, 20]); // pick 0, end 0 lifted
+    });
+
+    it('shows the raised ends and the weft band in lift and pass frames', () => {
+      const cloth = prepared(profile, slots);
+      const raisedWarp = (shade: number): Rgb => {
+        const [r, g, b] = shaded('#a03020', shade);
+        return [(r + 255) >> 1, (g + 255) >> 1, (b + 255) >> 1];
+      };
+      const background: Rgb = [0xef, 0xe9, 0xdd];
+      // Shed rows are y 16..23; the band is t = 4 rows tall, top row 16 + floor((8 - 4) / 2) = 18. Row y = 20 has shade 244.
+      const lift = frameImage(cloth, settings, { pick: 0, phase: 'lift' });
+      // Pick 0 lifts ends 0 and 2: raised there, plain warp on ends 1 and 3. Column 1 of a thread has shade 244.
+      expect(pixelAt(lift, 1, 20)).toEqual(raisedWarp(244));
+      expect(pixelAt(lift, 5, 20)).toEqual(shaded('#a03020', 244));
+      expect(pixelAt(lift, 9, 20)).toEqual(raisedWarp(244));
+      expect(pixelAt(lift, 13, 20)).toEqual(shaded('#a03020', 244));
+      expect(pixelAt(lift, 0, 20)).toEqual(raisedWarp(160));
+      // The cloth above the fell is rest(0): background only.
+      expect(pixelAt(lift, 0, 15)).toEqual(background);
+
+      const weftPixel = shaded('#204080', 244);
+      const full = frameImage(cloth, settings, { pick: 0, phase: 'pass', step: PASS_STEPS - 1 });
+      for (let x = 0; x < 16; x++) expect(pixelAt(full, x, 20)).toEqual(weftPixel);
+      expect(pixelAt(full, 16, 20)).toEqual(background); // right of the 16 px cloth
+      expect(pixelAt(full, 0, 17)).not.toEqual(weftPixel); // above the band
+      expect(pixelAt(full, 0, 22)).not.toEqual(weftPixel); // below the band
+
+      const first = frameImage(cloth, settings, { pick: 0, phase: 'pass', step: 0 });
+      expect(pixelAt(first, 0, 20)).toEqual(weftPixel);
+      expect(pixelAt(first, 1, 20)).toEqual(weftPixel);
+      expect(pixelAt(first, 2, 20)).toEqual(raisedWarp(244)); // 16 / 8 = 2 px of band; end 0 is raised beyond it
+      expect(pixelAt(first, 9, 20)).toEqual(raisedWarp(244));
     });
   });
 });

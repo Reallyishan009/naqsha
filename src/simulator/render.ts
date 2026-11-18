@@ -1,4 +1,5 @@
 import { floatLengthAt } from './floats.ts';
+import { PASS_STEPS } from './frames.ts';
 import { parseColour } from './settings.ts';
 import {
   BACKGROUND_COLOUR,
@@ -14,6 +15,7 @@ import {
   ZARI_HIGHLIGHT_COLUMN_STEP,
   ZARI_SILVER_COLOUR,
   ZARI_SILVER_HIGHLIGHT_COLOUR,
+  packRaised,
   packRgb,
   packShaded,
   shadeTable,
@@ -22,19 +24,32 @@ import type { PreparedCloth, RenderSettings, SimImage, SimResult, Weft } from '.
 
 type Rgb = [number, number, number];
 
-type FrameRead = { valid: true; pick: number } | { valid: false; pick: unknown };
+type FrameRead =
+  | { valid: true; pick: number; phase: 'rest' | 'lift' | 'pass'; step: number }
+  | { valid: false; pick: unknown };
 
 /**
- * TEMPORARY LIMIT (until task 3.2): only { pick, phase: 'rest' } with an integer pick 0..slotCount is drawn.
- * Every other value, including lift and pass frames, gives pick-out-of-range.
+ * Accepts { pick, phase: 'rest' } with an integer pick 0..slotCount, { pick, phase: 'lift' } and
+ * { pick, phase: 'pass', step } with an integer pick 0..slotCount-1 that is a woven pick (R9.3) and an integer step
+ * 0..PASS_STEPS-1. Every other value, including lift/pass on a gap pick or on pick = slotCount, gives pick-out-of-range
+ * (R7.5): such a frame does not exist.
  */
-function readFrame(frame: unknown, pickCount: number): FrameRead {
+function readFrame(frame: unknown, cloth: PreparedCloth): FrameRead {
   try {
     if (typeof frame !== 'object' || frame === null) return { valid: false, pick: frame };
     const record = frame as Record<string, unknown>;
     const pick = record.pick;
-    if (record.phase === 'rest' && typeof pick === 'number' && Number.isInteger(pick) && pick >= 0 && pick <= pickCount) {
-      return { valid: true, pick };
+    if (typeof pick !== 'number' || !Number.isInteger(pick) || pick < 0 || pick > cloth.picks.length) {
+      return { valid: false, pick };
+    }
+    if (record.phase === 'rest') return { valid: true, pick, phase: 'rest', step: 0 };
+    const woven = pick < cloth.picks.length && cloth.picks[pick].kind === 'woven';
+    if (record.phase === 'lift' && woven) return { valid: true, pick, phase: 'lift', step: 0 };
+    if (record.phase === 'pass' && woven) {
+      const step = record.step;
+      if (typeof step === 'number' && Number.isInteger(step) && step >= 0 && step < PASS_STEPS) {
+        return { valid: true, pick, phase: 'pass', step };
+      }
     }
     return { valid: false, pick };
   } catch {
@@ -55,12 +70,12 @@ function zariHighlight(weft: Weft): number | undefined {
 }
 
 /**
- * Draws one frame as RGBA bytes (R8.1: same input, same bytes). Rest frames only for now, see readFrame.
+ * Draws one frame as RGBA bytes (R8.1: same input, same bytes): rest, lift and pass frames, see readFrame.
  * Never throws for a bad frame (R7.5). Settings and cloth are expected to come from parseRenderSettings and prepareCloth.
  */
 export function renderFrame(cloth: PreparedCloth, settings: RenderSettings, frame: unknown): SimResult<SimImage> {
   const pickCount = cloth.picks.length;
-  const read = readFrame(frame, pickCount);
+  const read = readFrame(frame, cloth);
   if (!read.valid) return { ok: false, failure: { reason: 'pick-out-of-range', pick: read.pick, pickCount } };
   const p = read.pick;
 
@@ -75,6 +90,7 @@ export function renderFrame(cloth: PreparedCloth, settings: RenderSettings, fram
 
   const warpRgb: Rgb = parseColour(settings.warpColour) ?? [0, 0, 0];
   const warpByColumn = shade.map((s) => packShaded(warpRgb, s));
+  const raisedByColumn = shade.map((s) => packRaised(warpRgb, s));
   const weftByRow = settings.weftPlan.map((weft) => {
     const rgb = weftBaseColour(weft);
     return shade.map((s) => packShaded(rgb, s));
@@ -106,11 +122,16 @@ export function renderFrame(cloth: PreparedCloth, settings: RenderSettings, fram
     }
   };
 
-  // Draws every end of one pixel row as a vertical warp thread.
+  // In lift(p) and pass(p, s) the ends in pick p's lift set are drawn raised (R9.2).
+  const shedRow = read.phase === 'rest' ? undefined : cloth.picks[p];
+  const raisedLift = shedRow !== undefined && shedRow.kind === 'woven' ? shedRow.lift : undefined;
+
+  // Draws every end of one pixel row as a vertical warp thread, raised ends lighter.
   const drawWarpRow = (rowStart: number): void => {
-    for (let x0 = 0; x0 < drawnWidth; x0 += t) {
+    for (let cell = 0, x0 = 0; x0 < drawnWidth; cell++, x0 += t) {
       const xEnd = Math.min(x0 + t, drawnWidth);
-      for (let x = x0; x < xEnd; x++) pixels[rowStart + x] = warpByColumn[x - x0];
+      const columns = raisedLift !== undefined && raisedLift[cell % baseEnds] === 1 ? raisedByColumn : warpByColumn;
+      for (let x = x0; x < xEnd; x++) pixels[rowStart + x] = columns[x - x0];
     }
     if (copyRepeats) copyAcross(rowStart);
   };
@@ -119,6 +140,26 @@ export function renderFrame(cloth: PreparedCloth, settings: RenderSettings, fram
   if (shedHeight > 0) {
     drawWarpRow(fellY * width);
     for (let y = fellY + 1; y < height; y++) pixels.copyWithin(y * width, fellY * width, (fellY + 1) * width);
+  }
+
+  // pass(p, s): pick p's weft is a band of t rows centred in the shed, from x = 0 to floor((s + 1) * clothWidthPx / PASS_STEPS) - 1,
+  // cropped at the viewport and clipped to the shed rows. It is drawn directly over the warp, after the tiling,
+  // because its right end is not periodic.
+  if (read.phase === 'pass' && shedHeight > 0) {
+    const clothWidthPx = baseEnds * settings.repeat * t;
+    const bandEnd = Math.min(width, Math.floor(((read.step + 1) * clothWidthPx) / PASS_STEPS));
+    const weftIndex = p % weftByRow.length;
+    const bandTop = fellY + Math.floor((shedHeight - t) / 2);
+    for (let i = 0; i < t; i++) {
+      const y = bandTop + i;
+      if (y < fellY || y >= height) continue;
+      const rowStart = y * width;
+      pixels.fill(weftByRow[weftIndex][i], rowStart, rowStart + bandEnd);
+      const highlight = i === centreRow ? highlightByWeft[weftIndex] : undefined;
+      if (highlight !== undefined) {
+        for (let x = 0; x < bandEnd; x++) if ((x % baseWidth) % ZARI_HIGHLIGHT_COLUMN_STEP === 0) pixels[rowStart + x] = highlight;
+      }
+    }
   }
 
   // Woven rows above the fell. Row i (0 nearest the fell) holds y from fellY-(i+1)*t to fellY-i*t-1 and shows pick p-1-i.

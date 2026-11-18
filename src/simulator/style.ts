@@ -68,6 +68,18 @@ export function packRgb(r: number, g: number, b: number): number {
   return ((r << 24) | (g << 16) | (b << 8) | 255) >>> 0;
 }
 
+/**
+ * Packs a raised warp thread (R9.2): the shaded colour, then each channel blended halfway toward white,
+ * (shaded + 255) >> 1.
+ */
+export function packRaised(rgb: readonly [number, number, number], shade: number): number {
+  return packRgb(
+    blendHalfway(shadeChannel(rgb[0], shade), 255),
+    blendHalfway(shadeChannel(rgb[1], shade), 255),
+    blendHalfway(shadeChannel(rgb[2], shade), 255),
+  );
+}
+
 /** Packs a shaded colour: each channel is (channel * shade) >> 8. */
 export function packShaded(rgb: readonly [number, number, number], shade: number): number {
   return packRgb(shadeChannel(rgb[0], shade), shadeChannel(rgb[1], shade), shadeChannel(rgb[2], shade));
