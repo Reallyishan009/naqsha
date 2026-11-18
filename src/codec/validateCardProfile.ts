@@ -3,7 +3,11 @@ import type { CardProfile, PointMm, Result, Violation } from './types.ts';
 /** R2.8: peg hole diameters must differ by at least this fraction of the larger diameter. */
 export const MIN_PEG_DIAMETER_DIFFERENCE = 0.1;
 
-/** Guards the report of unassigned ends when hookRows * hookColumns is absurdly large. */
+/**
+ * Guards the report of unassigned ends when hookRows * hookColumns is absurdly large.
+ * This cap departs from R2.1 ("return all violations") for huge profiles only: it keeps validation from
+ * hanging when hookRows * hookColumns is very large. Normal profiles never reach it.
+ */
 const MAX_UNASSIGNED_VIOLATIONS = 1000;
 
 type UnknownRecord = Record<string, unknown>;
