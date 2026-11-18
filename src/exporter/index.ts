@@ -9,3 +9,4 @@ export type {
 export { DEFAULT_EXPORT_OPTIONS, parseExportOptions } from './options.ts';
 export { bmpLayout } from './layout.ts';
 export { exportPatternBmp } from './exportBmp.ts';
+export { readPatternBmp } from './readBmp.ts';
