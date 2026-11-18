@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as fc from 'fast-check';
+import { decodeEnds, encodeCardGrid } from '../../src/codec/index.ts';
 import type { CardProfile, Pattern } from '../../src/codec/index.ts';
 import { bmpLayout, exportPatternBmp, readPatternBmp } from '../../src/exporter/index.ts';
 import type { ExportOptions } from '../../src/exporter/index.ts';
@@ -186,6 +187,87 @@ describe('readPatternBmp properties', () => {
           ok: false,
           failure: { reason: 'unsupported-bmp', field: 'coloursUsed', value: used },
         });
+      }),
+    );
+  });
+});
+
+/** The colour index of the pixel for a pick and end in a file written with these options, read from the bytes. */
+function colourIndexAt(bytes: Uint8Array, testCase: Case, pick: number, end: number): number {
+  const width = testCase.profile.hookRows * testCase.profile.hookColumns;
+  const height = testCase.pattern.length;
+  const bitDepth = testCase.options.bitDepth;
+  const layout = bmpLayout(width, height, bitDepth);
+  const imageRow = testCase.options.pickOrder === 'first-at-top' ? pick : height - 1 - pick;
+  const x = testCase.options.endOrder === 'first-at-left' ? end : width - 1 - end;
+  const rowStart = layout.pixelOffset + (height - 1 - imageRow) * layout.rowStride;
+  if (bitDepth === 8) return bytes[rowStart + x]!;
+  return (bytes[rowStart + Math.floor(x / 8)]! >> (7 - (x % 8))) & 1;
+}
+
+describe('readPatternBmp colours', () => {
+  it('reading a file with the wrong liftColour option gives the inverse Pattern', () => {
+    // Only black and white are in the table, so every pixel classifies, but lifted and down swap (R6.3: the options
+    // must match the export).
+    const [testCase] = fc.sample(caseArbitrary, { seed: 3, numRuns: 1 });
+    const options = { ...testCase!.options, bitDepth: 1 as const, liftColour: 'black' as const };
+    const bytes = exported({ ...testCase!, options });
+    const wrong = readPatternBmp(bytes, testCase!.profile, { ...options, liftColour: 'white' });
+    expect(wrong.ok).toBe(true);
+    if (!wrong.ok) return;
+    const expected = testCase!.pattern.map((grid) => {
+      const ends = encodeCardGrid(testCase!.profile, grid);
+      if (!ends.ok) throw new Error('encode failed');
+      const inverted = decodeEnds(testCase!.profile, ends.value.map((lifted) => !lifted));
+      if (!inverted.ok) throw new Error('decode failed');
+      return inverted.value;
+    });
+    expect(wrong.pattern).toEqual(expected);
+  });
+
+  it('R6.3 a pixel whose colour is neither the lifted nor the down colour fails with unknown-colour', () => {
+    const arbitrary = fc.record({
+      testCase: caseArbitrary,
+      choose: fc.nat(),
+      blue: fc.integer({ min: 0, max: 255 }),
+      green: fc.integer({ min: 0, max: 255 }),
+      red: fc.integer({ min: 0, max: 255 }),
+      reserved: fc.integer({ min: 0, max: 255 }),
+    });
+    fc.assert(
+      fc.property(arbitrary, ({ testCase, choose, blue, green, red, reserved }) => {
+        // A third colour is any colour that is not black and not white.
+        const thirdBlue = blue === green && green === red && (blue === 0 || blue === 255) ? (blue === 0 ? 1 : 254) : blue;
+        const bytes = exported(testCase).slice();
+        const width = testCase.profile.hookRows * testCase.profile.hookColumns;
+        const used = new Set<number>();
+        for (let pick = 0; pick < testCase.pattern.length; pick++) {
+          for (let end = 0; end < width; end++) used.add(colourIndexAt(bytes, testCase, pick, end));
+        }
+        const usedList = [...used].sort((a, b) => a - b);
+        const changed = usedList[choose % usedList.length]!;
+        bytes.set([thirdBlue, green, red, reserved], 54 + 4 * changed);
+        const result = readPatternBmp(bytes, testCase.profile, testCase.options);
+        expect(result.ok).toBe(false);
+        if (!result.ok && result.failure.reason === 'unknown-colour') {
+          const { pick, end } = result.failure;
+          expect(colourIndexAt(bytes, testCase, pick, end)).toBe(changed);
+        } else {
+          expect(result.ok === false && result.failure.reason).toBe('unknown-colour');
+        }
+      }),
+    );
+  });
+
+  it('R7.5 the 1-bit and 8-bit files read back to the same Pattern', () => {
+    fc.assert(
+      fc.property(caseArbitrary, (testCase) => {
+        const read = ([1, 8] as const).map((bitDepth) => {
+          const options = { ...testCase.options, bitDepth };
+          return readPatternBmp(exported({ ...testCase, options }), testCase.profile, options);
+        });
+        expect(read[0]).toEqual({ ok: true, pattern: testCase.pattern });
+        expect(read[1]).toEqual(read[0]);
       }),
     );
   });

@@ -65,6 +65,22 @@ export function readPatternBmp(bytes: unknown, profile: unknown, options?: unkno
     if (expected !== actual) return { ok: false, failure: { reason: 'inconsistent-size', field, expected, actual } };
   }
 
+  // Classify each colour table entry once: 1 lifted, 0 down, -1 neither. The table lies inside the bytes: the
+  // length check above makes the file at least pixelOffset bytes. Only B, G and R are compared, not the reserved byte.
+  const liftValue = exportOptions.liftColour === 'black' ? 0 : 255;
+  const downValue = 255 - liftValue;
+  const classes = new Int8Array(256).fill(-1);
+  for (let entry = 0; entry < layout.colourEntries; entry++) {
+    const at = HEADERS_BYTES + 4 * entry;
+    const blue = bytes[at]!;
+    const green = bytes[at + 1]!;
+    const red = bytes[at + 2]!;
+    if (blue === green && green === red) {
+      if (blue === liftValue) classes[entry] = 1;
+      else if (blue === downValue) classes[entry] = 0;
+    }
+  }
+
   const pattern: Pattern = new Array<CardGrid>(height);
   for (let imageRow = 0; imageRow < height; imageRow++) {
     const storedRow = height - 1 - imageRow;
@@ -78,8 +94,10 @@ export function readPatternBmp(bytes: unknown, profile: unknown, options?: unkno
         return { ok: false, failure: { reason: 'inconsistent-size', field: 'length', expected: byteIndex + 1, actual: bytes.length } };
       }
       const value = bytes[byteIndex]!;
-      // Temporary (task 2.2 switches to the colour table check): colour index 1 is lifted.
-      ends[end] = bitDepth === 8 ? value === 1 : ((value >> (7 - (x % 8))) & 1) === 1;
+      const colourIndex = bitDepth === 8 ? value : (value >> (7 - (x % 8))) & 1;
+      const classification = classes[colourIndex]!;
+      if (classification < 0) return { ok: false, failure: { reason: 'unknown-colour', pick, end } };
+      ends[end] = classification === 1;
     }
     const decoded = decodeEnds(cardProfile, ends);
     // decodeEnds cannot fail here: ends has exactly hookRows * hookColumns booleans. Mapped only to never throw.
