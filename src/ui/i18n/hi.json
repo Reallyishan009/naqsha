@@ -218,5 +218,29 @@
   "error.print.invalid-card": {
     "text": "यह कार्ड छापा नहीं जा सकता, क्योंकि प्रोफ़ाइल या कार्ड के छेद सही नहीं हैं। कुछ डाउनलोड नहीं हुआ।",
     "reviewed": false
+  },
+  "colour.madder": {
+    "text": "मजीठ लाल",
+    "reviewed": false
+  },
+  "colour.indigo": {
+    "text": "नील",
+    "reviewed": false
+  },
+  "colour.leaf": {
+    "text": "पत्ती हरा",
+    "reviewed": false
+  },
+  "colour.ivory": {
+    "text": "हाथीदाँत",
+    "reviewed": false
+  },
+  "colour.charcoal": {
+    "text": "कोयला",
+    "reviewed": false
+  },
+  "colour.ochre": {
+    "text": "गेरुआ",
+    "reviewed": false
   }
 }
