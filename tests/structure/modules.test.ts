@@ -6,6 +6,7 @@ const SRC = path.resolve(import.meta.dirname, '../../src');
 const CODEC = path.join(SRC, 'codec');
 const READER = path.join(SRC, 'reader');
 const SIMULATOR = path.join(SRC, 'simulator');
+const EXPORTER = path.join(SRC, 'exporter');
 
 function tsFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -80,6 +81,7 @@ function load(dir: string): SourceFile[] {
 const codecFiles = load(CODEC);
 const readerFiles = load(READER);
 const simulatorFiles = load(SIMULATOR);
+const exporterFiles = load(EXPORTER);
 const bothFiles = [...codecFiles, ...readerFiles];
 
 function lineOf(text: string, index: number): number {
@@ -135,6 +137,12 @@ const BROWSER_API =
 // src/simulator/canvas.ts uses. They are not added to the codec and reader scans.
 const SIMULATOR_BROWSER_API = new RegExp(
   `${BROWSER_API.source.slice(0, -3)}|requestAnimationFrame|cancelAnimationFrame|ImageData)\\b`,
+);
+
+// Exporter scan only: the shared list (which already has Blob and document) plus the names
+// that src/exporter/download.ts uses: URL, setTimeout and globalThis. Not added to the other scans.
+const EXPORTER_BROWSER_API = new RegExp(
+  `${BROWSER_API.source.slice(0, -3)}|URL|setTimeout|globalThis)\\b`,
 );
 
 // Peg-hole words. Matches pegHole, PegHoles, "peg hole", peg-hole, peg_hole, any case.
@@ -223,6 +231,31 @@ describe('module boundaries', () => {
 
   it('R12.5 src/simulator does not import from or read public/', () => {
     expect(findAll(simulatorFiles, /\bpublic\//, (f) => f.raw)).toEqual([]);
+  });
+
+  it('there are source files to scan in src/exporter', () => {
+    expect(exporterFiles.length).toBeGreaterThan(0);
+  });
+
+  it('R10.1 src/exporter imports only from src/exporter and src/codec, and no packages (R10.5 no runtime dependency is also checked in tests/structure/dependencies.test.ts)', () => {
+    expect(importViolations(exporterFiles, [EXPORTER, CODEC])).toEqual([]);
+  });
+
+  it('R12.1 only src/exporter/download.ts names a browser API', () => {
+    const others = exporterFiles.filter((f) => f.relative !== path.join('exporter', 'download.ts'));
+    expect(findAll(others, EXPORTER_BROWSER_API, (f) => f.codeNoStrings)).toEqual([]);
+  });
+
+  it('R12.1 src/exporter does not use the any type', () => {
+    expect(findAll(exporterFiles, /(?<![.\w$])any(?![\w$])/, (f) => f.codeNoStrings)).toEqual([]);
+  });
+
+  it('R12.1 src/exporter does not name demo-12x16', () => {
+    expect(findAll(exporterFiles, /demo-12x16/, (f) => f.raw)).toEqual([]);
+  });
+
+  it('R12.1 src/exporter does not import from or read public/', () => {
+    expect(findAll(exporterFiles, /\bpublic\//, (f) => f.raw)).toEqual([]);
   });
 
   it('the comment stripper keeps comment markers inside strings and drops real comments', () => {
