@@ -12,8 +12,8 @@ import {
   ZARI_SILVER_HIGHLIGHT_COLOUR,
 } from '../../src/simulator/index.ts';
 import type { PreparedCloth, RenderSettings, SimImage, Weft } from '../../src/simulator/index.ts';
-import { profileArbitrary } from '../support/profiles.ts';
-import { renderSettingsArbitrary, slotListArbitrary } from '../support/slots.ts';
+import { cardGridArbitrary, profileArbitrary } from '../support/profiles.ts';
+import { damagedSlotArbitrary, renderSettingsArbitrary, slotListArbitrary } from '../support/slots.ts';
 
 // Image properties run 25 times with this pinned seed, so every run sees the same cases.
 const IMAGE_SEED = 20240611;
@@ -212,6 +212,132 @@ describe('renderFrame', () => {
           expect(Array.from(before.data)).toEqual(Array.from(snapshot));
         },
       ),
+      { numRuns: IMAGE_RUNS, seed: IMAGE_SEED },
+    );
+  });
+
+  /** The pixel rows [from, to) that pick p occupies in rest(q), clipped to the cloth area; null when p is not visible. */
+  function pickRows(settings: RenderSettings, p: number, q: number): { from: number; to: number } | null {
+    const t = settings.threadSizePx;
+    const { height } = settings.viewport;
+    const fellY = height - Math.min(6 * t, Math.floor(height / 3));
+    const rowIndex = q - 1 - p;
+    if (rowIndex < 0) return null;
+    const from = Math.max(0, fellY - (rowIndex + 1) * t);
+    const to = fellY - rowIndex * t;
+    return to > from ? { from, to } : null;
+  }
+
+  type Scenario = {
+    profile: CardProfile;
+    samples: { slot: unknown }[];
+    damaged: unknown;
+    card: unknown;
+    replacement: unknown;
+  };
+
+  /** A profile, a slot list, and a damaged value, a valid card and a mixed replacement slot for it. */
+  const scenarioArbitrary: fc.Arbitrary<Scenario> = profileArbitrary.chain((profile) =>
+    fc.record({
+      profile: fc.constant(profile),
+      samples: slotListArbitrary(profile),
+      damaged: damagedSlotArbitrary(profile),
+      card: cardGridArbitrary(profile),
+      replacement: fc.oneof(cardGridArbitrary(profile), fc.constant<unknown>(null), damagedSlotArbitrary(profile)),
+    }),
+  );
+
+  function withSlot(slots: unknown[], index: number, slot: unknown): unknown[] {
+    return slots.map((existing, i) => (i === index ? slot : existing));
+  }
+
+  function rowBytes(image: SimImage, rows: { from: number; to: number }, width: number): number[] {
+    const out: number[] = [];
+    for (let y = rows.from; y < rows.to; y++) {
+      for (let x = 0; x < width; x++) {
+        const o = (y * image.width + x) * 4;
+        out.push(image.data[o], image.data[o + 1], image.data[o + 2], image.data[o + 3]);
+      }
+    }
+    return out;
+  }
+
+  it('R2.5 changing one slot changes only that pick\'s row', () => {
+    fc.assert(
+      fc.property(scenarioArbitrary, renderSettingsArbitrary, fc.nat(), fc.nat(), (scenario, settings, pSeed, qSeed) => {
+        const slots = scenario.samples.map((sample) => sample.slot);
+        if (slots.length === 0) return; // no pick to replace
+        const p = pSeed % slots.length;
+        const q = qSeed % (slots.length + 1);
+        const before = rest(prepared(scenario.profile, slots), settings, q);
+        const after = rest(prepared(scenario.profile, withSlot(slots, p, scenario.replacement)), settings, q);
+        const rows = pickRows(settings, p, q);
+        for (let y = 0; y < before.height; y++) {
+          if (rows !== null && y >= rows.from && y < rows.to) continue;
+          for (let x = 0; x < before.width; x++) {
+            expect(pixelAt(after, x, y)).toEqual(pixelAt(before, x, y));
+          }
+        }
+        if (rows === null) expect(Array.from(after.data)).toEqual(Array.from(before.data));
+      }),
+      { numRuns: IMAGE_RUNS, seed: IMAGE_SEED },
+    );
+  });
+
+  it('R4.2 a gap row holds only gap colours and does not depend on other picks', () => {
+    fc.assert(
+      fc.property(
+        scenarioArbitrary,
+        renderSettingsArbitrary,
+        fc.nat(),
+        fc.nat(),
+        fc.boolean(),
+        (scenario, settings, pSeed, extra, isMissing) => {
+          const slots = [...scenario.samples.map((sample) => sample.slot), scenario.card];
+          const p = pSeed % slots.length;
+          const gapSlot = isMissing ? null : scenario.damaged;
+          const gapSlots = withSlot(slots, p, gapSlot);
+          const q = Math.min(slots.length, p + 1 + (extra % 3));
+          const rows = pickRows(settings, p, q);
+          if (rows === null) return; // pick p scrolled out of the viewport; q = p + 1 (extra mod 3 = 0) always shows it
+          const cloth = prepared(scenario.profile, gapSlots);
+          const image = rest(cloth, settings, q);
+          const clothWidth = Math.min(image.width, cloth.baseEnds * settings.repeat * settings.threadSizePx);
+          const white: Rgb = [255, 255, 255];
+          const ink: Rgb = isMissing ? [0x80, 0x80, 0x80] : [0xb0, 0x00, 0x20];
+          for (let y = rows.from; y < rows.to; y++) {
+            for (let x = 0; x < clothWidth; x++) {
+              const slash = (x + y) % 6 < 2;
+              const cross = slash || (((x - y) % 6) + 6) % 6 < 2;
+              const inked = isMissing ? slash : cross;
+              expect(pixelAt(image, x, y)).toEqual(inked ? ink : white);
+            }
+          }
+          const before = rowBytes(image, rows, image.width);
+          // Change any one other slot: the gap row stays byte-identical.
+          const other = (p + 1 + (extra % Math.max(1, slots.length - 1))) % slots.length;
+          if (other === p) return;
+          const changed = rest(prepared(scenario.profile, withSlot(gapSlots, other, scenario.replacement)), settings, q);
+          expect(rowBytes(changed, rows, image.width)).toEqual(before);
+        },
+      ),
+      { numRuns: IMAGE_RUNS, seed: IMAGE_SEED },
+    );
+  });
+
+  it('R4.3 a missing card and a damaged card draw different gap rows', () => {
+    fc.assert(
+      fc.property(scenarioArbitrary, renderSettingsArbitrary, fc.nat(), (scenario, settings, pSeed) => {
+        const slots = [...scenario.samples.map((sample) => sample.slot), scenario.card];
+        const p = pSeed % slots.length;
+        const q = p + 1;
+        const rows = pickRows(settings, p, q);
+        expect(rows).not.toBeNull();
+        if (rows === null) return;
+        const missing = rest(prepared(scenario.profile, withSlot(slots, p, null)), settings, q);
+        const damaged = rest(prepared(scenario.profile, withSlot(slots, p, scenario.damaged)), settings, q);
+        expect(rowBytes(damaged, rows, damaged.width)).not.toEqual(rowBytes(missing, rows, missing.width));
+      }),
       { numRuns: IMAGE_RUNS, seed: IMAGE_SEED },
     );
   });

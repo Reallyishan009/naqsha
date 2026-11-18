@@ -8,6 +8,29 @@ export const ZARI_SILVER_HIGHLIGHT_COLOUR = '#ffffff';
 /** A zari weft cell gets a highlight pixel in its centre row at every absolute column x with x mod 4 = 0. */
 export const ZARI_HIGHLIGHT_COLUMN_STEP = 4;
 
+/** Gap row colours (R4.2, R4.3): grey `/` hatch for a missing card, dark red `X` cross-hatch for a damaged card, on white. */
+export const GAP_WHITE_COLOUR = '#ffffff';
+export const GAP_MISSING_COLOUR = '#808080';
+export const GAP_DAMAGED_COLOUR = '#b00020';
+/** The hatch period in px, and how many px of each period are inked. */
+export const GAP_HATCH_PERIOD = 6;
+export const GAP_HATCH_WIDTH = 2;
+
+/** Modulo that is never negative. */
+export function positiveModulo(value: number, modulus: number): number {
+  return ((value % modulus) + modulus) % modulus;
+}
+
+/** True where the `/` diagonal is inked: (x + y) mod 6 < 2, in absolute image coordinates. */
+export function isSlashInk(x: number, y: number): boolean {
+  return positiveModulo(x + y, GAP_HATCH_PERIOD) < GAP_HATCH_WIDTH;
+}
+
+/** True where the `X` cross-hatch is inked: the `/` diagonal or (x - y) mod 6 < 2. */
+export function isCrossInk(x: number, y: number): boolean {
+  return isSlashInk(x, y) || positiveModulo(x - y, GAP_HATCH_PERIOD) < GAP_HATCH_WIDTH;
+}
+
 /**
  * Shade factor for each position 0..t-1 across a thread t px wide or tall: edges 160, centre about 255.
  * Integer only, so the same input gives the same table everywhere (R8.3).

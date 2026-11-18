@@ -1,6 +1,11 @@
 import { parseColour } from './settings.ts';
 import {
   BACKGROUND_COLOUR,
+  GAP_DAMAGED_COLOUR,
+  GAP_MISSING_COLOUR,
+  GAP_WHITE_COLOUR,
+  isCrossInk,
+  isSlashInk,
   ZARI_GOLD_COLOUR,
   ZARI_GOLD_HIGHLIGHT_COLOUR,
   ZARI_HIGHLIGHT_COLUMN_STEP,
@@ -72,6 +77,10 @@ export function renderFrame(cloth: PreparedCloth, settings: RenderSettings, fram
     return shade.map((s) => packShaded(rgb, s));
   });
 
+  const gapWhite = packRgb(...(parseColour(GAP_WHITE_COLOUR) ?? [255, 255, 255]));
+  const missingInk = packRgb(...(parseColour(GAP_MISSING_COLOUR) ?? [0, 0, 0]));
+  const damagedInk = packRgb(...(parseColour(GAP_DAMAGED_COLOUR) ?? [0, 0, 0]));
+
   const highlightByWeft = settings.weftPlan.map(zariHighlight);
   const centreRow = Math.floor(t / 2);
 
@@ -100,12 +109,19 @@ export function renderFrame(cloth: PreparedCloth, settings: RenderSettings, fram
     const pick = p - 1 - rowIndex;
     if (pick < 0) continue;
     const row = cloth.picks[pick];
-    if (row === undefined || row.kind !== 'woven') continue; // gap picks stay background until task 2.1
+    if (row === undefined) continue;
+    const rowStart = y * width;
+    if (row.kind !== 'woven') {
+      // Gap row: hatch across the full cloth width, no warp, weft or shading (R4.1 to R4.5).
+      const ink = row.kind === 'missing' ? missingInk : damagedInk;
+      const inked = row.kind === 'missing' ? isSlashInk : isCrossInk;
+      for (let x = 0; x < clothWidth; x++) pixels[rowStart + x] = inked(x, y) ? ink : gapWhite;
+      continue;
+    }
     const withinRow = y - (fellY - (rowIndex + 1) * t);
     const weftIndex = pick % weftByRow.length;
     const weftRow = weftByRow[weftIndex][withinRow];
     const highlight = withinRow === centreRow ? highlightByWeft[weftIndex] : undefined;
-    const rowStart = y * width;
     for (let cell = 0, x0 = 0; x0 < clothWidth; cell++, x0 += t) {
       const xEnd = Math.min(x0 + t, clothWidth);
       if (row.lift[cell % baseEnds] === 1) {
