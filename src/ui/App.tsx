@@ -13,6 +13,7 @@ import type { KeyValueStorage } from './platform/browser.ts';
 import { loadProfile } from './profile/loadProfile.ts';
 import { profileUrl } from './profile/profileUrl.ts';
 import styles from './Shell.module.css';
+import { KeepScreen } from './screens/keep/KeepScreen.tsx';
 import { WeaveScreen } from './screens/weave/WeaveScreen.tsx';
 import { appReducer, initialAppState } from './state/appState.ts';
 import './theme/tokens.css';
@@ -42,7 +43,7 @@ class ScreenBoundary extends Component<BoundaryProps, BoundaryState> {
   }
 }
 
-function PlaceholderScreen({ screen, t }: { screen: Exclude<Screen, 'weave'>; t: Translate }) {
+function PlaceholderScreen({ screen, t }: { screen: 'scan'; t: Translate }) {
   const body = t(`placeholder.${screen}`);
   return (
     <section aria-labelledby="screen-title" className={styles.screen}>
@@ -113,6 +114,8 @@ export function Shell({ state, dispatch, onLanguageChosen }: ShellProps) {
         <ScreenBoundary key={state.screen} message={t('error.generic')}>
           {state.screen === 'weave' ? (
             <WeaveScreen state={state} dispatch={dispatch} t={t} />
+          ) : state.screen === 'keep' ? (
+            <KeepScreen state={state} dispatch={dispatch} t={t} />
           ) : (
             <PlaceholderScreen screen={state.screen} t={t} />
           )}

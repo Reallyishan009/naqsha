@@ -1,0 +1,153 @@
+.screen {
+  max-width: 60rem;
+}
+
+.screenTitle {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+.sectionTitle {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+.panel {
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+
+.empty {
+  padding: 16px;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-panel);
+}
+
+.failure {
+  margin: 8px 0;
+  padding: 12px 16px;
+  border: 2px solid var(--madder);
+  border-radius: var(--radius-panel);
+}
+
+.fieldset {
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  padding: 0;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--touch-target);
+  cursor: pointer;
+}
+
+.radio {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+}
+
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 14rem;
+  flex: 1 1 14rem;
+}
+
+.input {
+  min-height: var(--touch-target);
+  padding: 8px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  font: inherit;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.button {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: 0 16px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.legal {
+  margin: 8px 0;
+  color: var(--ink);
+}
+
+.done {
+  margin: 8px 0;
+  font-weight: 700;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.itemName {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.itemDetail {
+  margin: 2px 0;
+  font-family: var(--font-data);
+  overflow-wrap: anywhere;
+}
+
+.confirm {
+  margin-top: 8px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 2px solid var(--zari);
+  border-radius: var(--radius-panel);
+}
