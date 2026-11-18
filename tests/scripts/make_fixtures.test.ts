@@ -1,8 +1,10 @@
 import { readdirSync, readFileSync } from 'node:fs';
+import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
   BORDER_MM,
   FIXTURE_SET,
+  FixtureViolationError,
   PIXELS_PER_MM,
   demoPattern,
   encodePng,
@@ -13,7 +15,7 @@ import {
 } from '../../scripts/make_fixtures';
 import { validateCardProfile } from '../../src/codec/index.ts';
 import type { CardProfile } from '../../src/codec/types';
-import { rowMajorEndOrder } from '../support/profiles.ts';
+import { cardGridArbitrary, profileArbitrary, rowMajorEndOrder } from '../support/profiles.ts';
 
 const profile = JSON.parse(
   readFileSync(new URL('../../public/profiles/demo-12x16.json', import.meta.url), 'utf8'),
@@ -90,6 +92,47 @@ describe('fixture generator', () => {
   });
 });
 
+describe('ground truth', () => {
+  it('R19.2 the ground-truth ends list follows the profile\'s end-order', () => {
+    fc.assert(
+      fc.property(
+        profileArbitrary.chain((generated) => fc.tuple(fc.constant(generated), cardGridArbitrary(generated))),
+        ([generated, grid]) => {
+          const truth = JSON.parse(
+            groundTruthText(generated, grid, 'x.png', { noise: 0, tiltDegrees: 0, shade: 0, seed: 1 }),
+          ) as GroundTruth;
+          expect(truth.ends).toHaveLength(generated.hookRows * generated.hookColumns);
+          for (let r = 0; r < generated.hookRows; r++) {
+            for (let c = 0; c < generated.hookColumns; c++) {
+              expect(truth.ends[generated.endOrder[r]![c]!]).toBe(grid[r]![c]);
+            }
+          }
+        },
+      ),
+    );
+  });
+  it('R19.2 the committed ground-truth ends list puts card hook (0,0) at end endOrder[0][0], next to card', () => {
+    const truth = JSON.parse(readFileSync(new URL('../fixtures/pick0-clean.json', import.meta.url), 'utf8')) as GroundTruth;
+    const keys = Object.keys(truth);
+    expect(keys[keys.indexOf('card') + 1]).toBe('ends');
+    expect(truth.ends[profile.endOrder[0]![0]!]).toBe(truth.card[0]![0]);
+  });
+  it('R19.2 an invalid profile makes the generator refuse with the violations, before rendering or writing', () => {
+    const invalid = { ...profile, endOrder: [[0]] };
+    const options = { noise: 0, tiltDegrees: 0, shade: 0, seed: 1 };
+    expect(() => renderCard(invalid, card, options)).toThrow(FixtureViolationError);
+    expect(() => groundTruthText(invalid, card, 'x.png', options)).toThrow(FixtureViolationError);
+    try {
+      renderCard(invalid, card, options);
+    } catch (error) {
+      expect((error as FixtureViolationError).violations.some((v) => v.kind === 'end-order-shape')).toBe(true);
+    }
+  });
+  it('R19.2 a card that does not match the profile makes the generator refuse with the violations', () => {
+    const options = { noise: 0, tiltDegrees: 0, shade: 0, seed: 1 };
+    expect(() => groundTruthText(profile, card.slice(1), 'x.png', options)).toThrow(FixtureViolationError);
+  });
+});
 describe('demo profile', () => {
   it('R19.4 the demo profile is valid, has peg diameters at least 10% apart, an explicit row-major endOrder and the ILLUSTRATIVE marker', () => {
     expect(validateCardProfile(profile)).toEqual([]);

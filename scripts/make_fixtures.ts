@@ -21,7 +21,8 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import type { CardGrid, CardProfile, Pattern, PointMm } from '../src/codec/index.ts';
+import { encodeCardGrid, parseCardProfile } from '../src/codec/index.ts';
+import type { CardGrid, CardProfile, Ends, Pattern, PointMm, Violation } from '../src/codec/index.ts';
 
 export type RenderOptions = {
   /** Standard deviation of gaussian noise, in grey levels (0 to 255). */
@@ -49,6 +50,8 @@ export type GroundTruth = {
   hookColumns: number;
   endsPerPick: number;
   card: CardGrid;
+  /** The card as an ends list: ends[endOrder[r][c]] is card[r][c]. */
+  ends: Ends;
   options: RenderOptions;
 };
 
@@ -67,6 +70,24 @@ export const DEFAULT_OPTIONS: RenderOptions = {
 };
 
 // ---------------------------------------------------------------- validation
+/** Thrown when the profile or a card is invalid. Carries every violation. */
+export class FixtureViolationError extends Error {
+  violations: Violation[];
+  constructor(violations: Violation[]) {
+    super(formatViolations(violations));
+    this.name = 'FixtureViolationError';
+    this.violations = violations;
+  }
+}
+export function formatViolations(violations: Violation[]): string {
+  return violations.map((v) => `  [${v.kind}] ${v.location}: ${v.message}`).join('\n');
+}
+/** Returns the profile if parseCardProfile accepts it; otherwise throws with every violation. */
+export function requireValidProfile(profile: unknown): CardProfile {
+  const parsed = parseCardProfile(profile);
+  if (!parsed.ok) throw new FixtureViolationError(parsed.violations);
+  return parsed.value;
+}
 
 export function assertCardMatchesProfile(profile: CardProfile, card: CardGrid): void {
   if (card.length !== profile.hookRows) {
@@ -153,6 +174,7 @@ export function renderCard(
   card: CardGrid,
   input: RenderInput = DEFAULT_OPTIONS,
 ): GrayImage {
+  requireValidProfile(profile);
   assertCardMatchesProfile(profile, card);
   const options = resolveOptions(input);
   const pixelsPerMm = options.pixelsPerMm;
@@ -255,6 +277,9 @@ export function groundTruthText(
   input: RenderInput,
   pickIndex = 0,
 ): string {
+  requireValidProfile(profile);
+  const encoded = encodeCardGrid(profile, card);
+  if (!encoded.ok) throw new FixtureViolationError(encoded.violations);
   const groundTruth: GroundTruth = {
     profile: profile.name,
     image: imageName,
@@ -263,6 +288,7 @@ export function groundTruthText(
     hookColumns: profile.hookColumns,
     endsPerPick: profile.hookRows * profile.hookColumns,
     card,
+    ends: encoded.value,
     options: resolveOptions(input),
   };
   return JSON.stringify(groundTruth, null, 2) + '\n';
@@ -275,9 +301,9 @@ export function writeFixture(
   options: RenderInput,
   pickIndex = 0,
 ): { imagePath: string; groundTruthPath: string } {
+  const text = groundTruthText(profile, card, imagePath.split('/').pop()!, options, pickIndex);
   const png = encodePng(renderCard(profile, card, options));
   const groundTruthPath = imagePath.replace(/\.png$/i, '') + '.json';
-  const text = groundTruthText(profile, card, imagePath.split('/').pop()!, options, pickIndex);
   mkdirSync(dirname(imagePath), { recursive: true });
   writeFileSync(imagePath, png);
   writeFileSync(groundTruthPath, text);
@@ -336,11 +362,11 @@ function parseArgs(argv: string[]): Map<string, string> {
   return args;
 }
 
-function main(): void {
+function run(): void {
   const repoRoot = fileURLToPath(new URL('..', import.meta.url));
   const args = parseArgs(process.argv.slice(2));
   const profilePath = resolve(args.get('profile') ?? join(repoRoot, 'public/profiles/demo-12x16.json'));
-  const profile = JSON.parse(readFileSync(profilePath, 'utf8')) as CardProfile;
+  const profile = requireValidProfile(JSON.parse(readFileSync(profilePath, 'utf8')));
 
   if (args.has('all')) {
     const outDir = resolve(args.get('out-dir') ?? join(repoRoot, 'tests/fixtures'));
@@ -373,5 +399,13 @@ function main(): void {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  main();
+  try {
+    run();
+  } catch (error) {
+    if (error instanceof FixtureViolationError) {
+      console.error(`Invalid input, nothing rendered:\n${error.message}`);
+      process.exit(1);
+    }
+    throw error;
+  }
 }
