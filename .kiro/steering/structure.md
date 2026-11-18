@@ -24,12 +24,12 @@ Naqsha/
 ### src/codec
 Converts between raw hole-grid data and the application's internal PunchCard representation. Contains the encoder, decoder, and all shared domain types (types.ts). No I/O, no React — pure data transformation only.
 
-Key exports: decodePunchCard, encodePunchCard, PunchCard, HoleGrid
+Key exports: validateCardProfile, parseCardProfile, validateCardGrid, endsPerPick, encodeCardGrid, decodeEnds; types CardProfile, PegHole, PointMm, CardGrid, Pattern, Ends, Result, Violation, ViolationKind
 
 ### src/reader
-Handles everything between the physical card and the codec: camera stream acquisition via getUserMedia, frame capture, perspective correction, binarisation, and grid extraction. Isolates all browser media API calls so the rest of the app does not depend on them.
+Handles everything between the physical card and the codec: loading an image into pixel data, greyscale, thresholding, dark region detection, peg hole selection (pegHoles.ts, selectPegHoles.ts), layout check (layout.ts), orientation, pose, and sampling the hook positions into a card grid. Isolates all browser image API calls so the rest of the app does not depend on them. No perspective correction. Camera stream acquisition is not built yet.
 
-Key exports: startCameraStream, captureFrame, extractGrid
+Key exports: readCard, loadPixelData, isPixelData, toGreyscale, chooseThreshold, classifyDark, findDarkRegions, equivalentDiameterPx, findPegHolePair, rankPegHolePairs, selectPegHolePair, layoutMatches, orientationSeparation, decideOrientation, poseFromPegHoles, cardToImage, samplingRadiusPx, decidePunched, sampleCardGrid, normalizeDegrees, angleDifferenceDegrees; types PixelData, GreyImage, DarkMap, DarkRegion, PointPx, Orientation, Pose, PegHolePair, PegHoleSelection, LayoutResult, OrientationDecision, ReadFailure, ReadResult, ImageSource
 
 ### src/simulator
 Takes a decoded PunchCard and renders the weave pattern onto a canvas element. Implements the interlacing logic (warp/weft over-under rules) and produces an animated row-by-row preview. No camera or file I/O.
