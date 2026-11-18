@@ -345,3 +345,14 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **Evidence saved:** None new.
 **Credits left:** Not recorded.
 **Commit:** Phase 2 work spans `9486b0c` to `ad0a711`; see the commit that adds this entry.
+
+## 2026-11-21 (app phase 3, task 3.5: Scan chunk check and readCard timing)
+**Goal today:** Check that the Scan code stays out of the entry chunk, record the chunk sizes, and time `readCard` on a 1080p synthetic image in Node.
+**What changed:**
+- `scripts/check_bundle.ts` now fails when the Scan-only marker string is in the entry chunk, or when no other chunk in `dist/assets` has it. The marker is `width and height must be positive integers`, the `invalid-image` detail text in `src/reader/readCard.ts`. A string literal is used because minification renames identifiers but keeps strings. If that message changes, `SCAN_ONLY_MARKER` must change with it. `BundleReport` gained `scanChunks`.
+- `scripts/time_read_card.ts` (new) renders one demo card (tilt 3 degrees, noise 2, shade 0.1, seed 1) at 19.6 px/mm, pads it to exactly 1920 x 1080, checks that the read grid equals the ground truth, then times `readCard` over 15 runs after one warm-up read.
+**Sizes (`npm run check-bundle`, gzip level 9):** entry chunk `assets/index-CHTieIvU.js` 92,230 bytes (limit 204,800); Scan chunk `assets/ScanScreen-DWCJl0Mp.js` 7,659 bytes. `vite build` prints 93.44 kB and 7.70 kB for the same files, because it uses its own gzip level and kB = 1000 bytes.
+**readCard timing, Node v24.5.0, darwin arm64, 1920 x 1080, 15 runs per batch, three batches:** min 23.4 / 23.3 / 23.3 ms; median 24.6 / 24.2 / 24.1 ms; max 32.1 / 35.0 / 31.3 ms. Run with `node scripts/time_read_card.ts`.
+**Budget:** 300 ms for a 1080p frame on a mid-range 2020 phone (`tech.md`). The Node number is from a laptop and says nothing certain about a phone. The on-device timing is a manual check and has not been done.
+**Deviation:** `src/reader` imports its own files without an extension, which Node cannot resolve. `time_read_card.ts` registers a small resolve hook (`node:module` `registerHooks`) that retries with `.ts`. No source file was changed for this.
+**Evidence saved:** None.
