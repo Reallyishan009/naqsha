@@ -51,11 +51,11 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 19.5_
 
-- [ ] 2. Codec: validation, encode and decode
+- [x] 2. Codec: validation, encode and decode
   - The first properties for every codec function. The remaining codec properties are in task 5.
   - _Requirements: 1.1, 1.2, 1.4, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3.1, 3.6, 4.1, 4.3, 5.1, 5.4, 5.5, 14.1, 17.3, 19.2, 19.4, 19.6_
 
-- [ ] 2.1 Validate a CardProfile, and the profile arbitraries
+- [x] 2.1 Validate a CardProfile, and the profile arbitraries
   - **Demo-essential.**
   - Files: `src/codec/validateCardProfile.ts`, `src/codec/index.ts`, `tests/support/profiles.ts`, `tests/codec/validateCardProfile.test.ts`, `tests/scripts/make_fixtures.test.ts`.
   - Implement `validateCardProfile`, `parseCardProfile` and `MIN_PEG_DIAMETER_DIFFERENCE`, covering validation rules 1 to 8 from the design. Collect every violation. Never throw.
@@ -64,7 +64,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 1.1, 1.4, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 17.3, 19.4_
 
-- [ ] 2.2 Validate a CardGrid
+- [x] 2.2 Validate a CardGrid
   - **Demo-essential.**
   - Files: `src/codec/validateCardGrid.ts`, `src/codec/index.ts`, `tests/codec/validateCardGrid.test.ts`.
   - Implement `validateCardGrid(profile, input: unknown)` to return every violation, never throw, and report the expected and actual counts.
@@ -72,7 +72,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 3.1, 3.6_
 
-- [ ] 2.3 Encode and decode through the profile's end-order
+- [x] 2.3 Encode and decode through the profile's end-order
   - **Demo-essential.**
   - Files: `src/codec/endsCodec.ts`, `src/codec/index.ts`, `tests/codec/endsCodec.test.ts`.
   - Implement `endsPerPick`, `encodeCardGrid` and `decodeEnds` using only `profile.endOrder`, with no index arithmetic. Return `Result` values and never throw.
@@ -80,7 +80,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 1.2, 4.1, 4.3, 5.1, 5.4, 5.5, 14.1_
 
-- [ ] 2.4 Wire the generator to the codec
+- [x] 2.4 Wire the generator to the codec
   - **Demo-essential.**
   - Files: `scripts/make_fixtures.ts`, `tests/scripts/make_fixtures.test.ts`, `tests/fixtures/*.json`.
   - The generator calls `parseCardProfile` before rendering and stops with the violations if the profile is invalid. It writes `ends: encodeCardGrid(profile, card)` into each ground-truth file, next to `card`.
