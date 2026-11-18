@@ -356,3 +356,16 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **Budget:** 300 ms for a 1080p frame on a mid-range 2020 phone (`tech.md`). The Node number is from a laptop and says nothing certain about a phone. The on-device timing is a manual check and has not been done.
 **Deviation:** `src/reader` imports its own files without an extension, which Node cannot resolve. `time_read_card.ts` registers a small resolve hook (`node:module` `registerHooks`) that retries with `.ts`. No source file was changed for this.
 **Evidence saved:** None.
+## 2026-11-21 (app phase 3, task 3.6: README media)
+**Goal today:** Capture the banner and three GIFs from the built site in a real browser.
+**What changed:** `media/banner.png`, `media/weave-sample.gif`, `media/scan-printed-card.gif`, `media/keep-export.gif` added. The README line saying the media was missing was replaced by a short note on how they were captured.
+**Tools used (all outside the project, nothing added to `package.json`):** the installed Google Chrome 157 app, run headless and driven over the DevTools protocol by a throwaway Node script in `/tmp/naqsha-capture/` (Node 24 built-in `WebSocket`, real mouse events, `DOM.setFileInputFiles` for the photo); Python 3.13 with Pillow 13.0.0 (already on the machine) to scale the PNG frames and write the GIFs. The script is not kept in the repository.
+**How each file was made:**
+- App: `npm run build`, `npm run preview` on port 4173, window 900 x 1000, English, demo profile `demo-12x16`.
+- `weave-sample.gif`: Weave, "Diamond" sample, playback until pick 36 of 36.
+- `scan-printed-card.gif`: Scan, a card image from `scripts/make_fixtures.ts` (demo profile, `--noise 8 --tilt 3 --shade 0.15 --seed 7 --pixels-per-mm 8`, picked card is `scripts/photo-trial/input-card.json`), one hook tapped (diamond badge shown), card accepted. The Card_Profile notice is on screen in the first and last frames. The input is a generated image, not a camera photo.
+- `keep-export.gif`: Keep with the "Floral" sample, 1-bit chosen, download button pressed. The notice is on screen in the export panel. The BMP landed in a temporary folder and was not kept.
+- `banner.png`: composed with Pillow from two real captures, the printable card raster `scripts/photo-trial/card.png` on the left and a screenshot of the finished diamond cloth canvas on the right. It is a composite, not one screenshot.
+**Sizes:** see `ls -l media/`; all four files are well under 5 MB.
+**Seen while capturing (not changed):** after "Accept this card" the live message reads "Card {number} added." in English, so the `{number}` placeholder is not filled for the `scan.accepted` announcement.
+**Not verified:** the GIFs were not played back in a browser or on GitHub; the Hindi UI was not captured.

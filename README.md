@@ -4,13 +4,13 @@
 
 A browser app that reads a Jacquard loom punch card through a camera, rebuilds the weave pattern, and (coming) simulates the cloth and exports a bitmap for electronic Jacquard looms.
 
-The banner and the three GIFs below are not in the repository yet. They are added in Phase 3, so these images show as broken links until then.
+The GIFs below were captured from the built site (`npm run preview`) with the demo card profile, whose values are illustrative and unverified. The Scan GIF reads a generated card image, not a camera photo.
 
 ![Weave screen: a sample design weaving pick by pick into cloth](media/weave-sample.gif)
 
 ![Scan screen: a printed card is read and one hole is corrected with a tap](media/scan-printed-card.gif)
 
-![Keep screen: a design is kept in the archive and exported as a bitmap](media/keep-export.gif)
+![Keep screen: the export options, the unverified card profile notice, and the bitmap file being downloaded](media/keep-export.gif)
 
 Public URL: https://naqsha-ashen.vercel.app/ (opens with no login; deployed by hand on Vercel, see "Deploy to Vercel").
 
