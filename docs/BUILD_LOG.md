@@ -186,3 +186,32 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **Evidence saved:** None new.
 **Credits left:** Not recorded.
 **Commit:** range `75d5952..HEAD` (`d1ad64f`, `afe549a`, `5976f43`, `271caf6`, `195d5ec`, plus the docs commit).
+
+## 2026-11-18 (exporter phase 1)
+**Goal today:** Exporter spec (requirements, design, tasks) and phase 1 (export).
+**Prompts run in Kiro:** Not recorded by number. In order, the requests were:
+- write the exporter requirements, adapted from prompt 28;
+- answer the review: designs with gaps fail to export; lift colour black by default, white as an option, and the docs say the right colour per controller is unverified; pick 0 at the top and end 0 at the left by default; the 8-bit colour table has 256 entries; the exporter imports only `src/codec`; the download helper stays in one file;
+- approve the design and tasks with decisions: a file over 2 GB is refused as `invalid-options` with option `bitDepth`; a non-array Pattern is `invalid-card` at pick -1; the reader ignores padding;
+- run all three phases.
+**What Kiro produced:**
+- `.kiro/specs/exporter/`: 12 requirements, a design with 19 numbered properties (17 marked Demo and 2 Cut last), and 13 tasks.
+- `structure.md` updated: exporter imports only `src/codec`.
+- `src/exporter`: `types.ts`, `options.ts` (`parseExportOptions`), `layout.ts` (`bmpLayout`), `exportBmp.ts` (`exportPatternBmp`, 1-bit and 8-bit).
+- `tests/support/patterns.ts`.
+- Known-bytes tests for 1-bit (70 bytes) and 8-bit (1,086 bytes), with the bytes written out in the tests.
+- Properties 1, 2, 3, 6, 8 and the options half of 9, plus two extra option properties (valid options are returned unchanged; parsing never throws).
+- `scripts/export_sample.ts` and the `sample-bmp` package script.
+- `media/sample-design-1bit.bmp` (4,862 bytes) and `media/sample-design-8bit.bmp` (39,478 bytes), 192 x 200 px, recognised by `file` and `sips`.
+- Test suite at the end of phase 1: 34 files, 246 tests passing.
+**What failed or surprised me:**
+- No property failed.
+- A size-limit test first used a layout too small to exceed the 2 GB limit (test arithmetic error). It now checks `bmpLayout` only, because a Pattern large enough to trigger the refusal through `exportPatternBmp` would not fit in memory.
+- Until task 1.3, `bitDepth` 8 was refused with `invalid-options`, as a marked temporary step.
+- The R7.2 property had the 1-bit layout arithmetic hard-coded. It was generalised to both bit depths in task 1.3 (widened).
+- **Cut-last properties skipped:** none so far.
+**What I changed by hand:** No files edited by hand.
+**Kiro features used:** spec, steering, property tests.
+**Evidence saved:** `media/sample-design-1bit.bmp`, `media/sample-design-8bit.bmp`.
+**Credits left:** Not recorded.
+**Commit:** range `721aa45..HEAD` (starts with `30784ec`).

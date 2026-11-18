@@ -23,7 +23,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
 - [ ] 1. Export
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 4.1, 4.2, 4.3, 4.4, 4.5, 5.1, 5.2, 5.3, 7.2, 7.3, 9.2, 10.2, 10.3, 10.4, 12.3_
 
-- [ ] 1.1 Types and options
+- [x] 1.1 Types and options
   - **Demo-essential.**
   - Files: `src/exporter/types.ts`, `src/exporter/options.ts`, `src/exporter/index.ts`, `tests/support/patterns.ts`, `tests/exporter/options.test.ts`.
   - Write the types from the design (replacing the scaffold stubs). Implement `DEFAULT_EXPORT_OPTIONS` and `parseExportOptions` (defaults for missing fields, first bad field reported, never throws). Add `exportOptionsArbitrary` and `patternArbitrary(profile)` (1 to 40 picks of valid cards).
@@ -31,7 +31,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 5.1, 5.2, 10.2, 10.3_
 
-- [ ] 1.2 Layout and the 1-bit export
+- [x] 1.2 Layout and the 1-bit export
   - **Demo-essential.**
   - Files: `src/exporter/layout.ts`, `src/exporter/exportBmp.ts`, `src/exporter/index.ts`, `tests/exporter/exportBmp.test.ts`.
   - Implement `bmpLayout` and `exportPatternBmp` for bit depth 1: checks in the order profile, options, Pattern (non-array, empty, damaged cards), size limit; then headers, the 2-entry colour table and the rows, following "Pixel placement" and "Header fields". All four orientation options.
@@ -39,7 +39,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4, 3.6, 3.7, 3.8, 4.1, 4.2, 4.4, 7.2, 9.2, 10.4, 12.3_
 
-- [ ] 1.3 The 8-bit export
+- [x] 1.3 The 8-bit export
   - **Demo-essential.**
   - Files: `src/exporter/exportBmp.ts`, `tests/exporter/exportBmp.test.ts`.
   - Add bit depth 8: one byte per pixel, the 256-entry colour table with entries 2 to 255 equal to entry 0, important colours 2.
@@ -47,7 +47,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 3.5, 4.1, 4.3, 4.4, 4.5, 7.3, 12.3_
 
-- [ ] 1.4 Sample BMP files
+- [x] 1.4 Sample BMP files
   - **Demo-essential.**
   - Files: `scripts/export_sample.ts`, `package.json`, `media/sample-design-1bit.bmp`, `media/sample-design-8bit.bmp`, `tests/scripts/export_sample.test.ts`.
   - `scripts/export_sample.ts` loads the demo profile, builds 200 picks with `demoPattern(profile, 200)` from `scripts/demo_pattern.ts`, and writes both variants with default options to `media/`. Add a `sample-bmp` script to `package.json`.
@@ -56,7 +56,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 3.6, 7.4_
 
-- [ ] 1.5 Phase 1 log and push
+- [-] 1.5 Phase 1 log and push
   - Files: `docs/BUILD_LOG.md`.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), cut-last properties skipped, and the commit range. Push.
   - _Requirements: 12.4_
