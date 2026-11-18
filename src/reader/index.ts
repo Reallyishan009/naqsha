@@ -1,5 +1,6 @@
 export * from './types';
 export * from './pixelData';
+export * from './canvasSource';
 export * from './greyscale';
 export * from './threshold';
 export * from './regions';
