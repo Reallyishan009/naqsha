@@ -176,7 +176,7 @@ Each pixel row is built for one base width (`baseEnds * t` px) and then copied a
 ### Floats
 
 - `computeFloats` scans every woven pick for weft runs of length >= 2 and every end for warp runs of length >= 2, stopping at gap picks (R3.1, R3.2). It is used for reports and tests, not per frame.
-- For highlighting, `renderFrame` measures each visible cell's float length by scanning along the thread, up to `maxLength + 1` threads in each direction, stopping at gap picks. Cells in a float longer than `maxLength` are blended halfway towards `#ff00c8` (R3.3). The scan is bounded, so the cost stays independent of `p`.
+- For highlighting, `renderFrame` finds float lengths with run-length passes instead of a scan per cell: one pass along each visible woven pick (weft floats, across the tiled width), and one pass down each end over the visible picks plus `maxLength` picks of margin below the visible window (warp floats, stopping at gap picks and at pick `p - 1`). Cells in a float longer than `maxLength` are blended halfway towards `#ff00c8` (R3.3). The cost is one pass over the visible cells plus a bounded margin, so it stays independent of `p` (R10.2). The output is byte-identical to the earlier per-cell scan, which Property 9 checks exactly.
 
 ### Speed
 
@@ -369,8 +369,12 @@ Each property is a fast-check property. The test title is the heading text after
 
 ## Decisions
 
+**Known limit:** the `isPreparedCloth` check is a module-private `WeakSet`, so a structural copy of a cloth (`structuredClone`, a cloth posted to a Web Worker) is rejected; a worker must call `prepareCloth` itself.
+
 Settled in the design review:
 
 1. **Minimum thread size** is 3 px (R6.3); R6.4 is dropped and R4.1 is kept.
 2. **Speed: measure first.** If frame times miss the 16 ms budget, no requirement (including R8.2) changes. The measured numbers and a proposed fallback (for example rendering at a lower resolution and letting the canvas scale it) go to the user, and work waits for approval.
 3. **Accepted as proposed:** shed height `min(6 t, height / 3)`, viewport sides up to 4,096 px, repeat and highlight limits up to 64, fixed gap, zari, highlight and background colours.
+4. **R10.2 changed (user-approved after the task 4.4 benchmark):** frame time stays flat once the viewport is full of woven picks; early frames may be cheaper.
+5. **Float highlight speed:** the per-cell scan measured a 16 ms median with highlighting on (task 4.4). It is replaced by run-length passes (task 4.7); if the median is still above 12 ms in Node, work stops for the user.

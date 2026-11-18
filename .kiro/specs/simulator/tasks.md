@@ -158,7 +158,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
 - [ ] 4. Remaining properties, structure, speed
   - _Requirements: 1.6, 5.2, 6.1, 9.4, 10.1, 10.2, 10.4, 10.5, 11.1, 12.1, 12.2, 12.3, 12.4, 12.5, 13.1, 13.3_
 
-- [ ] 4.1 Never throws, and inputs unchanged
+- [x] 4.1 Never throws, and inputs unchanged
   - **Demo-essential** for Property 22.
   - Files: `tests/simulator/prepare.test.ts`, `tests/simulator/render.test.ts`.
   - Add Property 22 (failure path, not cuttable) and Property 3 (**Cut last**).
@@ -171,19 +171,27 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 5.2, 6.1, 9.4_
 
-- [ ] 4.3 Structure tests for the simulator
+- [x] 4.3 Structure tests for the simulator
   - Files: `tests/structure/modules.test.ts`, `tests/structure/propertyNames.test.ts`.
   - Extend the scans to `src/simulator`: imports only from `src/simulator` and `src/codec`, browser APIs only in `canvas.ts`, no `any`, no `demo-12x16` or `public/`. Extend the property naming and coverage test to `src/simulator` exports (other than `paintToCanvas` and `browserScheduler`, which have example tests with fakes).
   - If a scan finds a violation, report it and stop.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 10.5, 12.1, 12.2, 12.3, 12.4, 12.5, 13.1, 13.3_
 
-- [ ] 4.4 Benchmark
+- [x] 4.4 Benchmark
   - Files: `tests/simulator/benchmark.test.ts`, `.kiro/specs/simulator/measurements.md`.
   - Generate a 2,000-pick slot list from the demo profile, render frames spread across it (rest, lift and pass frames, picks from 0 to 2,000) at 1920 x 1080 with thread size 6 and repeat 1, and print the median and worst frame time and the time at pick 0 versus pick 2,000. Fail only if a render fails, never on the time.
   - Record the numbers, the machine and the Node version in `measurements.md`.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 10.1, 10.2, 10.4_
+
+- [ ] 4.7 Faster float highlighting
+  - **Demo-essential.** Added after the task 4.4 benchmark: with highlighting on, the median frame was about 16 ms at 1920 x 1080.
+  - Files: `src/simulator/floats.ts`, `src/simulator/render.ts`, `tests/simulator/benchmark.test.ts`, `.kiro/specs/simulator/measurements.md`.
+  - Replace the per-cell float scan in `renderFrame` with one run-length pass per visible woven pick (weft floats, across the tiled width) and one pass per end over the visible picks plus `maxLength` picks of margin (warp floats). Output must be byte-identical; Property 9 must pass unchanged.
+  - Re-run the benchmark and record the numbers. If the median with highlighting on is above 12 ms in Node, stop and report.
+  - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
+  - _Requirements: 3.3, 10.1, 10.2_
 
 - [ ] 4.5 Final checkpoint: frame times
   - **Demo-essential.**
@@ -341,11 +349,17 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
     {
       "id": 21,
       "tasks": [
-        "4.5"
+        "4.7"
       ]
     },
     {
       "id": 22,
+      "tasks": [
+        "4.5"
+      ]
+    },
+    {
+      "id": 23,
       "tasks": [
         "4.6"
       ]

@@ -143,7 +143,7 @@ Acceptance criteria are referenced as `R<requirement>.<criterion>` (for example 
 #### Acceptance Criteria
 
 1. WHEN a Pattern of 2000 picks is played THEN the simulator SHALL render each frame in under 16 ms on a mid-range 2020 smartphone, the budget in `tech.md`, for any viewport up to 1920 x 1080 pixels.
-2. THE frame time SHALL NOT grow with the pick index, so the last pick of a 2000-pick Pattern renders as fast as the first.
+2. ONCE the viewport is full of woven picks, THE frame time SHALL NOT grow with the pick index, so the last pick of a 2000-pick Pattern renders as fast as any other pick after the viewport has filled. Before the viewport is full, frames are cheaper because fewer woven rows are drawn. (Changed with the user's approval after the task 4.4 benchmark.)
 3. THE player SHALL schedule frames with `requestAnimationFrame`, and WHEN rendering falls behind THEN it SHALL skip frames rather than slow down the pick rate.
 4. THE project SHALL include a benchmark that renders frames across a generated 2000-pick Pattern at 1920 x 1080 and prints the median and worst frame time. A run in Node is informational and SHALL NOT fail the test suite.
 5. THE simulator SHALL add no runtime dependency.
@@ -201,6 +201,7 @@ Acceptance criteria are referenced as `R<requirement>.<criterion>` (for example 
 5. **Gap style.** Gap rows use patterns, not only colour, so missing and damaged cards can be told apart by colour-blind users (R4.1, R4.3).
 6. **Performance.** Measure first. If frame times miss the 16 ms budget (R10.1), no requirement changes: the numbers and a proposed fallback go to the user for approval. The Node benchmark is informational.
 7. **Player.** A small player with play, pause, resume and seek, and no buttons (R9.5).
+8. **R10.2 wording.** Approved by the user after the benchmark: frame time must stay flat once the viewport is full of woven picks; early frames may be cheaper.
 
 ## Known limits
 
@@ -208,3 +209,4 @@ Acceptance criteria are referenced as `R<requirement>.<criterion>` (for example 
 - No harness tie-up: one end per hook position, plus a plain horizontal repeat.
 - No face-down weaving.
 - Pattern length is tested up to 10,000 picks (R1.5).
+- `renderFrame` only accepts a cloth object returned by `prepareCloth` in the same JavaScript realm. A copy of a prepared cloth, for example from `structuredClone` or a cloth posted to a Web Worker, is rejected with `invalid-settings` (setting `cloth`). A worker must call `prepareCloth` itself.
