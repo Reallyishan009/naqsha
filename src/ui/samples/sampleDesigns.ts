@@ -5,21 +5,60 @@ import type { SampleDesign } from '../types.ts';
 /** Number of times the motif repeats along the picks (R4.5). */
 const REPEATS = 3;
 
-/** Half-width of the diamond outline band around |u| + |v| = 0.8. */
-const OUTLINE_HALF_WIDTH = 0.04;
+/** Diamond: the filled core reaches |u| + |v| = 0.35, the outline is a band of half-width 0.1 around 0.85. */
+const DIAMOND_CORE = 0.35;
+const DIAMOND_OUTLINE = 0.85;
+const DIAMOND_OUTLINE_HALF_WIDTH = 0.1;
 
-/** Whether the end at unit position u lifts on the pick at unit position v. Only reads u and v, never a dimension. */
-function lifted(design: SampleDesign, u: number, v: number): boolean {
+/**
+ * Floral: each flower is a centre of |u| + |v| <= 0.2 with four round petals of radius 0.27 centred at (+-0.5, +-0.5),
+ * so the petals stand apart from the centre and from each other. Flowers sit in cells twice as wide as a repeat, and a
+ * small leaf (a diamond of reach 0.45) sits on the boundary between two flowers.
+ */
+const FLORAL_CENTRE = 0.2;
+const FLORAL_PETAL_OFFSET = 0.5;
+const FLORAL_PETAL_RADIUS = 0.27;
+const FLORAL_LEAF = 0.45;
+
+/** Border: a solid band on each edge, a zigzag band set in from it, and a plain line closing the inner side. */
+const BORDER_EDGE_ENDS = 2;
+const BORDER_ZIGZAG_START = 4;
+const BORDER_ZIGZAG_THICKNESS = 2;
+const BORDER_LINE_OFFSET = 12;
+
+/**
+ * Where an end and a pick sit in the motif. The cloth is made of square threads, so the diamond and the floral are
+ * tiled along the ends in cells that are `period` ends wide, the same size as one repeat along the picks.
+ * `u` and `v` run from -1 to 1 across a cell; `floralU` runs from -2 to 2 across a floral cell, which is two repeats
+ * wide, with the flower in the middle (|floralU| <= 1) and a leaf at the boundary; `edgeDistance` counts ends from the nearer edge of the card;
+ * `zigzagStep` is the distance of the pick from the middle of the repeat, in picks.
+ */
+type Position = { u: number; floralU: number; v: number; edgeDistance: number; zigzagStep: number };
+
+/** Whether the end at this position lifts on this pick. Reads only the position, never a card dimension. */
+function lifted(design: SampleDesign, position: Position): boolean {
+  const { u, floralU, v, edgeDistance, zigzagStep } = position;
   const au = Math.abs(u);
   const av = Math.abs(v);
   const sum = au + av;
   switch (design) {
     case 'diamond':
-      return sum <= 0.5 || Math.abs(sum - 0.8) <= OUTLINE_HALF_WIDTH;
-    case 'border':
-      return au >= 0.8 || av >= 0.8;
-    case 'floral':
-      return (au * av <= 0.08 && sum <= 0.7) || sum <= 0.15;
+      return sum <= DIAMOND_CORE || Math.abs(sum - DIAMOND_OUTLINE) <= DIAMOND_OUTLINE_HALF_WIDTH;
+    case 'border': {
+      const zigzagOffset = edgeDistance - BORDER_ZIGZAG_START - zigzagStep;
+      return (
+        edgeDistance < BORDER_EDGE_ENDS ||
+        (zigzagOffset >= 0 && zigzagOffset < BORDER_ZIGZAG_THICKNESS) ||
+        edgeDistance === BORDER_LINE_OFFSET
+      );
+    }
+    case 'floral': {
+      const flowerU = Math.abs(floralU);
+      if (flowerU > 1) return 2 - flowerU + av <= FLORAL_LEAF;
+      const petalU = flowerU - FLORAL_PETAL_OFFSET;
+      const petalV = av - FLORAL_PETAL_OFFSET;
+      return flowerU + av <= FLORAL_CENTRE || petalU * petalU + petalV * petalV <= FLORAL_PETAL_RADIUS * FLORAL_PETAL_RADIUS;
+    }
     default: {
       const unreachable: never = design;
       return unreachable;
@@ -40,10 +79,14 @@ export function generateSample(profile: CardProfile, design: SampleDesign): Patt
   for (let pickIndex = 0; pickIndex < REPEATS * period; pickIndex++) {
     const s = pickIndex % period;
     const v = (2 * s + 1 - period) / period;
+    const zigzagStep = Math.floor(Math.abs(2 * s + 1 - period) / 2);
     const ends: Ends = [];
     for (let end = 0; end < endCount; end++) {
-      const u = (2 * end + 1 - endCount) / endCount;
-      ends.push(lifted(design, u, v));
+      const cellEnd = end % period;
+      const u = (2 * cellEnd + 1 - period) / period;
+      const floralU = (2 * (end % (2 * period)) + 1 - 2 * period) / period;
+      const edgeDistance = Math.min(end, endCount - 1 - end);
+      ends.push(lifted(design, { u, floralU, v, edgeDistance, zigzagStep }));
     }
     const decoded = decodeEnds(profile, ends);
     if (!decoded.ok) return [];
