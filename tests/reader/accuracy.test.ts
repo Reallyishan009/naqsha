@@ -16,14 +16,14 @@ import { chooseThreshold, classifyDark } from '../../src/reader/threshold';
 import type { PixelData } from '../../src/reader/types';
 import { decodePng } from '../support/png';
 
-/** Required hole accuracy per fixture (R13.1 to R13.4). This table is the requirement. */
+/** Required hole accuracy per fixture (R13.1 to R13.3). This table is the requirement. */
 const TARGETS: Record<string, { minAccuracy: number; requirement: string }> = {
   'pick0-clean': { minAccuracy: 1, requirement: 'R13.1' },
-  'pick1-clean': { minAccuracy: 1, requirement: 'R13.2' },
-  'pick2-clean': { minAccuracy: 1, requirement: 'R13.2' },
-  'pick0-tilted': { minAccuracy: 1, requirement: 'R13.4' },
+  'pick1-clean': { minAccuracy: 1, requirement: 'R13.1' },
+  'pick2-clean': { minAccuracy: 1, requirement: 'R13.1' },
+  'pick0-tilted': { minAccuracy: 1, requirement: 'R13.2' },
   'pick0-noisy': { minAccuracy: 0.95, requirement: 'R13.3' },
-  'pick0-noisy-tilted': { minAccuracy: 0.95, requirement: 'R13.5' },
+  'pick0-noisy-tilted': { minAccuracy: 0.95, requirement: 'R13.3' },
 };
 
 const TILT_TOLERANCE_DEGREES = 0.5;
@@ -61,7 +61,7 @@ function diagnostics(profile: CardProfile, pixels: PixelData): string {
 }
 
 describe('decodePng', () => {
-  it('decodes an encodePng image back to the same levels', () => {
+  it('R17.5 decoding a PNG written by the generator returns the same grey levels', () => {
     fc.assert(
       fc.property(
         fc.integer({ min: 1, max: 12 }),
@@ -80,13 +80,13 @@ describe('decodePng', () => {
     );
   });
 
-  it('throws on a PNG that is not 8-bit greyscale', () => {
+  it('R17.5 decoding throws on a PNG that is not 8-bit greyscale', () => {
     const png = Buffer.from(encodePng({ width: 2, height: 2, pixels: new Uint8Array([1, 2, 3, 4]) }));
     png[8 + 8 + 9] = 2; // IHDR colour type: truecolour
     expect(() => decodePng(png)).toThrow(/colour type 2/);
   });
 
-  it('throws on a non-PNG, on a non-zero filter byte and on truncated data', () => {
+  it('R17.5 decoding throws on a non-PNG, on a non-zero filter byte and on truncated data', () => {
     expect(() => decodePng(new Uint8Array([1, 2, 3]))).toThrow(/signature/);
     const png = encodePng({ width: 2, height: 2, pixels: new Uint8Array([1, 2, 3, 4]) });
     expect(() => decodePng(png.subarray(0, png.length - 20))).toThrow();
@@ -122,7 +122,7 @@ function chunk(type: string, data: Buffer): Buffer {
 }
 
 describe('fixture accuracy', () => {
-  it('every fixture in FIXTURE_SET exists and has a target', () => {
+  it('R17.7 every fixture in FIXTURE_SET exists and has a target', () => {
     for (const { name } of FIXTURE_SET) {
       expect(existsSync(`tests/fixtures/${name}.png`), `${name}.png`).toBe(true);
       expect(existsSync(`tests/fixtures/${name}.json`), `${name}.json`).toBe(true);
