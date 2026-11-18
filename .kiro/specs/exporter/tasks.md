@@ -93,7 +93,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), cut-last properties skipped, and the commit range. Push.
   - _Requirements: 12.4_
 
-- [ ] 3. Properties, structure and docs
+- [x] 3. Properties, structure and docs
   - _Requirements: 1.6, 2.3, 3.3, 6.7, 7.4, 9.1, 10.1, 10.5, 11.1, 11.2, 11.3, 11.4, 12.1, 12.2_
 
 - [x] 3.1 Remaining properties
@@ -117,7 +117,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 10.1, 10.5, 12.1_
 
-- [-] 3.4 Docs, phase 3 log and push
+- [x] 3.4 Docs, phase 3 log and push
   - Files: `README.md`, `.kiro/steering/structure.md`, `docs/BUILD_LOG.md`.
   - README: change the exporter row in "What it does" to built, add an "Exporter options and limits" list with the four options and their defaults, and state that each loom controller may need a specific variant, that no controller has been tested, and that the right lift colour for each controller is unverified. Check that the exporter section of `structure.md` lists the real exports.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), cut-last properties skipped, and the commit range. Push.
