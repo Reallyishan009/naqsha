@@ -272,3 +272,61 @@ describe('readPatternBmp colours', () => {
     );
   });
 });
+
+describe('readPatternBmp totality', () => {
+  const isResult = (value: unknown): void => {
+    expect(typeof (value as { ok: unknown }).ok).toBe('boolean');
+  };
+
+  it('R6.7 reading any bytes never throws', () => {
+    // (a) arbitrary values as the bytes, valid profile and options
+    fc.assert(
+      fc.property(caseArbitrary, fc.anything(), ({ profile, options }, input) => {
+        isResult(readPatternBmp(input, profile, options));
+      }),
+    );
+    // (b) random bytes of length 0..200
+    fc.assert(
+      fc.property(caseArbitrary, fc.uint8Array({ minLength: 0, maxLength: 200 }), ({ profile, options }, input) => {
+        isResult(readPatternBmp(input, profile, options));
+      }),
+    );
+    // (c) valid exports truncated at a random length
+    fc.assert(
+      fc.property(caseArbitrary, fc.nat(), (testCase, cut) => {
+        const bytes = exported(testCase);
+        isResult(readPatternBmp(bytes.slice(0, cut % (bytes.length + 1)), testCase.profile, testCase.options));
+      }),
+    );
+    // (d) valid exports with 1..10 random bytes changed, header bytes included
+    fc.assert(
+      fc.property(
+        caseArbitrary,
+        fc.array(fc.tuple(fc.nat(), fc.integer({ min: 0, max: 255 })), { minLength: 1, maxLength: 10 }),
+        (testCase, changes) => {
+          const bytes = exported(testCase).slice();
+          for (const [position, value] of changes) bytes[position % bytes.length] = value;
+          isResult(readPatternBmp(bytes, testCase.profile, testCase.options));
+        },
+      ),
+    );
+    // (d') the same, with every change inside the 54-byte header
+    fc.assert(
+      fc.property(
+        caseArbitrary,
+        fc.array(fc.tuple(fc.integer({ min: 0, max: 53 }), fc.integer({ min: 0, max: 255 })), { minLength: 1, maxLength: 10 }),
+        (testCase, changes) => {
+          const bytes = exported(testCase).slice();
+          for (const [position, value] of changes) bytes[position] = value;
+          isResult(readPatternBmp(bytes, testCase.profile, testCase.options));
+        },
+      ),
+    );
+    // (e) arbitrary values for all three arguments
+    fc.assert(
+      fc.property(fc.anything(), fc.anything(), fc.anything(), (input, profile, options) => {
+        isResult(readPatternBmp(input, profile, options));
+      }),
+    );
+  });
+});

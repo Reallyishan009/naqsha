@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as fc from 'fast-check';
-import { parseCardProfile, validateCardGrid, validateCardProfile } from '../../src/codec/index.ts';
+import { encodeCardGrid, parseCardProfile, validateCardGrid, validateCardProfile } from '../../src/codec/index.ts';
 import type { CardProfile, Pattern } from '../../src/codec/index.ts';
 import { bmpLayout, exportPatternBmp } from '../../src/exporter/index.ts';
 import { exportOptionsArbitrary, patternArbitrary } from '../support/patterns.ts';
@@ -214,6 +214,77 @@ describe('exportPatternBmp properties', () => {
         expect(entry(1)).toEqual(options.liftColour === 'black' ? black : white);
         expect(entry(0)).toEqual(options.liftColour === 'black' ? white : black);
         for (let index = 2; index < entries; index++) expect(entry(index)).toEqual(entry(0));
+      }),
+    );
+  });
+});
+
+describe('exportPatternBmp pixel placement, determinism and totality', () => {
+  const scenarioArbitrary = profileArbitrary.chain((profile) =>
+    fc.record({ profile: fc.constant(profile), pattern: patternArbitrary(profile), options: exportOptionsArbitrary }),
+  );
+
+  it('R2.3 each pixel holds the lift of the end and pick the options place there', () => {
+    fc.assert(
+      fc.property(scenarioArbitrary, ({ profile, pattern, options }) => {
+        const result = exportPatternBmp(profile, pattern, options);
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        const bytes = result.bytes;
+        const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+        const width = view.getInt32(18, true);
+        const height = view.getInt32(22, true);
+        const bitCount = view.getUint16(28, true);
+        const offset = view.getUint32(10, true);
+        const stride = 4 * Math.ceil((width * bitCount) / 32);
+        for (let s = 0; s < height; s++) {
+          const r = height - 1 - s;
+          const p = options.pickOrder === 'first-at-top' ? r : height - 1 - r;
+          const ends = encodeCardGrid(profile, pattern[p]);
+          expect(ends.ok).toBe(true);
+          if (!ends.ok) return;
+          for (let x = 0; x < width; x++) {
+            const e = options.endOrder === 'first-at-left' ? x : width - 1 - x;
+            const index =
+              bitCount === 1
+                ? (bytes[offset + s * stride + Math.floor(x / 8)]! >> (7 - (x % 8))) & 1
+                : bytes[offset + s * stride + x]!;
+            expect(index).toBe(ends.value[e] ? 1 : 0);
+          }
+        }
+      }),
+    );
+  });
+
+  it('R7.4 the same input exports identical bytes', () => {
+    fc.assert(
+      fc.property(scenarioArbitrary, scenarioArbitrary, ({ profile, pattern, options }, other) => {
+        const first = exportPatternBmp(profile, pattern, options);
+        exportPatternBmp(other.profile, other.pattern, other.options);
+        const second = exportPatternBmp(profile, pattern, options);
+        expect(first.ok && second.ok).toBe(true);
+        if (first.ok && second.ok) expect(Array.from(second.bytes)).toEqual(Array.from(first.bytes));
+      }),
+    );
+  });
+
+  it('R9.1 exporting never throws for any input', () => {
+    const isResult = (value: unknown): void => {
+      expect(typeof (value as { ok: unknown }).ok).toBe('boolean');
+    };
+    fc.assert(
+      fc.property(fc.anything(), fc.anything(), fc.anything(), (profile, pattern, options) => {
+        isResult(exportPatternBmp(profile, pattern, options));
+      }),
+    );
+    fc.assert(
+      fc.property(profileArbitrary, fc.anything(), exportOptionsArbitrary, (profile, pattern, options) => {
+        isResult(exportPatternBmp(profile, pattern, options));
+      }),
+    );
+    fc.assert(
+      fc.property(scenarioArbitrary, fc.anything(), ({ profile, pattern }, options) => {
+        isResult(exportPatternBmp(profile, pattern, options));
       }),
     );
   });
