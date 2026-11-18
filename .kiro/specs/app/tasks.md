@@ -218,7 +218,7 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
     - Run `npm run test:run`, `npm run typecheck` and `npm run build`, then `git push`. Run `git remote -v` first; if no remote is configured, ask the user before pushing.
     - _Requirements: 16.7_
 
-- [ ] 3. Phase 3: Scan with tap-to-correct and batch
+- [x] 3. Phase 3: Scan with tap-to-correct and batch
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8, 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7, 11.8, 11.9, 11.10, 16.10, 17.1, 17.3, 17.5, 17.6, 22.1, 22.3, 22.5, 22.10, 22.11, 23.9, 23.11, 23.12, 23.13_
 
   - [x] 3.1 Scan_Batch operations and reducer actions
@@ -269,7 +269,7 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
     - Run `npm run test:run`, `npm run typecheck`, `npm run build` and `check_bundle`. Confirm every requirement ID from 1 to 17 and 21 to 23 appears in a test title (18 to 20 are Phase 4). Regenerate `docs/HINDI_REVIEW.md` and tell the user how many strings need a native Hindi speaker. List what was not verified: real IndexedDB in a browser, on-device timings, any loom controller, the Hindi text, real card dimensions.
     - _Requirements: 12.9, 12.12, 16.7, 17.1, 17.3_
 
-  - [-] 3.8 Phase 3 push
+  - [x] 3.8 Phase 3 push
     - Run `npm run test:run`, `npm run typecheck` and `npm run build`, then `git push`. Run `git remote -v` first; if no remote is configured, ask the user before pushing.
     - _Requirements: 16.7_
 
