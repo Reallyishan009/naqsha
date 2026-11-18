@@ -131,9 +131,9 @@ describe('renderFrame', () => {
             if (x >= image.width) break;
             const lifted = row.lift[col % cloth.baseEnds] === 1;
             let expected = lifted ? shaded(settings.warpColour, shade) : shaded(weftHex(weft), shade);
-            // A zari weft cell has an unshaded highlight on its centre row where x mod 4 = 0 (R5.5).
+            // A zari weft cell has an unshaded highlight on its centre row where u mod 4 = 0, u = x mod (baseEnds * t) (R5.5).
             const highlight = highlightHex(weft);
-            if (!lifted && highlight !== undefined && x % 4 === 0) expected = parseColour(highlight)!;
+            if (!lifted && highlight !== undefined && (x % (cloth.baseEnds * t)) % 4 === 0) expected = parseColour(highlight)!;
             if (settings.floatHighlight !== null && floatLength(pick, col) > settings.floatHighlight.maxLength) {
               expected = blendHalfwayRef(expected);
             }
@@ -220,7 +220,7 @@ describe('renderFrame', () => {
             const warpOnFace = face[pick][col] === 'warp';
             let expected = warpOnFace ? shaded(settings.warpColour, shade) : shaded(weftHex(weft), shade);
             const highlight = highlightHex(weft);
-            if (!warpOnFace && highlight !== undefined && x % 4 === 0) expected = parseColour(highlight)!;
+            if (!warpOnFace && highlight !== undefined && (x % (cloth.baseEnds * t)) % 4 === 0) expected = parseColour(highlight)!;
             if (floatLength(pick, col) > limit) expected = blendHalfwayRef(expected);
             expect(pixelAt(image, x, y)).toEqual(expected);
           }
@@ -389,8 +389,9 @@ describe('renderFrame', () => {
           const ink: Rgb = isMissing ? [0x80, 0x80, 0x80] : [0xb0, 0x00, 0x20];
           for (let y = rows.from; y < rows.to; y++) {
             for (let x = 0; x < clothWidth; x++) {
-              const slash = (x + y) % 6 < 2;
-              const cross = slash || (((x - y) % 6) + 6) % 6 < 2;
+              const u = x % (cloth.baseEnds * settings.threadSizePx);
+              const slash = (u + y) % 6 < 2;
+              const cross = slash || (((u - y) % 6) + 6) % 6 < 2;
               const inked = isMissing ? slash : cross;
               expect(pixelAt(image, x, y)).toEqual(inked ? ink : white);
             }
@@ -419,6 +420,33 @@ describe('renderFrame', () => {
         const missing = rest(prepared(scenario.profile, withSlot(slots, p, null)), settings, q);
         const damaged = rest(prepared(scenario.profile, withSlot(slots, p, scenario.damaged)), settings, q);
         expect(rowBytes(damaged, rows, damaged.width)).not.toEqual(rowBytes(missing, rows, missing.width));
+      }),
+      { numRuns: IMAGE_RUNS, seed: IMAGE_SEED },
+    );
+  });
+
+  // Property 24 (R14.4, "cut last") is not written: weft floats across repeat boundaries are already covered by
+  // Property 9's tiled reference (floatReference) and Property 7 (computeFloats).
+  it('R14.2 the tiled render equals the base render repeated', () => {
+    fc.assert(
+      fc.property(profileAndSlots, renderSettingsArbitrary, fc.nat(), fc.integer({ min: 1, max: 4 }), ({ profile, samples }, generated, seedPick, k) => {
+        const cloth = prepared(profile, samples.map((sample) => sample.slot));
+        const t = generated.threadSizePx;
+        const baseWidth = cloth.baseEnds * t;
+        // The viewport is wide enough to show all k repeats (and so at least one whole base width), capped at the 4096 px limit.
+        // A partial last repeat is covered by the cap and by the clipped-width case when baseWidth * k exceeds it.
+        const viewport = { width: Math.min(4096, baseWidth * k), height: generated.viewport.height };
+        if (viewport.width < baseWidth) return; // a base width wider than the viewport limit cannot be compared
+        const settings: RenderSettings = { ...generated, floatHighlight: null, viewport };
+        const p = seedPick % (cloth.picks.length + 1);
+        const tiled = rest(cloth, { ...settings, repeat: k }, p);
+        const base = rest(cloth, { ...settings, repeat: 1 }, p);
+        const visibleWidth = Math.min(viewport.width, baseWidth * k);
+        for (let y = 0; y < viewport.height; y++) {
+          for (let x = 0; x < visibleWidth; x++) {
+            expect(pixelAt(tiled, x, y)).toEqual(pixelAt(base, x % baseWidth, y));
+          }
+        }
       }),
       { numRuns: IMAGE_RUNS, seed: IMAGE_SEED },
     );

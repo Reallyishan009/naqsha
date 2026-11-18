@@ -147,14 +147,15 @@ For a woven pick, the cell of end `e` is warp-on-face when `lift[e] = 1`, else w
 
 ### Zari
 
-A zari weft uses a base colour (gold `#c9a227`, silver `#b8bcc4`) and the weft shading. In addition, the centre row of each zari weft cell (`y mod t = floor(t / 2)`) is set to the highlight colour (gold `#fff2c4`, silver `#ffffff`) at columns where `x mod 4 = 0`. This makes the colour vary along the weft, which a plain weft cell never does, because a plain weft cell is constant along `x` (R5.5). Zari appears only where the weft is on the face.
+A zari weft uses a base colour (gold `#c9a227`, silver `#b8bcc4`) and the weft shading. In addition, the centre row of each zari weft cell (`y mod t = floor(t / 2)`) is set to the highlight colour (gold `#fff2c4`, silver `#ffffff`) at columns where `u mod 4 = 0`, with `u = x mod (baseEnds * t)` measured from the start of each repeat, so zari rows tile exactly (R14.2). This makes the colour vary along the weft, which a plain weft cell never does, because a plain weft cell is constant along `x` (R5.5). Zari appears only where the weft is on the face.
 
 ### Gap rows
 
 A gap row fills all `t` rows of its pick with a fixed two-colour hatch that varies diagonally, which no crossing cell can do (a warp cell is constant along `y` and a weft cell is constant along `x`):
 
-- Missing: grey `#808080` where `(x + y) mod 6 < 2`, else white (one diagonal set, `/`).
-- Damaged: dark red `#b00020` where `(x + y) mod 6 < 2` or `(x - y) mod 6 < 2`, else white (cross-hatch, `X`).
+- Missing: grey `#808080` where `(u + y) mod 6 < 2`, else white (one diagonal set, `/`).
+- Damaged: dark red `#b00020` where `(u + y) mod 6 < 2` or `(u - y) mod 6 < 2`, else white (cross-hatch, `X`).
+- `u = x mod (baseEnds * t)` is measured from the start of each repeat, so gap rows tile exactly (R14.2). The hatch may restart at a repeat boundary; it stays diagonal, which is what keeps it distinct from cloth.
 
 The hatch is drawn the same whatever the other picks are, and the row keeps its place in the pick sequence (R4.1 to R4.4). A damaged card is never partly drawn (R4.5).
 
@@ -170,7 +171,7 @@ Below the fell, every end is drawn as a vertical warp thread. In `lift(p)` and `
 
 ### Repeat
 
-Each pixel row is built for one base width (`baseEnds * t` px) and then copied across the remaining width with `copyWithin`. With float highlighting off this makes column `x` equal to column `x mod (baseEnds * t)` (R14.2). With highlighting on, weft floats are measured across the tiled width (R14.4), so the highlighted pixels may differ near repeat boundaries.
+Each pixel row is built for one base width (`baseEnds * t` px) and then copied across the remaining width with `copyWithin`. Every pattern (shading, zari highlight, gap hatch) is measured from the start of its repeat, so every row tiles. With float highlighting off this makes column `x` equal to column `x mod (baseEnds * t)` (R14.2). With highlighting on, weft floats are measured across the tiled width (R14.4), so the highlighted pixels may differ near repeat boundaries.
 
 ### Floats
 

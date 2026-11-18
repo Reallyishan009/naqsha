@@ -94,12 +94,25 @@ export function renderFrame(cloth: PreparedCloth, settings: RenderSettings, fram
   const shedHeight = Math.min(6 * t, Math.floor(height / 3));
   const fellY = height - shedHeight;
 
+  // Repeat (R14.2): with float highlighting off a pixel row is drawn for one base width and copied across the cloth.
+  // With highlighting on, floats join across repeats (R14.4), so every cell is drawn and measured on its own.
+  const copyRepeats = settings.floatHighlight === null;
+  const baseWidth = baseEnds * t;
+  const drawnWidth = copyRepeats ? Math.min(baseWidth, clothWidth) : clothWidth;
+  // Fills the rest of the cloth width of one pixel row from its first drawnWidth pixels, doubling the copied span.
+  const copyAcross = (rowStart: number): void => {
+    for (let filled = drawnWidth; filled < clothWidth; filled *= 2) {
+      pixels.copyWithin(rowStart + filled, rowStart, rowStart + Math.min(filled, clothWidth - filled));
+    }
+  };
+
   // Draws every end of one pixel row as a vertical warp thread.
   const drawWarpRow = (rowStart: number): void => {
-    for (let x0 = 0; x0 < clothWidth; x0 += t) {
-      const xEnd = Math.min(x0 + t, clothWidth);
+    for (let x0 = 0; x0 < drawnWidth; x0 += t) {
+      const xEnd = Math.min(x0 + t, drawnWidth);
       for (let x = x0; x < xEnd; x++) pixels[rowStart + x] = warpByColumn[x - x0];
     }
+    if (copyRepeats) copyAcross(rowStart);
   };
 
   // The shed: the first row is drawn and the rest are copies of it.
@@ -118,24 +131,26 @@ export function renderFrame(cloth: PreparedCloth, settings: RenderSettings, fram
     const rowStart = y * width;
     if (row.kind !== 'woven') {
       // Gap row: hatch across the full cloth width, no warp, weft or shading (R4.1 to R4.5).
+      // The hatch is measured from the start of each repeat, u = x mod baseWidth, so the row tiles (R14.2).
       const ink = row.kind === 'missing' ? missingInk : damagedInk;
       const inked = row.kind === 'missing' ? isSlashInk : isCrossInk;
-      for (let x = 0; x < clothWidth; x++) pixels[rowStart + x] = inked(x, y) ? ink : gapWhite;
+      for (let x = 0; x < drawnWidth; x++) pixels[rowStart + x] = inked(x % baseWidth, y) ? ink : gapWhite;
+      if (copyRepeats) copyAcross(rowStart);
       continue;
     }
     const withinRow = y - (fellY - (rowIndex + 1) * t);
     const weftIndex = pick % weftByRow.length;
     const weftRow = weftByRow[weftIndex][withinRow];
     const highlight = withinRow === centreRow ? highlightByWeft[weftIndex] : undefined;
-    for (let cell = 0, x0 = 0; x0 < clothWidth; cell++, x0 += t) {
-      const xEnd = Math.min(x0 + t, clothWidth);
+    for (let cell = 0, x0 = 0; x0 < drawnWidth; cell++, x0 += t) {
+      const xEnd = Math.min(x0 + t, drawnWidth);
       if (row.lift[cell % baseEnds] === 1) {
         for (let x = x0; x < xEnd; x++) pixels[rowStart + x] = warpByColumn[x - x0];
       } else {
         pixels.fill(weftRow, rowStart + x0, rowStart + xEnd);
         if (highlight !== undefined) {
-          const first = Math.ceil(x0 / ZARI_HIGHLIGHT_COLUMN_STEP) * ZARI_HIGHLIGHT_COLUMN_STEP;
-          for (let x = first; x < xEnd; x += ZARI_HIGHLIGHT_COLUMN_STEP) pixels[rowStart + x] = highlight;
+          // Highlight columns are measured from the start of each repeat: u = x mod baseWidth, u mod 4 = 0 (R14.2).
+          for (let x = x0; x < xEnd; x++) if ((x % baseWidth) % ZARI_HIGHLIGHT_COLUMN_STEP === 0) pixels[rowStart + x] = highlight;
         }
       }
       // Float highlighting (R3.3): only woven picks already in the cloth (0..p-1) count. Every pixel of a cell in a
@@ -149,6 +164,7 @@ export function renderFrame(cloth: PreparedCloth, settings: RenderSettings, fram
         }
       }
     }
+    if (copyRepeats) copyAcross(rowStart);
   }
 
   return { ok: true, value: { width, height, data } };

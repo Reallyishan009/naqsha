@@ -5,7 +5,7 @@ export const ZARI_SILVER_COLOUR = '#b8bcc4';
 /** Zari highlight colours, drawn unshaded (R5.5). */
 export const ZARI_GOLD_HIGHLIGHT_COLOUR = '#fff2c4';
 export const ZARI_SILVER_HIGHLIGHT_COLOUR = '#ffffff';
-/** A zari weft cell gets a highlight pixel in its centre row at every absolute column x with x mod 4 = 0. */
+/** A zari weft cell gets a highlight pixel in its centre row at every column with u mod 4 = 0, u = x mod (baseEnds * t) measured from the start of each repeat. */
 export const ZARI_HIGHLIGHT_COLUMN_STEP = 4;
 
 /** Float highlight colour (R3.3). */
@@ -32,7 +32,7 @@ export function positiveModulo(value: number, modulus: number): number {
   return ((value % modulus) + modulus) % modulus;
 }
 
-/** True where the `/` diagonal is inked: (x + y) mod 6 < 2, in absolute image coordinates. */
+/** True where the `/` diagonal is inked: (x + y) mod 6 < 2, with x the column measured from the start of each repeat (u) and y the absolute image row. */
 export function isSlashInk(x: number, y: number): boolean {
   return positiveModulo(x + y, GAP_HATCH_PERIOD) < GAP_HATCH_WIDTH;
 }
