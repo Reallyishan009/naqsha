@@ -4,3 +4,4 @@ export * from './greyscale';
 export * from './threshold';
 export * from './regions';
 export * from './orientation';
+export * from './pose';
