@@ -53,6 +53,7 @@ Acceptance criteria are referenced as `R<requirement>.<criterion>` (for example 
 7. IF the profile does not list exactly two peg holes, or lists two peg holes at the same position, THEN validation SHALL report a violation, because the reader needs two distinct peg holes to find the card.
 8. IF the two peg hole diameters differ by less than 10% of the larger diameter THEN validation SHALL report a violation naming both peg holes, because the reader could not reliably tell which way up the card is. Equal diameters are included.
 9. WHEN the value passed to profile validation is not an object, or is missing fields, THEN validation SHALL report violations and SHALL NOT throw.
+10. IF the profile's `name` is present but is not a string THEN validation SHALL report a violation naming the `name` field.
 
 ### Requirement 3: Validate a CardGrid against a CardProfile
 

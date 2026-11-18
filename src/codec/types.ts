@@ -36,7 +36,7 @@ export type Pattern = CardGrid[];
 export type Ends = boolean[];
 
 export type ViolationKind =
-  | 'not-an-object' | 'missing-field'
+  | 'not-an-object' | 'missing-field' | 'not-a-string'
   | 'not-a-positive-integer' | 'not-a-positive-number' | 'hole-outside-card'
   | 'end-order-shape' | 'end-order-duplicate' | 'end-order-unassigned' | 'end-order-out-of-range'
   | 'peg-hole-count' | 'peg-holes-coincide' | 'peg-diameters-too-close'

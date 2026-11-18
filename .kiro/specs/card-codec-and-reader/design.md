@@ -143,7 +143,7 @@ export type Pattern = CardGrid[];     // one card per pick
 export type Ends = boolean[];         // length hookRows * hookColumns, ends[endIndex]
 
 export type ViolationKind =
-  | 'not-an-object' | 'missing-field'
+  | 'not-an-object' | 'missing-field' | 'not-a-string'
   | 'not-a-positive-integer' | 'not-a-positive-number' | 'hole-outside-card'
   | 'end-order-shape' | 'end-order-duplicate' | 'end-order-unassigned' | 'end-order-out-of-range'
   | 'peg-hole-count' | 'peg-holes-coincide' | 'peg-diameters-too-close'
@@ -1123,6 +1123,12 @@ Test file: `tests/reader/layout.test.ts`. For any profile from `profileArbitrary
 Test file: `tests/reader/readCard.test.ts`. Image property. For any `profileArbitrary` profile, any grid, scale 1 to 4 px/mm and tilt within 10 degrees of 0 or 180, `readCard` either returns the true grid or fails. Example tests keep the three counterexamples from task 5.13 as regressions: the demo profile with peg diameters 2.5 mm and 2.8 mm, demo card 0, seed 1234, noise 0, tilt 0, at 2.75, 2.25 and 1.25 px/mm.
 
 **Validates: Requirements 18.5**
+
+### Property 84: R2.10 a profile name that is not a string is reported.
+
+Test file: `tests/codec/validateCardProfile.test.ts`. For any valid profile with `name` replaced by any non-string value other than `undefined` (numbers, booleans, `null`, arrays, objects), validation reports one `not-a-string` violation at `name`, and `parseCardProfile` is not `ok`. A missing `name` is still `missing-field`.
+
+**Validates: Requirements 2.10**
 
 ### Fixture tests (examples, not properties)
 

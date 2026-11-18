@@ -249,4 +249,34 @@ describe('validateCardProfile', () => {
       }),
     );
   });
+
+  it('R2.10 a name of 42 is reported as not-a-string and an absent name as missing-field', () => {
+    const summary = (candidate: unknown) =>
+      validateCardProfile(candidate).map(({ kind, location }) => ({ kind, location }));
+    expect(summary(mutateProfile(demoProfile, ['name'], 42))).toEqual([{ kind: 'not-a-string', location: 'name' }]);
+    expect(summary(mutateProfile(demoProfile, ['name'], REMOVE))).toEqual([{ kind: 'missing-field', location: 'name' }]);
+    expect(validateCardProfile(mutateProfile(demoProfile, ['name'], ''))).toEqual([]);
+  });
+
+  it('R2.10 a profile name that is not a string is reported', () => {
+    const nonString: fc.Arbitrary<unknown> = fc.oneof(
+      fc.double(),
+      fc.integer(),
+      fc.boolean(),
+      fc.constant(null),
+      fc.array(fc.oneof(fc.integer(), fc.string())),
+      fc.dictionary(fc.string(), fc.integer()),
+      fc.bigInt(),
+    );
+    fc.assert(
+      fc.property(profileArbitrary, nonString, (profile, name) => {
+        const candidate = mutateProfile(profile, ['name'], name);
+        const violations = validateCardProfile(candidate);
+        expect(violations.map(({ kind, location }) => ({ kind, location }))).toEqual([
+          { kind: 'not-a-string', location: 'name' },
+        ]);
+        expect(parseCardProfile(candidate).ok).toBe(false);
+      }),
+    );
+  });
 });

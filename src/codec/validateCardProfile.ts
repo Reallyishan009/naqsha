@@ -102,7 +102,12 @@ export function validateCardProfile(input: unknown): Violation[] {
   };
 
   // Rule 2: missing fields. The presence of the others is reported by the rules below.
-  if (own(input, 'name') === undefined) reportMissing('name');
+  const name = own(input, 'name');
+  if (name === undefined) {
+    reportMissing('name');
+  } else if (typeof name !== 'string') {
+    report({ kind: 'not-a-string', location: 'name', message: 'The field "name" must be a string.' });
+  }
 
   // Rule 3: hookRows and hookColumns.
   const integerField = (key: string): number | undefined => {
