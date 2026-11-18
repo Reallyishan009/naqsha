@@ -1,8 +1,19 @@
 import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
+import type { ArchiveFailure } from '../../../src/archive/index.ts';
 import type { Violation } from '../../../src/codec/index.ts';
+import type { ExportFailure, ReadFailure as BmpReadFailure } from '../../../src/exporter/index.ts';
 import type { SimFailure } from '../../../src/simulator/index.ts';
-import { EN, HI, printFailureKey, profileFailureKey, simFailureKey } from '../../../src/ui/i18n/messages.ts';
+import {
+  EN,
+  HI,
+  archiveFailureKey,
+  bmpReadFailureKey,
+  exportFailureKey,
+  printFailureKey,
+  profileFailureKey,
+  simFailureKey,
+} from '../../../src/ui/i18n/messages.ts';
 import type { PrintFailure, ProfileFailure } from '../../../src/ui/index.ts';
 
 const violation: fc.Arbitrary<Violation> = fc.record({
@@ -23,6 +34,27 @@ const profileFailure: fc.Arbitrary<ProfileFailure> = fc.oneof(
   violations.map((v): ProfileFailure => ({ reason: 'invalid-profile', violations: v })),
 );
 const printFailure: fc.Arbitrary<PrintFailure> = violations.map((v) => ({ reason: 'invalid-card' as const, violations: v }));
+
+const exportFailure: fc.Arbitrary<ExportFailure> = fc.oneof(
+  violations.map((v): ExportFailure => ({ reason: 'invalid-profile', violations: v })),
+  fc.array(fc.record({ pick: fc.nat(), violations }), { maxLength: 3 }).map((picks): ExportFailure => ({ reason: 'invalid-card', picks })),
+  fc.constant<ExportFailure>({ reason: 'empty-pattern' }),
+  fc.record({ reason: fc.constant('invalid-options' as const), option: fc.string(), message: fc.string() }),
+);
+const bmpReadFailure: fc.Arbitrary<BmpReadFailure> = fc.oneof(
+  violations.map((v): BmpReadFailure => ({ reason: 'invalid-profile', violations: v })),
+  fc.record({ reason: fc.constant('invalid-options' as const), option: fc.string(), message: fc.string() }),
+  fc.constant<BmpReadFailure>({ reason: 'not-a-bmp' }),
+  fc.record({ reason: fc.constant('unsupported-bmp' as const), field: fc.string(), value: fc.integer() }),
+  fc.record({ reason: fc.constant('inconsistent-size' as const), field: fc.string(), expected: fc.nat(), actual: fc.nat() }),
+  fc.record({ reason: fc.constant('width-mismatch' as const), fileWidth: fc.nat(), profileWidth: fc.nat() }),
+  fc.record({ reason: fc.constant('unknown-colour' as const), pick: fc.nat(), end: fc.nat() }),
+);
+const archiveFailure: fc.Arbitrary<ArchiveFailure> = fc.oneof(
+  fc.record({ reason: fc.constant('not-found' as const), id: fc.string() }),
+  fc.record({ reason: fc.constant('storage-unavailable' as const), detail: fc.string() }),
+  fc.record({ reason: fc.constant('write-failed' as const), detail: fc.string() }),
+);
 
 function expectMessage(key: string, reason: string): void {
   expect(key).not.toBe(reason);
@@ -48,6 +80,21 @@ describe('failure messages (Phase 1 failure types)', () => {
   it('R21.17 every printable-card failure has a message in both languages', () => {
     // Feature: app, Property 6: Every failure has a message in both languages
     fc.assert(fc.property(printFailure, (failure) => expectMessage(printFailureKey(failure), failure.reason)), options);
+  });
+
+  it('R5.7 every ExportFailure reason has a message in both languages', () => {
+    // Feature: app, Property 6: Every failure has a message in both languages
+    fc.assert(fc.property(exportFailure, (failure) => expectMessage(exportFailureKey(failure), failure.reason)), options);
+  });
+
+  it('R5.8 every BMP ReadFailure reason has a message in both languages', () => {
+    // Feature: app, Property 6: Every failure has a message in both languages
+    fc.assert(fc.property(bmpReadFailure, (failure) => expectMessage(bmpReadFailureKey(failure), failure.reason)), options);
+  });
+
+  it('R7.4 every ArchiveFailure reason has a message in both languages', () => {
+    // Feature: app, Property 6: Every failure has a message in both languages
+    fc.assert(fc.property(archiveFailure, (failure) => expectMessage(archiveFailureKey(failure), failure.reason)), options);
   });
 
   it('R2.12 the message says what to do next, in both languages', () => {

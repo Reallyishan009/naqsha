@@ -1,3 +1,5 @@
+import type { ArchiveFailure } from '../../archive/index.ts';
+import type { ExportFailure, ReadFailure as BmpReadFailure } from '../../exporter/index.ts';
 import type { SimFailure } from '../../simulator/index.ts';
 import type { Dictionaries, Dictionary, HiDictionary, Language, PrintFailure, ProfileFailure } from '../types.ts';
 import enJson from './en.json';
@@ -74,6 +76,61 @@ export function printFailureKey(failure: PrintFailure): string {
       return 'error.print.invalid-card';
     default: {
       const unreachable: never = failure.reason;
+      return unreachable;
+    }
+  }
+}
+
+export function exportFailureKey(failure: ExportFailure): string {
+  switch (failure.reason) {
+    case 'invalid-profile':
+      return 'error.export.invalid-profile';
+    case 'invalid-card':
+      return 'error.export.invalid-card';
+    case 'empty-pattern':
+      return 'error.export.empty-pattern';
+    case 'invalid-options':
+      return 'error.export.invalid-options';
+    default: {
+      const unreachable: never = failure;
+      return unreachable;
+    }
+  }
+}
+
+export function bmpReadFailureKey(failure: BmpReadFailure): string {
+  switch (failure.reason) {
+    case 'invalid-profile':
+      return 'error.bmpRead.invalid-profile';
+    case 'invalid-options':
+      return 'error.bmpRead.invalid-options';
+    case 'not-a-bmp':
+      return 'error.bmpRead.not-a-bmp';
+    case 'unsupported-bmp':
+      return 'error.bmpRead.unsupported-bmp';
+    case 'inconsistent-size':
+      return 'error.bmpRead.inconsistent-size';
+    case 'width-mismatch':
+      return 'error.bmpRead.width-mismatch';
+    case 'unknown-colour':
+      return 'error.bmpRead.unknown-colour';
+    default: {
+      const unreachable: never = failure;
+      return unreachable;
+    }
+  }
+}
+
+export function archiveFailureKey(failure: ArchiveFailure): string {
+  switch (failure.reason) {
+    case 'not-found':
+      return 'error.archive.not-found';
+    case 'storage-unavailable':
+      return 'error.archive.storage-unavailable';
+    case 'write-failed':
+      return 'error.archive.write-failed';
+    default: {
+      const unreachable: never = failure;
       return unreachable;
     }
   }
