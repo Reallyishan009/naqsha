@@ -339,19 +339,18 @@ describe('validateCardProfile', () => {
           let candidate: unknown;
           let a: string;
           let b: string;
+          // One hole sits at x = 0 so that the offset t * (sum of radii) is stored exactly and the centre distance
+          // is at most the sum of radii in floating point as well (t <= 1).
           if (kind === 'lacing-lacing') {
-            const origin = profile.firstHoleCentreMm;
             candidate = mutateProfile(profile, ['lacingHoles', 'positionsMm'], [
-              origin,
-              { x: origin.x + t * d, y: origin.y },
+              { x: 0, y: 0 },
+              { x: t * d, y: 0 },
             ]);
             [a, b] = ['lacing[0]', 'lacing[1]'];
           } else if (kind === 'peg-lacing') {
-            const peg = profile.pegHoles[0];
-            const reach = (peg.diameterMm + profile.lacingHoles.diameterMm) / 2;
-            candidate = mutateProfile(profile, ['lacingHoles', 'positionsMm'], [
-              { x: peg.positionMm.x + t * reach, y: peg.positionMm.y },
-            ]);
+            const reach = profile.pegHoles[0].diameterMm / 2 + profile.lacingHoles.diameterMm / 2;
+            const movedPeg = mutateProfile(profile, ['pegHoles', 0, 'positionMm'], { x: 0, y: 0 }) as CardProfile;
+            candidate = mutateProfile(movedPeg, ['lacingHoles', 'positionsMm'], [{ x: t * reach, y: 0 }]);
             [a, b] = ['pegHoles[0]', 'lacing[0]'];
           } else {
             candidate = mutateProfile(profile, ['horizontalPitchMm'], t * d);
