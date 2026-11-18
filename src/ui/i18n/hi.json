@@ -1,0 +1,222 @@
+{
+  "app.title": {
+    "text": "नक्शा",
+    "reviewed": false
+  },
+  "nav.label": {
+    "text": "मुख्य मेनू",
+    "reviewed": false
+  },
+  "nav.weave": {
+    "text": "बुनाई",
+    "reviewed": false
+  },
+  "nav.keep": {
+    "text": "सहेजें",
+    "reviewed": false
+  },
+  "nav.scan": {
+    "text": "स्कैन",
+    "reviewed": false
+  },
+  "language.label": {
+    "text": "भाषा",
+    "reviewed": false
+  },
+  "language.hi": {
+    "text": "हिन्दी",
+    "reviewed": false
+  },
+  "language.en": {
+    "text": "English",
+    "reviewed": false
+  },
+  "status.loading": {
+    "text": "कार्ड प्रोफ़ाइल लोड हो रही है…",
+    "reviewed": false
+  },
+  "placeholder.keep": {
+    "text": "सहेजने की सुविधा जल्द आ रही है।",
+    "reviewed": false
+  },
+  "placeholder.scan": {
+    "text": "स्कैन की सुविधा जल्द आ रही है।",
+    "reviewed": false
+  },
+  "weave.title": {
+    "text": "बुनाई",
+    "reviewed": false
+  },
+  "weave.empty": {
+    "text": "अभी कोई डिज़ाइन नहीं है। कपड़ा देखने के लिए \"आज़माएँ\" में एक नमूना चुनें।",
+    "reviewed": false
+  },
+  "weave.play": {
+    "text": "चलाएँ",
+    "reviewed": false
+  },
+  "weave.pause": {
+    "text": "रोकें",
+    "reviewed": false
+  },
+  "weave.resume": {
+    "text": "फिर चलाएँ",
+    "reviewed": false
+  },
+  "weave.stepBack": {
+    "text": "पिछली पिक",
+    "reviewed": false
+  },
+  "weave.stepForward": {
+    "text": "अगली पिक",
+    "reviewed": false
+  },
+  "weave.scrubber": {
+    "text": "पिक पर जाएँ",
+    "reviewed": false
+  },
+  "weave.speed": {
+    "text": "गति",
+    "reviewed": false
+  },
+  "weave.speed.slow": {
+    "text": "धीमी",
+    "reviewed": false
+  },
+  "weave.speed.normal": {
+    "text": "सामान्य",
+    "reviewed": false
+  },
+  "weave.speed.fast": {
+    "text": "तेज़",
+    "reviewed": false
+  },
+  "weave.warpColour": {
+    "text": "ताने का रंग",
+    "reviewed": false
+  },
+  "weave.weftColour": {
+    "text": "बाने का रंग",
+    "reviewed": false
+  },
+  "weave.zari": {
+    "text": "ज़री का धागा",
+    "reviewed": false
+  },
+  "weave.zari.off": {
+    "text": "ज़री नहीं",
+    "reviewed": false
+  },
+  "weave.zari.gold": {
+    "text": "सुनहरी ज़री",
+    "reviewed": false
+  },
+  "weave.zari.silver": {
+    "text": "चाँदी की ज़री",
+    "reviewed": false
+  },
+  "weave.repeat": {
+    "text": "दोहराव",
+    "reviewed": false
+  },
+  "weave.pickPosition": {
+    "text": "पिक {pick} / {total}",
+    "reviewed": false
+  },
+  "weave.gaps": {
+    "text": "जिन पिक में खाली जगह है: {picks}",
+    "reviewed": false
+  },
+  "weave.canvasAlt": {
+    "text": "बुना हुआ कपड़ा, पिक {pick} / {total} दिख रही है",
+    "reviewed": false
+  },
+  "tryit.title": {
+    "text": "आज़माएँ",
+    "reviewed": false
+  },
+  "tryit.intro": {
+    "text": "बुना हुआ देखने के लिए एक नमूना डिज़ाइन चुनें।",
+    "reviewed": false
+  },
+  "tryit.diamond": {
+    "text": "हीरा",
+    "reviewed": false
+  },
+  "tryit.border": {
+    "text": "किनारी",
+    "reviewed": false
+  },
+  "tryit.floral": {
+    "text": "फूल",
+    "reviewed": false
+  },
+  "tryit.confirmReplace": {
+    "text": "आपके स्कैन किए कार्ड सहेजे नहीं गए हैं। क्या इन्हें इस नमूने से बदलें?",
+    "reviewed": false
+  },
+  "tryit.confirmYes": {
+    "text": "बदलें",
+    "reviewed": false
+  },
+  "tryit.confirmNo": {
+    "text": "मेरे कार्ड रखें",
+    "reviewed": false
+  },
+  "print.pick": {
+    "text": "छापने की पिक",
+    "reviewed": false
+  },
+  "print.png": {
+    "text": "PNG डाउनलोड करें",
+    "reviewed": false
+  },
+  "print.svg": {
+    "text": "SVG डाउनलोड करें",
+    "reviewed": false
+  },
+  "print.scale": {
+    "text": "100% माप पर छापें, पेज में फिट न करें।",
+    "reviewed": false
+  },
+  "print.notCut": {
+    "text": "यह फ़ोटो खींचने के लिए छपा कार्ड है। यह कटा हुआ कार्ड नहीं है और करघे पर नहीं चल सकता।",
+    "reviewed": false
+  },
+  "error.generic": {
+    "text": "कुछ गड़बड़ हो गई। कृपया फिर कोशिश करें।",
+    "reviewed": false
+  },
+  "error.profile.banner": {
+    "text": "कार्ड प्रोफ़ाइल इस्तेमाल नहीं हो सकी। आप फिर भी स्क्रीन बदल सकते हैं।",
+    "reviewed": false
+  },
+  "error.sim.invalid-profile": {
+    "text": "कार्ड प्रोफ़ाइल सही नहीं है, इसलिए कपड़ा नहीं दिख सकता। प्रोफ़ाइल फ़ाइल जाँचें।",
+    "reviewed": false
+  },
+  "error.sim.invalid-settings": {
+    "text": "कपड़े की एक पसंद मान्य नहीं है। पिछला कपड़ा अभी दिख रहा है। पसंद बदलकर फिर कोशिश करें।",
+    "reviewed": false
+  },
+  "error.sim.pick-out-of-range": {
+    "text": "वह पिक मौजूद नहीं है। पहली और आख़िरी पिक के बीच की पिक चुनें।",
+    "reviewed": false
+  },
+  "error.profile.fetch-failed": {
+    "text": "कार्ड प्रोफ़ाइल फ़ाइल लोड नहीं हो सकी। अपना कनेक्शन जाँचें और पेज फिर खोलें।",
+    "reviewed": false
+  },
+  "error.profile.not-json": {
+    "text": "कार्ड प्रोफ़ाइल फ़ाइल खराब है और पढ़ी नहीं जा सकती। उसकी जगह सही प्रति रखें।",
+    "reviewed": false
+  },
+  "error.profile.invalid-profile": {
+    "text": "कार्ड प्रोफ़ाइल में गलत या छूटे हुए मान हैं। प्रोफ़ाइल फ़ाइल सुधारें।",
+    "reviewed": false
+  },
+  "error.print.invalid-card": {
+    "text": "यह कार्ड छापा नहीं जा सकता, क्योंकि प्रोफ़ाइल या कार्ड के छेद सही नहीं हैं। कुछ डाउनलोड नहीं हुआ।",
+    "reviewed": false
+  }
+}

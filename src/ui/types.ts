@@ -104,3 +104,14 @@ export type ScanState =
       replacing: number | null;
     }
   | { status: 'failed'; failure: CardReadFailure };
+
+/** The printable card is refused when the profile or grid is invalid (R21.17). */
+export type PrintFailure = { reason: 'invalid-card'; violations: Violation[] };
+
+/** English dictionary: flat key to text. */
+export type Dictionary = Readonly<Record<string, string>>;
+export type HiEntry = { text: string; reviewed: boolean };
+/** Hindi dictionary: flat key to text with a per-key reviewed flag (R12.11). */
+export type HiDictionary = Readonly<Record<string, HiEntry>>;
+export type Dictionaries = { en: Dictionary; hi: HiDictionary };
+export type ReviewEntry = { key: string; hi: string; en: string };
