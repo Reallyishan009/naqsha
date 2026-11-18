@@ -41,7 +41,7 @@ export type ViolationKind =
   | 'end-order-shape' | 'end-order-duplicate' | 'end-order-unassigned' | 'end-order-out-of-range'
   | 'peg-hole-count' | 'peg-holes-coincide' | 'peg-diameters-too-close'
   | 'not-an-array' | 'wrong-hook-row-count' | 'wrong-hook-column-count' | 'not-a-boolean'
-  | 'wrong-ends-length';
+  | 'wrong-ends-length' | 'holes-overlap';
 
 export type Violation = {
   kind: ViolationKind;

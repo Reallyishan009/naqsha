@@ -33,6 +33,124 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
+type HoleOverlap = { first: string; second: string; distanceMm: number; radiiSumMm: number };
+type HookGrid = {
+  hookRows: number;
+  hookColumns: number;
+  holeDiameterMm: number;
+  horizontalPitchMm: number;
+  verticalPitchMm: number;
+  firstHoleCentreMm: PointMm;
+};
+type Disc = { name: string; centre: PointMm; radiusMm: number };
+/** True when the discs overlap or touch (R2.11): centre distance <= sum of radii. */
+function discsOverlap(a: Disc, b: Disc): boolean {
+  return Math.hypot(a.centre.x - b.centre.x, a.centre.y - b.centre.y) <= a.radiusMm + b.radiusMm;
+}
+function overlapOf(a: Disc, b: Disc): HoleOverlap {
+  return {
+    first: a.name,
+    second: b.name,
+    distanceMm: Math.hypot(a.centre.x - b.centre.x, a.centre.y - b.centre.y),
+    radiiSumMm: a.radiusMm + b.radiusMm,
+  };
+}
+/**
+ * Finds every overlapping or touching pair among the hook positions, the lacing holes and the peg holes (R2.11),
+ * without comparing all pairs. Pairs inside the hook grid are reported once per axis (see design.md, rule 9).
+ * Groups with missing or invalid data are skipped. Lacing entries with a NaN centre are skipped.
+ */
+function findHoleOverlaps(
+  grid: HookGrid | undefined,
+  lacingDiameterMm: number | undefined,
+  lacingPositions: readonly PointMm[],
+  pegPositions: ReadonlyArray<PointMm | undefined>,
+  pegDiameters: ReadonlyArray<number | undefined>,
+): HoleOverlap[] {
+  const found: HoleOverlap[] = [];
+  const add = (a: Disc, b: Disc): void => {
+    if (discsOverlap(a, b)) found.push(overlapOf(a, b));
+  };
+  const hookRadiusMm = grid === undefined ? 0 : grid.holeDiameterMm / 2;
+  const hookDisc = (hookRow: number, hookColumn: number): Disc => ({
+    name: `hook[${hookRow}][${hookColumn}]`,
+    centre: {
+      x: grid!.firstHoleCentreMm.x + hookColumn * grid!.horizontalPitchMm,
+      y: grid!.firstHoleCentreMm.y + hookRow * grid!.verticalPitchMm,
+    },
+    radiusMm: hookRadiusMm,
+  });
+  // Hook against hook: the nearest pairs of a regular grid are horizontal or vertical neighbours.
+  if (grid !== undefined) {
+    // The neighbour distance is the pitch itself, so the result does not depend on where the grid starts.
+    const addNeighbours = (pitchMm: number, second: Disc): void => {
+      if (pitchMm <= 2 * hookRadiusMm) {
+        found.push({ first: 'hook[0][0]', second: second.name, distanceMm: pitchMm, radiiSumMm: 2 * hookRadiusMm });
+      }
+    };
+    if (grid.hookColumns >= 2) addNeighbours(grid.horizontalPitchMm, hookDisc(0, 1));
+    if (grid.hookRows >= 2) addNeighbours(grid.verticalPitchMm, hookDisc(1, 0));
+  }
+  const lacing: Disc[] = [];
+  if (lacingDiameterMm !== undefined) {
+    lacingPositions.forEach((centre, lacingIndex) => {
+      if (Number.isFinite(centre.x) && Number.isFinite(centre.y)) {
+        lacing.push({ name: `lacing[${lacingIndex}]`, centre, radiusMm: lacingDiameterMm / 2 });
+      }
+    });
+  }
+  const pegs: Disc[] = [];
+  pegPositions.forEach((centre, pegIndex) => {
+    const diameterMm = pegDiameters[pegIndex];
+    if (centre !== undefined && diameterMm !== undefined) {
+      pegs.push({ name: `pegHoles[${pegIndex}]`, centre, radiusMm: diameterMm / 2 });
+    }
+  });
+  // Lacing against lacing: sweep in x order. All lacing holes have one radius, so a hole only needs the holes
+  // that follow it within one diameter in x.
+  const sorted = [...lacing].sort((a, b) => a.centre.x - b.centre.x);
+  for (let i = 0; i < sorted.length; i++) {
+    for (let j = i + 1; j < sorted.length; j++) {
+      const a = sorted[i]!;
+      const b = sorted[j]!;
+      if (b.centre.x - a.centre.x > a.radiusMm + b.radiusMm) break;
+      const [first, second] = lacingIndexOf(a) <= lacingIndexOf(b) ? [a, b] : [b, a];
+      add(first, second);
+    }
+  }
+  // Peg against peg and peg against lacing.
+  for (let i = 0; i < pegs.length; i++) {
+    for (let j = i + 1; j < pegs.length; j++) add(pegs[i]!, pegs[j]!);
+    for (const lacingHole of lacing) add(pegs[i]!, lacingHole);
+  }
+  // Peg or lacing hole against the hook grid: test only the grid cells within reach of the disc.
+  if (grid !== undefined) {
+    let remaining = MAX_UNASSIGNED_VIOLATIONS;
+    for (const disc of [...pegs, ...lacing]) {
+      const reachMm = disc.radiusMm + hookRadiusMm;
+      const cellRange = (centre: number, first: number, pitch: number, count: number): [number, number] => {
+        const low = Math.ceil((centre - reachMm - first) / pitch) - 1;
+        const high = Math.floor((centre + reachMm - first) / pitch) + 1;
+        return [Math.max(0, low), Math.min(count - 1, high)];
+      };
+      const [firstColumn, lastColumn] = cellRange(disc.centre.x, grid.firstHoleCentreMm.x, grid.horizontalPitchMm, grid.hookColumns);
+      const [firstRow, lastRow] = cellRange(disc.centre.y, grid.firstHoleCentreMm.y, grid.verticalPitchMm, grid.hookRows);
+      for (let hookRow = firstRow; hookRow <= lastRow && remaining > 0; hookRow++) {
+        for (let hookColumn = firstColumn; hookColumn <= lastColumn && remaining > 0; hookColumn++) {
+          const hook = hookDisc(hookRow, hookColumn);
+          if (discsOverlap(disc, hook)) {
+            found.push(overlapOf(hook, disc));
+            remaining--;
+          }
+        }
+      }
+    }
+  }
+  return found;
+}
+function lacingIndexOf(disc: Disc): number {
+  return Number(/\[(\d+)\]/.exec(disc.name)![1]);
+}
 /**
  * Checks a profile read from outside the program (R2.1).
  * Reports every violation it finds, returns [] for a valid profile, and never throws (R2.9).
@@ -139,13 +257,16 @@ export function validateCardProfile(input: unknown): Violation[] {
   const firstHoleCentreMm = point(own(input, 'firstHoleCentreMm'), 'firstHoleCentreMm');
 
   const lacingHoles = own(input, 'lacingHoles');
+  let lacingDiameterMm: number | undefined;
+  let lacingPositionsRaw: unknown;
   if (lacingHoles === undefined) {
     reportMissing('lacingHoles');
   } else if (!isRecord(lacingHoles)) {
     report({ kind: 'not-an-object', location: 'lacingHoles', message: 'The field "lacingHoles" must be an object.' });
   } else {
-    positiveNumber(lacingHoles, 'diameterMm', 'lacingHoles.diameterMm');
+    lacingDiameterMm = positiveNumber(lacingHoles, 'diameterMm', 'lacingHoles.diameterMm');
     const positionsMm = own(lacingHoles, 'positionsMm');
+    lacingPositionsRaw = positionsMm;
     if (positionsMm === undefined) {
       reportMissing('lacingHoles.positionsMm');
     } else if (!Array.isArray(positionsMm)) {
@@ -270,6 +391,8 @@ export function validateCardProfile(input: unknown): Violation[] {
 
   // Rule 7: exactly two distinct peg holes, each with its own position and diameter (R2.6, R2.7).
   const pegHoles = own(input, 'pegHoles');
+  let pegPositions: Array<PointMm | undefined> = [];
+  let pegDiameters: Array<number | undefined> = [];
   if (pegHoles === undefined) {
     reportMissing('pegHoles');
   } else if (!Array.isArray(pegHoles)) {
@@ -286,6 +409,8 @@ export function validateCardProfile(input: unknown): Violation[] {
     }
     const positions: Array<PointMm | undefined> = [];
     const diameters: Array<number | undefined> = [];
+    pegPositions = positions;
+    pegDiameters = diameters;
     for (let pegIndex = 0; pegIndex < pegHoles.length; pegIndex++) {
       const pegHole: unknown = pegHoles[pegIndex];
       const location = `pegHoles[${pegIndex}]`;
@@ -324,6 +449,41 @@ export function validateCardProfile(input: unknown): Violation[] {
     }
   }
 
+  // Rule 9: no two holes may overlap or touch (R2.11).
+  const lacingPositions: PointMm[] = [];
+  if (Array.isArray(lacingPositionsRaw)) {
+    // Entries that are not points get a NaN centre and are skipped by findHoleOverlaps.
+    for (const entry of lacingPositionsRaw as unknown[]) {
+      const x = isRecord(entry) ? own(entry, 'x') : undefined;
+      const y = isRecord(entry) ? own(entry, 'y') : undefined;
+      lacingPositions.push(isFiniteNumber(x) && isFiniteNumber(y) ? { x, y } : { x: Number.NaN, y: Number.NaN });
+    }
+  }
+  const grid =
+    hookRows !== undefined &&
+    hookColumns !== undefined &&
+    holeDiameterMm !== undefined &&
+    horizontalPitchMm !== undefined &&
+    verticalPitchMm !== undefined &&
+    firstHoleCentreMm !== undefined
+      ? { hookRows, hookColumns, holeDiameterMm, horizontalPitchMm, verticalPitchMm, firstHoleCentreMm }
+      : undefined;
+  const overlaps = findHoleOverlaps(
+    grid,
+    lacingDiameterMm,
+    lacingPositions,
+    pegPositions.length === 2 ? pegPositions : [],
+    pegDiameters,
+  );
+  for (const overlap of overlaps) {
+    report({
+      kind: 'holes-overlap',
+      location: `${overlap.first} and ${overlap.second}`,
+      message: `The holes ${overlap.first} and ${overlap.second} overlap or touch: their centres are ${overlap.distanceMm} mm apart and their radii add up to ${overlap.radiiSumMm} mm.`,
+      expected: overlap.radiiSumMm,
+      actual: overlap.distanceMm,
+    });
+  }
   return violations;
 }
 

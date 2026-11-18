@@ -54,6 +54,7 @@ Acceptance criteria are referenced as `R<requirement>.<criterion>` (for example 
 8. IF the two peg hole diameters differ by less than 10% of the larger diameter THEN validation SHALL report a violation naming both peg holes, because the reader could not reliably tell which way up the card is. Equal diameters are included.
 9. WHEN the value passed to profile validation is not an object, or is missing fields, THEN validation SHALL report violations and SHALL NOT throw.
 10. IF the profile's `name` is present but is not a string THEN validation SHALL report a violation naming the `name` field.
+11. IF the disc of any hole overlaps or touches the disc of any other hole, THEN validation SHALL report a violation naming both holes. The holes compared are every hook position, every lacing hole and both peg holes. Two discs overlap or touch when the distance between their centres is less than or equal to the sum of their radii. (Added by a user-approved requirement change: a profile with two lacing holes about 0.87 mm apart and 1.5 mm in diameter was accepted before.)
 
 ### Requirement 3: Validate a CardGrid against a CardProfile
 

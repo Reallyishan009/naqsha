@@ -212,6 +212,12 @@ Precondition for `validateCardGrid`, `encodeCardGrid` and `decodeEnds`: `profile
 6. `endOrder` (R2.5): must be `hookRows` arrays of `hookColumns` integers (`end-order-shape`). Then every value must lie in `0 .. hookRows*hookColumns-1` (`end-order-out-of-range`, located at the cell), appear at most once (`end-order-duplicate`, located at the second cell), and every end index must appear (`end-order-unassigned`, located at the end index).
 7. Peg holes (R2.6, R2.7): each must have `positionMm` with finite `x` and `y`, and `diameterMm`. The list must have length 2 (`peg-hole-count`) and the two positions must differ (`peg-holes-coincide`).
 8. Peg diameter difference (R2.8): with `a`, `b` the two diameters, report `peg-diameters-too-close` when `|a - b| < 0.1 * max(a, b) * (1 - 1e-9)`. The `1e-9` factor stops floating-point error from rejecting a difference of exactly 10% (for example 2.7 and 3.0). Equal diameters are included.
+9. Hole overlap (R2.11): runs only when the fields it needs are valid. A hole is a disc with a centre and a radius (half of its diameter). A violation of kind `holes-overlap` is reported for each pair whose centre distance is `<= ra + rb`. The message and the `location` name both holes, as `hook[r][c]`, `lacing[i]` or `pegHoles[i]`. The compared groups are the hook positions, the lacing holes and the two peg holes, within each group and between groups. The check is bounded, not all-pairs:
+   - Hook against hook: the hook positions form a regular grid, so the closest two are horizontal neighbours (distance `horizontalPitchMm`, only when `hookColumns >= 2`) or vertical neighbours (distance `verticalPitchMm`, only when `hookRows >= 2`). Any other pair is at least as far apart as one of these. One violation is reported per axis, naming `hook[0][0]` and its neighbour.
+   - Lacing against lacing: all lacing holes share one diameter, so the holes are sorted by x and each is compared only with the following holes whose x lies within one diameter.
+   - Peg or lacing hole against hook: only the grid columns and rows within `r + hookRadius` of the disc (plus one cell of rounding slack) are tested, each with the exact distance test. Every overlapping hook position is reported, up to `MAX_UNASSIGNED_VIOLATIONS` for the whole profile.
+   - Peg against peg, peg against lacing: tested directly.
+   Property 87 compares this bounded check with a brute-force all-pairs check.
 
 ### Reader types (`src/reader/types.ts`)
 
@@ -1130,6 +1136,15 @@ Test file: `tests/codec/validateCardProfile.test.ts`. For any valid profile with
 
 **Validates: Requirements 2.10**
 
+### Property 85: R2.11 a profile with two overlapping or touching holes is reported with both hole names.
+Test file: `tests/codec/validateCardProfile.test.ts`. For any valid profile with the lacing hole diameter and a lacing hole pair, a peg hole and a lacing hole, or the horizontal or vertical pitch set so that two discs overlap or touch (distance between centres `<=` sum of radii), validation reports a `holes-overlap` violation whose message names both holes, and `parseCardProfile` is not `ok`. Example tests cover two lacing holes 0.87 mm apart with 1.5 mm diameter, exactly touching discs (rejected), and discs 0.001 mm apart (accepted).
+**Validates: Requirements 2.11**
+### Property 86: R2.11 a profile with a lacing hole moved onto another hole is rejected.
+Test file: `tests/codec/validateCardProfile.test.ts`. For any valid profile and any other hole (a hook position, another lacing hole or a peg hole), moving a lacing hole to that hole's centre makes validation report a `holes-overlap` violation naming the moved lacing hole and the other hole.
+**Validates: Requirements 2.11**
+### Property 87: R2.11 the bounded overlap check reports exactly the pairs a brute-force all-pairs check reports.
+Test file: `tests/codec/validateCardProfile.test.ts`. For small generated profiles (positions and diameters in multiples of 0.25 mm so the arithmetic is exact, with holes placed densely so overlaps are common), the set of `holes-overlap` violations other than hook against hook equals the set of overlapping pairs found by comparing every pair of holes, and validation reports a hook against hook violation exactly when some pair of hook positions overlaps.
+**Validates: Requirements 2.11**
 ### Fixture tests (examples, not properties)
 
 These tests check fixed files, so they are example tests and not fast-check properties.

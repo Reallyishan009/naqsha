@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import * as fc from 'fast-check';
-import type { CardGrid, CardProfile, Ends } from '../../src/codec/types.ts';
+import type { CardGrid, CardProfile, Ends, PointMm } from '../../src/codec/types.ts';
 
 /** The row-major end order: endOrder[hookRow][hookColumn] = hookRow * hookColumns + hookColumn. */
 export function rowMajorEndOrder(hookRows: number, hookColumns: number): number[][] {
@@ -21,6 +21,11 @@ export function endOrderArbitrary(hookRows: number, hookColumns: number): fc.Arb
   );
 }
 
+/**
+ * Minimum clear gap between the edges of any two holes, as a fraction of the punched hole diameter (R2.11 only
+ * rejects overlapping or touching holes; the generator keeps a margin so a printed card reads reliably).
+ */
+const MIN_HOLE_GAP_FRACTION = 0.5;
 /** Edge clearance, in mm, between a peg hole and the card edge, and between a peg hole and a punched hole. */
 const PEG_CLEARANCE_MM = 1.5;
 
@@ -42,7 +47,20 @@ type ProfileDraft = {
 };
 
 /**
- * Builds a valid profile by construction, with no filtering.
+ * Keeps each lacing hole position only when it is at least `minCentreSpacingMm` from every position kept before it,
+ * so the lacing holes keep a clear gap (R2.11). Positions are dropped, never moved, so the count may shrink.
+ */
+function spacedLacingPositions(positions: PointMm[], minCentreSpacingMm: number): PointMm[] {
+  const kept: PointMm[] = [];
+  for (const position of positions) {
+    if (kept.every((other) => Math.hypot(other.x - position.x, other.y - position.y) >= minCentreSpacingMm)) {
+      kept.push(position);
+    }
+  }
+  return kept;
+}
+/**
+ * Builds a valid profile by construction, with no filtering of whole profiles.
  *
  * Layout: a band of side margin on the left and right of the hook grid holds one peg hole each, centred in the
  * band, so it clears the card edge and the nearest punched hole by at least 1.5 mm. A band above and below the
@@ -54,6 +72,9 @@ type ProfileDraft = {
  */
 function buildProfile(draft: ProfileDraft): CardProfile {
   const holeRadiusMm = draft.holeDiameterMm / 2;
+  const minCentreSpacingMm = draft.holeDiameterMm * (1 + MIN_HOLE_GAP_FRACTION);
+  const horizontalPitchMm = Math.max(draft.horizontalPitchMm, minCentreSpacingMm);
+  const verticalPitchMm = Math.max(draft.verticalPitchMm, minCentreSpacingMm);
   const smallPegDiameterMm = draft.holeDiameterMm * draft.smallPegFactor;
   const bigPegDiameterMm = smallPegDiameterMm * draft.pegRatioInverse;
   const sideMarginMm = bigPegDiameterMm + 2 * PEG_CLEARANCE_MM + draft.sideMarginExtraMm;
@@ -61,8 +82,8 @@ function buildProfile(draft: ProfileDraft): CardProfile {
 
   const firstHoleX = sideMarginMm + holeRadiusMm;
   const firstHoleY = bandMarginMm + holeRadiusMm;
-  const gridRightMm = firstHoleX + (draft.hookColumns - 1) * draft.horizontalPitchMm + holeRadiusMm;
-  const gridBottomMm = firstHoleY + (draft.hookRows - 1) * draft.verticalPitchMm + holeRadiusMm;
+  const gridRightMm = firstHoleX + (draft.hookColumns - 1) * horizontalPitchMm + holeRadiusMm;
+  const gridBottomMm = firstHoleY + (draft.hookRows - 1) * verticalPitchMm + holeRadiusMm;
   const cardWidthMm = gridRightMm + sideMarginMm;
   const cardHeightMm = gridBottomMm + bandMarginMm;
 
@@ -85,8 +106,8 @@ function buildProfile(draft: ProfileDraft): CardProfile {
     hookRows: draft.hookRows,
     hookColumns: draft.hookColumns,
     holeDiameterMm: draft.holeDiameterMm,
-    horizontalPitchMm: draft.horizontalPitchMm,
-    verticalPitchMm: draft.verticalPitchMm,
+    horizontalPitchMm,
+    verticalPitchMm,
     firstHoleCentreMm: { x: firstHoleX, y: firstHoleY },
     endOrder: draft.endOrder,
     pegHoles: [
@@ -95,10 +116,13 @@ function buildProfile(draft: ProfileDraft): CardProfile {
     ],
     lacingHoles: {
       diameterMm: draft.holeDiameterMm,
-      positionsMm: draft.lacingHoles.map(({ fraction, atTop }) => ({
-        x: firstHoleX + fraction * (gridRightMm - firstHoleX),
-        y: atTop ? bandMarginMm / 2 : cardHeightMm - bandMarginMm / 2,
-      })),
+      positionsMm: spacedLacingPositions(
+        draft.lacingHoles.map(({ fraction, atTop }) => ({
+          x: firstHoleX + fraction * (gridRightMm - firstHoleX),
+          y: atTop ? bandMarginMm / 2 : cardHeightMm - bandMarginMm / 2,
+        })),
+        minCentreSpacingMm,
+      ),
     },
   };
 }

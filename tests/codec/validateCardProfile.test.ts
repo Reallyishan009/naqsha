@@ -7,7 +7,7 @@ import {
   validateCardProfile,
   type CardProfile,
 } from '../../src/codec/index.ts';
-import { REMOVE, mutateProfile, profileArbitrary } from '../support/profiles.ts';
+import { REMOVE, mutateProfile, profileArbitrary, rowMajorEndOrder } from '../support/profiles.ts';
 
 const demoProfile = JSON.parse(
   readFileSync(new URL('../../public/profiles/demo-12x16.json', import.meta.url), 'utf8'),
@@ -75,7 +75,9 @@ describe('validateCardProfile', () => {
 
   it('R2.8 peg hole diameters that differ by at least 11% of the larger are accepted', () => {
     // The generated profile is otherwise valid. Validation does not compare the peg hole diameters with the
-    // punched hole diameter, so overriding the two diameters keeps the profile valid.
+    // punched hole diameter. Since R2.11, a peg hole of up to 20 mm would overlap other holes, so the two peg
+    // holes are moved far from the card (validation does not check where a peg hole lies) and the diameter range
+    // stays unchanged. Only the peg positions differ from before.
     fc.assert(
       fc.property(
         profileArbitrary,
@@ -84,7 +86,12 @@ describe('validateCardProfile', () => {
         fc.boolean(),
         (profile, larger, ratio, largerFirst) => {
           const smaller = larger * ratio;
-          const candidate = largerFirst ? withPegDiameters(profile, larger, smaller) : withPegDiameters(profile, smaller, larger);
+          const resized = largerFirst ? withPegDiameters(profile, larger, smaller) : withPegDiameters(profile, smaller, larger);
+          const candidate = mutateProfile(
+            mutateProfile(resized as CardProfile, ['pegHoles', 0, 'positionMm'], { x: -1000, y: 0 }) as CardProfile,
+            ['pegHoles', 1, 'positionMm'],
+            { x: -2000, y: 0 },
+          );
           expect(validateCardProfile(candidate)).toEqual([]);
         },
       ),
@@ -278,5 +285,201 @@ describe('validateCardProfile', () => {
         expect(parseCardProfile(candidate).ok).toBe(false);
       }),
     );
+  });
+
+  describe('R2.11 holes that overlap or touch', () => {
+    const overlaps = (candidate: unknown) =>
+      validateCardProfile(candidate).filter((violation) => violation.kind === 'holes-overlap');
+    const namesBoth = (candidate: unknown, a: string, b: string): boolean =>
+      overlaps(candidate).some(({ location }) => location === `${a} and ${b}` || location === `${b} and ${a}`);
+
+    it('R2.11 the demo profile has no overlapping holes', () => {
+      expect(overlaps(demoProfile)).toEqual([]);
+    });
+    it('R2.11 two lacing holes 0.87 mm apart with a 1.5 mm diameter are reported naming both', () => {
+      const candidate = mutateProfile(
+        mutateProfile(demoProfile, ['lacingHoles', 'diameterMm'], 1.5) as CardProfile,
+        ['lacingHoles', 'positionsMm'],
+        [{ x: 15, y: 2 }, { x: 15.87, y: 2 }],
+      );
+      expect(namesBoth(candidate, 'lacing[0]', 'lacing[1]')).toBe(true);
+      expect(parseCardProfile(candidate).ok).toBe(false);
+    });
+    it('R2.11 lacing holes exactly touching are rejected and lacing holes 0.001 mm apart are accepted', () => {
+      const withSecondLacingX = (x: number) => mutateProfile(demoProfile, ['lacingHoles', 'positionsMm', 1, 'x'], x);
+      const first = demoProfile.lacingHoles.positionsMm[0]!;
+      const diameter = demoProfile.lacingHoles.diameterMm;
+      expect(namesBoth(withSecondLacingX(first.x + diameter), 'lacing[0]', 'lacing[1]')).toBe(true);
+      expect(validateCardProfile(withSecondLacingX(first.x + diameter + 0.001))).toEqual([]);
+    });
+    it('R2.11 a peg hole moved onto a hook position is reported naming both', () => {
+      const candidate = mutateProfile(demoProfile, ['pegHoles', 0, 'positionMm'], demoProfile.firstHoleCentreMm);
+      expect(namesBoth(candidate, 'pegHoles[0]', 'hook[0][0]')).toBe(true);
+    });
+    it('R2.11 a horizontal pitch equal to the hole diameter is reported and one slightly larger is accepted', () => {
+      const touching = mutateProfile(demoProfile, ['horizontalPitchMm'], demoProfile.holeDiameterMm);
+      expect(namesBoth(touching, 'hook[0][0]', 'hook[0][1]')).toBe(true);
+      const clear = mutateProfile(demoProfile, ['horizontalPitchMm'], demoProfile.holeDiameterMm + 0.001);
+      expect(validateCardProfile(clear)).toEqual([]);
+    });
+    it('R2.11 a vertical pitch equal to the hole diameter is reported naming the vertical neighbours', () => {
+      const touching = mutateProfile(demoProfile, ['verticalPitchMm'], demoProfile.holeDiameterMm);
+      expect(namesBoth(touching, 'hook[0][0]', 'hook[1][0]')).toBe(true);
+    });
+
+    it('R2.11 a profile with two overlapping or touching holes is reported with both hole names', () => {
+      const scenario = fc.oneof(
+        fc.record({ kind: fc.constant('lacing-lacing' as const), t: fc.double({ min: 0, max: 1, noNaN: true }) }),
+        fc.record({ kind: fc.constant('peg-lacing' as const), t: fc.double({ min: 0, max: 1, noNaN: true }) }),
+        fc.record({ kind: fc.constant('hook-pitch' as const), t: fc.double({ min: 0.01, max: 1, noNaN: true }) }),
+      );
+      fc.assert(
+        fc.property(profileArbitrary, scenario, (profile, { kind, t }) => {
+          const d = profile.holeDiameterMm;
+          let candidate: unknown;
+          let a: string;
+          let b: string;
+          if (kind === 'lacing-lacing') {
+            const origin = profile.firstHoleCentreMm;
+            candidate = mutateProfile(profile, ['lacingHoles', 'positionsMm'], [
+              origin,
+              { x: origin.x + t * d, y: origin.y },
+            ]);
+            [a, b] = ['lacing[0]', 'lacing[1]'];
+          } else if (kind === 'peg-lacing') {
+            const peg = profile.pegHoles[0];
+            const reach = (peg.diameterMm + profile.lacingHoles.diameterMm) / 2;
+            candidate = mutateProfile(profile, ['lacingHoles', 'positionsMm'], [
+              { x: peg.positionMm.x + t * reach, y: peg.positionMm.y },
+            ]);
+            [a, b] = ['pegHoles[0]', 'lacing[0]'];
+          } else {
+            candidate = mutateProfile(profile, ['horizontalPitchMm'], t * d);
+            [a, b] = ['hook[0][0]', 'hook[0][1]'];
+          }
+          expect(namesBoth(candidate, a, b)).toBe(true);
+          expect(parseCardProfile(candidate).ok).toBe(false);
+        }),
+      );
+    });
+
+    it('R2.11 a profile with a lacing hole moved onto another hole is rejected', () => {
+      fc.assert(
+        fc.property(
+          profileArbitrary,
+          fc.integer({ min: 0, max: 3 }),
+          fc.nat(),
+          fc.nat(),
+          (profile, targetKind, rowSeed, columnSeed) => {
+            const hookRow = rowSeed % profile.hookRows;
+            const hookColumn = columnSeed % profile.hookColumns;
+            const secondLacing = { x: profile.firstHoleCentreMm.x, y: profile.firstHoleCentreMm.y - 1 };
+            const target =
+              targetKind === 0
+                ? {
+                    name: `hook[${hookRow}][${hookColumn}]`,
+                    centre: {
+                      x: profile.firstHoleCentreMm.x + hookColumn * profile.horizontalPitchMm,
+                      y: profile.firstHoleCentreMm.y + hookRow * profile.verticalPitchMm,
+                    },
+                  }
+                : targetKind === 3
+                  ? { name: 'lacing[1]', centre: secondLacing }
+                  : { name: `pegHoles[${targetKind - 1}]`, centre: profile.pegHoles[targetKind - 1]!.positionMm };
+            const candidate = mutateProfile(profile, ['lacingHoles', 'positionsMm'], [
+              { x: target.centre.x, y: target.centre.y },
+              secondLacing,
+            ]);
+            expect(namesBoth(candidate, 'lacing[0]', target.name)).toBe(true);
+            expect(parseCardProfile(candidate).ok).toBe(false);
+          },
+        ),
+      );
+    });
+
+    it('R2.11 the bounded overlap check reports exactly the pairs a brute-force all-pairs check reports', () => {
+      const quarter = (min: number, max: number) => fc.integer({ min: min * 4, max: max * 4 }).map((n) => n / 4);
+      const point = fc.record({ x: quarter(0, 14), y: quarter(0, 14) });
+      const dense = fc
+        .record({
+          hookRows: fc.integer({ min: 1, max: 4 }),
+          hookColumns: fc.integer({ min: 1, max: 4 }),
+          holeDiameterMm: quarter(0.5, 3),
+          horizontalPitchMm: quarter(0.5, 4),
+          verticalPitchMm: quarter(0.5, 4),
+          firstHoleCentreMm: point,
+          lacingDiameterMm: quarter(0.5, 3),
+          lacingPositions: fc.array(point, { maxLength: 6 }),
+          pegPositions: fc.tuple(point, point),
+          pegDiameters: fc.tuple(quarter(0.5, 4), quarter(0.5, 4)),
+        })
+        .map((draft): CardProfile => ({
+          name: 'dense',
+          cardWidthMm: 100,
+          cardHeightMm: 100,
+          hookRows: draft.hookRows,
+          hookColumns: draft.hookColumns,
+          holeDiameterMm: draft.holeDiameterMm,
+          horizontalPitchMm: draft.horizontalPitchMm,
+          verticalPitchMm: draft.verticalPitchMm,
+          firstHoleCentreMm: draft.firstHoleCentreMm,
+          endOrder: rowMajorEndOrder(draft.hookRows, draft.hookColumns),
+          pegHoles: [
+            { positionMm: draft.pegPositions[0], diameterMm: draft.pegDiameters[0] },
+            { positionMm: draft.pegPositions[1], diameterMm: draft.pegDiameters[1] },
+          ],
+          lacingHoles: { diameterMm: draft.lacingDiameterMm, positionsMm: draft.lacingPositions },
+        }));
+      type Hole = { name: string; hook: boolean; x: number; y: number; r: number };
+      const allHoles = (profile: CardProfile): Hole[] => {
+        const holes: Hole[] = [];
+        for (let row = 0; row < profile.hookRows; row++) {
+          for (let column = 0; column < profile.hookColumns; column++) {
+            holes.push({
+              name: `hook[${row}][${column}]`,
+              hook: true,
+              x: profile.firstHoleCentreMm.x + column * profile.horizontalPitchMm,
+              y: profile.firstHoleCentreMm.y + row * profile.verticalPitchMm,
+              r: profile.holeDiameterMm / 2,
+            });
+          }
+        }
+        profile.lacingHoles.positionsMm.forEach((centre, index) =>
+          holes.push({ name: `lacing[${index}]`, hook: false, x: centre.x, y: centre.y, r: profile.lacingHoles.diameterMm / 2 }),
+        );
+        profile.pegHoles.forEach((peg, index) =>
+          holes.push({ name: `pegHoles[${index}]`, hook: false, x: peg.positionMm.x, y: peg.positionMm.y, r: peg.diameterMm / 2 }),
+        );
+        return holes;
+      };
+      const pairKey = (a: string, b: string): string => [a, b].sort().join(' and ');
+      fc.assert(
+        fc.property(dense, (profile) => {
+          const holes = allHoles(profile);
+          const expectedPairs = new Set<string>();
+          let expectedHookPair = false;
+          for (let i = 0; i < holes.length; i++) {
+            for (let j = i + 1; j < holes.length; j++) {
+              const a = holes[i]!;
+              const b = holes[j]!;
+              if (Math.hypot(a.x - b.x, a.y - b.y) > a.r + b.r) continue;
+              if (a.hook && b.hook) expectedHookPair = true;
+              else expectedPairs.add(pairKey(a.name, b.name));
+            }
+          }
+          const reported = validateCardProfile(profile).filter((violation) => violation.kind === 'holes-overlap');
+          const reportedPairs = new Set<string>();
+          let reportedHookPair = false;
+          for (const { location } of reported) {
+            const [a, b] = location.split(' and ') as [string, string];
+            if (a.startsWith('hook') && b.startsWith('hook')) reportedHookPair = true;
+            else reportedPairs.add(pairKey(a, b));
+          }
+          expect([...reportedPairs].sort()).toEqual([...expectedPairs].sort());
+          expect(reportedHookPair).toBe(expectedHookPair);
+          expect(reported.length).toBe(reportedPairs.size + (reportedHookPair ? reported.filter(({ location }) => location.split(' and ').every((name) => name.startsWith('hook'))).length : 0));
+        }),
+      );
+    });
   });
 });
