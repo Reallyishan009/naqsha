@@ -30,6 +30,7 @@ export type ReadFailure =
   | { reason: 'invalid-image'; detail: string }
   | { reason: 'peg-holes-not-found' }
   | { reason: 'ambiguous-orientation'; separation: number }
+  | { reason: 'resolution-too-low'; holeDiameterPx: number; minimumPx: number }
   | { reason: 'card-outside-image' };
 
 export type ReadResult =
