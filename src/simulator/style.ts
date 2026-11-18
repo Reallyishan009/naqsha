@@ -2,6 +2,11 @@
 export const BACKGROUND_COLOUR = '#efe9dd';
 export const ZARI_GOLD_COLOUR = '#c9a227';
 export const ZARI_SILVER_COLOUR = '#b8bcc4';
+/** Zari highlight colours, drawn unshaded (R5.5). */
+export const ZARI_GOLD_HIGHLIGHT_COLOUR = '#fff2c4';
+export const ZARI_SILVER_HIGHLIGHT_COLOUR = '#ffffff';
+/** A zari weft cell gets a highlight pixel in its centre row at every absolute column x with x mod 4 = 0. */
+export const ZARI_HIGHLIGHT_COLUMN_STEP = 4;
 
 /**
  * Shade factor for each position 0..t-1 across a thread t px wide or tall: edges 160, centre about 255.

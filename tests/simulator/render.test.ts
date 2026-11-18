@@ -7,7 +7,9 @@ import {
   renderFrame,
   shadeTable,
   ZARI_GOLD_COLOUR,
+  ZARI_GOLD_HIGHLIGHT_COLOUR,
   ZARI_SILVER_COLOUR,
+  ZARI_SILVER_HIGHLIGHT_COLOUR,
 } from '../../src/simulator/index.ts';
 import type { PreparedCloth, RenderSettings, SimImage, Weft } from '../../src/simulator/index.ts';
 import { profileArbitrary } from '../support/profiles.ts';
@@ -45,6 +47,11 @@ function shaded(hex: string, shade: number): Rgb {
 function weftHex(weft: Weft): string {
   if (weft.kind === 'plain') return weft.colour;
   return weft.tone === 'gold' ? ZARI_GOLD_COLOUR : ZARI_SILVER_COLOUR;
+}
+
+function highlightHex(weft: Weft): string | undefined {
+  if (weft.kind === 'plain') return undefined;
+  return weft.tone === 'gold' ? ZARI_GOLD_HIGHLIGHT_COLOUR : ZARI_SILVER_HIGHLIGHT_COLOUR;
 }
 
 function sameColour(a: Rgb, b: Rgb): boolean {
@@ -85,9 +92,58 @@ describe('renderFrame', () => {
             const x = col * t + centre;
             if (x >= image.width) break;
             const lifted = row.lift[col % cloth.baseEnds] === 1;
-            const expected = lifted ? shaded(settings.warpColour, shade) : shaded(weftHex(weft), shade);
+            let expected = lifted ? shaded(settings.warpColour, shade) : shaded(weftHex(weft), shade);
+            // A zari weft cell has an unshaded highlight on its centre row where x mod 4 = 0 (R5.5).
+            const highlight = highlightHex(weft);
+            if (!lifted && highlight !== undefined && x % 4 === 0) expected = parseColour(highlight)!;
             expect(pixelAt(image, x, y)).toEqual(expected);
           }
+        }
+      }),
+      { numRuns: IMAGE_RUNS, seed: IMAGE_SEED },
+    );
+  });
+
+  it('R5.5 zari picks show the zari highlight and plain picks never do', () => {
+    fc.assert(
+      fc.property(profileAndSlots, renderSettingsArbitrary, fc.nat(), ({ profile, samples }, settings, seedPick) => {
+        const cloth = prepared(profile, samples.map((sample) => sample.slot));
+        const p = seedPick % (cloth.picks.length + 1);
+        const image = rest(cloth, settings, p);
+        const t = settings.threadSizePx;
+        const centre = Math.floor(t / 2);
+        const fellY = image.height - Math.min(6 * t, Math.floor(image.height / 3));
+        const clothWidth = Math.min(image.width, cloth.baseEnds * settings.repeat * t);
+        for (let rowIndex = 0; rowIndex * t < fellY; rowIndex++) {
+          const pick = p - 1 - rowIndex;
+          if (pick < 0) break;
+          const row = cloth.picks[pick];
+          if (row.kind !== 'woven') continue;
+          const weft = settings.weftPlan[pick % settings.weftPlan.length];
+          const highlight = highlightHex(weft);
+          const top = fellY - (rowIndex + 1) * t;
+          let wideWeftCell = false;
+          let highlightSeen = false;
+          for (let cell = 0; cell * t < clothWidth; cell++) {
+            if (row.lift[cell % cloth.baseEnds] === 1) continue;
+            const x0 = cell * t;
+            const xEnd = Math.min(x0 + t, clothWidth);
+            wideWeftCell = wideWeftCell || xEnd - x0 >= 4;
+            for (let withinRow = 0; withinRow < t; withinRow++) {
+              const y = top + withinRow;
+              if (y < 0) continue;
+              const first = pixelAt(image, x0, y);
+              for (let x = x0; x < xEnd; x++) {
+                const pixel = pixelAt(image, x, y);
+                if (highlight === undefined) {
+                  expect(pixel).toEqual(first); // plain weft cell: constant along x
+                } else if (sameColour(pixel, parseColour(highlight)!)) {
+                  highlightSeen = true;
+                }
+              }
+            }
+          }
+          if (highlight !== undefined && wideWeftCell && top + centre >= 0) expect(highlightSeen).toBe(true);
         }
       }),
       { numRuns: IMAGE_RUNS, seed: IMAGE_SEED },

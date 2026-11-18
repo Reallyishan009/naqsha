@@ -2,7 +2,10 @@ import { parseColour } from './settings.ts';
 import {
   BACKGROUND_COLOUR,
   ZARI_GOLD_COLOUR,
+  ZARI_GOLD_HIGHLIGHT_COLOUR,
+  ZARI_HIGHLIGHT_COLUMN_STEP,
   ZARI_SILVER_COLOUR,
+  ZARI_SILVER_HIGHLIGHT_COLOUR,
   packRgb,
   packShaded,
   shadeTable,
@@ -36,6 +39,13 @@ function weftBaseColour(weft: Weft): Rgb {
   return parseColour(hex) ?? [0, 0, 0];
 }
 
+/** The unshaded highlight colour of a zari weft, packed; undefined for a plain weft. */
+function zariHighlight(weft: Weft): number | undefined {
+  if (weft.kind !== 'zari') return undefined;
+  const hex = weft.tone === 'gold' ? ZARI_GOLD_HIGHLIGHT_COLOUR : ZARI_SILVER_HIGHLIGHT_COLOUR;
+  return packRgb(...(parseColour(hex) ?? [0, 0, 0]));
+}
+
 /**
  * Draws one frame as RGBA bytes (R8.1: same input, same bytes). Rest frames only for now, see readFrame.
  * Never throws for a bad frame (R7.5). Settings and cloth are expected to come from parseRenderSettings and prepareCloth.
@@ -61,6 +71,9 @@ export function renderFrame(cloth: PreparedCloth, settings: RenderSettings, fram
     const rgb = weftBaseColour(weft);
     return shade.map((s) => packShaded(rgb, s));
   });
+
+  const highlightByWeft = settings.weftPlan.map(zariHighlight);
+  const centreRow = Math.floor(t / 2);
 
   const baseEnds = cloth.baseEnds;
   const clothWidth = Math.min(width, baseEnds * settings.repeat * t);
@@ -89,7 +102,9 @@ export function renderFrame(cloth: PreparedCloth, settings: RenderSettings, fram
     const row = cloth.picks[pick];
     if (row === undefined || row.kind !== 'woven') continue; // gap picks stay background until task 2.1
     const withinRow = y - (fellY - (rowIndex + 1) * t);
-    const weftRow = weftByRow[pick % weftByRow.length][withinRow];
+    const weftIndex = pick % weftByRow.length;
+    const weftRow = weftByRow[weftIndex][withinRow];
+    const highlight = withinRow === centreRow ? highlightByWeft[weftIndex] : undefined;
     const rowStart = y * width;
     for (let cell = 0, x0 = 0; x0 < clothWidth; cell++, x0 += t) {
       const xEnd = Math.min(x0 + t, clothWidth);
@@ -97,6 +112,10 @@ export function renderFrame(cloth: PreparedCloth, settings: RenderSettings, fram
         for (let x = x0; x < xEnd; x++) pixels[rowStart + x] = warpByColumn[x - x0];
       } else {
         pixels.fill(weftRow, rowStart + x0, rowStart + xEnd);
+        if (highlight !== undefined) {
+          const first = Math.ceil(x0 / ZARI_HIGHLIGHT_COLUMN_STEP) * ZARI_HIGHLIGHT_COLUMN_STEP;
+          for (let x = first; x < xEnd; x += ZARI_HIGHLIGHT_COLUMN_STEP) pixels[rowStart + x] = highlight;
+        }
       }
     }
   }
