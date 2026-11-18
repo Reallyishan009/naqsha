@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import * as fc from 'fast-check';
 import { encodeCardGrid, parseCardProfile, validateCardGrid, validateCardProfile } from '../../src/codec/index.ts';
 import type { CardProfile, Pattern } from '../../src/codec/index.ts';
-import { bmpLayout, exportPatternBmp } from '../../src/exporter/index.ts';
+import { bmpLayout, exportPatternBmp, readPatternBmp } from '../../src/exporter/index.ts';
 import { exportOptionsArbitrary, patternArbitrary } from '../support/patterns.ts';
 import { REMOVE, mutateProfile, profileArbitrary, rowMajorEndOrder } from '../support/profiles.ts';
 
@@ -285,6 +285,56 @@ describe('exportPatternBmp pixel placement, determinism and totality', () => {
     fc.assert(
       fc.property(scenarioArbitrary, fc.anything(), ({ profile, pattern }, options) => {
         isResult(exportPatternBmp(profile, pattern, options));
+      }),
+    );
+  });
+});
+
+describe('exportPatternBmp cut-last properties', () => {
+  const scenarioArbitrary = profileArbitrary.chain((profile) =>
+    fc.record({ profile: fc.constant(profile), pattern: patternArbitrary(profile), options: exportOptionsArbitrary }),
+  );
+
+  // Property 4 lives here for both calls: it exports, then reads the exported bytes.
+  it('R1.6 exporting and reading do not change their inputs', () => {
+    fc.assert(
+      fc.property(scenarioArbitrary, ({ profile, pattern, options }) => {
+        const profileBefore = structuredClone(profile);
+        const patternBefore = structuredClone(pattern);
+        const optionsBefore = structuredClone(options);
+        const result = exportPatternBmp(profile, pattern, options);
+        expect(profile).toEqual(profileBefore);
+        expect(pattern).toEqual(patternBefore);
+        expect(options).toEqual(optionsBefore);
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        const bytesBefore = result.bytes.slice();
+        const readOptionsBefore = structuredClone(options);
+        readPatternBmp(result.bytes, profile, options);
+        expect(profile).toEqual(profileBefore);
+        expect(options).toEqual(readOptionsBefore);
+        expect(Array.from(result.bytes)).toEqual(Array.from(bytesBefore));
+      }),
+    );
+  });
+
+  it('R3.3 padding bytes and unused bits are zero', () => {
+    fc.assert(
+      fc.property(scenarioArbitrary, ({ profile, pattern, options }) => {
+        const result = exportPatternBmp(profile, pattern, options);
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        const bytes = result.bytes;
+        const width = profile.hookRows * profile.hookColumns;
+        const height = pattern.length;
+        const layout = bmpLayout(width, height, options.bitDepth);
+        const pixelBytes = options.bitDepth === 1 ? Math.ceil(width / 8) : width;
+        const unusedBits = options.bitDepth === 1 ? pixelBytes * 8 - width : 0;
+        for (let s = 0; s < height; s++) {
+          const rowStart = layout.pixelOffset + s * layout.rowStride;
+          for (let i = pixelBytes; i < layout.rowStride; i++) expect(bytes[rowStart + i]).toBe(0);
+          if (unusedBits > 0) expect(bytes[rowStart + pixelBytes - 1]! & ((1 << unusedBits) - 1)).toBe(0);
+        }
       }),
     );
   });

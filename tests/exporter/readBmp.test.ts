@@ -330,3 +330,34 @@ describe('readPatternBmp totality', () => {
     );
   });
 });
+
+describe('readPatternBmp padding', () => {
+  it('R6.6 / R3.3 setting every padding byte and unused bit does not change what is read', () => {
+    const [testCase] = fc.sample(caseArbitrary, { seed: 3, numRuns: 1 });
+    const width = testCase!.profile.hookRows * testCase!.profile.hookColumns;
+    const height = testCase!.pattern.length;
+    let flipped = 0;
+    for (const bitDepth of [1, 8] as const) {
+      const options = { ...testCase!.options, bitDepth };
+      const bytes = exported({ ...testCase!, options }).slice();
+      const before = readPatternBmp(bytes, testCase!.profile, options);
+      const layout = bmpLayout(width, height, bitDepth);
+      const pixelBytes = bitDepth === 1 ? Math.ceil(width / 8) : width;
+      const unusedBits = bitDepth === 1 ? pixelBytes * 8 - width : 0;
+      for (let s = 0; s < height; s++) {
+        const rowStart = layout.pixelOffset + s * layout.rowStride;
+        for (let i = pixelBytes; i < layout.rowStride; i++) {
+          bytes[rowStart + i] = 0xff;
+          flipped++;
+        }
+        if (unusedBits > 0) {
+          bytes[rowStart + pixelBytes - 1]! |= (1 << unusedBits) - 1;
+          flipped++;
+        }
+      }
+      expect(before.ok).toBe(true);
+      expect(readPatternBmp(bytes, testCase!.profile, options)).toEqual(before);
+    }
+    expect(flipped).toBeGreaterThan(0);
+  });
+});
