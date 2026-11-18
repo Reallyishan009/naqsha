@@ -89,6 +89,16 @@ export type PlaybackState =
 
 export type HookPosition = { hookRow: number; hookColumn: number };
 
+/** One marker over the card image: `filled` for a punched hole, `ring` for an unpunched hook position (R8.4). */
+export type HookMarker = {
+  hookRow: number;
+  hookColumn: number;
+  centrePx: { x: number; y: number };
+  shape: 'filled' | 'ring';
+  /** True when the position was toggled an odd number of times (R10.4). */
+  corrected: boolean;
+};
+
 export type ScanState =
   | { status: 'idle' }
   | { status: 'reading'; fileName: string }
