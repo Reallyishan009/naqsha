@@ -175,7 +175,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 9.4, 9.6, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 17.4, 17.5, 17.7_
 
-- [ ] 4. Checkpoint: measured accuracy on every fixture
+- [x] 4. Checkpoint: measured accuracy on every fixture
   - **Demo-essential.**
   - Files: `.kiro/specs/card-codec-and-reader/measurements.md`, a new record.
   - Run the accuracy test and record the real output for all six fixtures, including the noisy ones. For each fixture, record the hole accuracy, the mismatched positions, the measured versus expected tilt, the measured versus expected scale, the threshold, the number of candidate regions, the measured peg diameters and the separation q.
