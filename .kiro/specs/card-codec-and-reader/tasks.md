@@ -187,7 +187,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Each task adds properties to an existing test file. If a property fails, report its shrunk counterexample, seed and path, and say whether the code or the property is wrong (see `testing.md`).
   - _Requirements: 1.4, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 4.4, 5.1, 5.2, 5.3, 5.6, 5.7, 6.1, 6.2, 6.6, 7.1, 7.2, 7.4, 7.5, 8.1, 8.2, 8.5, 9.1, 9.2, 9.3, 9.5, 9.7, 10.1, 10.2, 10.3, 11.1, 11.2, 11.3, 11.4, 12.1, 12.2, 12.3, 12.4, 14.3, 14.4, 17.6, 17.8, 18.1, 18.2, 18.3, 18.5, 18.6, 18.7, 18.8, 19.1_
 
-- [ ] 5.1 CardProfile validation: integrity properties
+- [x] 5.1 CardProfile validation: integrity properties
   - Files: `tests/codec/validateCardProfile.test.ts`.
   - Add Properties 2, 7 and 9.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
@@ -207,7 +207,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 5.4 Encode and decode: rejection properties
+- [x] 5.4 Encode and decode: rejection properties
   - Files: `tests/codec/endsCodec.test.ts`.
   - Add Properties 22, 25 and 26.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
@@ -220,7 +220,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 4.1, 4.2, 4.4, 5.1, 5.6, 5.7_
 
-- [ ] 5.6 Pixel data and the Canvas 2D conversion
+- [x] 5.6 Pixel data and the Canvas 2D conversion
   - Files: `src/reader/canvasSource.ts`, `src/reader/index.ts`, `tests/reader/canvasSource.test.ts`, `tests/reader/pixelData.test.ts`.
   - Implement `loadPixelData` with an injectable `createCanvas`. The default uses `OffscreenCanvas` when available, otherwise a canvas element. Only `drawImage` and `getImageData` are used. This is the only file in `src/reader` that uses a browser API.
   - Add Property 33, using a fake canvas that records its calls. Add Property 31, which is **Cut last** because Property 32 already covers `isPixelData`.
@@ -234,7 +234,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 7.1, 7.2, 7.4, 7.5_
 
-- [ ] 5.8 Threshold: remaining properties
+- [x] 5.8 Threshold: remaining properties
   - Files: `tests/reader/threshold.test.ts`.
   - Add Property 40. Add Property 43, which is **Cut last**. (Property 39 was added in task 3.2.)
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
@@ -247,27 +247,37 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 9.1_
 
-- [ ] 5.10 Orientation: remaining properties
+- [x] 5.10 Orientation: remaining properties
   - Files: `tests/reader/orientation.test.ts`.
   - Add Property 51, the error budget, which is not cuttable. Add Properties 47, 48, 49 and 53, which are **Cut last**.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 18.1, 18.2, 18.3, 18.5, 18.6_
 
-- [ ] 5.11 Peg hole search and pose: remaining properties
+- [x] 5.11 Peg hole search and pose: remaining properties
   - Files: `tests/reader/pegHoles.test.ts`, `tests/reader/pose.test.ts`.
   - Add Properties 54 and 55, which are not cuttable because they check decoy rejection. Add Properties 58 and 60, which are **Cut last**.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 9.2, 9.3, 10.1, 18.7_
 
-- [ ] 5.12 Sampling: remaining properties
+- [x] 5.12 Sampling: remaining properties
   - Files: `tests/reader/sampling.test.ts`.
   - Add Property 61. Add Properties 63 and 65, which are **Cut last**.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 10.3, 11.1, 11.2_
 
+- [-] 5.16 Check each peg hole pair against the card layout
+  - **Demo-essential.** Added after task 5.13 found wrong grids at 2.75, 2.25 and 1.25 px/mm (see design "Peg hole pair" and "Layout check").
+  - Files: `src/reader/pegHoles.ts`, `src/reader/layout.ts`, `src/reader/selectPegHoles.ts`, `src/reader/readCard.ts`, `src/reader/index.ts`, `tests/reader/layout.test.ts`, `tests/reader/pegHoles.test.ts`, `tests/reader/readCard.test.ts`, `.kiro/specs/card-codec-and-reader/measurements.md`.
+  - Move the pair selection into `selectPegHolePair` and retarget Property 55 to it. Only lacing holes fully inside the image are required (design "Layout check").
+  - Add `rankPegHolePairs` and keep `findPegHolePair` as its first result. Add `layoutMatches` and the constants `LAYOUT_POSITION_TOLERANCE`, `LAYOUT_DIAMETER_TOLERANCE`, `LAYOUT_MATCH_MIN` and `MAX_PAIRS_TO_VERIFY`. Change `readCard` to verify ranked pairs as the design states.
+  - Add Property 82. Add the three regression example tests from Property 83 (2.75, 2.25 and 1.25 px/mm), which must give the true grid or a failure, never a wrong grid.
+  - Re-run the R18.8 sweep (6 down to 1 px/mm) and record it in `measurements.md`. The six fixture accuracy tests must still pass at their targets. Report any constant changed, with the old and new value and the measurements behind it.
+  - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
+  - _Requirements: 9.3, 12.1, 18.5_
+
 - [ ] 5.13 `readCard`: failure paths, orientation and the R18.8 scale
   - Files: `tests/reader/readCard.test.ts`.
-  - Add Properties 69, 73, 74, 75 and 76 (failure paths), and Properties 78 and 79 (orientation). These use a pinned seed where they render images, and none is cuttable.
+  - Add Properties 69, 73, 74, 75 and 76 (failure paths), and Properties 78, 79 and 83 (orientation). These use a pinned seed where they render images, and none is cuttable.
   - Measure the R18.8 scale. Use a profile with peg diameters of 2.5 mm and 2.8 mm, and assert that `validateCardProfile` returns `[]` for it. Render it with a fixed seed at decreasing `pixelsPerMm`. Record the highest scale at which the peg holes are still found and the result is `ambiguous-orientation`. Write that scale, and the separation measured there, into the test and into `measurements.md`. If no such scale exists (the reader goes from a correct read straight to `peg-holes-not-found`), stop and report this with the measured values instead of changing the profile.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 9.7, 12.1, 12.2, 12.3, 12.4, 18.3, 18.4, 18.5, 18.8_
@@ -538,47 +548,53 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
     {
       "id": 31,
       "tasks": [
-        "5.13"
+        "5.16"
       ]
     },
     {
       "id": 32,
       "tasks": [
-        "5.14"
+        "5.13"
       ]
     },
     {
       "id": 33,
       "tasks": [
-        "5.15"
+        "5.14"
       ]
     },
     {
       "id": 34,
       "tasks": [
-        "6.1"
+        "5.15"
       ]
     },
     {
       "id": 35,
       "tasks": [
-        "6.2"
+        "6.1"
       ]
     },
     {
       "id": 36,
       "tasks": [
-        "6.3"
+        "6.2"
       ]
     },
     {
       "id": 37,
       "tasks": [
-        "6.4"
+        "6.3"
       ]
     },
     {
       "id": 38,
+      "tasks": [
+        "6.4"
+      ]
+    },
+    {
+      "id": 39,
       "tasks": [
         "7.1"
       ]

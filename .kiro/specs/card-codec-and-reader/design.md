@@ -41,7 +41,9 @@ src/reader/
   threshold.ts           chooseThreshold, classifyDark
   regions.ts             findDarkRegions, equivalentDiameterPx
   orientation.ts         orientationSeparation, decideOrientation
-  pegHoles.ts            findPegHolePair
+  pegHoles.ts            findPegHolePair, rankPegHolePairs
+  layout.ts              layoutMatches
+  selectPegHoles.ts      selectPegHolePair
   pose.ts                poseFromPegHoles, cardToImage, normalizeDegrees, angleDifferenceDegrees
   sampling.ts            samplingRadiusPx, decidePunched, sampleCardGrid
   readCard.ts            readCard
@@ -87,12 +89,15 @@ tests   -> src/*, scripts/make_fixtures.ts, tests/support
         | drop regions that touch the image edge, drop tiny regions
         v
   DarkRegion[]  (area, centroid, bounds)
-        | findPegHolePair  (distance, direction, diameter fit)  --(none)--> failure peg-holes-not-found
+        | rankPegHolePairs (distance, direction, diameter fit; best MAX_PAIRS_TO_VERIFY by fit)
         v
-  PegHolePair (two regions, pixelsPerMm, upright hypothesis, fit)
-        | decideOrientation (separation formula)  --(ambiguous)--> failure ambiguous-orientation
+  PegHolePair[]  (ascending fit)
+        | for each pair: decideOrientation, poseFromPegHoles for both orientations,
+        |   layoutMatches (every dark region inside the card is explained by the profile layout)
+        | the matching pair that explains the most regions wins  --(none, or a tie)--> failure peg-holes-not-found
+        |   orientation ambiguous, or the diameters and the layout disagree --> failure ambiguous-orientation
         v
-  upright | upside-down
+  upright | upside-down  (decided by the peg hole diameters, confirmed by the layout)
         | poseFromPegHoles
         v
   Pose (tiltDegrees, pixelsPerMm, originPx, orientation)
@@ -297,6 +302,18 @@ export type PegHolePair = {
   fit: number;                                        // mean relative diameter error, lower is better
 };
 export function findPegHolePair(profile: CardProfile, regions: readonly DarkRegion[]): PegHolePair | null;
+export function rankPegHolePairs(profile: CardProfile, regions: readonly DarkRegion[], limit: number): PegHolePair[];  // ascending fit
+
+// layout.ts
+export type LayoutResult = { matches: boolean; inCard: number; explained: number; missingLacingHoles: number };
+export function layoutMatches(profile: CardProfile, pose: Pose, regions: readonly DarkRegion[], imageSize: { width: number; height: number }): LayoutResult;
+
+// selectPegHoles.ts
+export type PegHoleSelection =
+  | { kind: 'selected'; pair: PegHolePair; pose: Pose; layout: LayoutResult }
+  | { kind: 'none' }                                  // no pair matches, or two pairs tie -> peg-holes-not-found
+  | { kind: 'ambiguous'; separation: number };        // -> ambiguous-orientation
+export function selectPegHolePair(profile: CardProfile, regions: readonly DarkRegion[], imageSize: { width: number; height: number }): PegHoleSelection;
 
 // pose.ts
 export function normalizeDegrees(angle: number): number;                   // result in (-180, 180]
@@ -370,6 +387,39 @@ The accepted pair with the lowest `fit` wins (ties go to the pair found first). 
 
 How decoys are rejected (R9.3): a punched hole or lacing hole has the wrong diameter for its role. With the demo profile at 6 px/mm, a 12 px hole against a 15 px and an 18 px peg gives `fit = (3 + 6) / 33 = 0.27`, above 0.15. Pairs of decoys that are the right distance apart also need a direction within 15 degrees of the peg axis. This rule depends on peg diameters differing from punched hole diameters. A profile whose pegs have the same diameter as its punched holes is not rejected by validation, and for such a card detection relies on distance and direction alone. The test arbitraries keep each peg diameter at least 20% away from the punched hole diameter.
 
+**Measured limit of the diameter rule.** Two decoys of the same diameter can reach a fit of `(d1 - d0) / (d0 + d1)` at some implied scale: 0.091 for the demo pegs and 0.057 for 2.5 mm and 2.8 mm pegs, both under `FIT_MAX`. At low resolution the real pegs' measured fit rises above that, and the decoys win. In task 5.13 this gave wrong grids at 2.75, 2.25 and 1.25 px/mm. The diameter rule alone therefore cannot satisfy R9.3 and R18.5, and every pair is now checked against the card layout before it is used (see "Layout check").
+
+### Layout check (R9.3, R18.5)
+
+A pair of regions only proves that two dark regions have roughly the right sizes and spacing. The layout check asks whether the whole card agrees with the pose that pair implies.
+
+**Ranking.** `rankPegHolePairs(profile, regions, limit)` runs the pair search above but returns every accepted pair, sorted by ascending `fit` (ties keep the order found), at most `limit`. `findPegHolePair` stays and returns the first ranked pair, or `null`.
+
+**Predicted holes.** For a pose, the predicted holes are every hook position (diameter `holeDiameterMm`), both peg holes (their own diameters) and every lacing hole (`lacingHoles.diameterMm`). Their image centres come from `cardToImage`, and their diameters in pixels are the millimetre diameters times `pixelsPerMm`.
+
+**`layoutMatches(profile, pose, regions, imageSize): LayoutResult`**, where `imageSize = { width, height }` in pixels, with `LayoutResult = { matches: boolean; inCard: number; explained: number; missingLacingHoles: number }`:
+
+1. **In-card regions.** A candidate region is in the card when its centroid, mapped back to card millimetres with the inverse of the pose, lies inside `[0, cardWidthMm] x [0, cardHeightMm]`.
+2. **Explained.** An in-card region is explained when the nearest predicted hole centre is within `LAYOUT_POSITION_TOLERANCE * min(horizontalPitchMm, verticalPitchMm) * pixelsPerMm` pixels (at least 1 px), and the region's equivalent diameter is within `LAYOUT_DIAMETER_TOLERANCE` (relative) of that predicted hole's diameter in pixels.
+3. **Lacing holes present.** Every predicted lacing hole whose predicted disc lies fully inside the image has an explained in-card region at it. Lacing holes are always punched, so a missing one means the pose is wrong. A lacing hole that the pose places partly or fully outside the image is not required, so a cropped card still reaches sampling and reports `card-outside-image` (R10.4).
+4. `matches` is true when `explained / inCard >= LAYOUT_MATCH_MIN` and `missingLacingHoles = 0`. The two regions of the pair are always in the card for their own pose.
+
+Why this rejects the decoys found in task 5.13: in a valid profile the peg holes sit outside the hook grid, so two punched holes or lacing holes are always closer together than the pegs. A decoy pair therefore implies a smaller scale than the real one. At that scale the predicted hook positions drift away from the real holes across the card, and the real holes' diameters stop matching the predicted ones, so most in-card regions are unexplained.
+
+**Pair selection: the best explanation wins.** The steps below are a pure function, `selectPegHolePair`, in `src/reader/selectPegHoles.ts`, so they can be property-tested on analytic regions. `readCard` calls it and maps its result to a failure or a pose. A pose can be consistent with the few regions inside a small decoy card (task 5.16 found this on sparse cards with no lacing holes). The true pose explains every region on the card, so poses are compared, not judged one at a time.
+
+1. For every ranked pair (at most `MAX_PAIRS_TO_VERIFY`), compute `decision = decideOrientation(...)` from the measured peg diameters, the poses for both orientations, and `layoutMatches` for both poses.
+2. A pair is a candidate if at least one of its two poses matches. Its score is the largest `explained` count among its matching poses.
+3. If there is no candidate, fail with `peg-holes-not-found`.
+4. Take the candidate with the highest score. If another pair has the same score, the card's position cannot be decided, so fail with `peg-holes-not-found`. The two poses of one pair are never compared against each other here; the peg hole diameters decide between them.
+5. For the chosen pair: if `decision` is `ambiguous`, fail with `ambiguous-orientation`. If the pose for `decision.kind` matches, use it. If only the other orientation's pose matches, the diameters and the layout disagree, so fail with `ambiguous-orientation` (R18.5).
+
+The failure list (R12.1) does not change.
+
+Cost: at most `MAX_PAIRS_TO_VERIFY` pairs, each checked against at most `MAX_CANDIDATE_REGIONS` regions, so at most 20,000 cheap checks per image. The nearest hook position is found by rounding in card millimetres, not by searching.
+
+The tolerances below are starting values. They may be tuned during implementation only if the change is reported with the measurements that justify it, and the R13 targets do not move.
+
 ### Orientation (R18)
 
 Let `e0, e1` be the expected peg diameters in pixels (`d0 * s`, `d1 * s`) and `u0, u1` the measured diameters under the upright hypothesis. Define:
@@ -441,6 +491,10 @@ The result has `hookRows` rows of `hookColumns` booleans, so it passes `validate
 | `FIT_MAX` | 0.15 | pegHoles.ts | mean relative diameter error allowed for a peg hole pair |
 | `MIN_SEPARATION` | 0.5 | orientation.ts | R18 decision margin |
 | `SAMPLING_RADIUS_FRACTION` | 0.6 | sampling.ts | R10.3 |
+| `MAX_PAIRS_TO_VERIFY` | 50 | readCard.ts | ranked pairs checked against the layout |
+| `LAYOUT_POSITION_TOLERANCE` | 0.35 | layout.ts | fraction of the smaller pitch a region centroid may be from its predicted hole |
+| `LAYOUT_DIAMETER_TOLERANCE` | 0.3 | layout.ts | relative diameter error allowed for an explained region |
+| `LAYOUT_MATCH_MIN` | 0.9 | layout.ts | fraction of in-card regions that must be explained |
 
 None of these is a card dimension (R14.2). They may be tuned while implementing only if the change is reported to you. The accuracy targets in R13 do not move.
 
@@ -537,7 +591,7 @@ Measured with a throwaway script on the existing fixtures: the threshold lands a
 | R6 Pixel data | `isPixelData`, `loadPixelData`, `readCard` | `pixelData.test.ts`, `canvasSource.test.ts`, `readCard.test.ts`, `modules.test.ts`, `dependencies.test.ts` |
 | R7 Greyscale | `toGreyscale` | `greyscale.test.ts` |
 | R8 Threshold | `chooseThreshold`, `classifyDark` | `threshold.test.ts` |
-| R9 Find the card | `findDarkRegions`, `equivalentDiameterPx`, `findPegHolePair`, `poseFromPegHoles` | `regions.test.ts`, `pegHoles.test.ts`, `readCard.test.ts`, `accuracy.test.ts` |
+| R9 Find the card | `findDarkRegions`, `equivalentDiameterPx`, `findPegHolePair`, `rankPegHolePairs`, `layoutMatches`, `selectPegHolePair`, `poseFromPegHoles` | `regions.test.ts`, `pegHoles.test.ts`, `readCard.test.ts`, `accuracy.test.ts` |
 | R10 Tilt and hook positions | `cardToImage`, `samplingRadiusPx`, `sampleCardGrid` | `pose.test.ts`, `sampling.test.ts`, `readCard.test.ts` |
 | R11 Punched or not | `decidePunched`, `sampleCardGrid` | `sampling.test.ts`, `readCard.test.ts` |
 | R12 Failures | `readCard`, `ReadFailure` | `readCard.test.ts` |
@@ -893,7 +947,7 @@ Test file: `tests/reader/pegHoles.test.ts`. Uses analytic `DarkRegion` lists bui
 
 ### Property 55: R9.3 punched holes and lacing holes are not mistaken for peg holes.
 
-Test file: `tests/reader/pegHoles.test.ts`. Uses analytic `DarkRegion` lists built from a pose, with no image. Same setup with a region for every hook position and every lacing hole added, plus small speckle regions.
+Test file: `tests/reader/pegHoles.test.ts`. Uses analytic `DarkRegion` lists built from a pose, with no image. For any valid profile, pixel scale 2 to 20, tilt within 10 degrees of 0 or 180, and card position, with a region for both pegs, every punched hook position, every lacing hole and small speckle regions, in shuffled order, `selectPegHolePair` (with an image size that holds the whole card) returns `selected` with the two peg regions and the true orientation. The diameter search alone (`findPegHolePair`) cannot guarantee this at low scale; task 5.16 found a counterexample (seed 1253667935, a 6 x 11 card with pegs of 2.268 mm and 2.81232 mm, no lacing holes, 2.14 px/mm), which is kept as a regression example.
 
 **Validates: Requirements 9.3**
 
@@ -1052,6 +1106,18 @@ Test file: `tests/scripts/make_fixtures.test.ts`. Image property. Any `profileAr
 Test file: `tests/scripts/make_fixtures.test.ts`. Any profile and grid. `ends[endOrder[r][c]]` equals `card[r][c]`, checked directly and not through the codec.
 
 **Validates: Requirements 19.2**
+
+### Property 82: R9.3 the true pose explains every region, and any pose from a decoy pair that matches the layout explains fewer regions.
+
+Test file: `tests/reader/layout.test.ts`. For any profile from `profileArbitrary`, any grid, and any pose (scale 2 to 12 px/mm, tilt within 10 degrees of 0 or 180), analytic regions are built for the pegs, every punched hook position and every lacing hole. `layoutMatches` with the true pose matches with every region in the card and explained. For every pair accepted by `rankPegHolePairs` other than the two peg regions, each of its two poses either does not match, or matches with fewer explained regions than the true pose. The counterexample from task 5.16 (seed -106734385, path `38:35:0:0:0:0:0:0:0:0:0`, a 3 x 3 card with one punched hole and no lacing holes) is kept as a regression example.
+
+**Validates: Requirements 9.3**
+
+### Property 83: R18.5 a low-resolution render never yields a wrong CardGrid.
+
+Test file: `tests/reader/readCard.test.ts`. Image property. For any `profileArbitrary` profile, any grid, scale 1 to 4 px/mm and tilt within 10 degrees of 0 or 180, `readCard` either returns the true grid or fails. Example tests keep the three counterexamples from task 5.13 as regressions: the demo profile with peg diameters 2.5 mm and 2.8 mm, demo card 0, seed 1234, noise 0, tilt 0, at 2.75, 2.25 and 1.25 px/mm.
+
+**Validates: Requirements 18.5**
 
 ### Fixture tests (examples, not properties)
 
