@@ -1,4 +1,4 @@
-import { Component, useEffect, useMemo, useReducer } from 'react';
+import { Component, lazy, Suspense, useEffect, useMemo, useReducer } from 'react';
 import type { Dispatch, ErrorInfo, ReactNode } from 'react';
 import { DICTIONARIES, profileFailureKey, translator } from './i18n/messages.ts';
 import type { Translate } from './i18n/messages.ts';
@@ -43,17 +43,8 @@ class ScreenBoundary extends Component<BoundaryProps, BoundaryState> {
   }
 }
 
-function PlaceholderScreen({ screen, t }: { screen: 'scan'; t: Translate }) {
-  const body = t(`placeholder.${screen}`);
-  return (
-    <section aria-labelledby="screen-title" className={styles.screen}>
-      <h2 id="screen-title" className={styles.screenTitle}>
-        {t(`nav.${screen}`)}
-      </h2>
-      <p>{body}</p>
-    </section>
-  );
-}
+/** The Scan screen is its own chunk, so the camera-free entry stays small (R16.10). */
+const ScanScreen = lazy(() => import('./screens/scan/ScanScreen.tsx'));
 
 export type ShellProps = {
   state: AppState;
@@ -117,7 +108,9 @@ export function Shell({ state, dispatch, onLanguageChosen }: ShellProps) {
           ) : state.screen === 'keep' ? (
             <KeepScreen state={state} dispatch={dispatch} t={t} />
           ) : (
-            <PlaceholderScreen screen={state.screen} t={t} />
+            <Suspense fallback={<p className={styles.loading}>{t('status.loading')}</p>}>
+              <ScanScreen state={state} dispatch={dispatch} t={t} />
+            </Suspense>
           )}
         </ScreenBoundary>
       </main>

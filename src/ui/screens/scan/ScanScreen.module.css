@@ -1,0 +1,194 @@
+.screen {
+  max-width: 60rem;
+}
+.screenTitle,
+.sectionTitle {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+.panel {
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+.empty {
+  padding: 16px;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-panel);
+}
+.busy {
+  font-weight: 700;
+}
+.failure {
+  margin: 8px 0;
+  padding: 12px 16px;
+  border: 2px solid var(--madder);
+  border-radius: var(--radius-panel);
+}
+.details code {
+  font-family: var(--font-data);
+}
+.file {
+  display: block;
+  min-height: var(--touch-target);
+  max-width: 100%;
+  margin: 8px 0;
+  font: inherit;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+.button {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: 0 16px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.confirm {
+  margin-top: 8px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 2px solid var(--zari);
+  border-radius: var(--radius-panel);
+}
+.legend {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+}
+.legendFilled,
+.legendRing,
+.legendBadge {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+}
+.legendFilled {
+  background: var(--indigo);
+  border-radius: 50%;
+}
+.legendRing {
+  border: 3px solid var(--madder);
+  border-radius: 50%;
+}
+.legendBadge {
+  width: 12px;
+  height: 12px;
+  margin: 3px;
+  background: var(--zari);
+  transform: rotate(45deg);
+}
+.viewport {
+  max-width: 100%;
+  max-height: 70vh;
+  overflow: auto;
+  border: 1px solid var(--line);
+}
+.stage {
+  position: relative;
+}
+.photo {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.marker {
+  position: absolute;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+.marker:focus-visible {
+  outline: 3px solid var(--zari);
+  outline-offset: -3px;
+}
+.shape {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40%;
+  height: 40%;
+  max-width: 28px;
+  max-height: 28px;
+  min-width: 14px;
+  min-height: 14px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.marker[data-shape='filled'] .shape {
+  background: var(--indigo);
+  border: 2px solid #fff;
+}
+.marker[data-shape='ring'] .shape {
+  background: transparent;
+  border: 3px solid var(--madder);
+}
+.badge {
+  position: absolute;
+  top: 12%;
+  right: 12%;
+  width: 10px;
+  height: 10px;
+  background: var(--zari);
+  border: 1px solid var(--ink);
+  transform: rotate(45deg);
+}
+.batch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+.batchItem {
+  flex: 1 1 14rem;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+.batchNumber {
+  margin: 0 0 4px;
+  font-weight: 700;
+}
+.thumb {
+  display: block;
+  width: 100%;
+  max-width: 12rem;
+  height: auto;
+}
+.thumbCard {
+  fill: var(--card);
+}
+.thumbHole {
+  fill: var(--hole);
+}

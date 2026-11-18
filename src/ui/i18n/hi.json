@@ -39,10 +39,6 @@
     "text": "सहेजने की सुविधा जल्द आ रही है।",
     "reviewed": false
   },
-  "placeholder.scan": {
-    "text": "स्कैन की सुविधा जल्द आ रही है।",
-    "reviewed": false
-  },
   "weave.title": {
     "text": "बुनाई",
     "reviewed": false
@@ -493,6 +489,178 @@
   },
   "colour.ochre": {
     "text": "गेरुआ",
+    "reviewed": false
+  },
+  "scan.needsProfile": {
+    "text": "कार्ड प्रोफ़ाइल लोड नहीं हुई है, इसलिए अभी कार्ड नहीं पढ़े जा सकते। पन्ने के ऊपर का संदेश देखें।",
+    "reviewed": false
+  },
+  "scan.choose.label": {
+    "text": "एक कार्ड की फ़ोटो चुनें",
+    "reviewed": false
+  },
+  "scan.choose.hint": {
+    "text": "कार्ड को समतल रखकर पूरा कार्ड दिखाते हुए फ़ोटो लें, फिर वह फ़ोटो चुनें।",
+    "reviewed": false
+  },
+  "scan.reading": {
+    "text": "{name} से कार्ड पढ़ा जा रहा है…",
+    "reviewed": false
+  },
+  "scan.legend.heading": {
+    "text": "निशानों का मतलब",
+    "reviewed": false
+  },
+  "scan.legend.punched": {
+    "text": "भरा हुआ गोला: छेद किया हुआ है।",
+    "reviewed": false
+  },
+  "scan.legend.unpunched": {
+    "text": "खाली छल्ला: छेद नहीं है।",
+    "reviewed": false
+  },
+  "scan.legend.corrected": {
+    "text": "हीरे का निशान: आपने यह हुक बदला है।",
+    "reviewed": false
+  },
+  "scan.legend.tap": {
+    "text": "बदलने के लिए किसी निशान को छुएँ। कीबोर्ड से तीर वाली कुंजियों से चलें और बदलने के लिए Enter या Space दबाएँ।",
+    "reviewed": false
+  },
+  "scan.marker.name": {
+    "text": "हुक की पंक्ति {row}, स्तंभ {column}: {state}",
+    "reviewed": false
+  },
+  "scan.marker.punched": {
+    "text": "छेद है",
+    "reviewed": false
+  },
+  "scan.marker.unpunched": {
+    "text": "छेद नहीं है",
+    "reviewed": false
+  },
+  "scan.marker.corrected": {
+    "text": "आपने बदला",
+    "reviewed": false
+  },
+  "scan.image.alt": {
+    "text": "कार्ड की फ़ोटो, हर हुक की जगह पर एक निशान के साथ",
+    "reviewed": false
+  },
+  "scan.zoom.heading": {
+    "text": "बड़ा करें",
+    "reviewed": false
+  },
+  "scan.zoom.in": {
+    "text": "और बड़ा करें",
+    "reviewed": false
+  },
+  "scan.zoom.out": {
+    "text": "छोटा करें",
+    "reviewed": false
+  },
+  "scan.zoom.fit": {
+    "text": "निशान छूने लायक बड़े करें",
+    "reviewed": false
+  },
+  "scan.zoom.value": {
+    "text": "बड़ाई {percent}%",
+    "reviewed": false
+  },
+  "scan.undo": {
+    "text": "आख़िरी बदलाव वापस लें",
+    "reviewed": false
+  },
+  "scan.accept": {
+    "text": "यह कार्ड स्वीकार करें",
+    "reviewed": false
+  },
+  "scan.discard": {
+    "text": "यह फ़ोटो छोड़ दें",
+    "reviewed": false
+  },
+  "scan.corrections": {
+    "text": "आपके किए बदलाव: {count}",
+    "reviewed": false
+  },
+  "scan.accepted": {
+    "text": "कार्ड {number} जोड़ा गया।",
+    "reviewed": false
+  },
+  "scan.replaced": {
+    "text": "कार्ड {number} बदल दिया गया।",
+    "reviewed": false
+  },
+  "scan.replacing": {
+    "text": "अगली फ़ोटो कार्ड {number} की जगह लेगी।",
+    "reviewed": false
+  },
+  "scan.replacing.cancel": {
+    "text": "कार्ड {number} रहने दें",
+    "reviewed": false
+  },
+  "scan.batch.heading": {
+    "text": "पढ़े गए कार्ड",
+    "reviewed": false
+  },
+  "scan.batch.empty": {
+    "text": "अभी कोई कार्ड नहीं। आपका स्वीकार किया हर कार्ड एक पिक है।",
+    "reviewed": false
+  },
+  "scan.batch.card": {
+    "text": "कार्ड {number}",
+    "reviewed": false
+  },
+  "scan.batch.thumb.alt": {
+    "text": "कार्ड {number}: {total} में से {punched} छेद",
+    "reviewed": false
+  },
+  "scan.batch.remove": {
+    "text": "कार्ड {number} हटाएँ",
+    "reviewed": false
+  },
+  "scan.batch.earlier": {
+    "text": "कार्ड {number} को पहले करें",
+    "reviewed": false
+  },
+  "scan.batch.later": {
+    "text": "कार्ड {number} को बाद में करें",
+    "reviewed": false
+  },
+  "scan.batch.again": {
+    "text": "कार्ड {number} फिर से पढ़ें",
+    "reviewed": false
+  },
+  "scan.batch.removeConfirm": {
+    "text": "कार्ड {number} हटाएँ? इसे वापस नहीं किया जा सकेगा।",
+    "reviewed": false
+  },
+  "scan.batch.removeYes": {
+    "text": "हाँ, हटाएँ",
+    "reviewed": false
+  },
+  "scan.batch.removeNo": {
+    "text": "नहीं, रहने दें",
+    "reviewed": false
+  },
+  "scan.done": {
+    "text": "पूरा हुआ",
+    "reviewed": false
+  },
+  "scan.done.question": {
+    "text": "आपके पास पहले से एक डिज़ाइन है। पढ़े गए कार्डों का क्या करें?",
+    "reviewed": false
+  },
+  "scan.done.replace": {
+    "text": "डिज़ाइन की जगह रखें",
+    "reviewed": false
+  },
+  "scan.done.append": {
+    "text": "डिज़ाइन के बाद जोड़ें",
+    "reviewed": false
+  },
+  "scan.done.cancel": {
+    "text": "रद्द करें",
     "reviewed": false
   }
 }
