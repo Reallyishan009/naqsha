@@ -35,7 +35,7 @@ type ScanState =
 
 ## Testing Conventions
 
-- Every pure function in src/codec, src/simulator and src/exporter must have both example-based unit tests and at least one fast-check property.
+- Every pure function in src/codec, src/reader, src/simulator and src/exporter must have both example-based unit tests and at least one fast-check property.
 - Properties to encode: round-trip (encode then decode equals identity), monotonicity (more holes produce more weft floats), boundary safety (no out-of-bounds pixel access for any input dimensions).
 - Test files live in tests/ and mirror src/ (e.g. tests/codec/decoder.test.ts).
 - Use vi.mock sparingly; prefer dependency injection for testability.

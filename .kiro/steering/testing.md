@@ -2,7 +2,7 @@
 
 ## Property-based tests
 
-1. Every pure function in `src/codec`, `src/simulator` and `src/exporter` must have property-based tests written with fast-check. Example-based tests are welcome as well, but they never replace the properties.
+1. Every pure function in `src/codec`, `src/reader`, `src/simulator` and `src/exporter` must have property-based tests written with fast-check. Example-based tests are welcome as well, but they never replace the properties.
 2. Name each property after the requirement it checks, so a failure points back to the requirement. Use the requirement ID and a plain statement of the requirement once the spec exists. Until then, state the requirement in plain words.
    - Good: `it('R2.1 decoding an encoded card returns the original pattern', ...)`
    - Good: `it('an exported bitmap has one pixel per end and one per pick', ...)`
