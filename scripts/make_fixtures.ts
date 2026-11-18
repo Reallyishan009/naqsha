@@ -9,7 +9,7 @@
  *   node scripts/make_fixtures.ts --all
  *   node scripts/make_fixtures.ts --profile public/profiles/demo-12x16.json \
  *        --card my-card.json --out tests/fixtures/mine.png \
- *        --noise 12 --tilt 5 --shade 0.2 --seed 7 [--pick-index 3]
+ *        --noise 12 --tilt 5 --shade 0.2 --seed 7 [--pixels-per-mm 6] [--pick-index 3]
  *
  * A card file is JSON: an array of hook rows, each an array of booleans (one
  * per hook column). true = punched hole = the hook lifts.
@@ -32,7 +32,12 @@ export type RenderOptions = {
   shade: number;
   /** Seed for all randomness. Same seed and inputs give identical bytes. */
   seed: number;
+  /** Image scale: pixels per millimetre of the card. The border stays in mm. */
+  pixelsPerMm: number;
 };
+
+/** What callers may pass: `pixelsPerMm` is optional and defaults to PIXELS_PER_MM. */
+export type RenderInput = Omit<RenderOptions, 'pixelsPerMm'> & { pixelsPerMm?: number };
 
 export type GrayImage = { width: number; height: number; pixels: Uint8Array };
 
@@ -53,7 +58,13 @@ const SURFACE_LEVEL = 215;
 const HOLE_LEVEL = 20;
 const BACKGROUND_LEVEL = 70;
 
-export const DEFAULT_OPTIONS: RenderOptions = { noise: 0, tiltDegrees: 0, shade: 0, seed: 1 };
+export const DEFAULT_OPTIONS: RenderOptions = {
+  noise: 0,
+  tiltDegrees: 0,
+  shade: 0,
+  seed: 1,
+  pixelsPerMm: PIXELS_PER_MM,
+};
 
 // ---------------------------------------------------------------- validation
 
@@ -127,18 +138,29 @@ function sampleCard(profile: CardProfile, card: CardGrid, x: number, y: number):
   return SURFACE_LEVEL;
 }
 
+/** Fills in the default `pixelsPerMm` and rejects a scale that is not a positive number. */
+export function resolveOptions(input: RenderInput): RenderOptions {
+  const pixelsPerMm = input.pixelsPerMm ?? PIXELS_PER_MM;
+  if (!Number.isFinite(pixelsPerMm) || pixelsPerMm <= 0) {
+    throw new Error(`pixelsPerMm must be a positive number, got ${pixelsPerMm}`);
+  }
+  return { ...input, pixelsPerMm };
+}
+
 /** Renders ONE card (the hole grid of one pick). */
 export function renderCard(
   profile: CardProfile,
   card: CardGrid,
-  options: RenderOptions = DEFAULT_OPTIONS,
+  input: RenderInput = DEFAULT_OPTIONS,
 ): GrayImage {
   assertCardMatchesProfile(profile, card);
+  const options = resolveOptions(input);
+  const pixelsPerMm = options.pixelsPerMm;
 
   const imageWidthMm = profile.cardWidthMm + 2 * BORDER_MM;
   const imageHeightMm = profile.cardHeightMm + 2 * BORDER_MM;
-  const width = Math.ceil(imageWidthMm * PIXELS_PER_MM);
-  const height = Math.ceil(imageHeightMm * PIXELS_PER_MM);
+  const width = Math.ceil(imageWidthMm * pixelsPerMm);
+  const height = Math.ceil(imageHeightMm * pixelsPerMm);
   const pixels = new Uint8Array(width * height);
 
   const rng = createRng(options.seed);
@@ -158,8 +180,8 @@ export function renderCard(
       let sum = 0;
       for (const oy of subSamples) {
         for (const ox of subSamples) {
-          const dx = (px + ox) / PIXELS_PER_MM - imageCentre.x;
-          const dy = (py + oy) / PIXELS_PER_MM - imageCentre.y;
+          const dx = (px + ox) / pixelsPerMm - imageCentre.x;
+          const dy = (py + oy) / pixelsPerMm - imageCentre.y;
           // Inverse of a clockwise rotation by theta about the image centre.
           const cardX = cardCentre.x + cos * dx + sin * dy;
           const cardY = cardCentre.y - sin * dx + cos * dy;
@@ -225,28 +247,40 @@ export function encodePng(image: GrayImage): Buffer {
 
 // ------------------------------------------------------------ file writing
 
-export function writeFixture(
+/** The exact text of a ground-truth file. Pure, so tests can reuse it. */
+export function groundTruthText(
   profile: CardProfile,
   card: CardGrid,
-  imagePath: string,
-  options: RenderOptions,
+  imageName: string,
+  input: RenderInput,
   pickIndex = 0,
-): { imagePath: string; groundTruthPath: string } {
-  const png = encodePng(renderCard(profile, card, options));
-  const groundTruthPath = imagePath.replace(/\.png$/i, '') + '.json';
+): string {
   const groundTruth: GroundTruth = {
     profile: profile.name,
-    image: imagePath.split('/').pop()!,
+    image: imageName,
     pickIndex,
     hookRows: profile.hookRows,
     hookColumns: profile.hookColumns,
     endsPerPick: profile.hookRows * profile.hookColumns,
     card,
-    options,
+    options: resolveOptions(input),
   };
+  return JSON.stringify(groundTruth, null, 2) + '\n';
+}
+
+export function writeFixture(
+  profile: CardProfile,
+  card: CardGrid,
+  imagePath: string,
+  options: RenderInput,
+  pickIndex = 0,
+): { imagePath: string; groundTruthPath: string } {
+  const png = encodePng(renderCard(profile, card, options));
+  const groundTruthPath = imagePath.replace(/\.png$/i, '') + '.json';
+  const text = groundTruthText(profile, card, imagePath.split('/').pop()!, options, pickIndex);
   mkdirSync(dirname(imagePath), { recursive: true });
   writeFileSync(imagePath, png);
-  writeFileSync(groundTruthPath, JSON.stringify(groundTruth, null, 2) + '\n');
+  writeFileSync(groundTruthPath, text);
   return { imagePath, groundTruthPath };
 }
 
@@ -276,12 +310,12 @@ export function demoPattern(profile: CardProfile, pickCount = DEMO_PICK_COUNT): 
 
 /** Four conditions on pick 0, plus a clean card for each other demo pick. */
 export const FIXTURE_SET: ReadonlyArray<{ name: string; pickIndex: number; options: RenderOptions }> = [
-  { name: 'pick0-clean', pickIndex: 0, options: { noise: 0, tiltDegrees: 0, shade: 0, seed: 1234 } },
-  { name: 'pick0-noisy', pickIndex: 0, options: { noise: 18, tiltDegrees: 0, shade: 0.25, seed: 1234 } },
-  { name: 'pick0-tilted', pickIndex: 0, options: { noise: 0, tiltDegrees: 7, shade: 0, seed: 1234 } },
-  { name: 'pick0-noisy-tilted', pickIndex: 0, options: { noise: 18, tiltDegrees: -6, shade: 0.25, seed: 1234 } },
-  { name: 'pick1-clean', pickIndex: 1, options: { noise: 0, tiltDegrees: 0, shade: 0, seed: 1234 } },
-  { name: 'pick2-clean', pickIndex: 2, options: { noise: 0, tiltDegrees: 0, shade: 0, seed: 1234 } },
+  { name: 'pick0-clean', pickIndex: 0, options: { noise: 0, tiltDegrees: 0, shade: 0, seed: 1234, pixelsPerMm: 6 } },
+  { name: 'pick0-noisy', pickIndex: 0, options: { noise: 18, tiltDegrees: 0, shade: 0.25, seed: 1234, pixelsPerMm: 6 } },
+  { name: 'pick0-tilted', pickIndex: 0, options: { noise: 0, tiltDegrees: 7, shade: 0, seed: 1234, pixelsPerMm: 6 } },
+  { name: 'pick0-noisy-tilted', pickIndex: 0, options: { noise: 18, tiltDegrees: -6, shade: 0.25, seed: 1234, pixelsPerMm: 6 } },
+  { name: 'pick1-clean', pickIndex: 1, options: { noise: 0, tiltDegrees: 0, shade: 0, seed: 1234, pixelsPerMm: 6 } },
+  { name: 'pick2-clean', pickIndex: 2, options: { noise: 0, tiltDegrees: 0, shade: 0, seed: 1234, pixelsPerMm: 6 } },
 ];
 
 // ---------------------------------------------------------------------- CLI
@@ -322,7 +356,7 @@ function main(): void {
   const outPath = args.get('out');
   if (!cardPath || !outPath) {
     console.error(
-      'Usage: make_fixtures.ts --all | --profile <file> --card <file> --out <file.png> [--noise N] [--tilt DEG] [--shade S] [--seed N] [--pick-index N]',
+      'Usage: make_fixtures.ts --all | --profile <file> --card <file> --out <file.png> [--noise N] [--tilt DEG] [--shade S] [--seed N] [--pixels-per-mm N] [--pick-index N]',
     );
     process.exit(1);
   }
@@ -332,6 +366,7 @@ function main(): void {
     tiltDegrees: Number(args.get('tilt') ?? DEFAULT_OPTIONS.tiltDegrees),
     shade: Number(args.get('shade') ?? DEFAULT_OPTIONS.shade),
     seed: Number(args.get('seed') ?? DEFAULT_OPTIONS.seed),
+    pixelsPerMm: Number(args.get('pixels-per-mm') ?? DEFAULT_OPTIONS.pixelsPerMm),
   };
   const result = writeFixture(profile, card, resolve(outPath), options, Number(args.get('pick-index') ?? 0));
   console.log(`wrote ${result.imagePath} and ${result.groundTruthPath}`);

@@ -227,6 +227,7 @@
     "noise": 18,
     "tiltDegrees": -6,
     "shade": 0.25,
-    "seed": 1234
+    "seed": 1234,
+    "pixelsPerMm": 6
   }
 }
