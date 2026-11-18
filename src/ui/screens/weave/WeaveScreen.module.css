@@ -123,3 +123,10 @@
   border: 2px solid var(--zari);
   border-radius: var(--radius-panel);
 }
+
+.printGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
