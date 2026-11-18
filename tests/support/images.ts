@@ -118,3 +118,29 @@ export function speckleRegions(centres: readonly PointPx[], area = 3): DarkRegio
     touchesEdge: false,
   }));
 }
+
+/**
+ * Translates a pose so the whole card lies inside the image with a margin, and returns the smallest image size
+ * that holds it. The translation is zero when the card already lies at positive coordinates.
+ */
+export function fitCardInImage(
+  profile: CardProfile,
+  pose: Pose,
+  marginPx = 20,
+): { pose: Pose; imageSize: { width: number; height: number } } {
+  const corners = [
+    { x: 0, y: 0 },
+    { x: profile.cardWidthMm, y: 0 },
+    { x: 0, y: profile.cardHeightMm },
+    { x: profile.cardWidthMm, y: profile.cardHeightMm },
+  ].map((corner) => cardToImage(pose, corner));
+  const shiftX = Math.max(0, marginPx - Math.min(...corners.map((c) => c.x)));
+  const shiftY = Math.max(0, marginPx - Math.min(...corners.map((c) => c.y)));
+  return {
+    pose: { ...pose, originPx: { x: pose.originPx.x + shiftX, y: pose.originPx.y + shiftY } },
+    imageSize: {
+      width: Math.ceil(Math.max(...corners.map((c) => c.x)) + shiftX + marginPx),
+      height: Math.ceil(Math.max(...corners.map((c) => c.y)) + shiftY + marginPx),
+    },
+  };
+}
