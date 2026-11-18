@@ -1,0 +1,13 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Related tests and typecheck on save",
+      "description": "When a TypeScript file under src/ or scripts/ is saved, run the Vitest files related to it and tsc --noEmit. Shell command only, no agent prompt.",
+      "trigger": "PostFileSave",
+      "matcher": "(^|/)(src|scripts)/.+\\.(ts|tsx)$",
+      "action": { "type": "command", "command": "node .kiro/hooks/bin/related-tests.mjs" },
+      "timeout": 10
+    }
+  ]
+}
