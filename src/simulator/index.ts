@@ -3,3 +3,4 @@ export * from './prepare.ts';
 export * from './settings.ts';
 export * from './style.ts';
 export * from './render.ts';
+export * from './floats.ts';
