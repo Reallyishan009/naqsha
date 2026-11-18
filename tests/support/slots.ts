@@ -1,5 +1,6 @@
 import * as fc from 'fast-check';
 import type { CardProfile } from '../../src/codec/types.ts';
+import type { RenderSettings, Weft } from '../../src/simulator/types.ts';
 import { cardGridArbitrary } from './profiles.ts';
 
 /** One generated slot and the kind it was built to be. */
@@ -47,3 +48,30 @@ export function slotListArbitrary(profile: CardProfile): fc.Arbitrary<SlotSample
   );
   return fc.array(sample, { maxLength: 12 });
 }
+
+/** A '#rrggbb' colour, written in lower or upper case. */
+export const colourArbitrary: fc.Arbitrary<string> = fc
+  .tuple(fc.integer({ min: 0, max: 0xffffff }), fc.boolean())
+  .map(([rgb, upper]) => {
+    const hex = rgb.toString(16).padStart(6, '0');
+    return `#${upper ? hex.toUpperCase() : hex}`;
+  });
+
+/** A weft: a plain colour or a zari tone. */
+export const weftArbitrary: fc.Arbitrary<Weft> = fc.oneof(
+  colourArbitrary.map((colour): Weft => ({ kind: 'plain', colour })),
+  fc.constantFrom<'gold' | 'silver'>('gold', 'silver').map((tone): Weft => ({ kind: 'zari', tone })),
+);
+
+/** A weft plan of 1 to 4 wefts mixing plain and zari. */
+export const weftPlanArbitrary: fc.Arbitrary<Weft[]> = fc.array(weftArbitrary, { minLength: 1, maxLength: 4 });
+
+/** Valid render settings with small viewports so frame properties stay fast. */
+export const renderSettingsArbitrary: fc.Arbitrary<RenderSettings> = fc.record({
+  warpColour: colourArbitrary,
+  weftPlan: weftPlanArbitrary,
+  threadSizePx: fc.integer({ min: 3, max: 8 }),
+  repeat: fc.integer({ min: 1, max: 4 }),
+  viewport: fc.record({ width: fc.integer({ min: 8, max: 64 }), height: fc.integer({ min: 8, max: 64 }) }),
+  floatHighlight: fc.option(fc.record({ maxLength: fc.integer({ min: 1, max: 8 }) }), { nil: null }),
+});
