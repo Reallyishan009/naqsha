@@ -298,7 +298,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 6.6, 9.5, 10.2, 11.3, 11.4, 14.3, 14.4_
 
-- [ ] 5.15 Generator: per-peg drawing property
+- [x] 5.15 Generator: per-peg drawing property
   - Files: `tests/scripts/make_fixtures.test.ts`.
   - Add Property 80, using `profileArbitrary`, a pinned seed and `numRuns` 25.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
@@ -317,10 +317,10 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 9.3, 18.5_
 
-- [ ] 6. Structure tests, benchmark and docs
+- [x] 6. Structure tests, benchmark and docs
   - _Requirements: 6.3, 6.5, 14.2, 15.1, 15.2, 15.4, 15.5, 16.1, 16.2, 16.3, 17.1, 17.2_
 
-- [ ] 6.1 Module boundary and dependency tests
+- [x] 6.1 Module boundary and dependency tests
   - Files: `tests/structure/modules.test.ts`, `tests/structure/dependencies.test.ts`.
   - These tests scan source text with `node:fs`.
   - `src/codec` imports nothing from other `src/` modules and uses no browser API. `src/reader` imports only from `src/codec`. Only `canvasSource.ts` names `document`, `OffscreenCanvas`, `HTMLImageElement`, `ImageBitmap` or `Blob`.
@@ -329,20 +329,20 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 6.3, 6.5, 14.2, 15.1, 15.2, 15.4, 15.5, 16.3_
 
-- [ ] 6.2 Property naming and coverage test
+- [x] 6.2 Property naming and coverage test
   - Files: `tests/structure/propertyNames.test.ts`.
   - Every test whose body calls `fc.assert` has a title that starts with an ID like `R5.4`. Every exported function in `src/codec` and `src/reader`, other than `loadPixelData`, is named in a test file that calls `fc.assert`. If cut-last tasks were dropped, this test must still pass.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 17.1, 17.2_
 
-- [ ] 6.3 Benchmark
+- [x] 6.3 Benchmark
   - Files: `tests/reader/benchmark.test.ts`, `.kiro/specs/card-codec-and-reader/measurements.md`.
   - Render the demo card, pad it to 1920 x 1080, time `readCard` and print the time. The test fails only if the read fails, never on the time.
   - Record the Node time in `measurements.md`, and note that the 300 ms phone budget (R16.1) is still unmeasured. If the Node time is over 300 ms, report it.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 16.1, 16.2_
 
-- [ ] 6.4 README and structure.md
+- [x] 6.4 README and structure.md
   - Files: `README.md`, `.kiro/steering/structure.md`.
   - README: add what the codec and reader do, how to regenerate the fixtures, and the limits. Accuracy is measured on synthetic fixtures only, the demo profile is illustrative, cards must be upright or upside down within 10 degrees with no perspective, and peg hole diameters must differ from the punched hole diameter.
   - `structure.md`: update the key exports of `src/codec` and `src/reader` to the real names.
