@@ -119,7 +119,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
 - [ ] 3. Animation and canvas
   - _Requirements: 7.3, 9.1, 9.2, 9.3, 9.5, 10.3, 12.2_
 
-- [ ] 3.1 Frames and time
+- [x] 3.1 Frames and time
   - **Demo-essential.**
   - Files: `src/simulator/frames.ts`, `src/simulator/index.ts`, `tests/simulator/frames.test.ts`.
   - Implement `PASS_STEPS`, `framesForPick` and `frameAt` as the design states.
@@ -127,14 +127,14 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 9.1, 9.2, 9.3, 10.3_
 
-- [ ] 3.2 The shed in lift and pass frames
+- [x] 3.2 The shed in lift and pass frames
   - **Demo-essential.**
   - Files: `src/simulator/render.ts`, `tests/simulator/render.test.ts`.
   - Draw raised ends for `lift(p)` and `pass(p, s)` and the weft part-way across for `pass(p, s)`. Extend the frame arbitrary used by Properties 6 and 18 to include lift and pass frames.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 9.1, 9.2, 9.3_
 
-- [ ] 3.3 Player
+- [x] 3.3 Player
   - **Demo-essential.**
   - Files: `src/simulator/player.ts`, `src/simulator/index.ts`, `tests/simulator/player.test.ts`.
   - Implement `createPlayer` with an injected scheduler and paint function: play, pause, resume, seek, current.
@@ -142,7 +142,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 7.3, 9.5, 10.3_
 
-- [ ] 3.4 Canvas and a dev-only preview page
+- [x] 3.4 Canvas and a dev-only preview page
   - **Demo-essential.**
   - Files: `src/simulator/canvas.ts`, `src/simulator/index.ts`, `scripts/sim-preview.html`, `scripts/sim-preview.ts`, `tests/simulator/canvas.test.ts`.
   - `paintToCanvas` (one `putImageData` per frame) and `browserScheduler` (`requestAnimationFrame`). Test both with fakes that record calls.
@@ -150,7 +150,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 8.2, 9.5, 10.1, 10.3, 12.2_
 
-- [ ] 3.5 Phase 3 log and push
+- [-] 3.5 Phase 3 log and push
   - Files: `docs/BUILD_LOG.md`.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), and the commit range. Push.
   - _Requirements: 13.4_

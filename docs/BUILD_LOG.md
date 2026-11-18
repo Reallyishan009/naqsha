@@ -138,3 +138,26 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **Evidence saved:** None new.
 **Credits left:** Not recorded.
 **Commit:** `f6b7e75`, `51c6dae`, `1bd1d82`, `9e3f6b5`, `a4534b9` (range `f6b7e75` to `a4534b9`).
+
+## 2026-11-18 (simulator phase 3)
+**Goal today:** Simulator phase 3 (frames, shed animation, player, canvas and a dev preview page).
+**Prompts run in Kiro:** Not recorded by number. The request was: commit the 2.5 checkbox, run phase 3, report the preview page command and URLs.
+**What Kiro produced:**
+- `src/simulator/frames.ts`: `PASS_STEPS = 8`, `framesForPick`, `frameAt`, with Properties 19 and 21.
+- `render.ts`: lift and pass frames (raised ends in the shed, the weft band part-way across). Properties 6, 16 and 18 were extended to lift and pass frames. A second R7.5 property covers lift and pass frames of gap picks and bad steps.
+- `src/simulator/player.ts`: `createPlayer` (play, pause, resume, seek, current) with an injected scheduler and paint. Property 17: play to p and `seek(p)` both paint exactly `renderFrame(rest(p))`.
+- `src/simulator/canvas.ts`: `paintToCanvas` (one `putImageData` per frame) and `browserScheduler` (`requestAnimationFrame` looked up at call time). It is the only browser-API file in `src/simulator`.
+- `scripts/sim-preview.html` and `scripts/sim-preview.ts`: dev-only preview page with controls, a scrub slider, gap toggles (pick 20 missing, pick 30 damaged) and a median/worst frame-time readout. It is not in the app build. `demoPattern` moved to `scripts/demo_pattern.ts` so the page can use it without Node modules; fixtures are byte-identical after the move.
+- Test suite at the end of phase 3: 29 files, 212 tests passing.
+**What failed or surprised me:**
+- No property failed in phase 3.
+- Property 23 (tiled equals base) holds only for rest frames: in a pass frame the weft band stops at a fraction of the full tiled width. The property was left unchanged (it renders rest frames).
+- When the shed is shorter than one thread (a very short viewport), the weft band is clipped to the shed instead of drawing over the cloth.
+- The preview page's frame time covers `renderFrame` plus the canvas copy per painted tick, because the player calls `renderFrame` internally.
+- The preview page was checked with curl (HTTP 200) and the type checker only. Kiro did not open it in a browser.
+- **Cut-last properties skipped in phase 3:** none (phase 3 has none).
+**What I changed by hand:** No files edited by hand.
+**Kiro features used:** spec, property tests.
+**Evidence saved:** None new.
+**Credits left:** Not recorded.
+**Commit:** `7cba7b8`, `6fd808d`, `b44dcce`, `1a67e94`, `1e87d74` (range `7cba7b8` to `1e87d74`).
