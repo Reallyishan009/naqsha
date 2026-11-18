@@ -12,7 +12,7 @@ The banner and the three GIFs below are not in the repository yet. They are adde
 
 ![Keep screen: a design is kept in the archive and exported as a bitmap](media/keep-export.gif)
 
-Public URL: **coming**. The site has not been deployed. This line is replaced with the address once someone has deployed it (see "Deploy to Vercel").
+Public URL: https://naqsha-ashen.vercel.app/ (opens with no login; deployed by hand on Vercel, see "Deploy to Vercel").
 
 **Status:** the card codec and the card reader are built and tested on synthetic card images, and the simulator renders cloth on a canvas (dev preview page only). The exporter writes and reads back BMP files (no app screen yet). The camera screen, archive and UI are not built yet.
 
@@ -136,7 +136,7 @@ Developer-only simulator preview: start the dev server with `npx vite --host` an
 
 ## Deploy to Vercel
 
-Nothing has been deployed from this repository. The steps below are for you to do by hand. They are not done yet.
+The site is deployed at https://naqsha-ashen.vercel.app/ . The steps below are how to deploy your own copy by hand.
 
 1. Create a Vercel account (the free Hobby plan is enough) and sign in. Connect it to the Git host that holds this repository.
 2. In Vercel choose **Add New... > Project** and import this repository.
@@ -144,7 +144,7 @@ Nothing has been deployed from this repository. The steps below are for you to d
 4. Build command: `npm run build`. `vercel.json` already states it.
 5. Output directory: `dist`. `vercel.json` already states it.
 6. Environment variables: none. Add none. The app has no backend and no API key.
-7. Select **Deploy**. Vercel prints the public URL when the build ends. Put that URL in the "Public URL" line near the top of this file.
+7. Select **Deploy**. Vercel prints the public URL when the build ends. If you deploy your own copy, put its URL in the "Public URL" line near the top of this file.
 
 Visitors need no login, no account and no API key to open the published site. The site makes no request to a third party and has no analytics.
 
