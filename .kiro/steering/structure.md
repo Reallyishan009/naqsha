@@ -39,9 +39,9 @@ Files: prepare.ts, settings.ts, style.ts, render.ts, floats.ts, frames.ts, playe
 Key exports: prepareCloth, isPreparedCloth, parseRenderSettings, parseColour, renderFrame, computeFloats, floatLengthAt, framesForPick, frameAt, PASS_STEPS, createPlayer, paintToCanvas, browserScheduler; types SlotList, PickRow, GapReport, PreparedCloth, Weft, RenderSettings, Frame, SimImage, SimFailure, SimResult, Float, Player, Scheduler, PaintContext
 
 ### src/exporter
-Converts a completed WeavePattern into output formats: a bitmap (ImageData / PNG blob) suitable for electronic Jacquard loom controllers, and an optional JSON snapshot for reimport. Handles the browser download trigger.
+Exports a Pattern (one CardGrid per pick) as an uncompressed BMP with a colour table, one pixel per end and one row per pick, in 1-bit and 8-bit variants, and reads those files back. Handles the browser download trigger in one file. Imports only from src/codec. Each loom controller may need a specific variant (bit depth, lift colour, pick order, end order); no controller has been tested.
 
-Key exports: exportBitmap, exportJSON, BitmapOptions
+Key exports: exportPatternBmp, readPatternBmp, parseExportOptions, bmpFileName, downloadBmp, ExportOptions
 
 ### src/archive
 Thin wrapper around IndexedDB. Stores and retrieves scan records (card metadata + bitmap + JSON). Provides a simple async CRUD interface; callers do not interact with IndexedDB directly.
@@ -64,7 +64,7 @@ Dependencies flow in one direction only:
 ui → simulator, exporter, archive, reader
 reader → codec
 simulator → codec
-exporter → simulator, codec
+exporter → codec
 archive → (IndexedDB only, no other src/ modules)
 codec → (no src/ dependencies)
 ```
