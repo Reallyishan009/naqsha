@@ -141,7 +141,7 @@ Acceptance criteria are referenced as `R<requirement>.<criterion>` (for example 
 4. WHEN the peg holes are found THEN the reader SHALL compute the pose: tilt in degrees (positive = clockwise), scale in pixels per millimetre, and the image position of the card's top-left corner.
 5. THE reader SHALL find the card when its tilt from upright is anywhere from -10 to +10 degrees. Cards that are upside down are covered by Requirement 18.
 6. FOR ALL fixtures in `tests/fixtures/`, the estimated tilt SHALL be within 0.5 degrees of the expected tilt, which is the `options.tiltDegrees` value in that fixture's ground-truth JSON.
-7. IF fewer than two peg holes are found, or the peg holes found do not fit the positions in the profile, THEN the reader SHALL fail with reason `peg-holes-not-found` and SHALL NOT return a CardGrid.
+7. IF fewer than two peg holes are found, or the peg holes found do not fit the positions in the profile, THEN the reader SHALL fail with reason `peg-holes-not-found` and SHALL NOT return a CardGrid. An image with no card can still contain a pair of dark regions that fits the peg holes by chance, for example random noise. The reader then fails at a later step (`ambiguous-orientation` or `resolution-too-low`), which is also acceptable because no CardGrid is returned.
 
 ### Requirement 10: Correct tilt and locate each hook position
 

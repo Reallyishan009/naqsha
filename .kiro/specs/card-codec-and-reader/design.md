@@ -1036,7 +1036,7 @@ Test file: `tests/reader/readCard.test.ts`. Image property. Any profile, grid, a
 
 ### Property 69: R9.7 an image with no peg holes fails with peg-holes-not-found and no grid.
 
-Test file: `tests/reader/readCard.test.ts`. Any uniform image or random-noise image of 16 to 64 px per side, with a valid profile.
+Test file: `tests/reader/readCard.test.ts`. Two parts with a valid profile. Uniform images of 16 to 64 px per side give exactly `peg-holes-not-found` and no grid. Random-noise images of 16 to 64 px per side always give a failure and no grid, with any of the six reasons: noise can contain a peg-like pair by chance, and the reader then fails at a later step (see R9.7). The noise case found in task 5.13 (seed 4242, a 44 x 20 image that gave `resolution-too-low`) is kept as a regression example.
 
 **Validates: Requirements 9.7**
 

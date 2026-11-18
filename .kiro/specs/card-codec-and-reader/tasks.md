@@ -285,7 +285,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 12.1, 12.5_
 
-- [ ] 5.13 `readCard`: failure paths, orientation and the R18.8 scale
+- [x] 5.13 `readCard`: failure paths, orientation and the R18.8 scale
   - Files: `tests/reader/readCard.test.ts`.
   - Add Properties 69, 73, 74, 75 and 76 (failure paths), and Properties 78, 79 and 83 (orientation). These use a pinned seed where they render images, and none is cuttable.
   - Measure the R18.8 scale. Use a profile with peg diameters of 2.5 mm and 2.8 mm, and assert that `validateCardProfile` returns `[]` for it. Render it with a fixed seed at decreasing `pixelsPerMm`. Record the highest scale at which the peg holes are still found and the result is `ambiguous-orientation`. Write that scale, and the separation measured there, into the test and into `measurements.md`. If no such scale exists (the reader goes from a correct read straight to `peg-holes-not-found`), stop and report this with the measured values instead of changing the profile.
