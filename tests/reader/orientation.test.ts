@@ -60,6 +60,22 @@ describe('orientation properties', () => {
     );
   });
 
+  // Error as a fraction of g / 4, in [-1, 1]. The exact boundaries -1, 0 and 1 are generated on purpose.
+  const errorFraction = fc.oneof(fc.double({ min: -1, max: 1, noNaN: true }), fc.constantFrom(-1, 0, 1));
+
+  it('R18.5 measurement errors within a quarter of the diameter gap never change the decision', () => {
+    fc.assert(
+      fc.property(expectedWithGap, fc.boolean(), errorFraction, errorFraction, (expected, upsideDown, t0, t1) => {
+        const [e0, e1] = expected;
+        const bound = Math.abs(e0 - e1) / 4;
+        const x0 = t0 * bound;
+        const x1 = t1 * bound;
+        const measuredUpright: DiameterPair = upsideDown ? [e1 + x0, e0 + x1] : [e0 + x0, e1 + x1];
+        expect(decideOrientation(expected, measuredUpright).kind).toBe(upsideDown ? 'upside-down' : 'upright');
+      }),
+    );
+  });
+
   it('R18.6 multiplying every diameter by the same factor does not change the separation or the decision', () => {
     fc.assert(
       fc.property(expectedWithGap, measuredPair, fc.integer({ min: -4, max: 4 }), (expected, measured, k) => {
