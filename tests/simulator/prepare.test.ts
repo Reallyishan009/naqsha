@@ -1,9 +1,9 @@
 import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { encodeCardGrid, parseCardProfile, validateCardGrid } from '../../src/codec/index.ts';
-import { parseRenderSettings, prepareCloth } from '../../src/simulator/index.ts';
+import { isPreparedCloth, parseRenderSettings, prepareCloth, renderFrame } from '../../src/simulator/index.ts';
 import { cardGridArbitrary, mutateProfile, profileArbitrary, REMOVE } from '../support/profiles.ts';
-import { slotListArbitrary } from '../support/slots.ts';
+import { renderSettingsArbitrary, slotListArbitrary } from '../support/slots.ts';
 
 /** A valid profile made invalid by construction. */
 const invalidProfileArbitrary = profileArbitrary.chain((profile) =>
@@ -112,6 +112,33 @@ describe('simulator never throws', () => {
         (profile, slots) => {
           expect(typeof prepareCloth(profile, slots).ok).toBe('boolean');
           expect(typeof parseRenderSettings(profile).ok).toBe('boolean');
+        },
+      ),
+    );
+  });
+});
+
+describe('isPreparedCloth', () => {
+  it('R11.1 renderFrame accepts exactly the cloths prepareCloth returned', () => {
+    fc.assert(
+      fc.property(profileAndSlots, renderSettingsArbitrary, ({ profile, samples }, settings) => {
+        const result = prepareCloth(profile, samples.map((sample) => sample.slot));
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        expect(isPreparedCloth(result.value)).toBe(true);
+        const copy = structuredClone(result.value);
+        expect(isPreparedCloth(copy)).toBe(false);
+        const rendered = renderFrame(copy, settings, { pick: 0, phase: 'rest' });
+        expect(rendered.ok).toBe(false);
+        if (rendered.ok) return;
+        expect(rendered.failure).toMatchObject({ reason: 'invalid-settings', setting: 'cloth' });
+      }),
+    );
+    fc.assert(
+      fc.property(
+        fc.anything({ withNullPrototype: true, withBigInt: true, withSparseArray: true, withObjectString: true }),
+        (value) => {
+          expect(isPreparedCloth(value)).toBe(false);
         },
       ),
     );

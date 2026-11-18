@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 const SRC = path.resolve(import.meta.dirname, '../../src');
 const CODEC = path.join(SRC, 'codec');
 const READER = path.join(SRC, 'reader');
+const SIMULATOR = path.join(SRC, 'simulator');
 
 function tsFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -78,6 +79,7 @@ function load(dir: string): SourceFile[] {
 
 const codecFiles = load(CODEC);
 const readerFiles = load(READER);
+const simulatorFiles = load(SIMULATOR);
 const bothFiles = [...codecFiles, ...readerFiles];
 
 function lineOf(text: string, index: number): number {
@@ -128,6 +130,12 @@ function importViolations(files: SourceFile[], allowedDirs: string[]): string[] 
 
 const BROWSER_API =
   /\b(?:document|window|OffscreenCanvas|HTMLImageElement|HTMLCanvasElement|ImageBitmap|createImageBitmap|Blob|navigator)\b/;
+
+// Simulator scan only: the shared list plus the animation and pixel-buffer names that
+// src/simulator/canvas.ts uses. They are not added to the codec and reader scans.
+const SIMULATOR_BROWSER_API = new RegExp(
+  `${BROWSER_API.source.slice(0, -3)}|requestAnimationFrame|cancelAnimationFrame|ImageData)\\b`,
+);
 
 // Peg-hole words. Matches pegHole, PegHoles, "peg hole", peg-hole, peg_hole, any case.
 const PEG_WORD = /peg[\s_-]?hole/i;
@@ -190,6 +198,31 @@ describe('module boundaries', () => {
   it('R15.4 peg hole words appear only in the files the design allows', () => {
     const offenders = bothFiles.filter((f) => !PEG_ALLOWED.has(f.relative.split(path.sep).join('/')));
     expect(findAll(offenders, PEG_WORD, (f) => withoutSpecifiers(f.raw))).toEqual([]);
+  });
+
+  it('there are source files to scan in src/simulator', () => {
+    expect(simulatorFiles.length).toBeGreaterThan(0);
+  });
+
+  it('R12.1 src/simulator imports only from src/simulator and src/codec, and no packages (R10.5 no runtime dependency is also checked in tests/structure/dependencies.test.ts)', () => {
+    expect(importViolations(simulatorFiles, [SIMULATOR, CODEC])).toEqual([]);
+  });
+
+  it('R12.2 only src/simulator/canvas.ts names a browser API', () => {
+    const others = simulatorFiles.filter((f) => f.relative !== path.join('simulator', 'canvas.ts'));
+    expect(findAll(others, SIMULATOR_BROWSER_API, (f) => f.codeNoStrings)).toEqual([]);
+  });
+
+  it('R12.3 src/simulator does not use the any type', () => {
+    expect(findAll(simulatorFiles, /(?<![.\w$])any(?![\w$])/, (f) => f.codeNoStrings)).toEqual([]);
+  });
+
+  it('R12.4 src/simulator does not name demo-12x16', () => {
+    expect(findAll(simulatorFiles, /demo-12x16/, (f) => f.raw)).toEqual([]);
+  });
+
+  it('R12.5 src/simulator does not import from or read public/', () => {
+    expect(findAll(simulatorFiles, /\bpublic\//, (f) => f.raw)).toEqual([]);
   });
 
   it('the comment stripper keeps comment markers inside strings and drops real comments', () => {

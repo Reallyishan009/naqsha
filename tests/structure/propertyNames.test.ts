@@ -6,7 +6,8 @@ import { join, relative } from 'node:path';
 // does not count as a property test just by naming it.
 const ASSERT_MARKER = ['fc', 'assert'].join('.');
 const ROOT = process.cwd();
-const EXCLUDED_FROM_COVERAGE = new Set(['loadPixelData']);
+// paintToCanvas and browserScheduler (src/simulator/canvas.ts) have example tests with fakes.
+const EXCLUDED_FROM_COVERAGE = new Set(['loadPixelData', 'paintToCanvas', 'browserScheduler']);
 const ID_PREFIX = /^R\d+\.\d+ /;
 
 function listFiles(dir: string, accept: (name: string) => boolean): string[] {
@@ -215,10 +216,11 @@ describe('property naming and coverage', () => {
     expect(stray, stray.join('\n')).toEqual([]);
   });
 
-  it('R17.1 every exported function in src/codec and src/reader is named in a test file that calls the property runner', () => {
+  it('R17.1 and R13.1 every exported function in src/codec, src/reader and src/simulator is named in a test file that calls the property runner', () => {
     const exported = [
       ...exportedFunctionNames(join(ROOT, 'src', 'codec')),
       ...exportedFunctionNames(join(ROOT, 'src', 'reader')),
+      ...exportedFunctionNames(join(ROOT, 'src', 'simulator')),
     ].filter(({ name }) => !EXCLUDED_FROM_COVERAGE.has(name));
     expect(exported.length, 'no exported functions were found, so the scan is probably broken').toBeGreaterThan(0);
 

@@ -2,7 +2,7 @@ import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { encodeCardGrid } from '../../src/codec/index.ts';
 import type { CardProfile } from '../../src/codec/index.ts';
-import { computeFloats, prepareCloth } from '../../src/simulator/index.ts';
+import { computeFloats, floatLengthAt, prepareCloth } from '../../src/simulator/index.ts';
 import type { Float, PreparedCloth } from '../../src/simulator/index.ts';
 import { profileArbitrary } from '../support/profiles.ts';
 import { slotListArbitrary } from '../support/slots.ts';
@@ -96,5 +96,53 @@ describe('computeFloats', () => {
       { set: 'warp', pick: 0, end: 0, length: 2 },
       { set: 'warp', pick: 0, end: 4, length: 2 },
     ]);
+  });
+});
+
+describe('floatLengthAt', () => {
+  it('R3.3 the windowed float length agrees with computeFloats up to the scan limit', () => {
+    const input = profileArbitrary.chain((profile) =>
+      fc.record({
+        profile: fc.constant(profile),
+        samples: slotListArbitrary(profile),
+        repeat: fc.integer({ min: 1, max: 3 }),
+        maxLength: fc.integer({ min: 1, max: 8 }),
+        lastPickSeed: fc.nat(),
+      }),
+    );
+    fc.assert(
+      fc.property(input, ({ profile, samples, repeat, maxLength, lastPickSeed }) => {
+        if (samples.length === 0) return; // an empty cloth has no cell to measure
+        const prepared = prepareCloth(profile, samples.map((sample) => sample.slot));
+        expect(prepared.ok).toBe(true);
+        if (!prepared.ok) return;
+        const cloth = prepared.value;
+        const lastPick = lastPickSeed % cloth.picks.length;
+        // Reference: the cloth cut after lastPick, so floats are measured over picks 0..lastPick only.
+        const cut: PreparedCloth = { ...cloth, picks: cloth.picks.slice(0, lastPick + 1) };
+        const floats = computeFloats(cut, repeat);
+        const tiledEnds = cloth.baseEnds * repeat;
+        for (let pick = 0; pick <= lastPick; pick++) {
+          const row = cloth.picks[pick]!;
+          for (let end = 0; end < tiledEnds; end++) {
+            const got = floatLengthAt(cloth, pick, end, repeat, maxLength, lastPick);
+            if (row.kind !== 'woven') {
+              expect(got).toBe(0);
+              continue;
+            }
+            const set = row.lift[end % cloth.baseEnds] === 1 ? 'warp' : 'weft';
+            // A cell in no float (a run of 1) has length 1.
+            const containing = floats.find((float) =>
+              set === 'weft'
+                ? float.set === 'weft' && float.pick === pick && end >= float.end && end < float.end + float.length
+                : float.set === 'warp' && float.end === end && pick >= float.pick && pick < float.pick + float.length,
+            );
+            const expected = containing?.length ?? 1;
+            if (expected <= maxLength) expect(got).toBe(expected);
+            else expect(got).toBeGreaterThan(maxLength);
+          }
+        }
+      }),
+    );
   });
 });

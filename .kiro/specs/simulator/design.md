@@ -295,9 +295,9 @@ Each property is a fast-check property. The test title is the heading text after
 
 **Validates: Requirements 5.5**
 
-### Property 15: R6.1 thread edges are darker than thread centres.
+### Property 15: R6.1 thread edges are darker than thread centres, and the pixel helpers follow their rules.
 
-**Cut last.** For every allowed `t`, `shadeTable(t)` is symmetric, lowest at the edges and highest at the centre.
+**Kept** (cut last in the plan, kept because the property naming test needs the style helpers covered). For every allowed `t`, `shadeTable(t)` is symmetric, lowest at the edges and highest at the centre. For any colour, `shadeChannel` never exceeds the channel, `packRgb`, `packShaded` and `packRaised` unpack to the expected bytes in the detected byte order, `blendHalfway` gives `(c + target) >> 1` per channel, `positiveModulo` lies in `0..m-1`, and `isSlashInk` and `isCrossInk` follow their hatch rules and repeat every 6 px.
 
 **Validates: Requirements 6.1**
 
@@ -354,6 +354,18 @@ Each property is a fast-check property. The test title is the heading text after
 **Cut last.** A weft float that touches the right edge of one repeat and the left edge of the next is measured as one float.
 
 **Validates: Requirements 14.4**
+
+### Property 25: R3.3 the windowed float length agrees with computeFloats up to the scan limit.
+
+**Added in task 4.3.** For any cloth, cell and limit `L`, `floatLengthAt` returns the length of the cell's float from `computeFloats` when that length is at most `L`, and a value above `L` otherwise.
+
+**Validates: Requirements 3.3**
+
+### Property 26: R11.1 renderFrame accepts exactly the cloths prepareCloth returned.
+
+**Added in task 4.3.** `isPreparedCloth` is true for every successful `prepareCloth` result and false for any other value, including structural copies of a prepared cloth. A copy made with `structuredClone` is therefore rejected by `renderFrame`.
+
+**Validates: Requirements 11.1**
 
 ## Decisions
 
