@@ -150,7 +150,7 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
     - Run `npm run test:run`, `npm run typecheck` and `npm run build`, then `git push`. Run `git remote -v` first; if no remote is configured, ask the user before pushing and do not add one yourself.
     - _Requirements: 16.7_
 
-- [ ] 2. Phase 2: Keep and the archive
+- [x] 2. Phase 2: Keep and the archive
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 6.10, 6.11, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 7.10, 22.1, 22.2, 22.4, 22.5, 22.6, 22.7, 22.8, 22.9, 22.10, 22.11, 22.12, 22.13_
 
   - [x] 2.1 Archive types and functions over a store
@@ -213,7 +213,7 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
     - Update the `src/archive` and `src/ui` entries in `structure.md` to the real exports (`saveDesign`, `getDesign`, `listDesigns`, `deleteDesign`; `App`). Add a log entry with the manual IndexedDB check (save, refresh, list, reopen) and its result or "not yet run". Regenerate `docs/HINDI_REVIEW.md`.
     - _Requirements: 6.1, 12.12_
 
-  - [-] 2.8 Phase 2 push
+  - [x] 2.8 Phase 2 push
     - **Demo-essential.**
     - Run `npm run test:run`, `npm run typecheck` and `npm run build`, then `git push`. Run `git remote -v` first; if no remote is configured, ask the user before pushing.
     - _Requirements: 16.7_
@@ -221,7 +221,7 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
 - [ ] 3. Phase 3: Scan with tap-to-correct and batch
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8, 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7, 11.8, 11.9, 11.10, 16.10, 17.1, 17.3, 17.5, 17.6, 22.1, 22.3, 22.5, 22.10, 22.11, 23.9, 23.11, 23.12, 23.13_
 
-  - [ ] 3.1 Scan_Batch operations and reducer actions
+  - [x] 3.1 Scan_Batch operations and reducer actions
     - Files: `src/ui/state/batch.ts`, `src/ui/state/appState.ts`, `tests/ui/state/batch.test.ts`, `tests/ui/state/appState.test.ts`.
     - `appendCard`, `removeCard`, `moveCard`, `replaceCard`, `commitBatch`, and the reducer actions `batch-accept`, `batch-remove`, `batch-move`, `batch-replace`, `batch-commit`, `read-failed`. Extend the Property 1 test to the new actions.
     - **Property 23**: a `read-failed` action leaves the batch unchanged and announces the failure. Failure-path property, never cuttable.
@@ -230,14 +230,14 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
     - Example tests: the replace or append confirmation, and an unaccepted read does not alter the batch.
     - _Requirements: 9.1, 11.1, 11.3, 11.4, 11.5, 11.6, 11.7, 11.8, 11.9, 11.10_
 
-  - [ ] 3.2 Read failure messages
+  - [x] 3.2 Read failure messages
     - Files: `src/ui/i18n/messages.ts`, `src/ui/i18n/en.json`, `src/ui/i18n/hi.json`, `tests/ui/i18n/failureKeys.test.ts`.
     - `readFailureKey` as an exhaustive switch over the six `ReadFailure` kinds (`invalid-profile`, `invalid-image`, `peg-holes-not-found`, `ambiguous-orientation`, `resolution-too-low`, `card-outside-image`), importing the reader's type under the alias `CardReadFailure`. Add the Scan keys, with the plain-language texts that R9.2 to R9.7 describe, in Hindi and English.
     - **Property 6 (read failure type)**: every kind has a key in both files that is not the raw kind string. Failure-path property, never cuttable.
     - Example tests: the text for `peg-holes-not-found`, `ambiguous-orientation`, `resolution-too-low`, `card-outside-image` and `invalid-image` states the cause and the next step in both languages.
     - _Requirements: 8.6, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9_
 
-  - [ ] 3.3 Correction and marker logic
+  - [x] 3.3 Correction and marker logic
     - Files: `src/ui/state/corrections.ts`, `tests/ui/state/corrections.test.ts`.
     - `toggleHook`, `undoCorrection`, `hookMarkers` (uses `cardToImage` from `src/reader` and `hookCentreMm` from `src/ui/printable/layout.ts`), `hitSizePx`, `minimumZoom`.
     - **Property 22**: markers sit on the hook positions, with `filled` for a punched hole and `ring` otherwise.
@@ -246,30 +246,30 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
     - Example: a position outside the grid returns the grid unchanged.
     - _Requirements: 8.3, 8.4, 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7_
 
-  - [ ] 3.4 Scan screen components
+  - [x] 3.4 Scan screen components
     - Files: `src/ui/screens/scan/ScanScreen.tsx`, `CardOverlay.tsx`, `BatchList.tsx`, `ScanScreen.module.css`, `src/ui/App.tsx`, `tests/ui/screens/scan.test.tsx`, `tests/integration/scanFixtures.test.ts`.
     - Lazy-load `ScanScreen` with `React.lazy` and `Suspense`. File input, busy state, a request counter so a late result never replaces a newer one, overlay with filled and ring markers and a text legend, enlarged hit areas and zoom, keyboard-operable markers, corrected badge, undo, accept, batch list (numbered thumbnails, confirmed remove, earlier, later, scan again), Done with the replace or append question, one message per `CardReadFailure` kind, violation locations for `invalid-profile`, the Card_Profile name and the Unverified_Profile notice (reusing `ProfileNotice` from task 2.3), no network request.
     - Integration test with the fixtures in `tests/fixtures/` and their ground-truth JSON, for all four conditions (clean, noisy, tilted, noisy and tilted): `readCard` on the fixture pixels equals the ground-truth grid and the overlay markers match it. A failure example for each of the six read failure kinds through the message mapping.
     - Render examples: each marker is a button with an accessible name; Done is disabled for an empty batch; the notice and profile name are shown.
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.9, 10.1, 10.2, 10.3, 10.4, 10.5, 10.8, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7, 11.8, 11.10, 16.10, 17.5, 17.6, 22.1, 22.3, 22.5, 22.10, 22.11_
 
-  - [ ] 3.5 Scan chunk check and timing
+  - [x] 3.5 Scan chunk check and timing
     - Files: `scripts/check_bundle.ts`, `docs/BUILD_LOG.md`.
     - Extend `check_bundle` so a Scan-only marker string must be absent from the entry chunk and present in a separate chunk. Run it and record the sizes. Time `readCard` on a 1080p synthetic image in Node and record it (the on-device number is a manual check).
     - _Requirements: 8.8, 16.1, 16.10_
 
-  - [ ] 3.6 README media (manual capture)
+  - [x] 3.6 README media (manual capture)
     - Files: `media/banner.png`, `media/weave-sample.gif`, `media/scan-printed-card.gif`, `media/keep-export.gif`, `README.md`.
     - This task needs the user if it cannot be done headlessly. Run `npm run build` and `npm run preview`, then capture one banner and three GIFs from the Built_Site in a real browser with the demo profile: Weave playback of a Sample_Design; scanning the printed card with a tap correction; the BMP export. The Scan and Keep GIFs must show the Card_Profile notice. Each file at most 5 MB (check with `ls -l`). Confirm the public URL with the user and put it in the README. The README already references these files (task 1.12); check that every reference resolves and has alternative text.
     - If capture is not possible in this session, say so, leave the README references in place, and list the missing files in the build log; this does not block the Phase 3 push.
     - _Requirements: 23.5, 23.9, 23.10, 23.11, 23.12, 23.13_
 
-  - [ ] 3.7 Phase 3 build-log entry and final check
+  - [x] 3.7 Phase 3 build-log entry and final check
     - Files: `docs/BUILD_LOG.md`, `docs/HINDI_REVIEW.md`.
     - Run `npm run test:run`, `npm run typecheck`, `npm run build` and `check_bundle`. Confirm every requirement ID from 1 to 17 and 21 to 23 appears in a test title (18 to 20 are Phase 4). Regenerate `docs/HINDI_REVIEW.md` and tell the user how many strings need a native Hindi speaker. List what was not verified: real IndexedDB in a browser, on-device timings, any loom controller, the Hindi text, real card dimensions.
     - _Requirements: 12.9, 12.12, 16.7, 17.1, 17.3_
 
-  - [ ] 3.8 Phase 3 push
+  - [-] 3.8 Phase 3 push
     - Run `npm run test:run`, `npm run typecheck` and `npm run build`, then `git push`. Run `git remote -v` first; if no remote is configured, ask the user before pushing.
     - _Requirements: 16.7_
 
