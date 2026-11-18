@@ -837,9 +837,9 @@ Test file: `tests/reader/regions.test.ts`. For any random dark map.
 
 **Validates: Requirements 9.1**
 
-### Property 46: R9.2 the equivalent diameter of a filled disc matches its true diameter within 5%.
+### Property 46: R9.2 the equivalent diameter of a filled disc is within 1 px of its true diameter, and within 5% from 12 px.
 
-Test file: `tests/reader/regions.test.ts`. For any disc of diameter 6 to 40 px at any sub-pixel position inside the image.
+Test file: `tests/reader/regions.test.ts`. For any disc of diameter 6 to 40 px at any sub-pixel position inside the image, the equivalent diameter is within 1 px of the true diameter, and for discs of 12 px or more the relative error is at most 5%. The case of a 6 px disc centred on a pixel corner (diameter 6, offsets 0, 0) is kept as a permanent regression example. Pixel quantisation makes small discs up to about 9% off in relative terms, while the reader works in pixels.
 
 **Validates: Requirements 9.2**
 
