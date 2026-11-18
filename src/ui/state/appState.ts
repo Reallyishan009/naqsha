@@ -12,7 +12,7 @@ export const initialAppState: AppState = {
 };
 
 /**
- * Pure reducer. Actions that belong to Phases 2 and 3 (saved designs, Scan_Batch) are not handled yet and
+ * Pure reducer. Scan_Batch actions (Phase 3) are not handled yet and
  * return the state unchanged.
  */
 export function appReducer(state: AppState, action: AppAction): AppState {
@@ -52,6 +52,17 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       }
       // Other confirmations are acted on by the phase that raises them.
       return { ...state, confirm: null };
+    }
+    case 'open-saved':
+      return {
+        ...state,
+        screen: 'weave',
+        current: { pattern: action.pattern, origin: { kind: 'archive', id: action.id } },
+      };
+    case 'mark-saved': {
+      const { origin } = state.current;
+      if (origin.kind !== 'scanned') return state;
+      return { ...state, current: { ...state.current, origin: { kind: 'scanned', saved: true } } };
     }
     case 'confirm-dismissed':
       return { ...state, confirm: null };

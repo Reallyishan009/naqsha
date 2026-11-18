@@ -119,6 +119,27 @@ describe('appReducer properties', () => {
     );
   });
 
+  it('R7.7 opening a saved design shows Weave with the archive origin and keeps the scan batch; mark-saved keeps the pattern and batch', () => {
+    // Feature: app, Property 1: Navigation keeps the Current_Pattern
+    fc.assert(
+      fc.property(stateAndPattern, fc.string(), ({ state, pattern }, id) => {
+        const opened = appReducer(state, { type: 'open-saved', id, pattern });
+        expect(opened.screen).toBe('weave');
+        expect(opened.current).toEqual({ pattern, origin: { kind: 'archive', id } });
+        expect(opened.batch).toEqual(state.batch);
+        const marked = appReducer(state, { type: 'mark-saved', id });
+        expect(marked.batch).toEqual(state.batch);
+        expect(marked.screen).toBe(state.screen);
+        expect(marked.current.pattern).toEqual(state.current.pattern);
+        if (state.current.origin.kind === 'scanned') {
+          expect(marked.current.origin).toEqual({ kind: 'scanned', saved: true });
+        } else {
+          expect(marked).toEqual(state);
+        }
+      }),
+      { numRuns: NUM_RUNS, seed: SEED },
+    );
+  });
   it('R4.7 a sample over a scanned unsaved non-empty pattern asks first; otherwise it replaces at once', () => {
     // Feature: app, Property 12: Replacing a scanned unsaved pattern asks first
     fc.assert(
