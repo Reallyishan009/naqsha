@@ -1,10 +1,18 @@
-<!-- Banner: coming. Put the image in media/ and link it here. -->
+![Naqsha banner: a punched Jacquard card beside the woven cloth it makes](media/banner.png)
 
 # Naqsha
 
 A browser app that reads a Jacquard loom punch card through a camera, rebuilds the weave pattern, and (coming) simulates the cloth and exports a bitmap for electronic Jacquard looms.
 
-<!-- GIF of a card being scanned and the cloth weaving: coming. -->
+The banner and the three GIFs below are not in the repository yet. They are added in Phase 3, so these images show as broken links until then.
+
+![Weave screen: a sample design weaving pick by pick into cloth](media/weave-sample.gif)
+
+![Scan screen: a printed card is read and one hole is corrected with a tap](media/scan-printed-card.gif)
+
+![Keep screen: a design is kept in the archive and exported as a bitmap](media/keep-export.gif)
+
+Public URL: **coming**. The site has not been deployed. This line is replaced with the address once someone has deployed it (see "Deploy to Vercel").
 
 **Status:** the card codec and the card reader are built and tested on synthetic card images, and the simulator renders cloth on a canvas (dev preview page only). The exporter writes and reads back BMP files (no app screen yet). The camera screen, archive and UI are not built yet.
 
@@ -112,9 +120,38 @@ npm run fixtures     # regenerate the synthetic card images in tests/fixtures/
 npm run sample-bmp   # write media/sample-design-1bit.bmp and media/sample-design-8bit.bmp
 ```
 
+Check the built site locally before you deploy:
+
+```
+npm run build        # type-check, then build to dist/
+npm run check-bundle # entry chunk under 200 KB gzipped, no absolute URL in dist/index.html
+npm run preview      # serve dist/ locally and open the address it prints
+```
+
+The built site uses relative paths (`base: './'`), so it works from the root of a host and from a sub-path.
+
 Developer-only photo trial: start the dev server with `npx vite --host`, print `/scripts/photo-trial/print.html` at 100% scale, photograph the printed card from directly above, then open `/scripts/read-photo.html` and choose the photo.
 
 Developer-only simulator preview: start the dev server with `npx vite --host` and open `/scripts/sim-preview.html`.
+
+## Deploy to Vercel
+
+Nothing has been deployed from this repository. The steps below are for you to do by hand. They are not done yet.
+
+1. Create a Vercel account (the free Hobby plan is enough) and sign in. Connect it to the Git host that holds this repository.
+2. In Vercel choose **Add New... > Project** and import this repository.
+3. Framework preset: **Vite**. `vercel.json` already states it.
+4. Build command: `npm run build`. `vercel.json` already states it.
+5. Output directory: `dist`. `vercel.json` already states it.
+6. Environment variables: none. Add none. The app has no backend and no API key.
+7. Select **Deploy**. Vercel prints the public URL when the build ends. Put that URL in the "Public URL" line near the top of this file.
+
+Visitors need no login, no account and no API key to open the published site. The site makes no request to a third party and has no analytics.
+
+What is not verified:
+
+- Card_Profile values are ILLUSTRATIVE and UNVERIFIED. `public/profiles/demo-12x16.json` is a demo card, not a measured one.
+- No loom controller has been tested with the exported bitmaps.
 
 ## Prior work and credits
 
