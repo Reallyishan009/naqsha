@@ -183,6 +183,18 @@
     "text": "यह फ़ोटो खींचने के लिए छपा कार्ड है। यह कटा हुआ कार्ड नहीं है और करघे पर नहीं चल सकता।",
     "reviewed": false
   },
+  "profile.name": {
+    "text": "कार्ड प्रोफ़ाइल:",
+    "reviewed": false
+  },
+  "notice.badge": {
+    "text": "असत्यापित",
+    "reviewed": false
+  },
+  "notice.unverifiedProfile": {
+    "text": "इस कार्ड प्रोफ़ाइल के मान किसी असली कार्ड से नापे नहीं गए हैं।",
+    "reviewed": false
+  },
   "error.generic": {
     "text": "कुछ गड़बड़ हो गई। कृपया फिर कोशिश करें।",
     "reviewed": false

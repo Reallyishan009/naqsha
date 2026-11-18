@@ -1,0 +1,41 @@
+.profile {
+  margin: 0 0 12px;
+}
+
+.name {
+  margin: 0 0 6px;
+  color: var(--ink);
+}
+
+.nameLabel {
+  color: var(--ink-soft);
+}
+
+.notice {
+  padding: 8px 12px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 2px solid var(--madder);
+  border-radius: var(--radius-panel);
+}
+
+.badge {
+  font-weight: 700;
+}
+
+.icon {
+  display: inline-block;
+  min-width: 1.2em;
+  text-align: center;
+  font-weight: 700;
+}
+
+.sentence {
+  margin: 4px 0;
+}
+
+.statusText {
+  margin: 0;
+  font-family: var(--font-data);
+  color: var(--ink);
+}
