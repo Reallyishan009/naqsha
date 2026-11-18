@@ -78,7 +78,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), and the commit range. Push.
   - _Requirements: 13.4_
 
-- [ ] 2. Gaps, floats and repeat
+- [x] 2. Gaps, floats and repeat
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 4.1, 4.2, 4.3, 4.4, 4.5, 14.1, 14.2, 14.3, 14.4_
 
 - [x] 2.1 Gap rows
@@ -111,7 +111,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 14.2, 14.3, 14.4_
 
-- [-] 2.5 Phase 2 log and push
+- [x] 2.5 Phase 2 log and push
   - Files: `docs/BUILD_LOG.md`.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), and the commit range. Push.
   - _Requirements: 13.4_
