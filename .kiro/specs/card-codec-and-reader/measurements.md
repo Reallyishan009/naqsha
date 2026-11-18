@@ -136,3 +136,19 @@ Chosen value: `MIN_HOLE_DIAMETER_PX = 11`. The highest bin with a wrong grid is 
 
 Caveat: this is a safety floor, not a fix. The wrong grids come from peg-pair selection on sparse cards, and the 9-10 px case is close to the fixtures' 6 px/mm. Above 11 px the only evidence is zero wrong grids in 3000 cases per bin. Task 5.18 tracks the defect.
 
+
+# Benchmark (task 6.3)
+Date: 2026-11-18 (local run)
+Commit measured (HEAD before this record): `92205db`
+Command: `npx vitest run tests/reader/benchmark.test.ts --reporter=verbose`
+Node: v24.5.0. Machine: arm64, Apple M1.
+Image: demo profile, `demoPattern` card 0, no noise, no tilt, no shade, seed 1, rendered at 19 px/mm (1330 x 1045 px) and padded with white to exactly 1920 x 1080. 20 px/mm was not used because the 55 mm tall image would be 1100 px high, which does not fit 1080. The read returned ok and the grid equalled the card.
+Method: one warm-up read, then the median of 5 timed reads with `performance.now()`. The test never asserts on time.
+## Result (Node, informational, R16.2)
+```
+benchmark: readCard 1920x1080 at 19 px/mm, median 27.5 ms (min 23.8, max 33.2)
+benchmark: readCard 1920x1080 at 19 px/mm, median 24.7 ms (min 23.5, max 32.0)
+```
+Two runs are shown; the median was about 25 to 28 ms. This is well under 300 ms, so no per-stage breakdown was made.
+## Not measured (R16.1)
+The 300 ms budget is for a mid-range 2020 phone. It is still unmeasured: this Node run on an Apple M1 says nothing about phone speed. It needs a manual run of a benchmark build on a real device.
