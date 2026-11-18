@@ -1,4 +1,3 @@
-import { floatLengthAt } from './floats.ts';
 import { PASS_STEPS } from './frames.ts';
 import { isPreparedCloth } from './prepare.ts';
 import { parseColour, parseRenderSettings } from './settings.ts';
@@ -68,6 +67,58 @@ function zariHighlight(weft: Weft): number | undefined {
   if (weft.kind !== 'zari') return undefined;
   const hex = weft.tone === 'gold' ? ZARI_GOLD_HIGHLIGHT_COLOUR : ZARI_SILVER_HIGHLIGHT_COLOUR;
   return packRgb(...(parseColour(hex) ?? [0, 0, 0]));
+}
+
+/**
+ * Marks the cells of one woven pick that belong to a weft float longer than `limit` (R3.3): one left-to-right pass over
+ * the tiled width `mask.length`, which is `baseEnds * repeat`. A run of weft-on-face cells (lift 0) that is longer than
+ * `limit` sets `mask[end]` to 1 for each of its ends; every other end is set to 0. Repeat boundaries join runs (R14.4).
+ * The result equals `floatLengthAt(...) > limit` for every end of the pick, with no per-cell scan.
+ */
+function markWeftFloats(lift: ArrayLike<number>, baseEnds: number, limit: number, mask: Uint8Array): void {
+  const tiledEnds = mask.length;
+  let runStart = 0;
+  for (let end = 0; end <= tiledEnds; end++) {
+    if (end < tiledEnds && lift[end % baseEnds] === 0) continue;
+    mask.fill(end - runStart > limit ? 1 : 0, runStart, end);
+    if (end < tiledEnds) mask[end] = 0;
+    runStart = end + 1;
+  }
+}
+
+/**
+ * Marks the cells of the picks `firstPick..lastPick` that belong to a warp float longer than `limit` (R3.3), one pass
+ * per base end. `mask` has one row of `baseEnds` entries per pick, row 0 being `firstPick`; a cell is set to 1 when its
+ * run of warp-on-face woven picks (lift 1, counted down to pick 0 and up to `lastPick`, ended by a gap pick or a
+ * weft-on-face pick) is longer than `limit`, and to 0 otherwise. The pass starts `limit` picks below `firstPick`, which
+ * is enough to know whether a run reaching into the first row is longer than `limit`. The cost is
+ * `baseEnds * (lastPick - firstPick + 1 + limit)`, whatever the pick index. The warp floats repeat identically across
+ * repeats, so a base end serves every tiled end that maps onto it.
+ */
+function markWarpFloats(
+  cloth: PreparedCloth,
+  firstPick: number,
+  lastPick: number,
+  limit: number,
+  mask: Uint8Array,
+): void {
+  const { baseEnds, picks } = cloth;
+  mask.fill(0);
+  if (lastPick < firstPick) return;
+  const startPick = Math.max(0, firstPick - limit);
+  for (let baseEnd = 0; baseEnd < baseEnds; baseEnd++) {
+    let runStart = startPick;
+    for (let pick = startPick; pick <= lastPick + 1; pick++) {
+      if (pick <= lastPick) {
+        const row = picks[pick]!;
+        if (row.kind === 'woven' && row.lift[baseEnd] === 1) continue;
+      }
+      if (pick - runStart > limit) {
+        for (let q = Math.max(runStart, firstPick); q < pick; q++) mask[(q - firstPick) * baseEnds + baseEnd] = 1;
+      }
+      runStart = pick + 1;
+    }
+  }
 }
 
 /**
@@ -175,6 +226,18 @@ export function renderFrame(clothInput: PreparedCloth, settingsInput: RenderSett
     }
   }
 
+  // Float highlighting (R3.3, R10.2): one run-length pass per visible woven pick for the weft floats (computed when the
+  // pick first appears) and one pass per end for the warp floats, over the visible picks plus `limit` picks of margin.
+  // Only woven picks already in the cloth (0..p-1) count. The buffers are allocated once per frame.
+  const highlighting = settings.floatHighlight !== null;
+  const tiledEnds = baseEnds * settings.repeat;
+  const lastRowIndex = fellY > 0 ? Math.floor((fellY - 1) / t) : -1;
+  const firstVisiblePick = Math.max(0, p - 1 - lastRowIndex);
+  const warpMask = new Uint8Array(highlighting && lastRowIndex >= 0 ? Math.max(0, p - firstVisiblePick) * baseEnds : 0);
+  const weftMask = new Uint8Array(highlighting ? tiledEnds : 0);
+  if (highlighting && warpMask.length > 0) markWarpFloats(cloth, firstVisiblePick, p - 1, limit, warpMask);
+  let weftMaskPick = -1;
+
   // Woven rows above the fell. Row i (0 nearest the fell) holds y from fellY-(i+1)*t to fellY-i*t-1 and shows pick p-1-i.
   for (let y = 0; y < fellY; y++) {
     const rowIndex = Math.floor((fellY - 1 - y) / t);
@@ -193,6 +256,11 @@ export function renderFrame(clothInput: PreparedCloth, settingsInput: RenderSett
       continue;
     }
     const withinRow = y - (fellY - (rowIndex + 1) * t);
+    if (highlighting && weftMaskPick !== pick) {
+      markWeftFloats(row.lift, baseEnds, limit, weftMask);
+      weftMaskPick = pick;
+    }
+    const warpMaskRow = (pick - firstVisiblePick) * baseEnds;
     const weftIndex = pick % weftByRow.length;
     const weftRow = weftByRow[weftIndex][withinRow];
     const highlight = withinRow === centreRow ? highlightByWeft[weftIndex] : undefined;
@@ -207,9 +275,9 @@ export function renderFrame(clothInput: PreparedCloth, settingsInput: RenderSett
           for (let x = x0; x < xEnd; x++) if ((x % baseWidth) % ZARI_HIGHLIGHT_COLUMN_STEP === 0) pixels[rowStart + x] = highlight;
         }
       }
-      // Float highlighting (R3.3): only woven picks already in the cloth (0..p-1) count. Every pixel of a cell in a
-      // float longer than the limit, zari highlight pixels included, is blended halfway toward the highlight colour.
-      if (settings.floatHighlight !== null && floatLengthAt(cloth, pick, cell, settings.repeat, limit, p - 1) > limit) {
+      // Every pixel of a cell in a float longer than the limit, zari highlight pixels included, is blended halfway
+      // toward the highlight colour.
+      if (highlighting && (row.lift[cell % baseEnds] === 1 ? warpMask[warpMaskRow + (cell % baseEnds)] : weftMask[cell]) === 1) {
         for (let x = x0; x < xEnd; x++) {
           const o = (rowStart + x) * 4;
           data[o] = blendHalfway(data[o], highlightTarget[0]);
