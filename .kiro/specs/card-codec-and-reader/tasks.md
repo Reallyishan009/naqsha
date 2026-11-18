@@ -265,7 +265,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 10.3, 11.1, 11.2_
 
-- [-] 5.16 Check each peg hole pair against the card layout
+- [x] 5.16 Check each peg hole pair against the card layout
   - **Demo-essential.** Added after task 5.13 found wrong grids at 2.75, 2.25 and 1.25 px/mm (see design "Peg hole pair" and "Layout check").
   - Files: `src/reader/pegHoles.ts`, `src/reader/layout.ts`, `src/reader/selectPegHoles.ts`, `src/reader/readCard.ts`, `src/reader/index.ts`, `tests/reader/layout.test.ts`, `tests/reader/pegHoles.test.ts`, `tests/reader/readCard.test.ts`, `.kiro/specs/card-codec-and-reader/measurements.md`.
   - Move the pair selection into `selectPegHolePair` and retarget Property 55 to it. Only lacing holes fully inside the image are required (design "Layout check").
@@ -275,12 +275,22 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 9.3, 12.1, 18.5_
 
+- [x] 5.17 Refuse images whose punched holes are too small
+  - **Demo-essential.** Added after task 5.13 found wrong grids at about 1 px/mm, where a punched hole of 1.5 to 2.3 px vanished (Property 83, seeds -1907209653 and -791670624).
+  - Files: `src/reader/types.ts`, `src/reader/readCard.ts`, `tests/reader/resolution.test.ts`, `.kiro/specs/card-codec-and-reader/measurements.md`.
+  - Add the `resolution-too-low` failure with `holeDiameterPx` and `minimumPx`, and `MIN_HOLE_DIAMETER_PX`. Check it in `readCard` after the pair is selected and before sampling.
+  - Set `MIN_HOLE_DIAMETER_PX` by measurement: run Property 83's setup with random seeds at scales that put the punched hole diameter between 1 and 8 px, record wrong grids against the hole diameter in pixels, and choose the smallest value with no wrong grid plus a stated margin. Record the table in `measurements.md`.
+  - Example tests: the two counterexamples now fail with `resolution-too-low`; a clean demo render at 6 px/mm still reads correctly; the R18.8 case at 2.25 px/mm still gives `ambiguous-orientation`.
+  - The six fixture accuracy tests and all existing tests must pass unchanged.
+  - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
+  - _Requirements: 12.1, 12.5_
+
 - [ ] 5.13 `readCard`: failure paths, orientation and the R18.8 scale
   - Files: `tests/reader/readCard.test.ts`.
   - Add Properties 69, 73, 74, 75 and 76 (failure paths), and Properties 78, 79 and 83 (orientation). These use a pinned seed where they render images, and none is cuttable.
   - Measure the R18.8 scale. Use a profile with peg diameters of 2.5 mm and 2.8 mm, and assert that `validateCardProfile` returns `[]` for it. Render it with a fixed seed at decreasing `pixelsPerMm`. Record the highest scale at which the peg holes are still found and the result is `ambiguous-orientation`. Write that scale, and the separation measured there, into the test and into `measurements.md`. If no such scale exists (the reader goes from a correct read straight to `peg-holes-not-found`), stop and report this with the measured values instead of changing the profile.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
-  - _Requirements: 9.7, 12.1, 12.2, 12.3, 12.4, 18.3, 18.4, 18.5, 18.8_
+  - _Requirements: 9.7, 12.1, 12.2, 12.3, 12.4, 12.5, 18.3, 18.4, 18.5, 18.8_
 
 - [ ] 5.14 `readCard`: image properties
   - Files: `tests/reader/readCard.test.ts`.
@@ -293,6 +303,13 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Add Property 80, using `profileArbitrary`, a pinned seed and `numRuns` 25.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 19.1, 19.3_
+
+- [ ] 5.18 Defect: wrong peg pair selected on sparse cards
+  - Logged in task 5.17, not yet scheduled. On cards with one punched hole, `selectPegHolePair` can pick a decoy pair and `readCard` returns a wrong grid. Measured: 16 in 15,000 cases with 1 to 6 px holes and 1 in 3,000 with 9 to 10 px holes. `MIN_HOLE_DIAMETER_PX = 11` hides the measured cases but does not fix the cause (see `measurements.md`, "Minimum hole size").
+  - Files: `src/reader/selectPegHoles.ts`, `src/reader/layout.ts`, `tests/reader/layout.test.ts`, `tests/reader/resolution.test.ts`, `.kiro/specs/card-codec-and-reader/measurements.md`.
+  - Find why the true pair loses (compare the `LayoutResult` of the true and the chosen pose for the two kept cases), fix the selection, keep both cases as regression tests, and re-measure. Lower `MIN_HOLE_DIAMETER_PX` only with the new measurements and the user's agreement.
+  - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
+  - _Requirements: 9.3, 18.5_
 
 - [ ] 6. Structure tests, benchmark and docs
   - _Requirements: 6.3, 6.5, 14.2, 15.1, 15.2, 15.4, 15.5, 16.1, 16.2, 16.3, 17.1, 17.2_
@@ -554,47 +571,59 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
     {
       "id": 32,
       "tasks": [
-        "5.13"
+        "5.17"
       ]
     },
     {
       "id": 33,
       "tasks": [
-        "5.14"
+        "5.13"
       ]
     },
     {
       "id": 34,
       "tasks": [
-        "5.15"
+        "5.14"
       ]
     },
     {
       "id": 35,
       "tasks": [
-        "6.1"
+        "5.15"
       ]
     },
     {
       "id": 36,
       "tasks": [
-        "6.2"
+        "6.1"
       ]
     },
     {
       "id": 37,
       "tasks": [
-        "6.3"
+        "6.2"
       ]
     },
     {
       "id": 38,
       "tasks": [
-        "6.4"
+        "6.3"
       ]
     },
     {
       "id": 39,
+      "tasks": [
+        "6.4"
+      ]
+    },
+    {
+      "id": 40,
+      "tasks": [
+        "5.18"
+      ]
+    },
+    {
+      "id": 41,
       "tasks": [
         "7.1"
       ]

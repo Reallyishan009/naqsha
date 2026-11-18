@@ -171,10 +171,11 @@ Acceptance criteria are referenced as `R<requirement>.<criterion>` (for example 
 
 #### Acceptance Criteria
 
-1. THE reader SHALL return either a success result containing the CardGrid and the pose, or a failure result containing one reason from this fixed list: `invalid-profile`, `invalid-image`, `peg-holes-not-found`, `ambiguous-orientation`, `card-outside-image`.
+1. THE reader SHALL return either a success result containing the CardGrid and the pose, or a failure result containing one reason from this fixed list: `invalid-profile`, `invalid-image`, `peg-holes-not-found`, `ambiguous-orientation`, `card-outside-image`, `resolution-too-low`.
 2. WHEN the profile fails the validation in Requirement 2 THEN the reader SHALL fail with reason `invalid-profile` and SHALL include the violations.
 3. THE reader SHALL NOT throw for any pixel data or any profile value, including empty, oversized or uniform images.
 4. WHEN the reader fails THEN it SHALL NOT return a CardGrid.
+5. WHEN the card has been found and its orientation decided, IF the punched hole diameter in pixels at the measured scale is below a minimum set by measurement, THEN the reader SHALL fail with reason `resolution-too-low`, SHALL report the measured and the minimum diameter in pixels, and SHALL NOT return a CardGrid. This exists because a punched hole of only 1 to 2 pixels can vanish at its sampling position, which would otherwise give a wrong CardGrid (found in task 5.13).
 
 ### Requirement 13: Accuracy on the synthetic fixtures
 
@@ -271,6 +272,6 @@ Acceptance criteria are referenced as `R<requirement>.<criterion>` (for example 
 
 Settled by your review: orientation (Requirement 18 and R2.6 to R2.8), exactly two peg holes (R2.7), a minimum peg hole diameter difference of 10% of the larger diameter (R2.8), upside-down cards read correctly (R18.3), the fixture generator (Requirement 19) importing the end-order mapping from `src/codec`, the generator's `pixelsPerMm` option (R19.8), the tilt reference (R9.6), and `src/reader` in the property-test rule of `testing.md` and `tech.md`. Remaining notes:
 
-1. **Failure reasons.** The list has five reasons (R12.1) and is closed.
+1. **Failure reasons.** The list has six reasons (R12.1) and is closed. `resolution-too-low` was added after task 5.13 (R12.5).
 2. **Peg diameter limitation.** Peg detection relies on peg hole diameters differing from the punched hole diameter. Validation does not enforce this. It is documented in `design.md` and in `card-geometry.md`.
 3. **Carried forward.** The reader assumes holes are darker than the card surface. Mirrored images and perspective distortion are not supported. Accuracy targets cover synthetic fixtures only. The 300 ms budget is checked on a device.

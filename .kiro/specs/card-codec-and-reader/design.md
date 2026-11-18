@@ -242,7 +242,8 @@ export type ReadFailure =
   | { reason: 'invalid-image'; detail: string }
   | { reason: 'peg-holes-not-found' }
   | { reason: 'ambiguous-orientation'; separation: number }
-  | { reason: 'card-outside-image' };
+  | { reason: 'card-outside-image' }
+  | { reason: 'resolution-too-low'; holeDiameterPx: number; minimumPx: number };
 
 export type ReadResult =
   | { ok: true; grid: CardGrid; pose: Pose }
@@ -414,7 +415,9 @@ Why this rejects the decoys found in task 5.13: in a valid profile the peg holes
 4. Take the candidate with the highest score. If another pair has the same score, the card's position cannot be decided, so fail with `peg-holes-not-found`. The two poses of one pair are never compared against each other here; the peg hole diameters decide between them.
 5. For the chosen pair: if `decision` is `ambiguous`, fail with `ambiguous-orientation`. If the pose for `decision.kind` matches, use it. If only the other orientation's pose matches, the diameters and the layout disagree, so fail with `ambiguous-orientation` (R18.5).
 
-The failure list (R12.1) does not change.
+The failure list (R12.1) does not change here.
+
+**Minimum resolution (R12.5).** After `selectPegHolePair` returns `selected`, `readCard` computes `holeDiameterPx = holeDiameterMm * pose.pixelsPerMm`. If it is below `MIN_HOLE_DIAMETER_PX`, `readCard` fails with `resolution-too-low` before sampling. The check comes after the orientation decision, so a card whose peg holes cannot be told apart still reports `ambiguous-orientation` (R18.8). `MIN_HOLE_DIAMETER_PX` is set in task 5.17 as the smallest diameter at which random-seed runs of Property 83 find no wrong grid, plus a stated margin.
 
 Cost: at most `MAX_PAIRS_TO_VERIFY` pairs, each checked against at most `MAX_CANDIDATE_REGIONS` regions, so at most 20,000 cheap checks per image. The nearest hook position is found by rounding in card millimetres, not by searching.
 
@@ -491,7 +494,8 @@ The result has `hookRows` rows of `hookColumns` booleans, so it passes `validate
 | `FIT_MAX` | 0.15 | pegHoles.ts | mean relative diameter error allowed for a peg hole pair |
 | `MIN_SEPARATION` | 0.5 | orientation.ts | R18 decision margin |
 | `SAMPLING_RADIUS_FRACTION` | 0.6 | sampling.ts | R10.3 |
-| `MAX_PAIRS_TO_VERIFY` | 50 | readCard.ts | ranked pairs checked against the layout |
+| `MIN_HOLE_DIAMETER_PX` | set by measurement in task 5.17 | readCard.ts | R12.5: smallest punched hole diameter in pixels that is sampled |
+| `MAX_PAIRS_TO_VERIFY` | 50 | selectPegHoles.ts | ranked pairs checked against the layout |
 | `LAYOUT_POSITION_TOLERANCE` | 0.35 | layout.ts | fraction of the smaller pitch a region centroid may be from its predicted hole |
 | `LAYOUT_DIAMETER_TOLERANCE` | 0.3 | layout.ts | relative diameter error allowed for an explained region |
 | `LAYOUT_MATCH_MIN` | 0.9 | layout.ts | fraction of in-card regions that must be explained |
@@ -544,6 +548,7 @@ type GroundTruth = {
 | No pair of regions fits the peg holes (blank, uniform or unrelated image) | `findPegHolePair` returns `null` | `peg-holes-not-found` |
 | Peg diameters cannot be told apart | `decideOrientation` returns `ambiguous` | `ambiguous-orientation` with the separation |
 | A hook position's sampling area leaves the image | `sampleCardGrid` returns `null` | `card-outside-image` |
+| Punched holes are too small in the image to sample reliably (R12.5) | `readCard`, after the pair is selected and before sampling | `resolution-too-low` with the measured and minimum hole diameter in pixels |
 | Grid or ends list from outside is malformed | `validateCardGrid`, `decodeEnds` | `Result` with violations. Nothing throws. |
 | Browser cannot decode an image source | `loadPixelData` | The promise rejects. The caller handles it, and `readCard` is not involved. |
 
@@ -1053,7 +1058,7 @@ Test file: `tests/reader/readCard.test.ts`. Image property. Any profile and grid
 
 **Validates: Requirements 11.4**
 
-### Property 73: R12.1 every result is a success with a grid and a pose, or a failure with one of the five reasons.
+### Property 73: R12.1 every result is a success with a grid and a pose, or a failure with one of the six reasons.
 
 Test file: `tests/reader/readCard.test.ts`. Random small images (including random bytes) with a valid profile.
 

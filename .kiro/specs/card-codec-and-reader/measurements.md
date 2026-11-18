@@ -99,3 +99,40 @@ Before (task 5.13, no layout check): 2.75 px/mm ok with a wrong grid (70/192 wro
 - At every scale from 6 to 1.25 px/mm except 1.5, exactly one ranked pair has a matching pose, and it explains all 69 in-card regions. 1.5 px/mm gives `peg-holes-not-found` (no ranked pair matches). At 1 px/mm only one pair is ranked and it explains 6 regions.
 - No constant was changed.
 - Re-run after `layoutMatches` took the image size (lacing holes only required when their disc is inside the image) and the selection moved into `selectPegHolePair`: all 21 results are unchanged. Highest scale giving `ambiguous-orientation` is still 2.25 px/mm (q 0.49); no scale gives a wrong grid.
+
+## R18.8 chosen scale (task 5.13)
+
+- Chosen scale: 2.25 px/mm. It is the highest scale in the task 5.16 sweep at which the peg holes are found and the result is `ambiguous-orientation`. Re-checked in task 5.13: separation 0.4877 (q 0.49).
+- The margin is narrow. 0.49 is just under `MIN_SEPARATION` 0.5, so a small change to the renderer or the reader could turn this case into a correct read. For seed 1234 it is deterministic.
+- Clear case: 2.0 px/mm gives `ambiguous-orientation` with separation 0.00. Both scales are example tests in `tests/reader/readCard.test.ts`.
+- Re-checked neighbours: 2.5 px/mm and 1.75 px/mm both read correctly.
+
+## Minimum hole size (task 5.17, R12.5)
+
+Setup: one punched hole per card (sparse cards), `profileArbitrary` profiles, tilt within 10 degrees of 0 or 180, noise 0, shade 0, random render seed, `MIN_HOLE_DIAMETER_PX` disabled. Wrong grid = `readCard` returned `ok` with a grid different from the rendered one.
+
+Earlier run (seed 555, 3000 cases per 0.5 px bin), wrong grids by hole diameter: 1.0-1.5: 4, 1.5-2.0: 5, 2.0-2.5: 0, 2.5-3.0: 1, 3.0-3.5: 2, 3.5-4.0: 0, 4.0-4.5: 2, 4.5-5.0: 0, 5.0-5.5: 1, 5.5-6.0: 1.
+
+Higher run (fast-check seeds 7000 to 7009, 3000 cases per 1 px bin, about 5.5 minutes):
+
+| Hole px | ok-correct | ok-WRONG | Failures |
+|---|---|---|---|
+| 6-7 | 2650 | 0 | peg-holes-not-found 344, ambiguous-orientation 6 |
+| 7-8 | 2631 | 0 | peg-holes-not-found 363, ambiguous-orientation 6 |
+| 8-9 | 2643 | 0 | peg-holes-not-found 349, ambiguous-orientation 8 |
+| 9-10 | 2627 | 1 | peg-holes-not-found 360, ambiguous-orientation 12 |
+| 10-11 | 2666 | 0 | peg-holes-not-found 325, ambiguous-orientation 9 |
+| 11-12 | 2658 | 0 | peg-holes-not-found 327, ambiguous-orientation 14, card-outside-image 1 |
+| 12-13 | 2690 | 0 | peg-holes-not-found 304, ambiguous-orientation 6 |
+| 13-14 | 2683 | 0 | peg-holes-not-found 309, ambiguous-orientation 7, card-outside-image 1 |
+| 14-15 | 2680 | 0 | peg-holes-not-found 306, ambiguous-orientation 13, card-outside-image 1 |
+| 15-16 | 2671 | 0 | peg-holes-not-found 310, ambiguous-orientation 17, card-outside-image 2 |
+
+Wrong cases kept for task 5.18:
+- 9.0 px: 7 x 10 profile, hole 1.6 mm, pitches 3.3 / 2.6 mm, card 45.99664 x 28.2 mm, pegs 2.84832 mm at (42.32248, 20.89491) and 2.064 mm at (3.67416, 3.364896), lacing holes 1.6 mm at (30.87082, 25.45) and (30.07782, 25.45); 5.625 px/mm, tilt 9.99997, render seed 2056009115; true grid only [0][8]; read ok, upside-down, 171.06 degrees, 4.11 px/mm, 16 ones.
+- 5.9 px: 9 x 9 profile, hole 2.4 mm, pegs 3.84 / 4.8768 mm; 2.47 px/mm, tilt -10, render seed 279932540; true grid only [7][1]; read ok with ones at [0][0], [0][1], [0][8].
+
+Chosen value: `MIN_HOLE_DIAMETER_PX = 11`. The highest bin with a wrong grid is 9-10 px, plus a 1 px margin, with the next two bins clean. The fixtures (12 px holes) still read at 100%.
+
+Caveat: this is a safety floor, not a fix. The wrong grids come from peg-pair selection on sparse cards, and the 9-10 px case is close to the fixtures' 6 px/mm. Above 11 px the only evidence is zero wrong grids in 3000 cases per bin. Task 5.18 tracks the defect.
+
