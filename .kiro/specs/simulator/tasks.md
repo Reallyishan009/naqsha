@@ -116,7 +116,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), and the commit range. Push.
   - _Requirements: 13.4_
 
-- [ ] 3. Animation and canvas
+- [x] 3. Animation and canvas
   - _Requirements: 7.3, 9.1, 9.2, 9.3, 9.5, 10.3, 12.2_
 
 - [x] 3.1 Frames and time
@@ -150,7 +150,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 8.2, 9.5, 10.1, 10.3, 12.2_
 
-- [-] 3.5 Phase 3 log and push
+- [x] 3.5 Phase 3 log and push
   - Files: `docs/BUILD_LOG.md`.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), and the commit range. Push.
   - _Requirements: 13.4_
