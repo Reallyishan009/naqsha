@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 import {
   BORDER_MM,
   FIXTURE_SET,
+  HOLE_LEVEL,
+  SURFACE_LEVEL,
   FixtureViolationError,
   PIXELS_PER_MM,
   demoPattern,
@@ -186,3 +188,100 @@ describe('committed fixtures', () => {
     for (const { options } of FIXTURE_SET) expect(options.pixelsPerMm).toBe(6);
   });
 });
+
+describe('per-peg drawing', () => {
+  it('R19.1 each peg hole is drawn at the position and diameter the profile gives', () => {
+    const clean = { noise: 0, tiltDegrees: 0, shade: 0, seed: 1 };
+    const angleCount = 8;
+    const pegDrawingProperty = fc.property(
+        profileArbitrary.chain((generated) =>
+          fc.tuple(fc.constant(generated), fc.oneof(cardGridArbitrary(generated), fc.constant(allFalseCard(generated)))),
+        ),
+        ([generated, grid]) => {
+          const smallestPegDiameterMm = Math.min(...generated.pegHoles.map((pegHole) => pegHole.diameterMm));
+          const pixelsPerMm = Math.max(6, 12 / smallestPegDiameterMm);
+          const image = renderCard(generated, grid, { ...clean, pixelsPerMm });
+          const toPx = (mm: number): number => (mm + BORDER_MM) * pixelsPerMm;
+          const levelAt = (xPx: number, yPx: number): number =>
+            image.pixels[Math.floor(yPx) * image.width + Math.floor(xPx)]!;
+
+          // Every hole drawn on this card, in px: punched hole positions only, then peg holes, then lacing holes.
+          type DiscPx = { x: number; y: number; radius: number };
+          const punched: DiscPx[] = [];
+          grid.forEach((hookRow, hookRowIndex) =>
+            hookRow.forEach((isPunched, hookColumnIndex) => {
+              if (!isPunched) return;
+              punched.push({
+                x: toPx(generated.firstHoleCentreMm.x + hookColumnIndex * generated.horizontalPitchMm),
+                y: toPx(generated.firstHoleCentreMm.y + hookRowIndex * generated.verticalPitchMm),
+                radius: (generated.holeDiameterMm / 2) * pixelsPerMm,
+              });
+            }),
+          );
+          const lacing: DiscPx[] = generated.lacingHoles.positionsMm.map((centre) => ({
+            x: toPx(centre.x),
+            y: toPx(centre.y),
+            radius: (generated.lacingHoles.diameterMm / 2) * pixelsPerMm,
+          }));
+          const pegs: DiscPx[] = generated.pegHoles.map((pegHole) => ({
+            x: toPx(pegHole.positionMm.x),
+            y: toPx(pegHole.positionMm.y),
+            radius: (pegHole.diameterMm / 2) * pixelsPerMm,
+          }));
+
+          pegs.forEach((peg, pegIndex) => {
+            const others = [...punched, ...lacing, ...pegs.filter((_, index) => index !== pegIndex)];
+            // A point or pixel is affected by a neighbouring hole when it lies within that hole's radius + 1.5 px.
+            const nearOther = (x: number, y: number): boolean =>
+              others.some((other) => Math.hypot(x - other.x, y - other.y) <= other.radius + 1.5);
+
+            expect(levelAt(peg.x, peg.y), `peg ${pegIndex} centre`).toBeLessThan(100);
+
+            for (let angleIndex = 0; angleIndex < angleCount; angleIndex++) {
+              const angle = ((angleIndex + 0.5) / angleCount) * 2 * Math.PI;
+              const x = peg.x + (peg.radius + 1.5) * Math.cos(angle);
+              const y = peg.y + (peg.radius + 1.5) * Math.sin(angle);
+              const offCard =
+                x < toPx(0) + 1 || y < toPx(0) + 1 || x > toPx(generated.cardWidthMm) - 1 || y > toPx(generated.cardHeightMm) - 1;
+              if (offCard || nearOther(x, y)) continue;
+              expect(levelAt(x, y), `peg ${pegIndex} outside sample at angle ${angleIndex}`).toBeGreaterThanOrEqual(100);
+            }
+
+            // Area: coverage-weighted pixels (centre within radius + 1.5 px of the peg centre) against pi * radius^2.
+            // Coverage runs from 0 at SURFACE_LEVEL to 1 at HOLE_LEVEL, so anti-aliased edge pixels count partially.
+            const reach = peg.radius + 1.5;
+            let coveredArea = 0;
+            let affected = false;
+            for (let py = Math.floor(peg.y - reach); py <= Math.ceil(peg.y + reach); py++) {
+              for (let px = Math.floor(peg.x - reach); px <= Math.ceil(peg.x + reach); px++) {
+                if (Math.hypot(px + 0.5 - peg.x, py + 0.5 - peg.y) > reach) continue;
+                if (nearOther(px + 0.5, py + 0.5)) {
+                  affected = true;
+                  continue;
+                }
+                const coverage = (SURFACE_LEVEL - image.pixels[py * image.width + px]!) / (SURFACE_LEVEL - HOLE_LEVEL);
+                coveredArea += Math.min(1, Math.max(0, coverage));
+              }
+            }
+            // A neighbouring hole inside the measuring disc makes the count incomparable: skip only that peg's area check.
+            if (affected) return;
+            const expectedArea = Math.PI * peg.radius ** 2;
+            expect(Math.abs(coveredArea - expectedArea) / expectedArea, `peg ${pegIndex} covered area ${coveredArea} vs ${expectedArea}`)
+              .toBeLessThanOrEqual(0.05);
+          });
+        },
+    );
+    fc.assert(pegDrawingProperty, { numRuns: 25, seed: 1901 });
+
+    // Regression: the 9x4 profile (peg 0, 1.875 mm) that first undercounted dark pixels, replayed by seed and path.
+    fc.assert(pegDrawingProperty, {
+      numRuns: 1,
+      seed: 1901,
+      path: '4:6:0:1:1:1:0:1:1:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0',
+    });
+  });
+});
+
+function allFalseCard(generated: CardProfile): boolean[][] {
+  return Array.from({ length: generated.hookRows }, () => Array.from({ length: generated.hookColumns }, () => false));
+}

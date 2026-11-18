@@ -57,8 +57,8 @@ export type GroundTruth = {
 
 export const PIXELS_PER_MM = 6;
 export const BORDER_MM = 5;
-const SURFACE_LEVEL = 215;
-const HOLE_LEVEL = 20;
+export const SURFACE_LEVEL = 215;
+export const HOLE_LEVEL = 20;
 const BACKGROUND_LEVEL = 70;
 
 export const DEFAULT_OPTIONS: RenderOptions = {
