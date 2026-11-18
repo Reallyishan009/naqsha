@@ -11,7 +11,9 @@ import {
   type GroundTruth,
   type RenderInput,
 } from '../../scripts/make_fixtures';
+import { validateCardProfile } from '../../src/codec/index.ts';
 import type { CardProfile } from '../../src/codec/types';
+import { rowMajorEndOrder } from '../support/profiles.ts';
 
 const profile = JSON.parse(
   readFileSync(new URL('../../public/profiles/demo-12x16.json', import.meta.url), 'utf8'),
@@ -85,6 +87,17 @@ describe('fixture generator', () => {
     expect(defaulted).toEqual(explicit);
     const recorded = JSON.parse(groundTruthText(profile, card, 'x.png', clean)) as GroundTruth;
     expect(recorded.options.pixelsPerMm).toBe(PIXELS_PER_MM);
+  });
+});
+
+describe('demo profile', () => {
+  it('R19.4 the demo profile is valid, has peg diameters at least 10% apart, an explicit row-major endOrder and the ILLUSTRATIVE marker', () => {
+    expect(validateCardProfile(profile)).toEqual([]);
+    const [first, second] = profile.pegHoles;
+    const larger = Math.max(first.diameterMm, second.diameterMm);
+    expect(Math.abs(first.diameterMm - second.diameterMm)).toBeGreaterThanOrEqual(0.1 * larger * (1 - 1e-9));
+    expect(profile.endOrder).toEqual(rowMajorEndOrder(profile.hookRows, profile.hookColumns));
+    expect(profile.status).toContain('ILLUSTRATIVE, UNVERIFIED');
   });
 });
 
