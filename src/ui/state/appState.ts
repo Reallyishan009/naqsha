@@ -1,4 +1,5 @@
 import type { AppAction, AppState } from '../types.ts';
+import { appendCard, commitBatch, moveCard, removeCard, replaceCard } from './batch.ts';
 
 export const initialAppState: AppState = {
   screen: 'weave',
@@ -11,10 +12,7 @@ export const initialAppState: AppState = {
   prefersReducedMotion: false,
 };
 
-/**
- * Pure reducer. Scan_Batch actions (Phase 3) are not handled yet and
- * return the state unchanged.
- */
+/** Pure reducer. */
 export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'navigate':
@@ -75,6 +73,31 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           id: (state.announcement?.id ?? 0) + 1,
         },
       };
+    case 'batch-accept':
+      return { ...state, batch: appendCard(state.batch, action.grid) };
+    case 'batch-remove':
+      return { ...state, batch: removeCard(state.batch, action.index) };
+    case 'batch-move':
+      return { ...state, batch: moveCard(state.batch, action.index, action.by) };
+    case 'batch-replace':
+      return { ...state, batch: replaceCard(state.batch, action.index, action.grid) };
+    case 'batch-commit': {
+      // "Done" is disabled while the batch is empty (R11.7).
+      if (state.batch.length === 0) return state;
+      return {
+        ...state,
+        screen: 'weave',
+        current: {
+          pattern: commitBatch(state.batch, state.current.pattern, action.mode),
+          origin: { kind: 'scanned', saved: false },
+        },
+        batch: [],
+        confirm: null,
+      };
+    }
+    case 'read-failed':
+      // The batch stays as it is (R9.1, R11.10). Task 3.2 adds readFailureKey with these same keys.
+      return appReducer(state, { type: 'announce', kind: 'error', messageKey: `error.read.${action.failure.reason}` });
     default:
       return state;
   }

@@ -2,7 +2,8 @@ import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import type { CardProfile, Pattern } from '../../../src/codec/index.ts';
 import { appReducer, initialAppState } from '../../../src/ui/state/appState.ts';
-import type { AppState, PatternOrigin, SampleDesign, Screen } from '../../../src/ui/types.ts';
+import type { ReadFailure as CardReadFailure } from '../../../src/reader/index.ts';
+import type { AppAction, AppState, PatternOrigin, SampleDesign, Screen } from '../../../src/ui/types.ts';
 import { cardGridArbitrary, cardProfileArbitrary, demoProfile } from '../../support/profiles.ts';
 
 const SEED = 20240514;
@@ -97,6 +98,27 @@ describe('appReducer examples', () => {
     });
   });
 
+  it('R11.8 R11.10 accepting a card appends it; an unaccepted read does not alter the batch', () => {
+    const profile = demoProfile();
+    const grid = Array.from({ length: profile.hookRows }, () => Array<boolean>(profile.hookColumns).fill(true));
+    const accepted = appReducer(initialAppState, { type: 'batch-accept', grid });
+    expect(accepted.batch).toEqual([grid]);
+    const failed = appReducer(accepted, { type: 'read-failed', failure: { reason: 'card-outside-image' } });
+    expect(failed.batch).toEqual([grid]);
+  });
+
+  it('R11.8 Done with replace or append sets the pattern and clears the batch', () => {
+    const profile = demoProfile();
+    const on = Array.from({ length: profile.hookRows }, () => Array<boolean>(profile.hookColumns).fill(true));
+    const off = on.map((row) => row.map(() => false));
+    const state: AppState = { ...initialAppState, screen: 'scan', current: { pattern: [off], origin: { kind: 'sample', design: 'border' } }, batch: [on] };
+    expect(appReducer(state, { type: 'batch-commit', mode: 'replace' }).current.pattern).toEqual([on]);
+    const appended = appReducer(state, { type: 'batch-commit', mode: 'append' });
+    expect(appended.current.pattern).toEqual([off, on]);
+    expect(appended.batch).toEqual([]);
+    expect(appended.screen).toBe('weave');
+  });
+
   it('R14.10 each announcement gets a new id', () => {
     const first = appReducer(initialAppState, { type: 'announce', kind: 'error', messageKey: 'a' });
     const second = appReducer(first, { type: 'announce', kind: 'confirmation', messageKey: 'b' });
@@ -140,6 +162,72 @@ describe('appReducer properties', () => {
       { numRuns: NUM_RUNS, seed: SEED },
     );
   });
+  it('R1.4 R11.1 batch actions and read-failed keep the current pattern and screen', () => {
+    // Feature: app, Property 1: Navigation keeps the Current_Pattern
+    fc.assert(
+      fc.property(stateAndPattern, fc.integer({ min: -1, max: 5 }), ({ state, pattern }, index) => {
+        const card = pattern[0]!;
+        const actions: AppAction[] = [
+          { type: 'batch-accept', grid: card },
+          { type: 'batch-remove', index },
+          { type: 'batch-move', index, by: 1 },
+          { type: 'batch-replace', index, grid: card },
+          { type: 'read-failed', failure: { reason: 'peg-holes-not-found' } },
+        ];
+        for (const action of actions) {
+          const next = appReducer(state, action);
+          expect(next.current).toEqual(state.current);
+          expect(next.screen).toBe(state.screen);
+        }
+      }),
+      { numRuns: NUM_RUNS, seed: SEED },
+    );
+  });
+
+  it('R9.1 R11.10 a read-failed action leaves the batch unchanged and announces the failure', () => {
+    // Feature: app, Property 23: A failed or unaccepted read leaves the Scan_Batch unchanged
+    const failureArbitrary: fc.Arbitrary<CardReadFailure> = fc.oneof(
+      fc.constant<CardReadFailure>({ reason: 'peg-holes-not-found' }),
+      fc.constant<CardReadFailure>({ reason: 'card-outside-image' }),
+      fc.string().map((detail): CardReadFailure => ({ reason: 'invalid-image', detail })),
+      fc.double({ noNaN: true }).map((separation): CardReadFailure => ({ reason: 'ambiguous-orientation', separation })),
+      fc
+        .tuple(fc.double({ noNaN: true }), fc.double({ noNaN: true }))
+        .map(([holeDiameterPx, minimumPx]): CardReadFailure => ({ reason: 'resolution-too-low', holeDiameterPx, minimumPx })),
+      fc.constant<CardReadFailure>({ reason: 'invalid-profile', violations: [] }),
+    );
+    fc.assert(
+      fc.property(stateAndPattern, failureArbitrary, ({ state }, failure) => {
+        const next = appReducer(state, { type: 'read-failed', failure });
+        expect(next.batch).toEqual(state.batch);
+        expect(next.current).toEqual(state.current);
+        expect(next.announcement?.kind).toBe('error');
+        expect(next.announcement?.messageKey).not.toBe(failure.reason);
+        expect(next.announcement?.id).toBe((state.announcement?.id ?? 0) + 1);
+      }),
+      { numRuns: NUM_RUNS, seed: SEED },
+    );
+  });
+
+  it('R11.6 R11.9 batch-commit sets the pattern from the batch, shows Weave, and does nothing for an empty batch', () => {
+    // Feature: app, Property 27: Done keeps the order of the Scan_Batch
+    fc.assert(
+      fc.property(stateAndPattern, fc.constantFrom('replace' as const, 'append' as const), ({ state }, mode) => {
+        const next = appReducer(state, { type: 'batch-commit', mode });
+        if (state.batch.length === 0) {
+          expect(next).toEqual(state);
+          return;
+        }
+        expect(next.screen).toBe('weave');
+        expect(next.current.origin).toEqual({ kind: 'scanned', saved: false });
+        expect(next.current.pattern).toEqual(
+          mode === 'replace' ? state.batch : [...state.current.pattern, ...state.batch],
+        );
+      }),
+      { numRuns: NUM_RUNS, seed: SEED },
+    );
+  });
+
   it('R4.7 a sample over a scanned unsaved non-empty pattern asks first; otherwise it replaces at once', () => {
     // Feature: app, Property 12: Replacing a scanned unsaved pattern asks first
     fc.assert(
