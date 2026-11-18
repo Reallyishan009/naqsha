@@ -21,28 +21,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-// TODO: move CardProfile to src/codec/types.ts once the codec module exists.
-export type PointMm = { x: number; y: number };
-export type CardProfile = {
-  name: string;
-  status?: string;
-  cardWidthMm: number;
-  cardHeightMm: number;
-  hookRows: number;
-  hookColumns: number;
-  holeDiameterMm: number;
-  horizontalPitchMm: number;
-  verticalPitchMm: number;
-  firstHoleCentreMm: PointMm;
-  pegHoles: { diameterMm: number; positionsMm: PointMm[] };
-  lacingHoles: { diameterMm: number; positionsMm: PointMm[] };
-};
-
-/** The hole grid of one card (one pick): hookRows x hookColumns. true = punched = hook lifts. */
-export type CardGrid = boolean[][];
-
-/** A pattern is a list of cards, one per pick. */
-export type Pattern = CardGrid[];
+import type { CardGrid, CardProfile, Pattern, PointMm } from '../src/codec/types';
 
 export type RenderOptions = {
   /** Standard deviation of gaussian noise, in grey levels (0 to 255). */

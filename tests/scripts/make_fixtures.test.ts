@@ -6,9 +6,9 @@ import {
   demoPattern,
   encodePng,
   renderCard,
-  type CardProfile,
   type RenderOptions,
 } from '../../scripts/make_fixtures';
+import type { CardProfile } from '../../src/codec/types';
 
 const profile = JSON.parse(
   readFileSync(new URL('../../public/profiles/demo-12x16.json', import.meta.url), 'utf8'),
