@@ -22,13 +22,6 @@ export function exportPatternBmp(profile: unknown, pattern: unknown, options?: u
   const parsedOptions = parseExportOptions(options);
   if (!parsedOptions.ok) return { ok: false, failure: parsedOptions.failure };
   const exportOptions = parsedOptions.value;
-  // 8-bit export is not implemented yet (task 1.3); refuse it instead of writing a wrong file.
-  if (exportOptions.bitDepth === 8) {
-    return {
-      ok: false,
-      failure: { reason: 'invalid-options', option: 'bitDepth', message: 'bitDepth 8 is not implemented yet (8-bit export comes in task 1.3)' },
-    };
-  }
 
   if (!Array.isArray(pattern)) {
     const violation: Violation = {
@@ -76,7 +69,7 @@ export function exportPatternBmp(profile: unknown, pattern: unknown, options?: u
   view.setUint32(46, layout.colourEntries, true);
   view.setUint32(50, 2, true);
 
-  writeColourTable(bytes, exportOptions);
+  writeColourTable(bytes, exportOptions, layout.colourEntries);
   writeRows(bytes, layout.pixelOffset, layout.rowStride, width, height, exportOptions, (pick) => {
     const encoded = encodeCardGrid(cardProfile, pattern[pick]);
     // Every card was validated above, so encoding cannot fail.
@@ -85,11 +78,13 @@ export function exportPatternBmp(profile: unknown, pattern: unknown, options?: u
   return { ok: true, bytes };
 }
 
-function writeColourTable(bytes: Uint8Array, options: ExportOptions): void {
+/** Entry 0 is the down colour and entry 1 the lift colour. In the 8-bit table, entries 2 to 255 repeat entry 0. */
+function writeColourTable(bytes: Uint8Array, options: ExportOptions, colourEntries: number): void {
   const down = options.liftColour === 'black' ? WHITE : BLACK;
   const lifted = options.liftColour === 'black' ? BLACK : WHITE;
   bytes.set(down, 54);
   bytes.set(lifted, 58);
+  for (let entry = 2; entry < colourEntries; entry++) bytes.set(down, 54 + 4 * entry);
 }
 
 function writeRows(
@@ -107,9 +102,9 @@ function writeRows(
     const ends = endsOfPick(pick);
     for (let x = 0; x < width; x++) {
       const end = options.endOrder === 'first-at-left' ? x : width - 1 - x;
-      if (ends[end] === true) {
-        bytes[pixelOffset + storedRow * rowStride + Math.floor(x / 8)]! |= 1 << (7 - (x % 8));
-      }
+      if (ends[end] !== true) continue;
+      if (options.bitDepth === 8) bytes[pixelOffset + storedRow * rowStride + x] = 1;
+      else bytes[pixelOffset + storedRow * rowStride + Math.floor(x / 8)]! |= 1 << (7 - (x % 8));
     }
   }
 }

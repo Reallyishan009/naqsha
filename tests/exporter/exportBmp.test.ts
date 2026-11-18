@@ -3,12 +3,8 @@ import * as fc from 'fast-check';
 import { parseCardProfile, validateCardGrid, validateCardProfile } from '../../src/codec/index.ts';
 import type { CardProfile, Pattern } from '../../src/codec/index.ts';
 import { bmpLayout, exportPatternBmp } from '../../src/exporter/index.ts';
-import type { ExportOptions } from '../../src/exporter/index.ts';
 import { exportOptionsArbitrary, patternArbitrary } from '../support/patterns.ts';
 import { REMOVE, mutateProfile, profileArbitrary, rowMajorEndOrder } from '../support/profiles.ts';
-
-/** 8-bit export comes in task 1.3, so these properties use 1-bit options only. */
-const options1Bit: fc.Arbitrary<ExportOptions> = exportOptionsArbitrary.map((options) => ({ ...options, bitDepth: 1 }));
 
 /** A valid profile with 2 hook rows, 2 hook columns and a row-major endOrder. The geometry of a fixed-seed generated
  * profile is reused: a smaller hook grid in the same card keeps every hole on the card and clear of the peg holes. */
@@ -53,11 +49,33 @@ describe('exportPatternBmp 1-bit known bytes', () => {
     expect(Array.from(result.bytes.slice(62, 66))).toEqual([0x90, 0, 0, 0]);
     expect(Array.from(result.bytes.slice(66, 70))).toEqual([0x40, 0, 0, 0]);
   });
+});
 
-  it('bitDepth 8 is refused until task 1.3', () => {
-    const result = exportPatternBmp(twoByTwoProfile(), [[[true, false], [false, true]]], { bitDepth: 8 });
-    expect(result.ok).toBe(false);
-    expect(!result.ok && result.failure.reason).toBe('invalid-options');
+describe('exportPatternBmp 8-bit known bytes', () => {
+  it('a 2 x 2 hook profile with two picks exports exactly the 1,086 bytes of the design', () => {
+    const profile = twoByTwoProfile();
+    const pattern: Pattern = [
+      [[true, false], [false, true]],
+      [[false, false], [true, false]],
+    ];
+    const header = hex(`
+      42 4D 3E 04 00 00 00 00 00 00 36 04 00 00 28 00 00 00 04 00 00 00 02 00 00 00 01 00 08 00
+      00 00 00 00 08 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02 00 00 00
+    `);
+    const lastPixels = hex('00 00 01 00 01 00 00 01');
+    expect(header).toHaveLength(54);
+    const result = exportPatternBmp(profile, pattern, { bitDepth: 8 });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const bytes = Array.from(result.bytes);
+    expect(bytes).toHaveLength(1086);
+    expect(bytes.slice(0, 54)).toEqual(header);
+    expect(bytes.slice(54, 58)).toEqual([0xff, 0xff, 0xff, 0x00]);
+    expect(bytes.slice(58, 62)).toEqual([0x00, 0x00, 0x00, 0x00]);
+    for (let entry = 2; entry < 256; entry++) {
+      expect(bytes.slice(54 + 4 * entry, 58 + 4 * entry)).toEqual([0xff, 0xff, 0xff, 0x00]);
+    }
+    expect(bytes.slice(-8)).toEqual(lastPixels);
   });
 });
 
@@ -96,7 +114,7 @@ describe('exportPatternBmp properties', () => {
       [['cardWidthMm'], -1],
     ];
     fc.assert(
-      fc.property(profileArbitrary, fc.constantFrom(...mutations), options1Bit, (profile, [path, replacement], options) => {
+      fc.property(profileArbitrary, fc.constantFrom(...mutations), exportOptionsArbitrary, (profile, [path, replacement], options) => {
         const mutated = mutateProfile(profile, path, replacement);
         const expected = validateCardProfile(mutated);
         expect(expected.length).toBeGreaterThan(0);
@@ -119,7 +137,7 @@ describe('exportPatternBmp properties', () => {
           pattern: fc.constant(pattern),
           damagedPicks: fc.uniqueArray(fc.integer({ min: 0, max: pattern.length - 1 }), { minLength: 1 }),
           damages: fc.array(damageArbitrary, { minLength: pattern.length, maxLength: pattern.length }),
-          options: options1Bit,
+          options: exportOptionsArbitrary,
         }),
       ),
     );
@@ -144,7 +162,7 @@ describe('exportPatternBmp properties', () => {
 
   it('R1.4 an empty Pattern fails with empty-pattern', () => {
     fc.assert(
-      fc.property(profileArbitrary, options1Bit, (profile, options) => {
+      fc.property(profileArbitrary, exportOptionsArbitrary, (profile, options) => {
         expect(exportPatternBmp(profile, [], options)).toEqual({ ok: false, failure: { reason: 'empty-pattern' } });
       }),
     );
@@ -152,7 +170,7 @@ describe('exportPatternBmp properties', () => {
 
   it('R7.2 the file size in the header equals the byte length and the layout formula', () => {
     const scenario = profileArbitrary.chain((profile) =>
-      fc.tuple(fc.constant(profile), patternArbitrary(profile), options1Bit),
+      fc.tuple(fc.constant(profile), patternArbitrary(profile), exportOptionsArbitrary),
     );
     fc.assert(
       fc.property(scenario, ([profile, pattern, options]) => {
@@ -163,15 +181,39 @@ describe('exportPatternBmp properties', () => {
         const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
         const width = profile.hookRows * profile.hookColumns;
         const height = pattern.length;
-        const rowStride = 4 * Math.ceil(width / 32);
-        const pixelOffset = 14 + 40 + 4 * 2;
+        const rowStride = 4 * Math.ceil((width * options.bitDepth) / 32);
+        const pixelOffset = 14 + 40 + 4 * (options.bitDepth === 1 ? 2 : 256);
         expect(view.getUint32(2, true)).toBe(bytes.length);
         expect(bytes.length).toBe(pixelOffset + rowStride * height);
         expect(view.getUint32(10, true)).toBe(pixelOffset);
         expect(view.getUint32(34, true)).toBe(rowStride * height);
         expect(rowStride % 4).toBe(0);
-        expect(rowStride * 8).toBeGreaterThanOrEqual(width);
-        expect((rowStride - 4) * 8).toBeLessThan(width);
+        expect(rowStride * 8).toBeGreaterThanOrEqual(width * options.bitDepth);
+        expect((rowStride - 4) * 8).toBeLessThan(width * options.bitDepth);
+      }),
+    );
+  });
+
+  it('R7.3 the colour table is present and matches the lift colour', () => {
+    const scenario = profileArbitrary.chain((profile) =>
+      fc.tuple(fc.constant(profile), patternArbitrary(profile), exportOptionsArbitrary),
+    );
+    fc.assert(
+      fc.property(scenario, ([profile, pattern, options]) => {
+        const result = exportPatternBmp(profile, pattern, options);
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        const bytes = result.bytes;
+        const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+        const entries = options.bitDepth === 1 ? 2 : 256;
+        expect(view.getUint32(46, true)).toBe(entries);
+        expect(view.getUint32(10, true)).toBe(54 + 4 * entries);
+        const entry = (index: number): number[] => Array.from(bytes.slice(54 + 4 * index, 58 + 4 * index));
+        const white = [0xff, 0xff, 0xff, 0x00];
+        const black = [0x00, 0x00, 0x00, 0x00];
+        expect(entry(1)).toEqual(options.liftColour === 'black' ? black : white);
+        expect(entry(0)).toEqual(options.liftColour === 'black' ? white : black);
+        for (let index = 2; index < entries; index++) expect(entry(index)).toEqual(entry(0));
       }),
     );
   });
