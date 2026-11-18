@@ -16,7 +16,8 @@
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit",
     "fixtures": "node scripts/make_fixtures.ts --all",
-    "sample-cloth": "node scripts/render_sample.ts"
+    "sample-cloth": "node scripts/render_sample.ts",
+    "sample-bmp": "node scripts/export_sample.ts"
   },
   "dependencies": {
     "react": "^19.3.1",
