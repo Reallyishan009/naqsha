@@ -22,7 +22,7 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
 
 ## Tasks
 
-- [ ] 1. Phase 1: Weave, Try it, printable sample card and deployment
+- [x] 1. Phase 1: Weave, Try it, printable sample card and deployment
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 2.10, 2.11, 2.12, 2.13, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.8, 14.9, 14.10, 14.11, 14.12, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7, 16.8, 16.9, 17.7, 21.1, 21.2, 21.3, 21.4, 21.5, 21.6, 21.7, 21.8, 21.9, 21.10, 21.11, 21.12, 21.13, 21.14, 21.15, 21.16, 21.17, 21.18, 21.19, 23.1, 23.2, 23.3, 23.4, 23.5, 23.6, 23.7, 23.8, 23.10, 23.12, 23.14_
 
   - [x] 1.1 Build config, shared types and test support
@@ -145,7 +145,7 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
     - Record what was built, the contrast findings, the bundle sizes, the Node timings (sample load, `printableRaster`), flagged Hindi strings, and the manual checks still open: a phone-width check of Try it with `npm run dev`, printing a Printable_Card at 100% scale and measuring it with a ruler, and on-device timings. Regenerate `docs/HINDI_REVIEW.md`.
     - _Requirements: 4.8, 16.7, 21.5, 21.19_
 
-  - [-] 1.14 Phase 1 push
+  - [x] 1.14 Phase 1 push
     - **Demo-essential.**
     - Run `npm run test:run`, `npm run typecheck` and `npm run build`, then `git push`. Run `git remote -v` first; if no remote is configured, ask the user before pushing and do not add one yourself.
     - _Requirements: 16.7_
@@ -153,7 +153,7 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
 - [ ] 2. Phase 2: Keep and the archive
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 6.10, 6.11, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 7.10, 22.1, 22.2, 22.4, 22.5, 22.6, 22.7, 22.8, 22.9, 22.10, 22.11, 22.12, 22.13_
 
-  - [ ] 2.1 Archive types and functions over a store
+  - [x] 2.1 Archive types and functions over a store
     - **Demo-essential.**
     - Files: `src/archive/types.ts`, `src/archive/designs.ts`, `src/archive/index.ts`, `tests/archive/designs.test.ts`, `tests/support/fakes.ts`.
     - Types of the design. `saveDesign`, `getDesign`, `listDesigns`, `deleteDesign` over an injected `ArchiveStore`, `now` and `newId`. Sorting by `createdAt` descending then `id`. Every failure a value, no throw. Import only types from `src/codec/index.ts`.
@@ -165,7 +165,7 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
     - Example tests: field storage, empty list, a `put` that fails after staging leaves nothing.
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 6.10_
 
-  - [ ] 2.2 IndexedDB store
+  - [x] 2.2 IndexedDB store
     - **Demo-essential.**
     - Files: `src/archive/idbStore.ts`, `src/archive/index.ts`, `tests/archive/structure.test.ts`.
     - `openIndexedDbStore()` for database `naqsha-archive` version 1 with stores `designs` and `summaries` (index `createdAt`), `put` and `remove` in one `readwrite` transaction over both. An unavailable `indexedDB` rejects with a value that `designs.ts` maps to `storage-unavailable`. Default deps use `Date.now` and `crypto.randomUUID`.
@@ -173,7 +173,7 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
     - The real IndexedDB cannot run in Node here. State this in the log (task 2.7) and add a manual check item: save, refresh, list, reopen.
     - _Requirements: 6.8, 6.9, 6.11_
 
-  - [ ] 2.3 Card_Profile notice
+  - [x] 2.3 Card_Profile notice
     - **Demo-essential.**
     - Files: `src/ui/profile/notice.ts`, `src/ui/ProfileNotice.tsx`, `src/ui/ProfileNotice.module.css`, `src/ui/i18n/en.json`, `src/ui/i18n/hi.json`, `tests/ui/profile/notice.test.ts`, `tests/ui/screens/profileNotice.test.tsx`.
     - `profileNotice(profile)` returns a notice exactly when `status` contains `UNVERIFIED`, with the status text unchanged. `ProfileNotice` shows the profile `name` always, and the translated sentence plus the status text beside an icon or word when the notice exists. It is not announced through the live region. Reused by the Scan screen in Phase 3.
@@ -181,13 +181,13 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
     - Examples: the demo profile gives a notice with the status text unchanged; switching language changes the sentence and keeps the status text.
     - _Requirements: 22.1, 22.2, 22.3, 22.4, 22.5, 22.8, 22.9, 22.10, 22.11, 22.13_
 
-  - [ ] 2.4 Reducer actions for saved designs
+  - [x] 2.4 Reducer actions for saved designs
     - **Demo-essential.**
     - Files: `src/ui/state/appState.ts`, `tests/ui/state/appState.test.ts`.
     - Add `open-saved` (replaces the Current_Pattern with origin `archive`, shows Weave) and `mark-saved` (sets `saved: true` on a scanned origin). Extend the Property 1 test to include these actions.
     - _Requirements: 7.7_
 
-  - [ ] 2.5 Keep logic and export, archive failure messages
+  - [x] 2.5 Keep logic and export, archive failure messages
     - **Demo-essential.**
     - Files: `src/ui/state/keep.ts`, `src/ui/i18n/messages.ts`, `src/ui/i18n/en.json`, `src/ui/i18n/hi.json`, `tests/ui/state/keep.test.ts`, `tests/ui/i18n/failureKeys.test.ts`.
     - `canExport`, `canSave`, `savedLabel`, `summaryRow`, `runExport` (calls `exportPatternBmp`, and `downloadBmp` with `bmpFileName` only on success), the Keep form reducer that keeps the form on failure. Add `exportFailureKey`, `bmpReadFailureKey` and `archiveFailureKey` as exhaustive switches, and the Keep keys.
@@ -200,20 +200,20 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
     - Examples: defaults equal `DEFAULT_EXPORT_OPTIONS`, an empty pattern disables both controls, `bmpFileName` is used.
     - _Requirements: 5.3, 5.5, 5.6, 5.7, 5.8, 7.2, 7.3, 7.4, 7.6, 22.12_
 
-  - [ ] 2.6 Keep screen components
+  - [x] 2.6 Keep screen components
     - **Demo-essential.**
     - Files: `src/ui/screens/keep/KeepScreen.tsx`, `KeepScreen.module.css`, `src/ui/App.tsx`, `tests/ui/screens/keep.test.tsx`.
     - Export options (bit depth, lift colour, pick order, end order, one line each), the loom-purpose export button, the "no loom controller has been tested" sentence, the six optional fields, save, the record-not-legal-protection sentence, the saved list with open and confirmed delete, the empty-list text, the Card_Profile name and the Unverified_Profile notice next to the export control and next to the save control (shown before use, never blocking), and a differing profile name on list entries. Mount the screen in `App`.
     - Render examples: markup in a name appears escaped; the notice is shown for the demo profile and absent for a profile without status; both notice places exist; an empty pattern disables export with the Try it or Scan hint; a failed save keeps the form.
     - _Requirements: 5.1, 5.2, 5.4, 5.6, 5.9, 7.1, 7.5, 7.8, 7.9, 7.10, 22.1, 22.2, 22.4, 22.6, 22.7, 22.10, 22.12_
 
-  - [ ] 2.7 Phase 2 build-log entry
+  - [x] 2.7 Phase 2 build-log entry
     - **Demo-essential.**
     - Files: `docs/BUILD_LOG.md`, `docs/HINDI_REVIEW.md`, `.kiro/steering/structure.md`.
     - Update the `src/archive` and `src/ui` entries in `structure.md` to the real exports (`saveDesign`, `getDesign`, `listDesigns`, `deleteDesign`; `App`). Add a log entry with the manual IndexedDB check (save, refresh, list, reopen) and its result or "not yet run". Regenerate `docs/HINDI_REVIEW.md`.
     - _Requirements: 6.1, 12.12_
 
-  - [ ] 2.8 Phase 2 push
+  - [-] 2.8 Phase 2 push
     - **Demo-essential.**
     - Run `npm run test:run`, `npm run typecheck` and `npm run build`, then `git push`. Run `git remote -v` first; if no remote is configured, ask the user before pushing.
     - _Requirements: 16.7_

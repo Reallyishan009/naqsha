@@ -168,6 +168,109 @@
         "executionId": "ae4ac015-2633-4958-8a56-7ee899149f0a",
         "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
         "timestamp": 1795022611147
+      },
+      {
+        "executionId": "ae4ac015-2633-4958-8a56-7ee899149f0a",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795022660689
+      }
+    ],
+    "1. Phase 1: Weave, Try it, printable sample card and deployment": [
+      {
+        "executionId": "ae4ac015-2633-4958-8a56-7ee899149f0a",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795022660783
+      }
+    ],
+    "2.1 Archive types and functions over a store": [
+      {
+        "executionId": "ce1d5775-84e0-4704-adfb-db457e74f2d4",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795023406605
+      },
+      {
+        "executionId": "ce1d5775-84e0-4704-adfb-db457e74f2d4",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795023613591
+      }
+    ],
+    "2.2 IndexedDB store": [
+      {
+        "executionId": "ce1d5775-84e0-4704-adfb-db457e74f2d4",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795023621714
+      },
+      {
+        "executionId": "ce1d5775-84e0-4704-adfb-db457e74f2d4",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795023845019
+      }
+    ],
+    "2.3 Card_Profile notice": [
+      {
+        "executionId": "ce1d5775-84e0-4704-adfb-db457e74f2d4",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795023845631
+      },
+      {
+        "executionId": "ce1d5775-84e0-4704-adfb-db457e74f2d4",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795023972149
+      }
+    ],
+    "2.4 Reducer actions for saved designs": [
+      {
+        "executionId": "ce1d5775-84e0-4704-adfb-db457e74f2d4",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795023971697
+      },
+      {
+        "executionId": "ce1d5775-84e0-4704-adfb-db457e74f2d4",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795024030165
+      }
+    ],
+    "2.5 Keep logic and export, archive failure messages": [
+      {
+        "executionId": "ce1d5775-84e0-4704-adfb-db457e74f2d4",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795024029552
+      },
+      {
+        "executionId": "ce1d5775-84e0-4704-adfb-db457e74f2d4",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795024255689
+      }
+    ],
+    "2.6 Keep screen components": [
+      {
+        "executionId": "ce1d5775-84e0-4704-adfb-db457e74f2d4",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795024255156
+      },
+      {
+        "executionId": "ce1d5775-84e0-4704-adfb-db457e74f2d4",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795024465575
+      }
+    ],
+    "2.7 Phase 2 build-log entry": [
+      {
+        "executionId": "ce1d5775-84e0-4704-adfb-db457e74f2d4",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795024464847
+      },
+      {
+        "executionId": "ce1d5775-84e0-4704-adfb-db457e74f2d4",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795024579309
+      }
+    ],
+    "2.8 Phase 2 push": [
+      {
+        "executionId": "ce1d5775-84e0-4704-adfb-db457e74f2d4",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795024579494
       }
     ]
   }
