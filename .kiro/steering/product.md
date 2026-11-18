@@ -17,7 +17,7 @@ The name "Naqsha" (نقشہ) means pattern or design in Urdu and Hindi — the t
 | Persona | Context | Key need |
 |---|---|---|
 | Handloom weaver | Works at the loom, may own a basic smartphone | Quickly check whether a card set produces the intended cloth before threading |
-| Card maker (Naqsha nawis) | Cuts and arranges punch cards, limited computer use | Transfer a card set to a new electronic loom without redrawing |
+| Card maker (naqshband) | Cuts and arranges punch cards, limited computer use | Transfer a card set to a new electronic loom without redrawing |
 | Textile archivist | Museum or government body, moderate computer skills | Batch-scan and store card sets with metadata for long-term preservation |
 
 All personas have **low to moderate digital literacy**. The UI must work without training, with minimal text, and with large touch targets.

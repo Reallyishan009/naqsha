@@ -1,0 +1,28 @@
+{
+  "name": "demo-12x16",
+  "status": "ILLUSTRATIVE, UNVERIFIED, replace with measured values",
+  "cardWidthMm": 60,
+  "cardHeightMm": 45,
+  "hookRows": 12,
+  "hookColumns": 16,
+  "holeDiameterMm": 2.0,
+  "horizontalPitchMm": 3.0,
+  "verticalPitchMm": 3.0,
+  "firstHoleCentreMm": { "x": 7.5, "y": 6.0 },
+  "pegHoles": {
+    "diameterMm": 2.5,
+    "positionsMm": [
+      { "x": 3.0, "y": 22.5 },
+      { "x": 57.0, "y": 22.5 }
+    ]
+  },
+  "lacingHoles": {
+    "diameterMm": 2.0,
+    "positionsMm": [
+      { "x": 15.0, "y": 2.0 },
+      { "x": 45.0, "y": 2.0 },
+      { "x": 15.0, "y": 43.0 },
+      { "x": 45.0, "y": 43.0 }
+    ]
+  }
+}
