@@ -1,6 +1,6 @@
 # Checkpoint measurements (task 4)
 
-Date: 2026-05-24 (local run)
+Date: 2026-11-18 (local run)
 Commit measured (HEAD before this record): `2d6cd0c`
 Command: `npx vitest run tests/reader/accuracy.test.ts --reporter=verbose`
 
