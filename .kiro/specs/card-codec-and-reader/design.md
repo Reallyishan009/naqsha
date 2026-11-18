@@ -1024,7 +1024,7 @@ Test file: `tests/reader/readCard.test.ts`. Image property. Any profile, grid, a
 
 ### Property 67: R6.6 the CardGrid is read at any pixel scale from 5 to 12 pixels per millimetre.
 
-Test file: `tests/reader/readCard.test.ts`. Image property. Any profile, grid, and scale from 5 to 12 pixels per millimetre, tilt 0.
+Test file: `tests/reader/readCard.test.ts`. Image property. Any profile, grid, and scale from 5 to 12 pixels per millimetre, tilt 0. Below the floor (`holeDiameterMm * scale < MIN_HOLE_DIAMETER_PX`) the result is any failure with no grid, never `ok`; at or above it the result is the true grid. (User decision, task 5.14.)
 
 **Validates: Requirements 6.6**
 

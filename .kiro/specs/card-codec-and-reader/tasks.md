@@ -308,6 +308,12 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Logged in task 5.17, not yet scheduled. On cards with one punched hole, `selectPegHolePair` can pick a decoy pair and `readCard` returns a wrong grid. Measured: 16 in 15,000 cases with 1 to 6 px holes and 1 in 3,000 with 9 to 10 px holes. `MIN_HOLE_DIAMETER_PX = 11` hides the measured cases but does not fix the cause (see `measurements.md`, "Minimum hole size").
   - Files: `src/reader/selectPegHoles.ts`, `src/reader/layout.ts`, `tests/reader/layout.test.ts`, `tests/reader/resolution.test.ts`, `.kiro/specs/card-codec-and-reader/measurements.md`.
   - Find why the true pair loses (compare the `LayoutResult` of the true and the chosen pose for the two kept cases), fix the selection, keep both cases as regression tests, and re-measure. Lower `MIN_HOLE_DIAMETER_PX` only with the new measurements and the user's agreement.
+  - Also covers task 5.14, parked here by the user. Its four properties (67, 68, 70, 77) are saved in `.kiro/specs/card-codec-and-reader/parked-5.14-readCard-tests.patch` and failed on their pinned seeds, always with a failure and never a wrong grid:
+    - Property 77, seed 77024: 3 x 8 card, 2.3 mm holes, 6 px/mm, tilt 0, two punched holes; `ambiguous-orientation` with q 0.946. The diameters say upright but the layout check rejects that pose (`selectPegHoles.ts`).
+    - Property 70, seed 70023: 3 x 7 card, 2.3 mm holes, 6 px/mm, tilt -0.146; untilted reads, tilted gives `ambiguous-orientation` with q 0.933.
+    - Property 68, seed 68022: 2 x 2 card, 1.5 mm holes, 8 px/mm, tilt 0; `peg-holes-not-found`. The generated profile has two lacing holes 0.78 mm apart that render as one region, so `profileArbitrary` should also keep lacing holes apart.
+    - Property 67, seed 67021: 7.5 px holes (below the floor) at 5 px/mm; `peg-holes-not-found`. User decision: below the floor any failure is acceptable, never `ok`.
+  - Diagnose before changing code: record the `LayoutResult` of the true pose for every case above and the decoy cases. Then apply the parked patch, finish Properties 67, 68, 70 and 77, and mark task 5.14 complete.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 9.3, 18.5_
 

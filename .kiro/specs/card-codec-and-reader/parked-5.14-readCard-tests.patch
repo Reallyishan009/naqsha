@@ -1,0 +1,87 @@
+diff --git a/tests/reader/readCard.test.ts b/tests/reader/readCard.test.ts
+index 75ef5e1..11fb48f 100644
+--- a/tests/reader/readCard.test.ts
++++ b/tests/reader/readCard.test.ts
+@@ -438,3 +438,82 @@ describe('readCard orientation and scale (image properties)', () => {
+     );
+   });
+ });
++
++describe('readCard image properties (R6.6, R9.5, R10.2, R14.3)', () => {
++  const renderOptions = (seed: number, pixelsPerMm: number, tiltDegrees: number) => ({
++    noise: 0,
++    tiltDegrees,
++    shade: 0,
++    seed,
++    pixelsPerMm,
++  });
++  const splitCounts = { read: 0, tooLow: 0 };
++
++  it('R6.6 the CardGrid is read at any pixel scale from 5 to 12 pixels per millimetre', () => {
++    splitCounts.read = 0;
++    splitCounts.tooLow = 0;
++    fc.assert(
++      fc.property(
++        renderedCase(fc.double({ min: 5, max: 12, noNaN: true }), fc.constant(0)),
++        ({ profile, grid, pixelsPerMm, tiltDegrees, seed }) => {
++          const result = readCard(profile, renderCardPixels(profile, grid, renderOptions(seed, pixelsPerMm, tiltDegrees)));
++          // R12.5 refuses a punched hole narrower than MIN_HOLE_DIAMETER_PX. The 5 to 12 px/mm range is unchanged:
++          // below the floor the required outcome is exactly resolution-too-low with no grid, otherwise the true grid.
++          if (profile.holeDiameterMm * pixelsPerMm < MIN_HOLE_DIAMETER_PX) {
++            splitCounts.tooLow++;
++            expect(result.ok).toBe(false);
++            expect('grid' in result).toBe(false);
++            expect(!result.ok && result.failure.reason).toBe('resolution-too-low');
++          } else {
++            splitCounts.read++;
++            expect(result.ok).toBe(true);
++            if (!result.ok) return;
++            expect(result.grid).toEqual(grid);
++          }
++        },
++      ),
++      { numRuns: IMAGE_RUNS, seed: 67021 },
++    );
++    console.log(`Property 67 split: ${splitCounts.read} read, ${splitCounts.tooLow} resolution-too-low`);
++  });
++
++  // Properties 68, 70 and 77 are about tilt and profiles, not resolution, so every case is rendered at
++  // scaleAboveFloor(profile) (see the note above) and must be read.
++  it('R9.5 a card tilted by up to 10 degrees from upright is found and read', () => {
++    fc.assert(
++      fc.property(renderedCase(scaleAboveFloor, upright), ({ profile, grid, pixelsPerMm, tiltDegrees, seed }) => {
++        const result = readCard(profile, renderCardPixels(profile, grid, renderOptions(seed, pixelsPerMm, tiltDegrees)));
++        expect(result.ok).toBe(true);
++        if (!result.ok) return;
++        expect(result.grid).toEqual(grid);
++      }),
++      { numRuns: IMAGE_RUNS, seed: 68022 },
++    );
++  });
++
++  it('R10.2 a tilted card reads the same CardGrid as the same card untilted', () => {
++    fc.assert(
++      fc.property(renderedCase(scaleAboveFloor, upright), ({ profile, grid, pixelsPerMm, tiltDegrees, seed }) => {
++        const tilted = readCard(profile, renderCardPixels(profile, grid, renderOptions(seed, pixelsPerMm, tiltDegrees)));
++        const untilted = readCard(profile, renderCardPixels(profile, grid, renderOptions(seed, pixelsPerMm, 0)));
++        expect(tilted.ok).toBe(true);
++        expect(untilted.ok).toBe(true);
++        if (!tilted.ok || !untilted.ok) return;
++        expect(tilted.grid).toEqual(untilted.grid);
++      }),
++      { numRuns: IMAGE_RUNS, seed: 70023 },
++    );
++  });
++
++  it('R14.3 a profile that differs from the demo profile is read with 100% accuracy on a clean render', () => {
++    fc.assert(
++      fc.property(renderedCase(scaleAboveFloor, fc.constant(0)), ({ profile, grid, pixelsPerMm, tiltDegrees, seed }) => {
++        const result = readCard(profile, renderCardPixels(profile, grid, renderOptions(seed, pixelsPerMm, tiltDegrees)));
++        expect(result.ok).toBe(true);
++        if (!result.ok) return;
++        expect(result.grid).toEqual(grid);
++      }),
++      { numRuns: IMAGE_RUNS, seed: 77024 },
++    );
++  });
++});
