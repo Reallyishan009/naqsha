@@ -13,18 +13,18 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
 
 ## Tasks
 
-- [ ] 1. Project changes the design needs
+- [x] 1. Project changes the design needs
   - The tsconfig flags, codec types, demo profile, generator and fixtures that phases 2 to 5 build on.
   - _Requirements: 1.3, 15.3, 19.1, 19.3, 19.4, 19.5, 19.6, 19.7, 19.8_
 
-- [ ] 1.1 Allow `.ts` import extensions
+- [x] 1.1 Allow `.ts` import extensions
   - **Demo-essential.**
   - Files: `tsconfig.json`.
   - Add `"allowImportingTsExtensions": true` and `"erasableSyntaxOnly": true`. Confirm the build still passes and that Vite resolves `.ts` imports.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 15.5_
 
-- [ ] 1.2 New CardProfile shape, demo profile and per-peg rendering
+- [x] 1.2 New CardProfile shape, demo profile and per-peg rendering
   - **Demo-essential.**
   - Files: `src/codec/types.ts`, `src/codec/index.ts`, `public/profiles/demo-12x16.json`, `scripts/make_fixtures.ts`, `tests/scripts/make_fixtures.test.ts`.
   - In `types.ts`, add `PegHole`, `endOrder`, `pegHoles: [PegHole, PegHole]`, `Ends`, `ViolationKind`, `Violation` and `Result` as in the design. In `index.ts`, re-export them using `.ts` extensions.
@@ -34,7 +34,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 1.3, 2.6, 15.3, 19.1, 19.3, 19.4, 19.7_
 
-- [ ] 1.3 `pixelsPerMm` render option and regenerated fixtures
+- [x] 1.3 `pixelsPerMm` render option and regenerated fixtures
   - **Demo-essential.**
   - Files: `scripts/make_fixtures.ts`, `tests/scripts/make_fixtures.test.ts`, `tests/fixtures/*`.
   - Add `pixelsPerMm` to `RenderOptions` with a default of 6, and a `--pixels-per-mm` CLI flag. The border stays in millimetres, so it scales with the option. Record the value in `options.pixelsPerMm` of each ground-truth file. Set it explicitly in `FIXTURE_SET`.
@@ -43,7 +43,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 19.6, 19.8_
 
-- [ ] 1.4 Steering docs for the new profile shape
+- [x] 1.4 Steering docs for the new profile shape
   - Files: `.kiro/steering/card-geometry.md`, `.kiro/steering/tech.md`, `tests/scripts/make_fixtures.test.ts`.
   - `card-geometry.md`: in the Layout table, give each peg hole its own position and diameter (2.5 mm and 3.0 mm), and keep the ILLUSTRATIVE, UNVERIFIED marker on every value. The end index rule now points to the profile's `endOrder`. Add the limitation that peg hole diameters must differ from the punched hole diameter for reliable detection.
   - `tech.md`: relative imports inside `src/codec` use the `.ts` extension, so that Node can run the generator.
