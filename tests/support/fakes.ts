@@ -1,3 +1,5 @@
+import { StoreUnavailableError } from '../../src/archive/index.ts';
+import type { ArchiveStore, DesignSummary, SavedDesign } from '../../src/archive/index.ts';
 import type { DownloadDeps } from '../../src/exporter/index.ts';
 import type { Scheduler } from '../../src/simulator/index.ts';
 
@@ -100,5 +102,62 @@ export class FakeStorage {
 
   get length(): number {
     return this.values.size;
+  }
+}
+
+export type ArchiveFailurePoint = 'open' | 'put' | 'put-after-staging' | 'get' | 'list' | 'remove';
+
+/**
+ * An in-memory ArchiveStore. Values are structured-cloned on the way in and out, as IndexedDB does.
+ * put stages the record and the summary and commits both together. Failures are injected per point:
+ * 'open' makes every call throw StoreUnavailableError; 'put-after-staging' throws after staging, so
+ * nothing may be committed.
+ */
+export class FakeArchiveStore implements ArchiveStore {
+  private records = new Map<string, SavedDesign>();
+  private summaries = new Map<string, DesignSummary>();
+  private readonly failAt = new Set<ArchiveFailurePoint>();
+  failOn(...points: ArchiveFailurePoint[]): void {
+    for (const point of points) this.failAt.add(point);
+  }
+  clearFailures(): void {
+    this.failAt.clear();
+  }
+  private open(): void {
+    if (this.failAt.has('open')) throw new StoreUnavailableError('fake: open failed');
+  }
+  async put(record: SavedDesign, summary: DesignSummary): Promise<void> {
+    this.open();
+    if (this.failAt.has('put')) throw new Error('fake: put failed');
+    const stagedRecord = structuredClone(record);
+    const stagedSummary = structuredClone(summary);
+    if (this.failAt.has('put-after-staging')) throw new Error('fake: put failed after staging');
+    this.records.set(stagedRecord.id, stagedRecord);
+    this.summaries.set(stagedSummary.id, stagedSummary);
+  }
+  async get(id: string): Promise<SavedDesign | undefined> {
+    this.open();
+    if (this.failAt.has('get')) throw new Error('fake: get failed');
+    const record = this.records.get(id);
+    return record === undefined ? undefined : structuredClone(record);
+  }
+  async listSummaries(): Promise<DesignSummary[]> {
+    this.open();
+    if (this.failAt.has('list')) throw new Error('fake: list failed');
+    return [...this.summaries.values()].map((summary) => structuredClone(summary));
+  }
+  async remove(id: string): Promise<boolean> {
+    this.open();
+    if (this.failAt.has('remove')) throw new Error('fake: remove failed');
+    const had = this.records.delete(id);
+    this.summaries.delete(id);
+    return had;
+  }
+  /** A deep copy of everything stored, for before and after comparisons. */
+  snapshot(): { records: SavedDesign[]; summaries: DesignSummary[] } {
+    return {
+      records: [...this.records.values()].map((r) => structuredClone(r)),
+      summaries: [...this.summaries.values()].map((s) => structuredClone(s)),
+    };
   }
 }
