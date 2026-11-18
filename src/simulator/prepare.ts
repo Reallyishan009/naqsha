@@ -2,6 +2,14 @@ import { encodeCardGrid, endsPerPick, parseCardProfile, validateCardGrid } from 
 import type { CardProfile } from '../codec/index.ts';
 import type { GapReport, PickRow, PreparedCloth, SimResult } from './types.ts';
 
+/** Every cloth prepareCloth returned; lets renderFrame reject any other value in O(1). */
+const preparedCloths = new WeakSet<object>();
+
+/** True only for a cloth that prepareCloth made. */
+export function isPreparedCloth(value: unknown): value is PreparedCloth {
+  return typeof value === 'object' && value !== null && preparedCloths.has(value);
+}
+
 /**
  * Checks the profile, classifies every slot as woven, missing or damaged, and gets each woven pick's lift set
  * from encodeCardGrid (R1.1 to R1.4, R2.2). Never throws (R11.1). Copies what it keeps, so the inputs are not changed (R1.6).
@@ -41,7 +49,9 @@ export function prepareCloth(profile: unknown, slots: unknown): SimResult<Prepar
       }
       picks.push({ kind: 'woven', lift: Uint8Array.from(encoded.value, (lifted) => (lifted ? 1 : 0)) });
     }
-    return { ok: true, value: { profile: keptProfile, baseEnds: endsPerPick(keptProfile), picks, gaps } };
+    const cloth: PreparedCloth = { profile: keptProfile, baseEnds: endsPerPick(keptProfile), picks, gaps };
+    preparedCloths.add(cloth);
+    return { ok: true, value: cloth };
   } catch (error) {
     return {
       ok: false,

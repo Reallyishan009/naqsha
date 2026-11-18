@@ -195,6 +195,7 @@ Each frame writes `width * height` pixels once through a `Uint32Array` view (pac
 | Profile fails `parseCardProfile` | `invalid-profile` with the violations (R1.2) |
 | Colour not `#rrggbb`, empty weft plan, thread size, repeat, viewport or highlight limit out of range | `invalid-settings` naming the setting (R5.4, R6.3, R14.1) |
 | Frame pick not an integer from 0 to the slot count, or a bad phase or step | `pick-out-of-range` (R7.5) |
+| `renderFrame` given a cloth not made by `prepareCloth` (or malformed) | `invalid-settings` with setting `cloth`; settings are re-parsed per call |
 | Missing or damaged slot | Not a failure; drawn as a gap row and listed in `gaps` (R11.3) |
 | Any other input | Never throws (R11.1) |
 

@@ -1,7 +1,7 @@
 import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { encodeCardGrid, parseCardProfile, validateCardGrid } from '../../src/codec/index.ts';
-import { prepareCloth } from '../../src/simulator/index.ts';
+import { parseRenderSettings, prepareCloth } from '../../src/simulator/index.ts';
 import { cardGridArbitrary, mutateProfile, profileArbitrary, REMOVE } from '../support/profiles.ts';
 import { slotListArbitrary } from '../support/slots.ts';
 
@@ -98,5 +98,22 @@ describe('prepareCloth', () => {
     const profile = fc.sample(profileArbitrary, { numRuns: 1, seed: 2 })[0]!;
     const result = prepareCloth(profile, []);
     expect(result.ok && result.value.picks.length === 0 && result.value.gaps.length === 0).toBe(true);
+  });
+});
+
+// Property 3 (R1.6, "Cut last") is skipped by user decision; only Property 22 is implemented in task 4.1.
+// Property 22 (R11.1) is split over two files with the same title: prepareCloth and parseRenderSettings here, renderFrame in render.test.ts.
+describe('simulator never throws', () => {
+  it('R11.1 the simulator never throws for any input', () => {
+    fc.assert(
+      fc.property(
+        fc.anything({ withNullPrototype: true, withBigInt: true, withSparseArray: true, withObjectString: true }),
+        fc.anything({ withNullPrototype: true, withBigInt: true, withSparseArray: true, withObjectString: true }),
+        (profile, slots) => {
+          expect(typeof prepareCloth(profile, slots).ok).toBe('boolean');
+          expect(typeof parseRenderSettings(profile).ok).toBe('boolean');
+        },
+      ),
+    );
   });
 });

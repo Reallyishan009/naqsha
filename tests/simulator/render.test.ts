@@ -642,3 +642,39 @@ describe('renderFrame', () => {
     });
   });
 });
+
+// Property 22 (R11.1), renderFrame part; the prepareCloth and parseRenderSettings part is in prepare.test.ts.
+describe('renderFrame never throws', () => {
+  const anything = fc.anything({ withNullPrototype: true, withBigInt: true, withSparseArray: true, withObjectString: true });
+  const validInputs = profileArbitrary.chain((profile) =>
+    fc.record({
+      profile: fc.constant(profile),
+      samples: slotListArbitrary(profile),
+      settings: renderSettingsArbitrary,
+    }),
+  );
+  it('R11.1 the simulator never throws for any input', () => {
+    // (a) anything for cloth, settings and frame
+    fc.assert(
+      fc.property(anything, anything, anything, (cloth, settings, frame) => {
+        expect(typeof renderFrame(cloth as PreparedCloth, settings as RenderSettings, frame).ok).toBe('boolean');
+      }),
+    );
+    // (b) valid cloth and settings, anything for the frame
+    fc.assert(
+      fc.property(validInputs, anything, ({ profile, samples, settings }, frame) => {
+        const cloth = prepared(profile, samples.map((sample) => sample.slot));
+        expect(typeof renderFrame(cloth, settings, frame).ok).toBe('boolean');
+      }),
+      { numRuns: IMAGE_RUNS, seed: IMAGE_SEED },
+    );
+    // (c) valid cloth, anything for the settings
+    fc.assert(
+      fc.property(validInputs, anything, ({ profile, samples }, settings) => {
+        const cloth = prepared(profile, samples.map((sample) => sample.slot));
+        expect(typeof renderFrame(cloth, settings as RenderSettings, { pick: 0, phase: 'rest' }).ok).toBe('boolean');
+      }),
+      { numRuns: IMAGE_RUNS, seed: IMAGE_SEED },
+    );
+  });
+});

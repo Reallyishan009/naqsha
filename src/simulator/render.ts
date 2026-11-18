@@ -1,6 +1,7 @@
 import { floatLengthAt } from './floats.ts';
 import { PASS_STEPS } from './frames.ts';
-import { parseColour } from './settings.ts';
+import { isPreparedCloth } from './prepare.ts';
+import { parseColour, parseRenderSettings } from './settings.ts';
 import {
   BACKGROUND_COLOUR,
   blendHalfway,
@@ -73,7 +74,19 @@ function zariHighlight(weft: Weft): number | undefined {
  * Draws one frame as RGBA bytes (R8.1: same input, same bytes): rest, lift and pass frames, see readFrame.
  * Never throws for a bad frame (R7.5). Settings and cloth are expected to come from parseRenderSettings and prepareCloth.
  */
-export function renderFrame(cloth: PreparedCloth, settings: RenderSettings, frame: unknown): SimResult<SimImage> {
+export function renderFrame(clothInput: PreparedCloth, settingsInput: RenderSettings, frame: unknown): SimResult<SimImage> {
+  // Callers can pass values the types forbid, so the cloth must be one prepareCloth made (a check that costs O(1), so the
+  // frame stays O(viewport), R7.2) and the settings are parsed again on every call (R7.5, R11.1: never throw).
+  if (!isPreparedCloth(clothInput)) {
+    return {
+      ok: false,
+      failure: { reason: 'invalid-settings', setting: 'cloth', message: 'cloth must be the result of prepareCloth' },
+    };
+  }
+  const cloth = clothInput;
+  const parsedSettings = parseRenderSettings(settingsInput);
+  if (!parsedSettings.ok) return parsedSettings;
+  const settings = parsedSettings.value;
   const pickCount = cloth.picks.length;
   const read = readFrame(frame, cloth);
   if (!read.valid) return { ok: false, failure: { reason: 'pick-out-of-range', pick: read.pick, pickCount } };
