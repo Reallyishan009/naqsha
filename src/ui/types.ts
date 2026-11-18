@@ -30,7 +30,7 @@ export type PatternOrigin =
 export type CurrentPattern = { pattern: Pattern; origin: PatternOrigin };
 
 export type Confirm =
-  | { kind: 'replace-with-sample'; design: SampleDesign }
+  | { kind: 'replace-with-sample'; design: SampleDesign; pattern: Pattern } // the sample waits here until accepted
   | { kind: 'delete-design'; id: string }
   | { kind: 'remove-batch-card'; index: number }
   | { kind: 'commit-batch' }; // replace or append question (R11.8)
