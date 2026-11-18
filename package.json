@@ -15,7 +15,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit",
-    "fixtures": "node scripts/make_fixtures.ts --all"
+    "fixtures": "node scripts/make_fixtures.ts --all",
+    "sample-cloth": "node scripts/render_sample.ts"
   },
   "dependencies": {
     "react": "^19.3.1",
