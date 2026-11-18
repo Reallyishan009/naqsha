@@ -369,3 +369,43 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **Sizes:** see `ls -l media/`; all four files are well under 5 MB.
 **Seen while capturing (not changed):** after "Accept this card" the live message reads "Card {number} added." in English, so the `{number}` placeholder is not filled for the `scan.accepted` announcement.
 **Not verified:** the GIFs were not played back in a browser or on GitHub; the Hindi UI was not captured.
+## 2026-11-21 (app phase 3, task 3.7: Scan with tap-to-correct and batch, final check)
+**Goal today:** Close Phase 3 of the `app` spec and record what happened, including what is not verified.
+**Prompts run in Kiro:** Not recorded by number. Tasks 3.1 to 3.6 were run one at a time from `.kiro/specs/app/tasks.md`; this entry is task 3.7.
+**What Kiro produced:**
+- Scan_Batch operations and reducer actions (3.1), read failure messages (3.2), correction and marker logic (3.3), the lazy Scan screen with tap-to-correct, the batch list and a fixture integration test (3.4), the Scan chunk check and `readCard` timing (3.5), and README media (3.6).
+- **3.1 batch commit:** accepting a card commits it to the batch, and the batch is cleared as a whole when the pattern is handed on to Weave or Keep. The Remove and Done confirmations are kept in local screen state in `ScanScreen.tsx`, not in `AppState`, so a reload or a screen change drops a half-made confirmation and nothing in the reducer depends on it.
+- Tests: Property 25 (hit areas reach 48 CSS pixels) and the other Phase 3 properties, plus `tests/ui/screens/announce.test.tsx` and `tests/integration/scanFixtures.test.ts` (the four fixture conditions: clean, noisy, tilted, noisy and tilted).
+**Final checks run for this entry:**
+- `npm run test:run`: 69 files, 520 tests, all passing (64 files and 469 tests at the end of Phase 2).
+- `npm run typecheck` and `npm run build` pass.
+- `npm run check-bundle` passes. Entry chunk `assets/index-CP5VmUnR.js` 92,251 bytes gzipped (limit 204,800; 89,566 at the end of Phase 2). Scan chunk `assets/ScanScreen-Db_vFQEy.js` 7,674 bytes gzipped. `vite build` prints 93.47 kB and 7.72 kB for the same files (its own gzip level, kB = 1000 bytes). The Scan-only marker is in the Scan chunk and not in the entry chunk.
+- `readCard` on a 1920 x 1080 synthetic image, Node v24.5.0, darwin arm64, 15 runs per batch, measured in task 3.5: median 24.1 to 24.6 ms, max 35.0 ms. The budget is 300 ms on a mid-range 2020 phone. This is a laptop number and says nothing certain about a phone.
+**What failed or surprised me:**
+- **`announce` params bug.** During media capture (3.6) the live message after "Accept this card" read "Card {number} added." because the `announce` path did not pass `params` to the translator, so `{number}` stayed unfilled for `scan.accepted` and `scan.replaced`. Fixed in `59956cb` (`ScanScreen.tsx`, `App.tsx`, `appState.ts`, `types.ts`) with a new test, `tests/ui/screens/announce.test.tsx`. The 3.6 entry says "not changed"; it was fixed afterwards. The Scan GIF was re-recorded in `5d55064` so it ends on "Card 1 added." No other GIF showed the bug.
+- No property failed in Phase 3 that I know of from the repository; I did not keep a record of intermediate failures.
+**Read failure kinds checked only through message mapping in the app:**
+- `ambiguous-orientation`, `resolution-too-low` and `card-outside-image` have no real-photo test in the app. The app tests check that each kind maps to a message in both languages (`tests/ui/i18n/failureKeys.test.ts`) and, in the fixture integration test, the messages shown.
+- Reader tests do cover all three on synthetic images from the generator, not photographs: `resolution-too-low` in `tests/reader/resolution.test.ts` (line 38 and nearby), `ambiguous-orientation` at 2.25 px/mm in `tests/reader/resolution.test.ts` or `accuracy.test.ts` (the "R18.8" title) and the `orientation` tests, and `card-outside-image` for a render cropped through the top hook rows ("R10.4" title). Whether the real camera photo of a printed card triggers these kinds the way the synthetic images do is unknown.
+**Cuttable properties skipped:** none. Property 25 exists (`tests/ui/state/corrections.test.ts`, `Feature: app, Property 25`). Properties 4, 16, 19, 21, 25, 29, 30, 31, 32 and 35 all exist; Property 33 belongs to Phase 4 and has not been written.
+**Requirement-ID coverage check (Requirements 1 to 17 and 21 to 23):**
+- Method: a script read the 202 numbered acceptance criteria of those requirements and looked for `R<n>.<m>` in test titles (`it`, `test`, `describe`) under `tests/ui`, `tests/archive`, `tests/integration`, `tests/structure` and `tests/scripts`. Titles under `tests/reader`, `tests/codec`, `tests/simulator` and `tests/exporter` use the numbering of the earlier module specs, so they were not counted (an `R1.5` there is not app R1.5). Several titles list two IDs ("R14.8 and R14.9 ..."); both were counted. No acceptance criterion was weakened and no test was added in this task.
+- **147 of 202 IDs appear in a test title. 55 do not.** No documented manual check was found for these either, except where noted below. They are open:
+  - Requirement 1: 1.1, 1.5. Requirement 2: 2.4, 2.8. Requirement 3: 3.7, 3.8. Requirement 4: 4.6. Requirement 5: 5.1, 5.4. Requirement 6: 6.1, 6.2, 6.4. Requirement 7: 7.1. Requirement 8: 8.2, 8.6, 8.8. Requirement 9: 9.4, 9.5, 9.9. Requirement 13: 13.2, 13.4, 13.5. Requirement 14: 14.4, 14.6, 14.11, 14.12. Requirement 15: 15.3, 15.6, 15.7. Requirement 16: 16.5, 16.7, 16.9. Requirement 17: 17.3, 17.4, 17.6. Requirement 21: 21.3, 21.4, 21.7, 21.10, 21.11, 21.12, 21.15, 21.16. Requirement 22: 22.2. Requirement 23: 23.1, 23.4, 23.5, 23.6, 23.7, 23.9, 23.10, 23.11, 23.12, 23.13, 23.14.
+  - Several of these are probably checked by a test whose title carries no ID (for example 6.1 to 6.4 in `tests/archive/designs.test.ts`, 21.15 as Property 38, 17.6 in `tests/integration/scanFixtures.test.ts`, 13.2 and 13.4 in `tests/ui/deploy.test.ts`, 3.7 and 16.5 in the Weave tests). I did not match them one by one, so this log does not claim they are covered. Some others are documentation or process criteria (17.3, 23.4 to 23.6, 23.9 to 23.14, 16.7) that a title check cannot show; 16.7 is checked by `npm run build` above and 23.9, 23.12 and 23.13 by the media files and `ls -l media/`.
+  - Decision for the user: add ID prefixes to the existing titles that already cover these, or write new tests for the ones nothing covers. I did neither here.
+**Not verified (the unfilled list):**
+- Real IndexedDB in a browser (the archive tests use a hand-written fake; see the Phase 2 entry).
+- On-device timings: `readCard` on a phone, sample selection, `printableRaster`, simulation at 16 ms per frame.
+- A real camera photo of a printed card. The Scan GIF reads a generated image, not a photograph.
+- Printing at true scale: a Printable_Card printed at 100% and measured with a ruler.
+- Any loom controller: no exported BMP has been tried on one.
+- Hindi text: **166 strings** in `docs/HINDI_REVIEW.md`, all `reviewed: false` (117 at the end of Phase 2). The file was regenerated with `npm run review-list` and was already current. A Hindi speaker has not read them.
+- Real card dimensions: the demo Card_Profile values are illustrative and unverified.
+- The Hindi UI was not captured in the media; all four files show English.
+- The GIFs were not played back in a browser or on GitHub.
+**What I changed by hand:** No files edited by hand.
+**Kiro features used:** spec, steering, property tests (fast-check).
+**Evidence saved:** `media/scan-printed-card.gif` (re-recorded), `media/banner.png`, `media/weave-sample.gif`, `media/keep-export.gif`.
+**Credits left:** Not recorded.
+**Commit:** Phase 3 work spans `e7a365d` to `5d55064`; see the commit that adds this entry.
