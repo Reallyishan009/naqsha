@@ -1,0 +1,81 @@
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it } from 'vitest';
+import { WeaveScreen } from '../../../src/ui/screens/weave/WeaveScreen.tsx';
+import { TryIt } from '../../../src/ui/screens/weave/TryIt.tsx';
+import { EN, HI, translator, DICTIONARIES } from '../../../src/ui/i18n/messages.ts';
+import { initialAppState } from '../../../src/ui/state/appState.ts';
+import type { AppState, Language } from '../../../src/ui/types.ts';
+import { demoProfile } from '../../support/profiles.ts';
+
+function render(state: AppState): string {
+  const t = translator(DICTIONARIES, state.language);
+  return renderToStaticMarkup(<WeaveScreen state={state} dispatch={() => undefined} t={t} />);
+}
+
+const LANGUAGES: Language[] = ['hi', 'en'];
+
+describe('weave screen', () => {
+  it('R2.1 with no design the screen shows the empty text and the play controls are disabled', () => {
+    for (const language of LANGUAGES) {
+      const html = render({ ...initialAppState, language });
+      const t = translator(DICTIONARIES, language);
+      expect(html).toContain(t('weave.empty').replaceAll('"', '&quot;'));
+      for (const key of ['weave.play', 'weave.pause', 'weave.stepBack', 'weave.stepForward']) {
+        const button = new RegExp(`<button[^>]*disabled[^>]*>${t(key)}</button>`);
+        expect(button.test(html), `${language} ${key}`).toBe(true);
+      }
+      expect(/<input[^>]*type="range"[^>]*disabled/.test(html)).toBe(true);
+      expect(html.match(/<select[^>]*disabled/g)?.length).toBe(5);
+    }
+  });
+
+  it('R2.13 thread size, float highlight and the other preview controls are absent', () => {
+    const html = render({ ...initialAppState, language: 'en' });
+    for (const word of ['thread size', 'Thread size', 'float', 'Float', 'highlight', 'Highlight']) {
+      expect(html).not.toContain(word);
+    }
+    expect(EN['weave.zari']).toBeDefined();
+    expect(HI['weave.zari']).toBeDefined();
+  });
+
+  it('R4.1 Try it offers three Sample_Designs, enabled once the profile is ready', () => {
+    const loading = render({ ...initialAppState, language: 'en' });
+    expect((loading.match(/<button[^>]*disabled[^>]*>(Diamond|Border|Floral)</g) ?? []).length).toBe(3);
+    const ready = render({
+      ...initialAppState,
+      language: 'en',
+      profile: { status: 'ready', profile: demoProfile() },
+    });
+    expect(ready).toMatch(/<button(?![^>]*disabled)[^>]*>Diamond</);
+    expect(ready).toMatch(/<button(?![^>]*disabled)[^>]*>Border</);
+    expect(ready).toMatch(/<button(?![^>]*disabled)[^>]*>Floral</);
+  });
+
+  it('R4.7 Try it asks before replacing unsaved scanned cards, and not otherwise', () => {
+    const t = translator(DICTIONARIES, 'en');
+    const asking = renderToStaticMarkup(
+      <TryIt
+        profile={demoProfile()}
+        confirm={{ kind: 'replace-with-sample', design: 'floral', pattern: [] }}
+        dispatch={() => undefined}
+        t={t}
+      />,
+    );
+    expect(asking).toContain(EN['tryit.confirmReplace'] as string);
+    expect(asking).toContain(EN['tryit.confirmYes'] as string);
+    expect(asking).toContain(EN['tryit.confirmNo'] as string);
+    const quiet = renderToStaticMarkup(
+      <TryIt profile={demoProfile()} confirm={null} dispatch={() => undefined} t={t} />,
+    );
+    expect(quiet).not.toContain(EN['tryit.confirmReplace'] as string);
+  });
+
+  it('R2.12 a failed profile leaves Try it disabled and the screen usable', () => {
+    const html = render({
+      ...initialAppState,
+      language: 'en',
+      profile: { status: 'failed', failure: { reason: 'not-json' } },
+    });
+    expect((html.match(/<button[^>]*disabled[^>]*>(Diamond|Border|Floral)</g) ?? []).length).toBe(3);
+  });
+});

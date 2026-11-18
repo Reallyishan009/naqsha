@@ -1,0 +1,125 @@
+.screen {
+  max-width: 60rem;
+}
+
+.screenTitle {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+.sectionTitle {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+.clothArea {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+
+.hidden {
+  display: none;
+}
+
+.empty {
+  padding: 16px;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-panel);
+}
+
+.failure {
+  margin: 8px 0;
+  padding: 12px 16px;
+  border: 2px solid var(--madder);
+  border-radius: var(--radius-panel);
+}
+
+.gaps {
+  margin: 8px 0;
+  font-family: var(--font-data);
+}
+
+.position {
+  margin: 8px 0;
+  font-family: var(--font-data);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.button {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: 0 16px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.button:disabled,
+.select:disabled,
+.scrubber:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 10rem;
+}
+
+.select {
+  min-height: var(--touch-target);
+  padding: 0 8px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+
+.scrubber {
+  width: 100%;
+  min-height: var(--touch-target);
+}
+
+.tryIt {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.confirm {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 2px solid var(--zari);
+  border-radius: var(--radius-panel);
+}

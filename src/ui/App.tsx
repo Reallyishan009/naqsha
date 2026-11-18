@@ -13,6 +13,7 @@ import type { KeyValueStorage } from './platform/browser.ts';
 import { loadProfile } from './profile/loadProfile.ts';
 import { profileUrl } from './profile/profileUrl.ts';
 import styles from './Shell.module.css';
+import { WeaveScreen } from './screens/weave/WeaveScreen.tsx';
 import { appReducer, initialAppState } from './state/appState.ts';
 import './theme/tokens.css';
 import type { AppAction, AppState, Language, Screen } from './types.ts';
@@ -41,8 +42,8 @@ class ScreenBoundary extends Component<BoundaryProps, BoundaryState> {
   }
 }
 
-function PlaceholderScreen({ screen, t }: { screen: Screen; t: Translate }) {
-  const body = screen === 'weave' ? t('weave.empty') : t(`placeholder.${screen}`);
+function PlaceholderScreen({ screen, t }: { screen: Exclude<Screen, 'weave'>; t: Translate }) {
+  const body = t(`placeholder.${screen}`);
   return (
     <section aria-labelledby="screen-title" className={styles.screen}>
       <h2 id="screen-title" className={styles.screenTitle}>
@@ -110,7 +111,11 @@ export function Shell({ state, dispatch, onLanguageChosen }: ShellProps) {
       {profile.status === 'loading' ? <p className={styles.loading}>{t('status.loading')}</p> : null}
       <main className={styles.main}>
         <ScreenBoundary key={state.screen} message={t('error.generic')}>
-          <PlaceholderScreen screen={state.screen} t={t} />
+          {state.screen === 'weave' ? (
+            <WeaveScreen state={state} dispatch={dispatch} t={t} />
+          ) : (
+            <PlaceholderScreen screen={state.screen} t={t} />
+          )}
         </ScreenBoundary>
       </main>
       <div role="status" aria-live="polite" className={styles.liveRegion}>
