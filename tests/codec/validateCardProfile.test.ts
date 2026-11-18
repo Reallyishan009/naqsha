@@ -157,4 +157,96 @@ describe('validateCardProfile', () => {
     expect(locations).toContain('hookRows');
     expect(locations).toContain('pegHoles');
   });
+
+  it('R1.4 a profile with no end-order mapping is reported invalid and given no default order', () => {
+    fc.assert(
+      fc.property(profileArbitrary, (profile) => {
+        const candidate = mutateProfile(profile, ['endOrder'], REMOVE);
+        const violations = validateCardProfile(candidate);
+        expect(violations.some(({ kind, location }) => kind === 'missing-field' && location === 'endOrder')).toBe(true);
+        expect(parseCardProfile(candidate).ok).toBe(false);
+      }),
+    );
+  });
+
+  it('R2.5 an end-order that repeats, omits or exceeds an end index is reported', () => {
+    // Every case is built from a valid profile (a permutation) by overwriting one cell, so each fault is known.
+    // Cells are addressed by their row-major position p, which is also the order the validator visits them in.
+    type Fault =
+      | { fault: 'duplicate'; profile: CardProfile; cell: number; source: number }
+      | { fault: 'out-of-range'; profile: CardProfile; cell: number; value: number }
+      | { fault: 'unassigned'; profile: CardProfile; cell: number; source: number };
+    const faults: fc.Arbitrary<Fault> = profileArbitrary.chain((profile) => {
+      const total = profile.hookRows * profile.hookColumns;
+      return fc.oneof(
+        // (a) a later cell repeats the value of an earlier cell, so the duplicate is the second cell.
+        fc
+          .integer({ min: 1, max: total - 1 })
+          .chain((cell) =>
+            fc.integer({ min: 0, max: cell - 1 }).map((source): Fault => ({ fault: 'duplicate', profile, cell, source })),
+          ),
+        // (b) a cell holds a negative, too-large or non-integer value.
+        fc
+          .tuple(
+            fc.integer({ min: 0, max: total - 1 }),
+            fc.oneof(
+              fc.integer({ min: -1000, max: -1 }),
+              fc.integer({ min: total, max: total + 1000 }),
+              fc.integer({ min: -1000, max: 1000 }).map((whole) => whole + 0.5),
+            ),
+          )
+          .map(([cell, value]): Fault => ({ fault: 'out-of-range', profile, cell, value })),
+        // (c) a cell takes the value of another cell, so the end index it held is no longer assigned.
+        fc
+          .tuple(fc.integer({ min: 0, max: total - 1 }), fc.integer({ min: 1, max: total - 1 }))
+          .map(([cell, offset]): Fault => ({ fault: 'unassigned', profile, cell, source: (cell + offset) % total })),
+      );
+    });
+    fc.assert(
+      fc.property(faults, (scenario) => {
+        const { profile, cell } = scenario;
+        const { hookColumns } = profile;
+        const at = (position: number): [number, number] => [Math.floor(position / hookColumns), position % hookColumns];
+        const [hookRow, hookColumn] = at(cell);
+        const valueAt = (position: number): number => {
+          const [row, column] = at(position);
+          return profile.endOrder[row]![column]!;
+        };
+        const replacement = scenario.fault === 'out-of-range' ? scenario.value : valueAt(scenario.source);
+        const heldEndIndex = valueAt(cell);
+        const violations = validateCardProfile(mutateProfile(profile, ['endOrder', hookRow, hookColumn], replacement));
+        const found = (kind: string, location: string): boolean =>
+          violations.some((violation) => violation.kind === kind && violation.location === location);
+        const cellLocation = `endOrder[${hookRow}][${hookColumn}]`;
+        if (scenario.fault === 'duplicate') {
+          expect(found('end-order-duplicate', cellLocation)).toBe(true);
+        } else if (scenario.fault === 'out-of-range') {
+          // The design (rule 6) reports a non-integer cell as end-order-shape, not end-order-out-of-range.
+          const kind = Number.isInteger(scenario.value) ? 'end-order-out-of-range' : 'end-order-shape';
+          expect(found(kind, cellLocation)).toBe(true);
+        } else {
+          expect(found('end-order-unassigned', `end[${heldEndIndex}]`)).toBe(true);
+        }
+      }),
+    );
+  });
+
+  it('R2.7 a profile without exactly two distinct peg holes is reported', () => {
+    const pegFaults = fc.oneof(
+      fc.constantFrom(0, 1, 3).map((count) => ({ count })),
+      fc.constant({ count: 2 }),
+    );
+    fc.assert(
+      fc.property(profileArbitrary, pegFaults, (profile, { count }) => {
+        const [first, second] = profile.pegHoles;
+        const thirdPegHole = { ...second, positionMm: { x: second.positionMm.x + 1, y: second.positionMm.y } };
+        const pegHoles = [first, second, thirdPegHole].slice(0, count);
+        const withCount = mutateProfile(profile, ['pegHoles'], pegHoles);
+        const candidate =
+          count === 2 ? mutateProfile(profile, ['pegHoles', 1, 'positionMm'], first.positionMm) : withCount;
+        const kinds = validateCardProfile(candidate).map((violation) => violation.kind);
+        expect(kinds).toContain(count === 2 ? 'peg-holes-coincide' : 'peg-hole-count');
+      }),
+    );
+  });
 });
