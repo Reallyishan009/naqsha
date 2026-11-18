@@ -304,3 +304,44 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **Evidence saved:** None new.
 **Credits left:** Not recorded.
 **Commit:** see the commit that adds this entry; Phase 1 work spans `f2a61a7` to `acf3e58`.
+
+## 2026-11-21 (app phase 2: Keep and the archive)
+**Goal today:** Close Phase 2 of the `app` spec (archive, IndexedDB store, Card_Profile notice, Keep screen, BMP export) and record what happened.
+**Prompts run in Kiro:** Not recorded by number. Tasks 2.1 to 2.6 were run one at a time from `.kiro/specs/app/tasks.md`; this entry is task 2.7.
+**What Kiro produced:**
+- `src/archive`: `saveDesign`, `getDesign`, `listDesigns`, `deleteDesign` over an injected `ArchiveStore` (`put`, `get`, `listSummaries`, `remove`), with `now` and `newId` injected; every failure is a value, none throws. Lists sort newest first, then by id, and carry no pattern.
+- `src/archive/idbStore.ts`: `openIndexedDbStore()` for database `naqsha-archive` version 1, stores `designs` and `summaries` (index `createdAt`); `put` and `remove` each use one `readwrite` transaction over both stores.
+- `src/ui/profile/notice.ts` and `ProfileNotice.tsx`: the Card_Profile notice, shown exactly when the profile `status` contains `UNVERIFIED`, with the status text unchanged.
+- `appState.ts`: `open-saved` and `mark-saved` actions.
+- `src/ui/state/keep.ts`: `canExport`, `canSave`, `savedLabel`, `summaryRow`, `runExport`, the Keep form reducer; `exportFailureKey`, `bmpReadFailureKey` and `archiveFailureKey` as exhaustive switches.
+- `src/ui/screens/keep/KeepScreen.tsx`: export options, the loom export button with the "no loom controller has been tested" sentence, six optional fields, save, the saved list with open and confirmed delete, and the notice next to both the export and the save controls.
+- Tests: Properties 15, 16, 17, 18 (archive), 19, 20, 21 (Keep), 39 (notice), the export halves of 13 and 14, and Property 6 for the export, BMP read and archive failure types. Test files: `tests/archive/designs.test.ts`, `idbStore.test.ts`, `structure.test.ts`, `tests/ui/state/keep.test.ts`, `tests/ui/screens/keep.test.tsx`, and others.
+- Final checks run for this entry: `npm run test:run` gives 64 files, 469 tests, all passing. `npm run typecheck` and `npm run build` pass. `npm run check-bundle` passes: entry chunk 89,566 bytes gzipped (limit 204,800; 82,760 at the end of Phase 1). The lazy printable chunk is 2.51 kB gzipped and the CSS 1.80 kB gzipped.
+**Deviations from the design:**
+- **`StoreUnavailableError`.** The design did not name it. `src/archive/types.ts` exports this error class; a store method throws it when the database cannot be opened, and the archive reports `storage-unavailable` for it from any operation. Any other throw from `put` or `remove` is `write-failed`; any other throw from `get` or `listSummaries` is `storage-unavailable`. `openIndexedDbStore` is exported from `idbStore.ts` but is not re-exported from `src/archive/index.ts`; only `designs.ts` uses it.
+- **Default deps.** The four archive functions take `deps` as an optional last argument that defaults to browser deps (`openIndexedDbStore()`, `Date.now`, `crypto.randomUUID`), built on first use so importing the module never touches IndexedDB. `openIndexedDbStore` also takes an optional `IDBFactory`, so tests can pass a fake. An open that failed is tried again on the next call.
+- **`summaryRow` has a third argument.** It is `summaryRow(summary, currentProfileName, untitled)`; the `untitled` text is passed in so the function stays free of the language lookup.
+**What failed or surprised me:**
+- **Property 18 test bug (mine, in the test, not in the code).** `tests/archive/designs.test.ts` Property 18 first expected only `storage-unavailable` or `write-failed` from every failed call. With an empty store, a `get` or `delete` of an unknown id correctly returns `not-found`, so the test failed on a correct result. The fix lets `not-found` through for those two calls only when the store holds no design. I could not recover the original failing counterexample from the repository, so this describes the cause from the final test text and not from a saved failure. `numRuns` (the shared `NUM_RUNS`), seed 1801 and the failure points are unchanged. This does loosen what the property accepts in that one case, so it needs the user's confirmation.
+- No other property failed in Phase 2.
+**Archive tests use a hand-written fake IndexedDB.** `tests/support/fakeIndexedDb.ts` is an in-memory `IDBFactory` written for this project. No new dependency was added (`package.json` still has only `react` and `react-dom` as dependencies). It supports open with upgrade, object stores with a key path, indexes, transactions over several stores, put, get, getAll, count, delete and abort, with structured clone on the way in and out. `idbStore.ts` runs unchanged over it.
+**What the fake cannot prove (the user will test these by hand):**
+- That `idbStore.ts` is correct against the real browser typings, `createIndex`, `getAll` and `count`. The fake implements the parts of those APIs that I understood; a real browser may differ.
+- The real request-failure abort behaviour: the fake aborts a transaction when a write fails, and a browser's ordering of `onerror` and `onabort` may differ.
+- Real structured-clone limits and storage quota errors.
+- Opening failure in private browsing modes.
+- `onversionchange` across two tabs (the handler closes the database; only one fake database exists).
+- Transaction timing and auto-commit rules.
+- Persistence across a page refresh and after clearing the browser cache (a product success criterion). Nothing in Node can show this.
+**Cuttable properties skipped:** none. Properties 16, 19 and 21 all exist (`Feature: app, Property 16` in `tests/archive/designs.test.ts`; Properties 19 and 21 in `tests/ui/state/keep.test.ts`).
+**Manual checks still open (not yet run):**
+- In a real browser: save a design, reload the page, check it is in the list, open it, delete it, reload and check it is gone. Also clear the site data and check the list is empty and the app still works.
+- Open an exported 1-bit and an 8-bit BMP in an image viewer and check it looks like the design.
+- Run the Keep screen at phone width, in both languages.
+- No loom controller has been tried with an exported file, and the Card_Profile values are unverified.
+**Hindi review list:** 117 strings, all `reviewed: false` (61 at the end of Phase 1). `docs/HINDI_REVIEW.md` was regenerated with `npm run review-list`. A Hindi speaker has not read them.
+**What I changed by hand:** No files edited by hand.
+**Kiro features used:** spec, steering, property tests (fast-check).
+**Evidence saved:** None new.
+**Credits left:** Not recorded.
+**Commit:** Phase 2 work spans `9486b0c` to `ad0a711`; see the commit that adds this entry.

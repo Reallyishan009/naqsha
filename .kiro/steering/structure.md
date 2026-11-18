@@ -44,14 +44,14 @@ Exports a Pattern (one CardGrid per pick) as an uncompressed BMP with a colour t
 Key exports: exportPatternBmp, readPatternBmp, parseExportOptions, DEFAULT_EXPORT_OPTIONS, bmpLayout, bmpFileName, downloadBmp; types ExportOptions, ExportFailure, ReadFailure, ExportResult, ReadResult, BmpLayout, DownloadDeps
 
 ### src/archive
-Thin wrapper around IndexedDB. Stores and retrieves scan records (card metadata + bitmap + JSON). Provides a simple async CRUD interface; callers do not interact with IndexedDB directly.
+Thin wrapper around IndexedDB. Stores and retrieves saved designs (Pattern, Metadata, Card_Profile name, creation time) and a summary row per design for listing. Every function returns a result value and never throws. Callers do not touch IndexedDB; only `idbStore.ts` mentions it. `designs.ts` takes an injected `ArchiveStore`, `now` and `newId`, defaulting to the browser's. Imports only types from src/codec.
 
-Key exports: saveScan, getScan, listScans, deleteScan, ScanRecord
+Key exports: saveDesign, getDesign, listDesigns, deleteDesign, openIndexedDbStore (in idbStore.ts, not re-exported from index.ts), StoreUnavailableError; types Metadata, SavedDesign, DesignSummary, ArchiveFailure, ArchiveResult, ArchiveStore, ArchiveDeps
 
 ### src/ui
-All React components, pages, and hooks. Composes the other modules into user-facing flows. Components are grouped by feature (e.g. ui/scanner/, ui/simulator/, ui/archive/). Each component directory contains the .tsx file and its .module.css.
+All React components, pages, and hooks. Composes the other modules into user-facing flows. Screens live in ui/screens/ (weave, keep), with state logic in ui/state/, the Card_Profile notice in ui/ProfileNotice.tsx, the printable card in ui/printable/, and translations in ui/i18n/. Each component has a .tsx file and a .module.css beside it.
 
-Key exports: App, ScannerPage, SimulatorPage, ArchivePage
+Key exports: App; type exports from ui/types.ts (for example Screen, Language, AppState, AppAction, CurrentPattern, ClothChoices, ScanState). The Scan screen is not built yet.
 
 ### tests/
 Mirrors src/ one-for-one. Each module has a corresponding test file. Integration tests that span multiple modules live in tests/integration/.
