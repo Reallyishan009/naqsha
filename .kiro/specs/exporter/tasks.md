@@ -61,7 +61,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), cut-last properties skipped, and the commit range. Push.
   - _Requirements: 12.4_
 
-- [ ] 2. Reader and download
+- [x] 2. Reader and download
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 7.1, 7.5, 8.1, 8.2, 8.3, 9.3_
 
 - [x] 2.1 Reader: headers and sizes
@@ -88,7 +88,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 8.1, 8.2, 8.3_
 
-- [-] 2.4 Phase 2 log and push
+- [x] 2.4 Phase 2 log and push
   - Files: `docs/BUILD_LOG.md`.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), cut-last properties skipped, and the commit range. Push.
   - _Requirements: 12.4_
@@ -96,7 +96,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
 - [ ] 3. Properties, structure and docs
   - _Requirements: 1.6, 2.3, 3.3, 6.7, 7.4, 9.1, 10.1, 10.5, 11.1, 11.2, 11.3, 11.4, 12.1, 12.2_
 
-- [ ] 3.1 Remaining properties
+- [x] 3.1 Remaining properties
   - **Demo-essential.**
   - Files: `tests/exporter/exportBmp.test.ts`, `tests/exporter/readBmp.test.ts`.
   - Add Properties 5 (pixel placement, with an independent pixel reader in the test), 11 (identical bytes), 17 (reader never throws) and 18 (export never throws).
@@ -104,20 +104,20 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 2.3, 6.7, 7.4, 9.1, 12.2_
 
-- [ ] 3.2 Cut-last properties
+- [x] 3.2 Cut-last properties
   - Files: `tests/exporter/exportBmp.test.ts`, `tests/exporter/readBmp.test.ts`.
   - Add Property 4 and Property 7, both **Cut last**.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 1.6, 3.3_
 
-- [ ] 3.3 Structure tests for the exporter
+- [x] 3.3 Structure tests for the exporter
   - Files: `tests/structure/modules.test.ts`, `tests/structure/propertyNames.test.ts`.
   - Extend the scans to `src/exporter`: imports only from `src/exporter` and `src/codec`, browser APIs only in `download.ts`, no `any`, no `demo-12x16` or `public/`. Extend the property naming and coverage test to `src/exporter` exports other than `downloadBmp`, which has an example test with fakes.
   - If a scan finds a violation or an exported function has no property, report it and stop.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 10.1, 10.5, 12.1_
 
-- [ ] 3.4 Docs, phase 3 log and push
+- [-] 3.4 Docs, phase 3 log and push
   - Files: `README.md`, `.kiro/steering/structure.md`, `docs/BUILD_LOG.md`.
   - README: change the exporter row in "What it does" to built, add an "Exporter options and limits" list with the four options and their defaults, and state that each loom controller may need a specific variant, that no controller has been tested, and that the right lift colour for each controller is unverified. Check that the exporter section of `structure.md` lists the real exports.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), cut-last properties skipped, and the commit range. Push.

@@ -235,3 +235,20 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **Evidence saved:** None new.
 **Credits left:** Not recorded.
 **Commit:** range `a2e02c9..HEAD` (`5347fd5`, `787c6aa`, `398c2ae`).
+## 2026-11-18 (exporter phase 3)
+**Goal today:** Exporter phase 3 (remaining properties, structure tests, docs).
+**Prompts run in Kiro:** Not recorded by number.
+**What Kiro produced:**
+- Properties 5 (pixel placement, checked with an independent pixel reader), 11 (identical bytes), 17 (reader never throws, including truncated and byte-flipped files) and 18 (export never throws).
+- Cut-last Properties 4 (inputs unchanged) and 7 (padding zero), plus an example that the reader ignores padding.
+- Structure tests extended to `src/exporter` (the exporter-only browser word list adds `URL`, `setTimeout` and `globalThis`).
+- README and `structure.md` updates.
+- Test suite: 36 files, 276 tests passing.
+**What failed or surprised me:**
+- No property failed in phase 3.
+- **Cut-last properties skipped:** none (Properties 4 and 7 were both added).
+**What I changed by hand:** No files edited by hand.
+**Kiro features used:** spec, property tests, steering.
+**Evidence saved:** None new.
+**Credits left:** Not recorded.
+**Commit:** range `dafc418..HEAD`.

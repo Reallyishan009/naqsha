@@ -6,7 +6,7 @@ A browser app that reads a Jacquard loom punch card through a camera, rebuilds t
 
 <!-- GIF of a card being scanned and the cloth weaving: coming. -->
 
-**Status:** the card codec and the card reader are built and tested on synthetic card images, and the simulator renders cloth on a canvas (dev preview page only). The camera screen, exporter, archive and UI are not built yet.
+**Status:** the card codec and the card reader are built and tested on synthetic card images, and the simulator renders cloth on a canvas (dev preview page only). The exporter writes and reads back BMP files (no app screen yet). The camera screen, archive and UI are not built yet.
 
 ## Try it in 60 seconds
 
@@ -20,7 +20,7 @@ A browser app that reads a Jacquard loom punch card through a camera, rebuilds t
 | Convert a card grid to a list of ends and back, through the profile's end order | Built (`src/codec`) |
 | Camera screen | Coming |
 | Simulate the cloth pick by pick | Built (`src/simulator`): renders the cloth pick by pick on a canvas from tested pixel code; dev preview page only, no app screen yet |
-| Export a bitmap for an electronic Jacquard loom | Coming |
+| Export a bitmap for an electronic Jacquard loom | Built (`src/exporter`): uncompressed BMP, 1-bit and 8-bit, one pixel per end and one row per pick; reads its own files back; no app screen yet |
 | Archive scanned card sets in the browser | Coming |
 
 The card layout is a profile loaded at runtime. The only profile, `public/profiles/demo-12x16.json`, holds ILLUSTRATIVE, UNVERIFIED values for a small demo card (12 hook rows x 16 hook columns). No real card has been measured yet.
@@ -54,6 +54,22 @@ The card layout is a profile loaded at runtime. The only profile, `public/profil
 - Threads are at least 3 px wide.
 - `renderFrame` rejects copies of a prepared cloth (`structuredClone`, Web Worker messages).
 - The 16 ms per frame budget is unmeasured on a phone. Node figures are in `.kiro/specs/simulator/measurements.md`.
+
+### Exporter options and limits
+
+- `bitDepth`: `1` (default) or `8`.
+- `liftColour`: `black` (default) or `white`.
+- `pickOrder`: `first-at-top` (default) or `first-at-bottom`.
+- `endOrder`: `first-at-left` (default) or `first-at-right`.
+
+Limits:
+
+- Each loom controller may need a specific variant of these options.
+- No loom controller has been tested with these files.
+- The right lift colour for each controller is unverified. Black is only the default.
+- Designs with a missing or damaged card cannot be exported.
+- One pixel per end. There is no repeat across the loom width.
+- The reader reads only files this exporter writes.
 
 ### Known issue (task 5.18, not fixed)
 
@@ -93,6 +109,7 @@ npm run test:run     # run the tests once (npm test watches)
 npm run typecheck    # type-check with tsc
 npm run build        # type-check, then build to dist/
 npm run fixtures     # regenerate the synthetic card images in tests/fixtures/
+npm run sample-bmp   # write media/sample-design-1bit.bmp and media/sample-design-8bit.bmp
 ```
 
 Developer-only photo trial: start the dev server with `npx vite --host`, print `/scripts/photo-trial/print.html` at 100% scale, photograph the printed card from directly above, then open `/scripts/read-photo.html` and choose the photo.

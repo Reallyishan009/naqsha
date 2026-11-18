@@ -41,7 +41,7 @@ Key exports: prepareCloth, isPreparedCloth, parseRenderSettings, parseColour, re
 ### src/exporter
 Exports a Pattern (one CardGrid per pick) as an uncompressed BMP with a colour table, one pixel per end and one row per pick, in 1-bit and 8-bit variants, and reads those files back. Handles the browser download trigger in one file. Imports only from src/codec. Each loom controller may need a specific variant (bit depth, lift colour, pick order, end order); no controller has been tested.
 
-Key exports: exportPatternBmp, readPatternBmp, parseExportOptions, bmpFileName, downloadBmp, ExportOptions
+Key exports: exportPatternBmp, readPatternBmp, parseExportOptions, DEFAULT_EXPORT_OPTIONS, bmpLayout, bmpFileName, downloadBmp; types ExportOptions, ExportFailure, ReadFailure, ExportResult, ReadResult, BmpLayout, DownloadDeps
 
 ### src/archive
 Thin wrapper around IndexedDB. Stores and retrieves scan records (card metadata + bitmap + JSON). Provides a simple async CRUD interface; callers do not interact with IndexedDB directly.
