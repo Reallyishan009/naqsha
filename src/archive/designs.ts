@@ -1,4 +1,5 @@
 import type { Pattern } from '../codec/index.ts';
+import { openIndexedDbStore } from './idbStore.ts';
 import { StoreUnavailableError } from './types.ts';
 import type {
   ArchiveDeps,
@@ -9,6 +10,12 @@ import type {
   SavedDesign,
 } from './types.ts';
 
+let defaultDeps: ArchiveDeps | undefined;
+/** The browser deps, built on first use so importing this file never touches IndexedDB. */
+function browserDeps(): ArchiveDeps {
+  defaultDeps ??= { store: openIndexedDbStore(), now: Date.now, newId: () => crypto.randomUUID() };
+  return defaultDeps;
+}
 function detailOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -25,7 +32,7 @@ function failureOf(error: unknown, otherwise: 'storage-unavailable' | 'write-fai
 
 export async function saveDesign(
   input: { pattern: Pattern; profileName: string; metadata: Metadata },
-  deps: ArchiveDeps,
+  deps: ArchiveDeps = browserDeps(),
 ): Promise<ArchiveResult<string>> {
   try {
     const id = deps.newId();
@@ -51,7 +58,7 @@ export async function saveDesign(
   }
 }
 
-export async function getDesign(id: string, deps: ArchiveDeps): Promise<ArchiveResult<SavedDesign>> {
+export async function getDesign(id: string, deps: ArchiveDeps = browserDeps()): Promise<ArchiveResult<SavedDesign>> {
   try {
     const record = await deps.store.get(id);
     if (record === undefined) return failed({ reason: 'not-found', id });
@@ -62,7 +69,7 @@ export async function getDesign(id: string, deps: ArchiveDeps): Promise<ArchiveR
 }
 
 /** Newest first; equal creation times are ordered by id, so the order is stable. */
-export async function listDesigns(deps: ArchiveDeps): Promise<ArchiveResult<DesignSummary[]>> {
+export async function listDesigns(deps: ArchiveDeps = browserDeps()): Promise<ArchiveResult<DesignSummary[]>> {
   try {
     const summaries = await deps.store.listSummaries();
     const sorted = [...summaries].sort((a, b) => {
@@ -75,7 +82,7 @@ export async function listDesigns(deps: ArchiveDeps): Promise<ArchiveResult<Desi
   }
 }
 
-export async function deleteDesign(id: string, deps: ArchiveDeps): Promise<ArchiveResult<null>> {
+export async function deleteDesign(id: string, deps: ArchiveDeps = browserDeps()): Promise<ArchiveResult<null>> {
   try {
     const removed = await deps.store.remove(id);
     if (!removed) return failed({ reason: 'not-found', id });
