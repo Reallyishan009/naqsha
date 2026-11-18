@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Naqsha simulator preview</title>
+<style>
+  body { font-family: sans-serif; margin: 12px; }
+  label { display: inline-block; margin: 4px 12px 4px 0; }
+  input[type=number] { width: 5.5em; font-size: 1rem; }
+  input[type=text] { font-size: 1rem; width: 18em; max-width: 90%; }
+  button { font-size: 1.1rem; padding: 10px 16px; margin: 6px 6px 6px 0; }
+  #scrub { width: 100%; }
+  #scroller { overflow-x: auto; border: 1px solid #888; background: #222; }
+  /* The canvas is shown at 1 CSS pixel per canvas pixel: width/height attributes and style size are the same. */
+  canvas { display: block; image-rendering: pixelated; }
+  pre { background: #f4f4f4; padding: 8px; white-space: pre-wrap; }
+  #error { color: #b00020; font-weight: bold; white-space: pre-wrap; }
+  .legend { margin: 6px 0; }
+</style>
+</head>
+<body>
+  <h1>Naqsha simulator preview</h1>
+  <p>Dev only, not part of the app build.</p>
+  <div>
+    <label>Picks <input id="picks" type="number" min="1" max="10000" value="2000"></label>
+    <label>Picks per second <input id="rate" type="number" min="1" max="1000" value="12"></label>
+    <label>Thread size (3..16) <input id="threadSize" type="number" min="3" max="16" value="6"></label>
+    <label>Repeat (1..8) <input id="repeat" type="number" min="1" max="8" value="2"></label>
+  </div>
+  <div>
+    <label>Weft plan <input id="weftPlan" type="text" value="plain #7a1f2b, zari gold"></label>
+    <label>Warp colour <input id="warp" type="text" value="#1d3557" size="8"></label>
+    <span>(weft: <code>plain #rrggbb</code>, <code>zari gold</code>, <code>zari silver</code>, separated by commas)</span>
+  </div>
+  <div>
+    <label><input id="floatOn" type="checkbox"> Float highlight</label>
+    <label>limit <input id="floatLimit" type="number" min="1" max="64" value="4"></label>
+    <label><input id="missing20" type="checkbox" checked> make pick 20 missing</label>
+    <label><input id="damaged30" type="checkbox" checked> make pick 30 damaged</label>
+    <label><input id="full" type="checkbox"> 1920x1080</label>
+  </div>
+  <div>
+    <button id="play" type="button">Play</button>
+    <button id="pause" type="button">Pause</button>
+    <button id="resume" type="button">Resume</button>
+  </div>
+  <input id="scrub" type="range" min="0" max="2000" value="0">
+  <pre id="status">Loading...</pre>
+  <div id="error"></div>
+  <div class="legend">'/' hatch = missing card, 'X' cross-hatch = damaged card</div>
+  <div id="scroller"><canvas id="cloth" width="640" height="360" style="width:640px;height:360px"></canvas></div>
+  <script type="module" src="./sim-preview.ts"></script>
+</body>
+</html>
