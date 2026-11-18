@@ -35,7 +35,14 @@ export type Confirm =
   | { kind: 'remove-batch-card'; index: number }
   | { kind: 'commit-batch' }; // replace or append question (R11.8)
 
-export type Announcement = { kind: 'error' | 'confirmation'; messageKey: string; id: number };
+export type AnnouncementParams = Readonly<Record<string, string | number>>;
+
+export type Announcement = {
+  kind: 'error' | 'confirmation';
+  messageKey: string;
+  params?: AnnouncementParams;
+  id: number;
+};
 
 export type ScanBatch = ReadonlyArray<CardGrid>;
 
@@ -65,7 +72,7 @@ export type AppAction =
   | { type: 'batch-replace'; index: number; grid: CardGrid }
   | { type: 'batch-commit'; mode: 'replace' | 'append' }
   | { type: 'read-failed'; failure: CardReadFailure } // no change to the batch (R9.1)
-  | { type: 'announce'; kind: Announcement['kind']; messageKey: string };
+  | { type: 'announce'; kind: Announcement['kind']; messageKey: string; params?: AnnouncementParams };
 
 export type ClothChoices = {
   warpColour: string;

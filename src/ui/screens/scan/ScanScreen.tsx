@@ -283,10 +283,20 @@ export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) 
     const { replacing } = scan;
     if (replacing !== null && replacing < state.batch.length) {
       dispatch({ type: 'batch-replace', index: replacing, grid: scan.grid });
-      dispatch({ type: 'announce', kind: 'confirmation', messageKey: 'scan.replaced' });
+      dispatch({
+        type: 'announce',
+        kind: 'confirmation',
+        messageKey: 'scan.replaced',
+        params: { number: replacing + 1 },
+      });
     } else {
       dispatch({ type: 'batch-accept', grid: scan.grid });
-      dispatch({ type: 'announce', kind: 'confirmation', messageKey: 'scan.accepted' });
+      dispatch({
+        type: 'announce',
+        kind: 'confirmation',
+        messageKey: 'scan.accepted',
+        params: { number: state.batch.length + 1 },
+      });
     }
     setReplacingIndex(null);
     reset();

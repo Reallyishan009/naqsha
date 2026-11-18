@@ -70,6 +70,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         announcement: {
           kind: action.kind,
           messageKey: action.messageKey,
+          ...(action.params === undefined ? {} : { params: action.params }),
           id: (state.announcement?.id ?? 0) + 1,
         },
       };

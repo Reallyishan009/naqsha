@@ -115,7 +115,7 @@ export function Shell({ state, dispatch, onLanguageChosen }: ShellProps) {
         </ScreenBoundary>
       </main>
       <div role="status" aria-live="polite" className={styles.liveRegion}>
-        {announcement === null ? '' : t(announcement.messageKey)}
+        {announcement === null ? '' : t(announcement.messageKey, announcement.params)}
       </div>
     </div>
   );
