@@ -12,6 +12,23 @@ const greyImage = (maxSide: number): fc.Arbitrary<GreyImage> =>
         .map((l) => ({ width, height, levels: Uint8Array.from(l) })),
     );
 
+describe('classifyDark', () => {
+  it('R8.2 a pixel is dark exactly when its level is below the threshold', () => {
+    fc.assert(
+      fc.property(greyImage(64), fc.integer({ min: 0, max: 255 }), (grey, threshold) => {
+        const map = classifyDark(grey, threshold);
+        expect(map.width).toBe(grey.width);
+        expect(map.height).toBe(grey.height);
+        expect(map.dark.length).toBe(grey.levels.length);
+        for (let i = 0; i < grey.levels.length; i++) {
+          expect(map.dark[i] === 0 || map.dark[i] === 1).toBe(true);
+          expect(map.dark[i] === 1).toBe(grey.levels[i] < threshold);
+        }
+      }),
+    );
+  });
+});
+
 describe('chooseThreshold', () => {
   it('R8.1 a two-level image of 20 and 215 gets threshold 118, the middle of the empty gap', () => {
     // best split t = 20; bins 21..214 are empty so tEnd = 214; t* = floor((20 + 214) / 2) = 117; threshold = 118
