@@ -6,3 +6,4 @@ export * from './regions';
 export * from './orientation';
 export * from './pose';
 export * from './pegHoles';
+export * from './sampling';
