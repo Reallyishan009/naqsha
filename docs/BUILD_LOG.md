@@ -252,3 +252,8 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **Evidence saved:** None new.
 **Credits left:** Not recorded.
 **Commit:** range `dafc418..HEAD`.
+
+## 2026-11-19 (app phase 1, task 1.5: shell and theme tokens)
+**What Kiro produced:** `App` shell (navigation, language switch, profile error banner, per-screen error boundary, one live region), theme tokens, `contrastRatio` and `TOKEN_PAIRS`, `platform/browser.ts`.
+**Contrast findings (R14.7):** every Night loom pair passes. In Day loom, `--zari` `#B8860B` on `--ground` `#F6EFE0` is 2.84:1, below the 3:1 needed for the focus indicator. Darkening zari alone would break `--ink` on `--zari` (button text, needs 4.5:1; the brief value gives 4.95:1). Proposed and applied: `--zari` Day loom `#B0800A`, which gives `--ink` on zari 4.55:1, zari on ground 3.09:1, zari on surface 3.42:1. Night loom zari is unchanged.
+**Cut-last properties skipped:** none (Properties 31 and 32 are both written).

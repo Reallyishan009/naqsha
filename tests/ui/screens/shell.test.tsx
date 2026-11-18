@@ -1,0 +1,77 @@
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it } from 'vitest';
+import { Shell } from '../../../src/ui/App.tsx';
+import { EN, HI } from '../../../src/ui/i18n/messages.ts';
+import { initialAppState } from '../../../src/ui/state/appState.ts';
+import type { AppState, Language, Screen } from '../../../src/ui/types.ts';
+
+function render(state: AppState): string {
+  return renderToStaticMarkup(<Shell state={state} dispatch={() => undefined} />);
+}
+
+const SCREENS: Screen[] = ['weave', 'keep', 'scan'];
+const LANGUAGES: Language[] = ['hi', 'en'];
+
+function navLabel(language: Language, screen: Screen): string {
+  return language === 'en' ? (EN[`nav.${screen}`] as string) : (HI[`nav.${screen}`]?.text as string);
+}
+
+describe('shell', () => {
+  it('R1.2 the app starts on the Weave screen', () => {
+    expect(initialAppState.screen).toBe('weave');
+    const html = render({ ...initialAppState, language: 'en' });
+    expect(html).toContain('aria-current="page"');
+    expect(/aria-current="page"[^>]*>Weave</.test(html)).toBe(true);
+  });
+
+  it('R1.3 three visible navigation controls on every screen, in both languages', () => {
+    for (const screen of SCREENS) {
+      for (const language of LANGUAGES) {
+        const html = render({ ...initialAppState, screen, language });
+        const nav = /<nav[^>]*>(.*?)<\/nav>/.exec(html)?.[1] ?? '';
+        expect(nav.match(/<button/g)?.length, `${screen} ${language}`).toBe(3);
+        for (const target of SCREENS) expect(nav).toContain(`>${navLabel(language, target)}<`);
+      }
+    }
+  });
+
+  it('R12.2 the language switch offers both languages as pressable buttons', () => {
+    const html = render({ ...initialAppState, language: 'hi' });
+    expect(html).toContain('aria-pressed="true"');
+    expect(html).toContain('lang="hi"');
+    expect(html).toContain('lang="en"');
+  });
+
+  it('R14.10 there is exactly one live region and it shows the announcement', () => {
+    const html = render({
+      ...initialAppState,
+      language: 'en',
+      announcement: { kind: 'error', messageKey: 'error.generic', id: 1 },
+    });
+    expect(html.match(/role="status"/g)?.length).toBe(1);
+    expect(html).toContain(EN['error.generic'] as string);
+  });
+
+  it('R1.7 a profile error shows a message and keeps the navigation', () => {
+    const html = render({
+      ...initialAppState,
+      language: 'en',
+      profile: { status: 'failed', failure: { reason: 'not-json' } },
+    });
+    expect(html).toContain(EN['error.profile.banner'] as string);
+    expect(html).toContain(EN['error.profile.not-json'] as string);
+    expect((/<nav[^>]*>(.*?)<\/nav>/.exec(html)?.[1] ?? '').match(/<button/g)?.length).toBe(3);
+  });
+
+  it('R14.1 the shell styles give controls a 48 px minimum', async () => {
+    const { readFileSync } = await import('node:fs');
+    const path = await import('node:path');
+    const root = path.resolve(import.meta.dirname, '../../..');
+    const tokens = readFileSync(path.join(root, 'src/ui/theme/tokens.css'), 'utf8');
+    const shell = readFileSync(path.join(root, 'src/ui/Shell.module.css'), 'utf8');
+    expect(tokens).toContain('--touch-target: 48px');
+    expect(shell.match(/min-height: var\(--touch-target\)/g)?.length).toBeGreaterThan(0);
+    expect(tokens).toContain('prefers-reduced-motion: reduce');
+    expect(tokens).toContain('outline: 3px solid var(--zari)');
+  });
+});

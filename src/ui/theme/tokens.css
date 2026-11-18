@@ -1,0 +1,81 @@
+/* Day loom is the default. Night loom is defined but nothing switches to it yet (CUT-LAST, R20).
+   Values must equal THEME_TOKENS in contrast.ts; a test checks it. */
+:root {
+  --ground: #F6EFE0;
+  --surface: #FFFBF2;
+  --ink: #2A1F14;
+  --ink-soft: #6B5B48;
+  --line: #D9CBB0;
+  --card: #D8B67A;
+  --hole: #1B140C;
+  --zari: #B0800A;
+  --madder: #9C2B2B;
+  --indigo: #27306B;
+  --leaf: #2F6B4F;
+
+  --font-display: Georgia, serif;
+  --font-body: system-ui, sans-serif;
+  --font-data: ui-monospace, monospace;
+  --touch-target: 48px;
+  --radius-control: 4px;
+  --radius-panel: 8px;
+}
+
+[data-theme='night'] {
+  --ground: #14122B;
+  --surface: #1E1B3D;
+  --ink: #F1E8D5;
+  --ink-soft: #B4A9C8;
+  --line: #35315E;
+  --card: #C9A461;
+  --hole: #07061A;
+  --zari: #E3B341;
+  --madder: #E0625A;
+  --indigo: #8FA3FF;
+  --leaf: #6FCF9B;
+}
+
+html {
+  font-size: 18px;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-body);
+  line-height: 1.5;
+  text-align: left;
+}
+
+html[lang='hi'] body {
+  line-height: 1.7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+a {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--zari);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
