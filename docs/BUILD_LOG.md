@@ -161,3 +161,28 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **Evidence saved:** None new.
 **Credits left:** Not recorded.
 **Commit:** `7cba7b8`, `6fd808d`, `b44dcce`, `1a67e94`, `1e87d74` (range `7cba7b8` to `1e87d74`).
+
+## 2026-11-18 (simulator phase 4)
+**Goal today:** Simulator phase 4 (remaining properties, structure tests, benchmark, frame-time fix, docs).
+**Prompts run in Kiro:** Not recorded by number.
+**What Kiro produced:**
+- Property 22 (never throws) and the `renderFrame` fix it led to.
+- Structure tests extended to `src/simulator` (no violations).
+- Property 15 widened, and new Properties 25 and 26, so every exported simulator function has a property.
+- `tests/simulator/benchmark.test.ts` and `.kiro/specs/simulator/measurements.md`.
+- Run-length float highlighting (task 4.7).
+- Docs updates (`structure.md`, `README.md`, this entry).
+- Test suite at the end of the phase: 31 files, 224 tests passing.
+**What failed or surprised me:**
+- **Property 22 failed.** `renderFrame` threw a TypeError on a non-PreparedCloth (counterexample `[[],[],[]]`). Fix: a module-private WeakSet brand; a bad cloth returns `invalid-settings` with setting `cloth`; settings are re-parsed on every call. Frame time went from 5.5 to 6.5 ms.
+- The naming test found 10 exported helpers without a property. Fixed with Properties 15, 25 and 26.
+- **Benchmark (task 4.4):** with float highlighting on, the median was about 16 ms and the worst up to 24 ms at 1920 x 1080, so the budget was missed. Without highlighting it was about 6 ms. Frame time also rose from pick 0 until the viewport filled (about 180 picks at 6 px), then stayed flat.
+- After task 4.7 the median with highlighting on is about 10.6 ms (p95 11.3 to 12.5 ms). Output was byte-identical on 1,825 frames checked.
+- Isolated worst frames (29 ms and 147 ms) appeared in runs without highlighting, likely garbage-collection pauses. Not investigated.
+- **REQUIREMENT CHANGE APPROVED BY THE USER:** R10.2 now says frame time does not grow with the pick index once the viewport is full of woven picks (commit `271caf6`).
+- **Cut-last properties skipped across the simulator:** 3, 8, 13, 20 and 24. Property 15 (cut last) was kept and widened. Task 4.2 was skipped by the user.
+**What I changed by hand:** No files edited by hand; the user approved the two fixes.
+**Kiro features used:** spec, property tests, steering.
+**Evidence saved:** None new.
+**Credits left:** Not recorded.
+**Commit:** range `75d5952..HEAD` (`d1ad64f`, `afe549a`, `5976f43`, `271caf6`, `195d5ec`, plus the docs commit).

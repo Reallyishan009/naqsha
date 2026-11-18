@@ -34,7 +34,9 @@ Key exports: readCard, loadPixelData, isPixelData, toGreyscale, chooseThreshold,
 ### src/simulator
 Takes a decoded PunchCard and renders the weave pattern onto a canvas element. Implements the interlacing logic (warp/weft over-under rules) and produces an animated row-by-row preview. No camera or file I/O.
 
-Key exports: simulateWeave, renderRow, WeavePattern
+Files: prepare.ts, settings.ts, style.ts, render.ts, floats.ts, frames.ts, player.ts, canvas.ts (the only file that touches browser APIs), types.ts. Imports only from src/simulator and src/codec.
+
+Key exports: prepareCloth, isPreparedCloth, parseRenderSettings, parseColour, renderFrame, computeFloats, floatLengthAt, framesForPick, frameAt, PASS_STEPS, createPlayer, paintToCanvas, browserScheduler; types SlotList, PickRow, GapReport, PreparedCloth, Weft, RenderSettings, Frame, SimImage, SimFailure, SimResult, Float, Player, Scheduler, PaintContext
 
 ### src/exporter
 Converts a completed WeavePattern into output formats: a bitmap (ImageData / PNG blob) suitable for electronic Jacquard loom controllers, and an optional JSON snapshot for reimport. Handles the browser download trigger.

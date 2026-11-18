@@ -6,7 +6,7 @@ A browser app that reads a Jacquard loom punch card through a camera, rebuilds t
 
 <!-- GIF of a card being scanned and the cloth weaving: coming. -->
 
-**Status:** the card codec and the card reader are built and tested on synthetic card images. The camera screen, simulator, exporter, archive and UI are not built yet.
+**Status:** the card codec and the card reader are built and tested on synthetic card images, and the simulator renders cloth on a canvas (dev preview page only). The camera screen, exporter, archive and UI are not built yet.
 
 ## Try it in 60 seconds
 
@@ -19,7 +19,7 @@ A browser app that reads a Jacquard loom punch card through a camera, rebuilds t
 | Read one card from an image into a grid of punched and unpunched hook positions | Built (`src/reader`), synthetic images only |
 | Convert a card grid to a list of ends and back, through the profile's end order | Built (`src/codec`) |
 | Camera screen | Coming |
-| Simulate the cloth pick by pick | Coming |
+| Simulate the cloth pick by pick | Built (`src/simulator`): renders the cloth pick by pick on a canvas from tested pixel code; dev preview page only, no app screen yet |
 | Export a bitmap for an electronic Jacquard loom | Coming |
 | Archive scanned card sets in the browser | Coming |
 
@@ -45,6 +45,15 @@ The card layout is a profile loaded at runtime. The only profile, `public/profil
 - Each peg hole diameter must differ from the punched hole diameter. Profile validation does not enforce this.
 - A 2 mm hole needs at least 5.5 px/mm, because the reader refuses punched holes under 11 px.
 - The 300 ms reading budget has not been checked on a phone.
+
+### Simulator limits
+
+- One weft per pick (no extra zari wefts on the ground weft).
+- One end per hook (no harness tie-up). A horizontal repeat count is supported.
+- No face-down weaving.
+- Threads are at least 3 px wide.
+- `renderFrame` rejects copies of a prepared cloth (`structuredClone`, Web Worker messages).
+- The 16 ms per frame budget is unmeasured on a phone. Node figures are in `.kiro/specs/simulator/measurements.md`.
 
 ### Known issue (task 5.18, not fixed)
 
@@ -87,6 +96,8 @@ npm run fixtures     # regenerate the synthetic card images in tests/fixtures/
 ```
 
 Developer-only photo trial: start the dev server with `npx vite --host`, print `/scripts/photo-trial/print.html` at 100% scale, photograph the printed card from directly above, then open `/scripts/read-photo.html` and choose the photo.
+
+Developer-only simulator preview: start the dev server with `npx vite --host` and open `/scripts/sim-preview.html`.
 
 ## Prior work and credits
 

@@ -185,7 +185,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 10.1, 10.2, 10.4_
 
-- [ ] 4.7 Faster float highlighting
+- [x] 4.7 Faster float highlighting
   - **Demo-essential.** Added after the task 4.4 benchmark: with highlighting on, the median frame was about 16 ms at 1920 x 1080.
   - Files: `src/simulator/floats.ts`, `src/simulator/render.ts`, `tests/simulator/benchmark.test.ts`, `.kiro/specs/simulator/measurements.md`.
   - Replace the per-cell float scan in `renderFrame` with one run-length pass per visible woven pick (weft floats, across the tiled width) and one pass per end over the visible picks plus `maxLength` picks of margin (warp floats). Output must be byte-identical; Property 9 must pass unchanged.
@@ -193,14 +193,14 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 3.3, 10.1, 10.2_
 
-- [ ] 4.5 Final checkpoint: frame times
+- [x] 4.5 Final checkpoint: frame times
   - **Demo-essential.**
   - Report the measured frame times at 1920 x 1080 for 2,000 picks: median, worst, and pick 0 versus pick 2,000.
   - If the median or worst frame time in Node is over 16 ms, or frame time grows with the pick index, stop. Do not change R8.2 or any requirement. Report the numbers and a proposed fallback, and wait for the user's approval.
   - If Node is within budget, report that the 16 ms phone budget (R10.1) is still unmeasured, and that the preview page from task 3.4 shows frame times on a phone.
   - _Requirements: 10.1, 10.2_
 
-- [ ] 4.6 Docs, phase 4 log and push
+- [x] 4.6 Docs, phase 4 log and push
   - Files: `.kiro/steering/structure.md`, `README.md`, `docs/BUILD_LOG.md`.
   - Update the simulator's key exports in `structure.md`, and the README's "What it does" table and known limits (one weft per pick, no tie-up, no face-down, threads at least 3 px).
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), and the commit range. Push.
