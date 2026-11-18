@@ -89,11 +89,11 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 19.2, 19.6_
 
-- [ ] 3. Reader pipeline up to `readCard` and the fixture accuracy tests
+- [x] 3. Reader pipeline up to `readCard` and the fixture accuracy tests
   - The minimal working path. Each pipeline function gets its first property here. The remaining reader properties are in task 5.
   - _Requirements: 6.1, 6.3, 6.4, 6.5, 7.3, 8.1, 8.3, 8.4, 9.1, 9.2, 9.4, 9.6, 9.7, 10.1, 10.3, 10.4, 11.1, 11.2, 11.3, 12.1, 12.2, 12.4, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 17.4, 17.5, 17.7, 18.4, 18.6, 18.7_
 
-- [ ] 3.1 Reader types, pixel data check and greyscale
+- [x] 3.1 Reader types, pixel data check and greyscale
   - **Demo-essential.**
   - Files: `src/reader/types.ts`, `src/reader/pixelData.ts`, `src/reader/greyscale.ts`, `src/reader/index.ts`, `tests/reader/pixelData.test.ts`, `tests/reader/greyscale.test.ts`.
   - Write the reader types as in the design. Implement `isPixelData` and `toGreyscale`, using the integer weights 299, 587 and 114 with rounding.
@@ -101,7 +101,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 6.1, 6.3, 6.4, 7.3_
 
-- [ ] 3.2 Threshold choice
+- [x] 3.2 Threshold choice
   - **Demo-essential.**
   - Files: `src/reader/threshold.ts`, `src/reader/index.ts`, `tests/reader/threshold.test.ts`.
   - Implement `chooseThreshold` with Otsu's method: exact `BigInt` comparison, the first best split, then the middle of any empty-bin gap. A pixel is dark when its level is below the threshold. A single-level image gets threshold 0. Implement `classifyDark`.
@@ -109,7 +109,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 8.1, 8.3, 8.4_
 
-- [ ] 3.3 Dark regions
+- [x] 3.3 Dark regions
   - **Demo-essential.**
   - Files: `src/reader/regions.ts`, `src/reader/index.ts`, `tests/reader/regions.test.ts`.
   - Implement `findDarkRegions` as a 4-connected flood fill with an explicit `Int32Array` stack, recording area, centroid, bounds and `touchesEdge`. Implement `equivalentDiameterPx`.
@@ -117,7 +117,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 9.1, 9.2_
 
-- [ ] 3.4 Orientation rule
+- [x] 3.4 Orientation rule
   - **Demo-essential.**
   - Files: `src/reader/orientation.ts`, `src/reader/index.ts`, `tests/reader/orientation.test.ts`.
   - Implement `orientationSeparation` and `decideOrientation` with `MIN_SEPARATION` set to 0.5, using `q = (cDown - cUp) / (2 * |e0 - e1|)` as stated in the design. If `e0 = e1`, the decision is ambiguous.
@@ -125,7 +125,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 18.4, 18.6_
 
-- [ ] 3.5 Angle helpers and card-to-image mapping
+- [x] 3.5 Angle helpers and card-to-image mapping
   - **Demo-essential.**
   - Files: `src/reader/pose.ts`, `src/reader/index.ts`, `tests/reader/pose.test.ts`.
   - Implement `normalizeDegrees`, `angleDifferenceDegrees` and `cardToImage`. `poseFromPegHoles` comes in task 3.7.
@@ -133,7 +133,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 10.1, 18.7_
 
-- [ ] 3.6 Peg hole pair search
+- [x] 3.6 Peg hole pair search
   - **Demo-essential.**
   - Files: `src/reader/pegHoles.ts`, `src/reader/index.ts`, `tests/support/images.ts`, `tests/reader/pegHoles.test.ts`.
   - Implement `findPegHolePair` with `TILT_SEARCH_LIMIT_DEGREES` set to 15 and `FIT_MAX` set to 0.15, as in the design. In `tests/support/images.ts`, add analytic region builders that place regions from a pose with `cardToImage`.
@@ -141,7 +141,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 9.2, 9.7_
 
-- [ ] 3.7 Pose from the peg hole pair
+- [x] 3.7 Pose from the peg hole pair
   - **Demo-essential.**
   - Files: `src/reader/pose.ts`, `tests/reader/pose.test.ts`.
   - Implement `poseFromPegHoles(profile, pair, orientation)`. For `upside-down`, the two roles are swapped, so the tilt comes out near 180.
@@ -149,7 +149,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 9.4_
 
-- [ ] 3.8 Sampling
+- [x] 3.8 Sampling
   - **Demo-essential.**
   - Files: `src/reader/sampling.ts`, `src/reader/index.ts`, `tests/reader/sampling.test.ts`.
   - Implement `samplingRadiusPx` with `SAMPLING_RADIUS_FRACTION` set to 0.6, `decidePunched` as `darkCount * 2 > sampleCount`, and `sampleCardGrid`. `sampleCardGrid` checks the bounds of every hook position before it reads any pixel, and returns `null` when the card leaves the image.
@@ -157,7 +157,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 10.3, 10.4, 11.1, 11.2_
 
-- [ ] 3.9 `readCard`
+- [x] 3.9 `readCard`
   - **Demo-essential.**
   - Files: `src/reader/readCard.ts`, `src/reader/index.ts`, `tests/support/images.ts`, `tests/reader/readCard.test.ts`.
   - Implement `readCard(profile: unknown, pixels: unknown)` following the design's data flow, with `MIN_REGION_AREA_PX` set to 4 and `MAX_CANDIDATE_REGIONS` set to 400. The profile is checked before the pixels. There is no `try` or `catch`. In `tests/support/images.ts`, add `greyToPixelData`, `padPixelData` and `renderCardPixels`.
@@ -165,7 +165,7 @@ The order follows your plan. Phase 1 is the project changes from the design. Pha
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 9.7, 11.3, 12.1, 12.2, 12.4, 18.3_
 
-- [ ] 3.10 PNG test helper and fixture accuracy tests
+- [x] 3.10 PNG test helper and fixture accuracy tests
   - **Demo-essential.** The accuracy targets are never cut.
   - Files: `tests/support/png.ts`, `tests/reader/accuracy.test.ts`.
   - Write `decodePng` for 8-bit greyscale, filter-0 PNGs, using `node:zlib` only. It throws on any other format.
