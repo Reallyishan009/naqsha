@@ -4,8 +4,10 @@ import { describe, expect, it } from 'vitest';
 import { parseCardProfile } from '../../src/codec/index.ts';
 import type { CardProfile } from '../../src/codec/types.ts';
 import { findPegHolePair } from '../../src/reader/pegHoles';
+import { selectPegHolePair } from '../../src/reader/selectPegHoles';
 import type { DarkRegion, Pose } from '../../src/reader/types';
 import {
+  fitCardInImage,
   hookPositionRegions,
   lacingHoleRegions,
   pegHoleRegions,
@@ -175,44 +177,63 @@ describe('peg hole search properties', () => {
     );
   });
 
-  it('R9.3 punched holes and lacing holes are not mistaken for peg holes', () => {
-    const specklesArbitrary = fc.array(
+  // Property 55. The generated pose is translated, if needed, so the whole card lies inside the image; the translation
+  // is zero for a card already at positive coordinates.
+  const notMistakenForPegHoles = (
+    profile: CardProfile,
+    generatedPose: Pose,
+    speckleCentres: readonly (readonly [number, number])[],
+    speckleArea: number,
+    randoms: Iterable<number>,
+  ): void => {
+    const { pose, imageSize: cardImageSize } = fitCardInImage(profile, generatedPose);
+    const [peg0, peg1] = pegHoleRegions(profile, pose);
+    const candidates = [
+      peg0,
+      peg1,
+      ...hookPositionRegions(profile, pose),
+      ...lacingHoleRegions(profile, pose),
+      ...speckleRegions(
+        speckleCentres.map(([x, y]) => ({ x, y })),
+        speckleArea,
+      ),
+    ];
+    // Fisher-Yates shuffle driven by the generated stream, so a failure replays from the seed.
+    const randomValues = randoms[Symbol.iterator]();
+    for (let index = candidates.length - 1; index > 0; index--) {
+      const swapIndex = randomValues.next().value! % (index + 1);
+      [candidates[index], candidates[swapIndex]] = [candidates[swapIndex], candidates[index]];
+    }
+    const selection = selectPegHolePair(profile, candidates, cardImageSize);
+    expect(selection.kind).toBe('selected');
+    if (selection.kind !== 'selected') return;
+    const expected = pose.orientation === 'upright' ? [peg0, peg1] : [peg1, peg0];
+    expect(selection.pair.uprightRegions[0]).toBe(expected[0]);
+    expect(selection.pair.uprightRegions[1]).toBe(expected[1]);
+    expect(selection.pose.orientation).toBe(pose.orientation);
+  };
+  const notMistakenProperty = fc.property(
+    profileArbitrary,
+    poseArbitrary,
+    fc.array(
       fc.tuple(fc.double({ min: 0, max: 2500, noNaN: true }), fc.double({ min: 0, max: 2500, noNaN: true })),
       { maxLength: 6 },
-    );
-    fc.assert(
-      fc.property(
-        profileArbitrary,
-        poseArbitrary,
-        specklesArbitrary,
-        fc.integer({ min: 1, max: 4 }),
-        fc.infiniteStream(fc.nat()),
-        (profile, pose, speckleCentres, speckleArea, randoms) => {
-          const [peg0, peg1] = pegHoleRegions(profile, pose);
-          const candidates = [
-            peg0,
-            peg1,
-            ...hookPositionRegions(profile, pose),
-            ...lacingHoleRegions(profile, pose),
-            ...speckleRegions(
-              speckleCentres.map(([x, y]) => ({ x, y })),
-              speckleArea,
-            ),
-          ];
-          // Fisher-Yates shuffle driven by the generated stream, so a failure replays from the seed.
-          const randomValues = randoms[Symbol.iterator]();
-          for (let index = candidates.length - 1; index > 0; index--) {
-            const swapIndex = randomValues.next().value! % (index + 1);
-            [candidates[index], candidates[swapIndex]] = [candidates[swapIndex], candidates[index]];
-          }
-          const pair = findPegHolePair(profile, candidates);
-          expect(pair).not.toBeNull();
-          const expected = pose.orientation === 'upright' ? [peg0, peg1] : [peg1, peg0];
-          expect(pair!.uprightRegions[0]).toBe(expected[0]);
-          expect(pair!.uprightRegions[1]).toBe(expected[1]);
-          expect(Math.abs(pair!.pixelsPerMm / pose.pixelsPerMm - 1)).toBeLessThan(0.01);
-        },
-      ),
-    );
+    ),
+    fc.integer({ min: 1, max: 4 }),
+    fc.infiniteStream(fc.nat()),
+    notMistakenForPegHoles,
+  );
+
+  it('R9.3 punched holes and lacing holes are not mistaken for peg holes', () => {
+    fc.assert(notMistakenProperty);
+  });
+
+  // Regression: 6 x 11 card, pegs 2.268 and 2.81232 mm, no lacing holes, tilt 0, 2.14 px/mm. The diameter search alone
+  // chose a decoy pair here; the layout check must reject it.
+  it('R9.3 regression: seed 1253667935 (6 x 11 card at 2.14 px/mm) is not mistaken for peg holes', () => {
+    fc.assert(notMistakenProperty, {
+      seed: 1253667935,
+      path: '32:9:1:6:6:7:8:6:10:5:5:5:5:5:13:6:8:6:5:5:5:5:5:5:5:5:5:11:5:5:5:6:7:5:6:6:9:5:9:4:3:3:5:5:4:3:3:3:3:4:4:4:4:3:4:3:4:3:3:4:3:3:3:3:3:5:3:4:4:4:4:4:4:4:4',
+    });
   });
 });

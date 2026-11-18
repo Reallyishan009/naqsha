@@ -7,5 +7,7 @@ export * from './regions';
 export * from './orientation';
 export * from './pose';
 export * from './pegHoles';
+export * from './layout';
+export * from './selectPegHoles';
 export * from './sampling';
 export * from './readCard';

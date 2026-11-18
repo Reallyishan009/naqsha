@@ -27,15 +27,29 @@ export type PegHolePair = {
  * Returns null when no pair fits, including when there are fewer than two regions.
  */
 export function findPegHolePair(profile: CardProfile, regions: readonly DarkRegion[]): PegHolePair | null {
+  return rankPegHolePairs(profile, regions, 1)[0] ?? null;
+}
+
+/**
+ * Every accepted peg hole pair (fit <= FIT_MAX), sorted by ascending fit, at most `limit` of them (R9.3, R18.5).
+ * Ties keep the order in which the pairs were found. The search is the one findPegHolePair describes. The best
+ * `limit` pairs are kept by bounded insertion, so the full list is never sorted.
+ */
+export function rankPegHolePairs(
+  profile: CardProfile,
+  regions: readonly DarkRegion[],
+  limit: number,
+): PegHolePair[] {
+  const ranked: PegHolePair[] = [];
+  if (!(limit >= 1)) return ranked;
   const [peg0, peg1] = profile.pegHoles;
   const dx = peg1.positionMm.x - peg0.positionMm.x;
   const dy = peg1.positionMm.y - peg0.positionMm.y;
   const pegDistanceMm = Math.hypot(dx, dy);
-  if (!(pegDistanceMm > 0)) return null;
+  if (!(pegDistanceMm > 0)) return ranked;
   const phiDegrees = (Math.atan2(dy, dx) * 180) / Math.PI;
 
   const diameters = regions.map(equivalentDiameterPx);
-  let best: PegHolePair | null = null;
 
   for (let i = 0; i < regions.length; i++) {
     const regionI = regions[i]!;
@@ -62,14 +76,22 @@ export function findPegHolePair(profile: CardProfile, regions: readonly DarkRegi
       const cDown = Math.abs(u1 - e0) + Math.abs(u0 - e1);
       const fit = Math.min(cUp, cDown) / (e0 + e1);
       if (!(fit <= FIT_MAX)) continue;
-      if (best === null || fit < best.fit) {
-        best = {
-          uprightRegions: iIsRole0 ? [regionI, regionJ] : [regionJ, regionI],
-          pixelsPerMm,
-          fit,
-        };
+      if (ranked.length >= limit && fit >= ranked[ranked.length - 1]!.fit) continue;
+      // First index whose fit is greater than this one: equal fits stay ahead (found order).
+      let low = 0;
+      let high = ranked.length;
+      while (low < high) {
+        const mid = (low + high) >> 1;
+        if (ranked[mid]!.fit <= fit) low = mid + 1;
+        else high = mid;
       }
+      ranked.splice(low, 0, {
+        uprightRegions: iIsRole0 ? [regionI, regionJ] : [regionJ, regionI],
+        pixelsPerMm,
+        fit,
+      });
+      if (ranked.length > limit) ranked.pop();
     }
   }
-  return best;
+  return ranked;
 }

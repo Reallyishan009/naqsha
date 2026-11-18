@@ -114,3 +114,34 @@ describe('readCard', () => {
     });
   }
 });
+
+describe('readCard at low resolution (task 5.13 counterexamples)', () => {
+  const lowResolutionProfile = (() => {
+    const withFirst = mutateProfile(demo, ['pegHoles', 0, 'diameterMm'], 2.5);
+    const parsedFirst = parseCardProfile(withFirst);
+    if (!parsedFirst.ok) throw new Error('profile is invalid');
+    const parsed = parseCardProfile(mutateProfile(parsedFirst.value, ['pegHoles', 1, 'diameterMm'], 2.8));
+    if (!parsed.ok) throw new Error('profile is invalid');
+    return parsed.value;
+  })();
+  const lowResolutionCard = demoPattern(lowResolutionProfile)[0]!;
+
+  it('the low-resolution profile is valid', () => {
+    expect(validateCardProfile(lowResolutionProfile)).toEqual([]);
+  });
+
+  for (const pixelsPerMm of [2.75, 2.25, 1.25]) {
+    it(`R18.5 at ${pixelsPerMm} px/mm the result is the true grid or a failure, never a different grid`, () => {
+      const pixels = renderCardPixels(lowResolutionProfile, lowResolutionCard, {
+        noise: 0,
+        tiltDegrees: 0,
+        shade: 0,
+        seed: SEED,
+        pixelsPerMm,
+      });
+      const result = readCard(lowResolutionProfile, pixels);
+      if (result.ok) expect(result.grid).toEqual(lowResolutionCard);
+      else expect('grid' in result).toBe(false);
+    });
+  }
+});

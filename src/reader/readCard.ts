@@ -1,13 +1,11 @@
 import { parseCardProfile } from '../codec/index.ts';
 import { toGreyscale } from './greyscale';
-import { decideOrientation } from './orientation';
-import { findPegHolePair } from './pegHoles';
 import { isPixelData } from './pixelData';
-import { poseFromPegHoles } from './pose';
-import { equivalentDiameterPx, findDarkRegions } from './regions';
+import { findDarkRegions } from './regions';
+import { selectPegHolePair } from './selectPegHoles';
 import { sampleCardGrid } from './sampling';
 import { chooseThreshold, classifyDark } from './threshold';
-import type { DarkRegion, Orientation, ReadResult } from './types';
+import type { DarkRegion, ReadResult } from './types';
 
 /** Smallest dark region, in pixels, that is kept as a peg hole candidate. */
 export const MIN_REGION_AREA_PX = 4;
@@ -44,20 +42,12 @@ export function readCard(profileInput: unknown, pixels: unknown): ReadResult {
     .slice(0, MAX_CANDIDATE_REGIONS)
     .map(({ region }) => region);
 
-  const pair = findPegHolePair(profile, candidates);
-  if (pair === null) return { ok: false, failure: { reason: 'peg-holes-not-found' } };
-
-  const [peg0, peg1] = profile.pegHoles;
-  const scale = pair.pixelsPerMm;
-  const decision = decideOrientation(
-    [peg0.diameterMm * scale, peg1.diameterMm * scale],
-    [equivalentDiameterPx(pair.uprightRegions[0]), equivalentDiameterPx(pair.uprightRegions[1])],
-  );
-  if (decision.kind === 'ambiguous') {
-    return { ok: false, failure: { reason: 'ambiguous-orientation', separation: decision.separation } };
+  const selection = selectPegHolePair(profile, candidates, { width: pixels.width, height: pixels.height });
+  if (selection.kind === 'none') return { ok: false, failure: { reason: 'peg-holes-not-found' } };
+  if (selection.kind === 'ambiguous') {
+    return { ok: false, failure: { reason: 'ambiguous-orientation', separation: selection.separation } };
   }
-
-  const pose = poseFromPegHoles(profile, pair, decision.kind as Orientation);
+  const { pose } = selection;
   const grid = sampleCardGrid(profile, pose, map);
   if (grid === null) return { ok: false, failure: { reason: 'card-outside-image' } };
   return { ok: true, grid, pose };
