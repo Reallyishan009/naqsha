@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import * as fc from 'fast-check';
 import type { CardGrid, CardProfile, Ends } from '../../src/codec/types.ts';
 
@@ -106,8 +108,8 @@ const tenths = (min: number, max: number): fc.Arbitrary<number> =>
 const hundredths = (min: number, max: number): fc.Arbitrary<number> =>
   fc.integer({ min, max }).map((value) => value / 100);
 
-/** Valid profiles: 2 to 10 hook rows, 2 to 12 hook columns, pitches 2.5 to 4 mm, a permuted endOrder. */
-export const profileArbitrary: fc.Arbitrary<CardProfile> = fc
+function profilesWithPegRatio(pegRatioMin: number): fc.Arbitrary<CardProfile> {
+  return fc
   .record({ hookRows: fc.integer({ min: 2, max: 10 }), hookColumns: fc.integer({ min: 2, max: 12 }) })
   .chain(({ hookRows, hookColumns }) =>
     fc
@@ -116,7 +118,7 @@ export const profileArbitrary: fc.Arbitrary<CardProfile> = fc
         horizontalPitchMm: tenths(25, 40),
         verticalPitchMm: tenths(25, 40),
         smallPegFactor: hundredths(125, 160),
-        pegRatioInverse: hundredths(118, 150),
+        pegRatioInverse: hundredths(pegRatioMin, 150),
         sideMarginExtraMm: tenths(0, 20),
         bandMarginExtraMm: tenths(0, 20),
         bigPegIsFirst: fc.boolean(),
@@ -133,6 +135,22 @@ export const profileArbitrary: fc.Arbitrary<CardProfile> = fc
       })
       .map((rest) => buildProfile({ hookRows, hookColumns, ...rest })),
   );
+}
+
+/** Valid profiles: 2 to 10 hook rows, 2 to 12 hook columns, pitches 2.5 to 4 mm, a permuted endOrder. */
+export const profileArbitrary: fc.Arbitrary<CardProfile> = profilesWithPegRatio(118);
+
+/**
+ * Valid profiles of varied size, pitch and endOrder permutation, for the app tests. Each peg hole diameter is at
+ * least 20% away from the other and from the punched hole diameter (card-geometry.md).
+ */
+export const cardProfileArbitrary: fc.Arbitrary<CardProfile> = profilesWithPegRatio(125);
+
+/** The demo profile, read from public/profiles/demo-12x16.json. */
+export function demoProfile(): CardProfile {
+  const text = readFileSync(path.resolve(import.meta.dirname, '../../public/profiles/demo-12x16.json'), 'utf8');
+  return JSON.parse(text) as CardProfile;
+}
 
 /** Any card grid for the profile: hookRows rows of hookColumns booleans. */
 export function cardGridArbitrary(profile: CardProfile): fc.Arbitrary<CardGrid> {
