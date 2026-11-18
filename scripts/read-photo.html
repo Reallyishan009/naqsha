@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Naqsha photo trial</title>
+<style>
+  body { font-family: sans-serif; margin: 12px; max-width: 960px; }
+  input[type=file] { font-size: 1.1rem; margin: 8px 0; }
+  button { font-size: 1.1rem; padding: 10px 16px; margin: 8px 0; }
+  canvas { max-width: 100%; border: 1px solid #888; background: #222; }
+  pre { background: #f4f4f4; padding: 8px; overflow-x: auto; white-space: pre-wrap; }
+  .legend span { margin-right: 12px; }
+</style>
+</head>
+<body>
+  <h1>Naqsha photo trial</h1>
+  <p>Choose or take a photo of the printed card (dev only, nothing is uploaded).</p>
+  <input id="photo" type="file" accept="image/*" capture="environment">
+  <div class="legend">
+    <span style="color:#0a0">green = read punched</span>
+    <span style="color:#777">grey = read unpunched</span>
+    <span style="color:#d00">red ring = mismatch</span>
+    <span style="color:#06c">blue = peg holes</span>
+  </div>
+  <canvas id="preview" width="640" height="480"></canvas>
+  <div><button id="copy" type="button" disabled>Copy report</button> <span id="copyStatus"></span></div>
+  <pre id="report">No photo chosen yet.</pre>
+  <script type="module" src="./read-photo.ts"></script>
+</body>
+</html>

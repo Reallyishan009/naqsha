@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Naqsha photo trial: print at 100%</title>
+<style>
+  @page { margin: 10mm; }
+  html, body { margin: 0; padding: 0; background: #fff; font-family: sans-serif; }
+  .card { display: block; width: 70mm; height: 55mm; }
+  .ruler { margin-top: 8mm; }
+  .bar { width: 50mm; height: 3mm; background: #000; }
+  .label { font-size: 11pt; margin-top: 2mm; }
+  .note { font-size: 10pt; margin-top: 6mm; max-width: 150mm; }
+</style>
+</head>
+<body>
+  <img class="card" src="card.png" alt="Rendered demo card, pick 0">
+  <div class="ruler">
+    <div class="bar"></div>
+    <div class="label">This bar must measure exactly 50 mm. The image above must be 70 mm wide and 55 mm tall.</div>
+  </div>
+  <div class="note">Print at 100% (actual size). Turn off "fit to page" and "scale to fit".</div>
+</body>
+</html>
