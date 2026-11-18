@@ -1,0 +1,13 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Regenerate fixtures on profile or generator change",
+      "description": "When a card profile in public/profiles/ or scripts/make_fixtures.ts is saved, regenerate tests/fixtures/ and fail loudly if any PNG changed. Shell command only, no agent prompt.",
+      "trigger": "PostFileSave",
+      "matcher": "(^|/)(public/profiles/[^/]+\\.json|scripts/make_fixtures\\.ts)$",
+      "action": { "type": "command", "command": "sh .kiro/hooks/bin/check-fixtures.sh" },
+      "timeout": 60
+    }
+  ]
+}
