@@ -142,3 +142,77 @@ describe('findPegHolePair', () => {
     );
   });
 });
+
+// Properties 54 and 55 share one pose arbitrary: pixel scale 2 to 20, tilt within 10 degrees of 0 or of 180,
+// and a card origin anywhere in a 0 to 2000 px square.
+const poseArbitrary: fc.Arbitrary<Pose> = fc
+  .tuple(
+    fc.double({ min: 2, max: 20, noNaN: true }),
+    fc.double({ min: -10, max: 10, noNaN: true }),
+    fc.boolean(),
+    fc.double({ min: 0, max: 2000, noNaN: true }),
+    fc.double({ min: 0, max: 2000, noNaN: true }),
+  )
+  .map(([pixelsPerMm, offsetDegrees, upsideDown, x, y]): Pose => ({
+    tiltDegrees: upsideDown ? 180 + offsetDegrees : offsetDegrees,
+    pixelsPerMm,
+    originPx: { x, y },
+    orientation: upsideDown ? 'upside-down' : 'upright',
+  }));
+
+describe('peg hole search properties', () => {
+  it('R9.2 peg holes are found at any scale, tilt and position', () => {
+    fc.assert(
+      fc.property(profileArbitrary, poseArbitrary, (profile, pose) => {
+        const [peg0, peg1] = pegHoleRegions(profile, pose);
+        const pair = findPegHolePair(profile, [peg0, peg1]);
+        expect(pair).not.toBeNull();
+        const expected = pose.orientation === 'upright' ? [peg0, peg1] : [peg1, peg0];
+        expect(pair!.uprightRegions[0]).toBe(expected[0]);
+        expect(pair!.uprightRegions[1]).toBe(expected[1]);
+        expect(Math.abs(pair!.pixelsPerMm / pose.pixelsPerMm - 1)).toBeLessThan(0.01);
+      }),
+    );
+  });
+
+  it('R9.3 punched holes and lacing holes are not mistaken for peg holes', () => {
+    const specklesArbitrary = fc.array(
+      fc.tuple(fc.double({ min: 0, max: 2500, noNaN: true }), fc.double({ min: 0, max: 2500, noNaN: true })),
+      { maxLength: 6 },
+    );
+    fc.assert(
+      fc.property(
+        profileArbitrary,
+        poseArbitrary,
+        specklesArbitrary,
+        fc.integer({ min: 1, max: 4 }),
+        fc.infiniteStream(fc.nat()),
+        (profile, pose, speckleCentres, speckleArea, randoms) => {
+          const [peg0, peg1] = pegHoleRegions(profile, pose);
+          const candidates = [
+            peg0,
+            peg1,
+            ...hookPositionRegions(profile, pose),
+            ...lacingHoleRegions(profile, pose),
+            ...speckleRegions(
+              speckleCentres.map(([x, y]) => ({ x, y })),
+              speckleArea,
+            ),
+          ];
+          // Fisher-Yates shuffle driven by the generated stream, so a failure replays from the seed.
+          const randomValues = randoms[Symbol.iterator]();
+          for (let index = candidates.length - 1; index > 0; index--) {
+            const swapIndex = randomValues.next().value! % (index + 1);
+            [candidates[index], candidates[swapIndex]] = [candidates[swapIndex], candidates[index]];
+          }
+          const pair = findPegHolePair(profile, candidates);
+          expect(pair).not.toBeNull();
+          const expected = pose.orientation === 'upright' ? [peg0, peg1] : [peg1, peg0];
+          expect(pair!.uprightRegions[0]).toBe(expected[0]);
+          expect(pair!.uprightRegions[1]).toBe(expected[1]);
+          expect(Math.abs(pair!.pixelsPerMm / pose.pixelsPerMm - 1)).toBeLessThan(0.01);
+        },
+      ),
+    );
+  });
+});
