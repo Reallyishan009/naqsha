@@ -20,7 +20,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
 
 ## Tasks
 
-- [ ] 1. Export
+- [x] 1. Export
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 4.1, 4.2, 4.3, 4.4, 4.5, 5.1, 5.2, 5.3, 7.2, 7.3, 9.2, 10.2, 10.3, 10.4, 12.3_
 
 - [x] 1.1 Types and options
@@ -56,7 +56,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 3.6, 7.4_
 
-- [-] 1.5 Phase 1 log and push
+- [x] 1.5 Phase 1 log and push
   - Files: `docs/BUILD_LOG.md`.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), cut-last properties skipped, and the commit range. Push.
   - _Requirements: 12.4_
@@ -64,7 +64,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
 - [ ] 2. Reader and download
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 7.1, 7.5, 8.1, 8.2, 8.3, 9.3_
 
-- [ ] 2.1 Reader: headers and sizes
+- [x] 2.1 Reader: headers and sizes
   - **Demo-essential.**
   - Files: `src/exporter/readBmp.ts`, `src/exporter/index.ts`, `tests/exporter/readBmp.test.ts`.
   - Implement `readPatternBmp` steps 1 to 5 and 7 of "Reading back", with every read bounds-checked. For this task, map colour index 1 to lifted; task 2.2 switches to the colour-table check.
@@ -72,7 +72,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 6.1, 6.2, 6.4, 6.5, 6.6, 7.1, 9.3_
 
-- [ ] 2.2 Reader: colours
+- [x] 2.2 Reader: colours
   - **Demo-essential.**
   - Files: `src/exporter/readBmp.ts`, `tests/exporter/readBmp.test.ts`.
   - Decide each pixel from its colour table entry against the lift and down colours (step 6); a third colour gives `unknown-colour`.
@@ -80,7 +80,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 6.3, 7.5_
 
-- [ ] 2.3 Download helper
+- [x] 2.3 Download helper
   - **Demo-essential.**
   - Files: `src/exporter/download.ts`, `src/exporter/index.ts`, `tests/exporter/download.test.ts`.
   - Implement `bmpFileName` and `downloadBmp` with injectable dependencies; the defaults use `Blob`, `URL` and `document`, looked up at call time.
@@ -88,7 +88,7 @@ Each phase ends with a `BUILD_LOG.md` entry and a push.
   - Run `npm run test:run` and `npm run typecheck`. When both pass, commit.
   - _Requirements: 8.1, 8.2, 8.3_
 
-- [ ] 2.4 Phase 2 log and push
+- [-] 2.4 Phase 2 log and push
   - Files: `docs/BUILD_LOG.md`.
   - Add a `docs/BUILD_LOG.md` entry for this phase in the file's entry format: what Kiro produced, what failed or surprised, what the user changed by hand (only what is known; write "not recorded" otherwise), cut-last properties skipped, and the commit range. Push.
   - _Requirements: 12.4_

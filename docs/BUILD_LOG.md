@@ -215,3 +215,23 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **Evidence saved:** `media/sample-design-1bit.bmp`, `media/sample-design-8bit.bmp`.
 **Credits left:** Not recorded.
 **Commit:** range `721aa45..HEAD` (starts with `30784ec`).
+
+## 2026-11-18 (exporter phase 2)
+**Goal today:** Exporter phase 2 (reader and download helper).
+**Prompts run in Kiro:** Not recorded by number. The user asked to run all three phases without stopping unless a test fails.
+**What Kiro produced:**
+- `src/exporter/readBmp.ts`: `readPatternBmp` checks in this order: profile, options, not-a-bmp, unsupported-bmp fields, width-mismatch, inconsistent-size fields, then pixels by colour table entry. The file's own bit depth decides how to read, so both variants read back with the same options.
+- `src/exporter/download.ts`: `bmpFileName` and `downloadBmp` with injectable dependencies. The URL is revoked through an injectable `defer` (`setTimeout(0)` by default), because Safari can cancel a download that is revoked in the same tick. `DownloadDeps` gained a `defer` field beyond the design.
+- Properties 9 (reader half), 10 (round trip), 12 (1-bit and 8-bit round trip), 13, 14, 15, 16 and 19.
+- Example tests, including the inverse read with the wrong lift colour and a child-process test that importing `download.ts` in plain Node does not throw.
+- Test suite at the end of phase 2: 36 files, 263 tests passing.
+**What failed or surprised me:**
+- No property failed.
+- An in-process test of importing `download.ts` without browser globals failed because Vitest needs `URL` itself, so it runs in a child Node process.
+- Reading a file with the wrong `liftColour` option inverts the Pattern silently (both colours are known). This is correct per R6.3, but the options must match the export.
+- **Cut-last properties skipped:** none so far.
+**What I changed by hand:** No files edited by hand.
+**Kiro features used:** spec, property tests.
+**Evidence saved:** None new.
+**Credits left:** Not recorded.
+**Commit:** range `a2e02c9..HEAD` (`5347fd5`, `787c6aa`, `398c2ae`).
