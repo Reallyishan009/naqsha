@@ -24,6 +24,7 @@
 
 - Domain types live in one types.ts per module (e.g. src/codec/types.ts, src/simulator/types.ts).
 - Prefer type aliases over interface for data shapes; use interface only when declaration merging is intentional.
+- Relative imports inside `src/codec` use the `.ts` extension (for example `import { x } from './types.ts'`), so that Node can run the fixture generator without a build step.
 - Encode impossible states out of existence with discriminated unions. Example:
 
 ```ts

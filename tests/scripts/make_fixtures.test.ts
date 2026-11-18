@@ -88,6 +88,27 @@ describe('fixture generator', () => {
   });
 });
 
+describe('card-geometry.md', () => {
+  it("R19.5 the Layout table in card-geometry.md states the demo profile's peg positions and diameters", () => {
+    const markdown = readFileSync(new URL('../../.kiro/steering/card-geometry.md', import.meta.url), 'utf8');
+    const layout = markdown.slice(markdown.indexOf('## Layout'));
+    const rowCells = (label: string): string => {
+      const row = layout.split('\n').find((line) => line.startsWith(`| ${label} |`));
+      expect(row, `Layout table row "${label}"`).toBeDefined();
+      return row!.split('|')[2]!;
+    };
+    const numbersIn = (text: string): number[] => (text.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+
+    profile.pegHoles.forEach((pegHole, pegIndex) => {
+      expect(numbersIn(rowCells(`Peg hole ${pegIndex} position (mm)`))).toEqual([
+        pegHole.positionMm.x,
+        pegHole.positionMm.y,
+      ]);
+      expect(numbersIn(rowCells(`Peg hole ${pegIndex} diameter (mm)`))).toEqual([pegHole.diameterMm]);
+    });
+  });
+});
+
 describe('committed fixtures', () => {
   const fixturesUrl = new URL('../fixtures/', import.meta.url);
 
