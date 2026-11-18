@@ -47,18 +47,18 @@ function drawGrid(profile: CardProfile, pose: Pose, grid: CardGrid, width: numbe
 }
 
 describe('sampling examples', () => {
-  it('the sampling radius is 0.6 of the hole radius in pixels', () => {
+  it('R10.3 the sampling radius is 0.6 of the hole radius in pixels', () => {
     const pose: Pose = { tiltDegrees: 0, pixelsPerMm: 10, originPx: { x: 0, y: 0 }, orientation: 'upright' };
     expect(SAMPLING_RADIUS_FRACTION).toBe(0.6);
     expect(samplingRadiusPx(demo, pose)).toBeCloseTo(0.6 * (demo.holeDiameterMm / 2) * 10, 12);
   });
 
-  it('exactly half dark is not punched, more than half is', () => {
+  it('R11.1 exactly half dark is not punched, more than half is', () => {
     expect(decidePunched(5, 10)).toBe(false);
     expect(decidePunched(6, 10)).toBe(true);
   });
 
-  it('a card shifted so one hook position leaves the image returns null', () => {
+  it('R10.4 a card shifted so one hook position leaves the image returns null', () => {
     const pose: Pose = { tiltDegrees: 0, pixelsPerMm: 5, originPx: { x: 0, y: 0 }, orientation: 'upright' };
     const width = Math.ceil(demo.cardWidthMm * 5);
     const height = Math.ceil(demo.cardHeightMm * 5);
@@ -71,6 +71,26 @@ describe('sampling examples', () => {
 });
 
 describe('sampleCardGrid properties', () => {
+  it('R10.3 the sampling radius never exceeds the hole radius in pixels and is positive', () => {
+    const pose = fc.record({
+      tiltDegrees: fc.double({ min: -180, max: 180, noNaN: true }).map((t) => normalizeDegrees(t)),
+      pixelsPerMm: fc.double({ min: 0.5, max: 50, noNaN: true }),
+      originPx: fc.record({
+        x: fc.double({ min: -1e5, max: 1e5, noNaN: true }),
+        y: fc.double({ min: -1e5, max: 1e5, noNaN: true }),
+      }),
+      orientation: fc.constantFrom('upright' as const, 'upside-down' as const),
+    });
+    fc.assert(
+      fc.property(profileArbitrary, pose, (profile, p) => {
+        const radius = samplingRadiusPx(profile, p);
+        const holeRadiusPx = (profile.holeDiameterMm / 2) * p.pixelsPerMm;
+        const expected = SAMPLING_RADIUS_FRACTION * holeRadiusPx;
+        return radius > 0 && radius <= holeRadiusPx && Math.abs(radius - expected) <= 1e-12 * expected;
+      }),
+    );
+  });
+
   it('R10.4 a card that leaves the image is refused and no pixel outside the image is read', () => {
     const anyPose = (width: number, height: number) =>
       fc.record({
