@@ -21,7 +21,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import type { CardGrid, CardProfile, Pattern, PointMm } from '../src/codec/types';
+import type { CardGrid, CardProfile, Pattern, PointMm } from '../src/codec/index.ts';
 
 export type RenderOptions = {
   /** Standard deviation of gaussian noise, in grey levels (0 to 255). */
@@ -118,8 +118,8 @@ function sampleCard(profile: CardProfile, card: CardGrid, x: number, y: number):
       return HOLE_LEVEL;
     }
   }
-  for (const centre of profile.pegHoles.positionsMm) {
-    if (insideHole(x, y, centre, profile.pegHoles.diameterMm)) return HOLE_LEVEL;
+  for (const pegHole of profile.pegHoles) {
+    if (insideHole(x, y, pegHole.positionMm, pegHole.diameterMm)) return HOLE_LEVEL;
   }
   for (const centre of profile.lacingHoles.positionsMm) {
     if (insideHole(x, y, centre, profile.lacingHoles.diameterMm)) return HOLE_LEVEL;

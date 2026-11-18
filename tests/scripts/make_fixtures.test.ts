@@ -45,4 +45,23 @@ describe('fixture generator', () => {
       }
     }
   });
+
+  it('draws each peg hole at its own position with its own diameter', () => {
+    const image = renderCard(profile, card, { noise: 0, tiltDegrees: 0, shade: 0, seed: 1 });
+    const darkRunPx = (centreXmm: number, centreYmm: number): number => {
+      const y = Math.round((centreYmm + BORDER_MM) * PIXELS_PER_MM);
+      const x = Math.round((centreXmm + BORDER_MM) * PIXELS_PER_MM);
+      let count = 0;
+      for (let dx = -3 * PIXELS_PER_MM; dx <= 3 * PIXELS_PER_MM; dx++) {
+        if (image.pixels[y * image.width + x + dx]! < 100) count++;
+      }
+      return count;
+    };
+    const [first, second] = profile.pegHoles;
+    const firstRunPx = darkRunPx(first.positionMm.x, first.positionMm.y);
+    const secondRunPx = darkRunPx(second.positionMm.x, second.positionMm.y);
+    expect(Math.abs(firstRunPx - first.diameterMm * PIXELS_PER_MM)).toBeLessThanOrEqual(1);
+    expect(Math.abs(secondRunPx - second.diameterMm * PIXELS_PER_MM)).toBeLessThanOrEqual(1);
+    expect(secondRunPx).toBeGreaterThan(firstRunPx);
+  });
 });
