@@ -1,6 +1,50 @@
-import type { CardProfile, PointMm } from '../../src/codec/types.ts';
+import type { CardGrid, CardProfile, PointMm } from '../../src/codec/types.ts';
+import { renderCard } from '../../scripts/make_fixtures.ts';
+import type { RenderInput } from '../../scripts/make_fixtures.ts';
 import { cardToImage } from '../../src/reader/pose';
-import type { DarkRegion, PointPx, Pose } from '../../src/reader/types';
+import type { DarkRegion, PixelData, PointPx, Pose } from '../../src/reader/types';
+
+/** A greyscale image as the fixture generator produces it. */
+export type GreyPixels = { width: number; height: number; pixels: Uint8Array };
+
+/** Converts a greyscale image to RGBA pixel data with r = g = b = level and alpha 255. */
+export function greyToPixelData(grey: GreyPixels): PixelData {
+  const data = new Uint8ClampedArray(grey.width * grey.height * 4);
+  for (let i = 0; i < grey.pixels.length; i++) {
+    const level = grey.pixels[i]!;
+    data[4 * i] = level;
+    data[4 * i + 1] = level;
+    data[4 * i + 2] = level;
+    data[4 * i + 3] = 255;
+  }
+  return { width: grey.width, height: grey.height, data };
+}
+
+export type Padding = { left: number; top: number; right: number; bottom: number; level: number };
+
+/** Pads pixel data with a uniform grey level. Negative values are not allowed. */
+export function padPixelData(pixels: PixelData, padding: Padding): PixelData {
+  const width = pixels.width + padding.left + padding.right;
+  const height = pixels.height + padding.top + padding.bottom;
+  const data = new Uint8ClampedArray(width * height * 4);
+  for (let i = 0; i < width * height; i++) {
+    data[4 * i] = padding.level;
+    data[4 * i + 1] = padding.level;
+    data[4 * i + 2] = padding.level;
+    data[4 * i + 3] = 255;
+  }
+  for (let y = 0; y < pixels.height; y++) {
+    const source = y * pixels.width * 4;
+    const target = ((y + padding.top) * width + padding.left) * 4;
+    data.set(pixels.data.subarray(source, source + pixels.width * 4), target);
+  }
+  return { width, height, data };
+}
+
+/** Renders a card in memory with the fixture generator and returns it as pixel data. */
+export function renderCardPixels(profile: CardProfile, card: CardGrid, options: RenderInput): PixelData {
+  return greyToPixelData(renderCard(profile, card, options));
+}
 
 /**
  * Analytic region builders. They produce DarkRegion lists directly from a profile and a pose, with no image.
