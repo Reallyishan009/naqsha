@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { ArchiveFailure } from '../../../src/archive/index.ts';
 import type { Violation } from '../../../src/codec/index.ts';
 import type { ExportFailure, ReadFailure as BmpReadFailure } from '../../../src/exporter/index.ts';
+import type { ReadFailure as CardReadFailure } from '../../../src/reader/index.ts';
 import type { SimFailure } from '../../../src/simulator/index.ts';
 import {
   EN,
@@ -12,6 +13,7 @@ import {
   exportFailureKey,
   printFailureKey,
   profileFailureKey,
+  readFailureKey,
   simFailureKey,
 } from '../../../src/ui/i18n/messages.ts';
 import type { PrintFailure, ProfileFailure } from '../../../src/ui/index.ts';
@@ -56,6 +58,15 @@ const archiveFailure: fc.Arbitrary<ArchiveFailure> = fc.oneof(
   fc.record({ reason: fc.constant('write-failed' as const), detail: fc.string() }),
 );
 
+const readFailure: fc.Arbitrary<CardReadFailure> = fc.oneof(
+  violations.map((v): CardReadFailure => ({ reason: 'invalid-profile', violations: v })),
+  fc.record({ reason: fc.constant('invalid-image' as const), detail: fc.string() }),
+  fc.constant<CardReadFailure>({ reason: 'peg-holes-not-found' }),
+  fc.record({ reason: fc.constant('ambiguous-orientation' as const), separation: fc.double({ noNaN: true }) }),
+  fc.record({ reason: fc.constant('resolution-too-low' as const), holeDiameterPx: fc.double({ noNaN: true }), minimumPx: fc.double({ noNaN: true }) }),
+  fc.constant<CardReadFailure>({ reason: 'card-outside-image' }),
+);
+
 function expectMessage(key: string, reason: string): void {
   expect(key).not.toBe(reason);
   expect(Object.hasOwn(EN, key), `en ${key}`).toBe(true);
@@ -95,6 +106,35 @@ describe('failure messages (Phase 1 failure types)', () => {
   it('R7.4 every ArchiveFailure reason has a message in both languages', () => {
     // Feature: app, Property 6: Every failure has a message in both languages
     fc.assert(fc.property(archiveFailure, (failure) => expectMessage(archiveFailureKey(failure), failure.reason)), options);
+  });
+
+  it('R9.8 every reader ReadFailure kind has a message in both languages, under error.read.<reason>', () => {
+    // Feature: app, Property 6: Every failure has a message in both languages
+    fc.assert(
+      fc.property(readFailure, (failure) => {
+        expectMessage(readFailureKey(failure), failure.reason);
+        expect(readFailureKey(failure)).toBe(`error.read.${failure.reason}`);
+      }),
+      options,
+    );
+  });
+
+  it('R9.2 to R9.6 read failure texts state the cause and the next step in both languages', () => {
+    const text = (reason: CardReadFailure['reason'], hi: boolean): string => {
+      const key = `error.read.${reason}`;
+      return hi ? HI[key]!.text : EN[key]!;
+    };
+    expect(text('peg-holes-not-found', false)).toMatch(/alignment holes were not found.*whole card.*plain background/i);
+    expect(text('ambiguous-orientation', false)).toMatch(/direction.*could not be decided.*again.*flat.*evenly/i);
+    expect(text('resolution-too-low', false)).toMatch(/too small.*closer.*larger photo/i);
+    expect(text('card-outside-image', false)).toMatch(/outside the photo.*back/i);
+    expect(text('invalid-image', false)).toMatch(/could not be used as an image.*try again/i);
+    expect(EN['error.read.invalid-profile']).toMatch(/not valid.*details/i);
+    for (const reason of ['peg-holes-not-found', 'ambiguous-orientation', 'resolution-too-low', 'card-outside-image', 'invalid-image'] as const) {
+      expect(text(reason, true)).toMatch(/\p{Script=Devanagari}/u);
+      expect(text(reason, true)).toContain('फिर');
+      expect(text(reason, true)).not.toContain(reason);
+    }
   });
 
   it('R2.12 the message says what to do next, in both languages', () => {

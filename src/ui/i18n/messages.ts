@@ -1,5 +1,6 @@
 import type { ArchiveFailure } from '../../archive/index.ts';
 import type { ExportFailure, ReadFailure as BmpReadFailure } from '../../exporter/index.ts';
+import type { ReadFailure as CardReadFailure } from '../../reader/index.ts';
 import type { SimFailure } from '../../simulator/index.ts';
 import type { Dictionaries, Dictionary, HiDictionary, Language, PrintFailure, ProfileFailure } from '../types.ts';
 import enJson from './en.json';
@@ -114,6 +115,27 @@ export function bmpReadFailureKey(failure: BmpReadFailure): string {
       return 'error.bmpRead.width-mismatch';
     case 'unknown-colour':
       return 'error.bmpRead.unknown-colour';
+    default: {
+      const unreachable: never = failure;
+      return unreachable;
+    }
+  }
+}
+
+export function readFailureKey(failure: CardReadFailure): string {
+  switch (failure.reason) {
+    case 'invalid-profile':
+      return 'error.read.invalid-profile';
+    case 'invalid-image':
+      return 'error.read.invalid-image';
+    case 'peg-holes-not-found':
+      return 'error.read.peg-holes-not-found';
+    case 'ambiguous-orientation':
+      return 'error.read.ambiguous-orientation';
+    case 'resolution-too-low':
+      return 'error.read.resolution-too-low';
+    case 'card-outside-image':
+      return 'error.read.card-outside-image';
     default: {
       const unreachable: never = failure;
       return unreachable;
