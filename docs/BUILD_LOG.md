@@ -451,3 +451,16 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **Final checks:** see the commit that adds this entry.
 **What I changed by hand:** No files edited by hand.
 **Kiro features used:** spec.
+## 2026-11-21 (app phase 4, task 4.4: dropped features)
+**Goal today:** Record which Phase 4 extras were not built, and the known gaps in the one that was (the rise from darkness, task 4.2). No behaviour changed.
+**Dropped by the user's choice:**
+- **Hindi voice prompts (Requirement 19).** The user chose to drop them.
+- **Night loom theme (Requirement 20.5).** The user chose to drop it.
+**Left out in the trim (not dropped by choice):** The user asked for only the rise-from-darkness extra, so these were not built.
+- **Hole pop (R20.1).**
+- **Thread-drawn progress (R20.3).**
+**Night loom tokens (checked in the code):** The tokens still exist in `src/ui/theme/tokens.css` under `[data-theme='night']` (line 24), and `src/ui/theme/contrast.ts` still has a `night` palette and contrast pairs. Nothing switches to them: a search of `src` and `index.html` finds no `data-theme` outside `tokens.css`, so the app always uses the Day loom. The tokens are unused.
+**Open accessibility gap (from task 4.2):** The skip control is rendered only while the rise is running (`RiseSkipControl` in `src/ui/screens/weave/WeaveScreen.tsx`). After it is used it disappears, so keyboard focus falls back to the page. This is **open, not fixed**. A fix is not a small change here: the Play button is disabled while the cloth is playing, so the target would have to be the Pause button or the cloth wrapper (which needs a ref and a tabindex), and the project's tests run in a Node environment with no DOM, so focus cannot be tested without adding a test dependency. I did neither.
+**Judgement call from 4.2:** A manual step or scrub ends the rise (`seekTo` dispatches `seek` to `riseReducer`). This was chosen in task 4.2; the requirements do not say it.
+**What I changed by hand:** No files edited by hand.
+**Kiro features used:** spec.
