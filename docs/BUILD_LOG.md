@@ -545,3 +545,36 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **`check:deployed`:** passes 4 of 4, but the deployed JS is `assets/index-CYTYaTQc.js` and the local build is `assets/index-DIpFeFC9.js`. The hashes differ, so the deployed app is not shown to match this build.
 **What I changed by hand:** No files edited by hand.
 **Kiro features used:** spec, steering, property tests (fast-check).
+## 2026-11-22 (app phase 7, task 7.1: `check:browser` step 11 flake)
+**Goal today:** Find out why step 11 failed once with `the pick counter did not reach 36 of 36 within 60000 ms (values seen: none)`, and fix it without a longer timeout.
+**Runs.** Baseline: 10 runs of the unchanged check (`/tmp/naqsha-flake/run-N.txt`). After: 10 runs of the changed check (`/tmp/naqsha-flake/after/run-N.txt`). Every run exited 0 and printed `12 passed, 0 failed`; no FAIL line in any of the 20 runs.
+
+| Step | Baseline PASS (of 10) | After PASS (of 10) | Failure text |
+|---|---|---|---|
+| 1 app loads | 10 | 10 | none |
+| 2 language switch | 10 | 10 | none |
+| 3 play the three Try it samples | 10 | 10 | none |
+| 4 Keep: save | 10 | 10 | none |
+| 5 hard reload | 10 | 10 | none |
+| 6 open the saved design | 10 | 10 | none |
+| 7 delete with confirmation | 10 | 10 | none |
+| 8 export 1-bit and 8-bit BMP | 10 | 10 | none |
+| 9 printable card PNG | 10 | 10 | none |
+| 10 upload that PNG on Scan | 10 | 10 | none |
+| 11 blank image, batch and pattern unchanged | 10 | 10 | none |
+| 12 no horizontal scroll | 10 | 10 | none |
+
+**Reproduction attempts (one-off copy of the original check in `/tmp/naqsha-flake/exp`, not committed; only change was `Emulation.setCPUThrottlingRate` from `THROTTLE`).**
+- CPU throttle 4, 8 and 16, one run each: 12 passed, 0 failed each time.
+- Six runs in parallel at throttle 6: 12 passed, 0 failed in all six.
+- Hidden or background tab (throttled `requestAnimationFrame`): not tried.
+- Result: **the failure was not reproduced** in 10 + 10 plain runs, 3 throttled runs and 6 parallel throttled runs.
+
+**What I did observe.** With a `MutationObserver` on the page, the pick counter text on each arrival at Weave was (one line per arrival, 11 arrivals in one run): `Pick 0 of 0` or `Pick 36 of 36` when the cloth is already built, and `["Pick 1 of 36", "Pick 36 of 36"]` six times, so for one render the counter reads "Pick 1 of 36" before the mount effect seeks to the end (`WeaveScreen.tsx`, `player.seek(count)` after the first render with a built cloth). Final state is always right.
+**Cause (a reading of the code and the observation, not a reproduced failure).** In the old `playToEnd`, `seen` only started filling when a read had `pick < total`, and the wait returned only when `seen` was non-empty. Step 11's `weaveSignature` reads the counter once and calls `playToEnd` if `pick < total`. If that one read lands on the one-render `Pick 1 of 36` and the next read in `playToEnd` is already `Pick 36 of 36`, `seen` stays empty, the wait can never finish, and it times out with `values seen: none`. That matches the one failure text exactly. It needs a read to land in a window of one render, which fits a failure that appeared once. The wait was at fault, not the app: the final state is correct and nothing was lost. I did not change the app. The one-render `Pick 1 of 36` is a visible flicker in principle; I have not judged whether it is worth a separate fix.
+**Fix in the check.** The wait is now a condition on state: done as soon as a read shows the last pick, whatever was read before (`stepPickWatch` in `scripts/checks/pickWatch.ts`, pure). Timeouts are unchanged (150 s default, 60 s in step 11). Nothing step 11 asserts was loosened: the message text, the batch size, the Weave counter and canvas hash (`after === before`) are checked as before. Step 3 still requires at least three increasing counter values, so a counter that does not advance still fails there. On timeout the error now adds the last counter text, the screen title, the counter, the Play and Pause disabled state, whether a canvas exists, the page visibility, the console errors and a screenshot written to `media/check/failure-pick-counter-36.png` (`media/check/` is git-ignored).
+**Tests.** `tests/scripts/pickWatch.test.ts`: three examples (first pick to last between two reads; first read at the last pick; not finished before the last pick) and one property (finished exactly when some reading with the right total is at the last pick; seed 71101, 200 runs). These are tests of the new wait. No test was weakened or removed.
+**Verification:** `npm run test:run` 709 passed (the first run had two 5 s timeouts, `tests/reader/readCard.test.ts` and `tests/simulator/render.test.ts`, while the machine was loaded after the parallel experiment; the next run passed 89 files, 709 tests, and I changed no timeout), `npm run typecheck`, `npm run build` and `npm run check-bundle` (93203 bytes gzipped, limit 204800) pass.
+**Root cause:** not reproduced; most likely the wait described above.
+**What I changed by hand:** No files edited by hand.
+**Kiro features used:** spec, steering, property tests (fast-check).

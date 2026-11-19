@@ -20,6 +20,7 @@ import { connectCdp } from './checks/cdp.ts';
 import type { CdpClient } from './checks/cdp.ts';
 import { chromeArgs, findChrome, parseDevToolsActivePort } from './checks/chrome.ts';
 import { parsePngInfo } from './checks/pngHeader.ts';
+import { newPickWatch, stepPickWatch } from './checks/pickWatch.ts';
 import { encodePngRgba } from './png_rgba.ts';
 import { exitCodeFor, formatResult, formatSummary, runBrowserSteps } from './checks/report.ts';
 import type { BrowserResult, BrowserStep } from './checks/report.ts';
@@ -299,19 +300,44 @@ const parsePick = (text: string | null): { pick: number; total: number } | null 
   return match ? { pick: Number(match[1]), total: Number(match[2]) } : null;
 };
 
-/** Waits for the pick counter to start below the end and then reach it. Returns every counter value seen. */
+/** Everything worth knowing about the page when a wait gives up. */
+async function diagnose(page: Page, label: string): Promise<string> {
+  let state = 'page state unreadable';
+  try {
+    state = JSON.stringify(
+      await page.ev<unknown>(
+        `(()=>{const b=t=>[...document.querySelectorAll('button')].find(x=>x.textContent.trim()===t);return {screen:document.querySelector('#screen-title')?.textContent.trim()??null,counter:${PICK_TEXT},playDisabled:b(${JSON.stringify(EN['weave.play'])})?.disabled??null,pauseDisabled:b(${JSON.stringify(EN['weave.pause'])})?.disabled??null,canvas:!!document.querySelector('canvas'),visibility:document.visibilityState}})()`,
+      ),
+    );
+  } catch (error) {
+    state = `page state unreadable: ${error instanceof Error ? error.message : String(error)}`;
+  }
+  let shot = 'no screenshot';
+  try {
+    const file = path.join(repoRoot, 'media', 'check', `failure-${slug(label)}.png`);
+    await page.screenshot(file);
+    shot = `screenshot ${path.relative(repoRoot, file)}`;
+  } catch {
+    // keep going: the state above is still reported
+  }
+  const errors = page.consoleErrors.length === 0 ? 'none' : page.consoleErrors.join(' | ');
+  return `page: ${state}; console errors: ${errors}; ${shot}`;
+}
+
+/** Waits until the pick counter shows the last pick (a finished cloth may show it on the first read). Returns every value seen. */
 async function playToEnd(page: Page, total: number, timeoutMs = 150_000): Promise<number[]> {
-  const seen: number[] = [];
+  let watch = newPickWatch();
   const end = Date.now() + timeoutMs;
+  let lastText: string | null = null;
   for (;;) {
-    const now = parsePick(await page.ev<string | null>(PICK_TEXT));
-    if (now !== null && now.total === total) {
-      if (seen.length === 0 && now.pick < total) seen.push(now.pick);
-      else if (seen.length > 0 && seen[seen.length - 1] !== now.pick) seen.push(now.pick);
-      if (seen.length > 0 && now.pick === total) return seen;
-    }
+    lastText = await page.ev<string | null>(PICK_TEXT);
+    const step = stepPickWatch(watch, parsePick(lastText), total);
+    watch = step.watch;
+    if (step.done) return watch.seen;
     if (Date.now() > end) {
-      throw new Error(`the pick counter did not reach ${total} of ${total} within ${timeoutMs} ms (values seen: ${seen.join(', ') || 'none'})`);
+      throw new Error(
+        `the pick counter did not reach ${total} of ${total} within ${timeoutMs} ms (values seen: ${watch.seen.join(', ') || 'none'}; last counter text: ${lastText === null ? 'none' : JSON.stringify(lastText)}; ${await diagnose(page, `pick-counter-${total}`)})`,
+      );
     }
     await sleep(100);
   }
