@@ -507,6 +507,50 @@
     "text": "{name} से कार्ड पढ़ा जा रहा है…",
     "reviewed": false
   },
+  "scan.camera.open": {
+    "text": "कैमरा इस्तेमाल करें",
+    "reviewed": false
+  },
+  "scan.camera.opening": {
+    "text": "कैमरा चालू हो रहा है…",
+    "reviewed": false
+  },
+  "scan.camera.hint": {
+    "text": "कार्ड को बिंदीदार चौखट के अंदर समतल पकड़ें, फिर “फ़ोटो लें” दबाएँ।",
+    "reviewed": false
+  },
+  "scan.camera.view": {
+    "text": "कैमरे का दृश्य",
+    "reviewed": false
+  },
+  "scan.camera.capture": {
+    "text": "फ़ोटो लें",
+    "reviewed": false
+  },
+  "scan.camera.close": {
+    "text": "कैमरा बंद करें",
+    "reviewed": false
+  },
+  "scan.camera.frameName": {
+    "text": "कैमरा",
+    "reviewed": false
+  },
+  "scan.camera.denied": {
+    "text": "कैमरा रोका गया है। अपने ब्राउज़र में इस पन्ने के लिए कैमरे की अनुमति दें, या इसके बजाय कोई फ़ोटो चुनें।",
+    "reviewed": false
+  },
+  "scan.camera.none": {
+    "text": "इस उपकरण में कैमरा नहीं मिला। इसके बजाय कोई फ़ोटो चुनें।",
+    "reviewed": false
+  },
+  "scan.camera.failed": {
+    "text": "कैमरा इस्तेमाल नहीं हो सका। इसके बजाय कोई फ़ोटो चुनें।",
+    "reviewed": false
+  },
+  "scan.camera.insecure": {
+    "text": "कैमरे के लिए सुरक्षित पन्ना (https) चाहिए। इसके बजाय कोई फ़ोटो चुनें।",
+    "reviewed": false
+  },
   "scan.legend.heading": {
     "text": "निशानों का मतलब",
     "reviewed": false

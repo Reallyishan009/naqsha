@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   LANGUAGE_STORAGE_KEY,
   autoplay,
+  cameraControl,
   readStoredLanguage,
   storeLanguage,
 } from '../../../src/ui/platform/browser.ts';
@@ -61,5 +62,27 @@ describe('platform decisions', () => {
     expect(readStoredLanguage(new ThrowingStorage())).toBeNull();
     expect(storeLanguage(null, 'hi')).toBe(false);
     expect(storeLanguage(new ThrowingStorage(), 'hi')).toBe(false);
+  });
+});
+
+describe('live camera decision', () => {
+  it('R18.1 R18.6 the camera control follows the secure-page rule', () => {
+    // Feature: app, Property 33: The live camera control follows the secure-page rule
+    fc.assert(
+      fc.property(fc.boolean(), fc.boolean(), (isSecureContext, hasGetUserMedia) => {
+        const result = cameraControl({ isSecureContext, hasGetUserMedia });
+        if (isSecureContext && hasGetUserMedia) expect(result).toBe('shown');
+        else if (!isSecureContext) expect(result).toBe('hidden-with-note');
+        else expect(result).toBe('hidden');
+      }),
+      { seed: SEED, numRuns: 100 },
+    );
+  });
+
+  it('R18.1 R18.6 the four combinations', () => {
+    expect(cameraControl({ isSecureContext: true, hasGetUserMedia: true })).toBe('shown');
+    expect(cameraControl({ isSecureContext: true, hasGetUserMedia: false })).toBe('hidden');
+    expect(cameraControl({ isSecureContext: false, hasGetUserMedia: true })).toBe('hidden-with-note');
+    expect(cameraControl({ isSecureContext: false, hasGetUserMedia: false })).toBe('hidden-with-note');
   });
 });

@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useReducer, useRef, useState } from 'react';
-import type { ChangeEvent, Dispatch } from 'react';
+import type { ChangeEvent, Dispatch, ReactNode } from 'react';
 import type { CardProfile } from '../../../codec/index.ts';
-import type { ReadFailure as CardReadFailure } from '../../../reader/index.ts';
+import type { PixelData, ReadFailure as CardReadFailure } from '../../../reader/index.ts';
 import { readFailureKey } from '../../i18n/messages.ts';
 import type { Translate } from '../../i18n/messages.ts';
 import { hookMarkers } from '../../state/corrections.ts';
@@ -16,10 +16,13 @@ import {
   ZOOM_STEP,
 } from '../../state/scan.ts';
 import type { LoadPixels } from '../../state/scan.ts';
+import { cameraControl } from '../../platform/browser.ts';
 import { ProfileNotice } from '../../ProfileNotice.tsx';
 import type { AppAction, AppState, HookPosition, ScanBatch, ScanState } from '../../types.ts';
 import { BatchList } from './BatchList.tsx';
+import { browserCameraDevice, browserCameraEnv } from './camera.ts';
 import { CardOverlay } from './CardOverlay.tsx';
+import { LiveCamera } from './LiveCamera.tsx';
 import styles from './ScanScreen.module.css';
 
 /** Width in CSS pixels assumed for the photo before the real width is measured. */
@@ -50,6 +53,8 @@ export type ScanViewProps = {
   onDone: () => void;
   onCommit: (mode: 'replace' | 'append') => void;
   onDoneCancel: () => void;
+  /** The live camera control, drawn below photo upload. Absent when there is none. */
+  cameraSlot?: ReactNode;
 };
 
 function FailureMessage({ failure, t }: { failure: CardReadFailure; t: Translate }) {
@@ -104,6 +109,7 @@ export function ScanView(props: ScanViewProps) {
                 if (file !== undefined) props.onFile(file);
               }}
             />
+            {props.cameraSlot ?? null}
             {props.replacingIndex === null ? null : (
               <div className={styles.row}>
                 <p>{t('scan.replacing', { number: props.replacingIndex + 1 })}</p>
@@ -242,6 +248,8 @@ export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) 
   const [viewWidthPx, setViewWidthPx] = useState(DEFAULT_VIEW_WIDTH_PX);
   const counter = useRef(new RequestCounter());
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const [cameraEnv] = useState(browserCameraEnv);
+  const [cameraDevice] = useState(browserCameraDevice);
 
   useLayoutEffect(() => {
     const measure = (): void => {
@@ -253,12 +261,12 @@ export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) 
     return () => window.removeEventListener('resize', measure);
   }, []);
 
-  const onFile = useCallback(
-    (file: File): void => {
+  const startRead = useCallback(
+    (name: string, file: Blob, load: LoadPixels | undefined): void => {
       if (profile === null) return;
       const request = counter.current.begin();
-      dispatchScan({ type: 'start', fileName: file.name });
-      void readPhoto(profile, file, loadPixels).then((outcome) => {
+      dispatchScan({ type: 'start', fileName: name });
+      void readPhoto(profile, file, load).then((outcome) => {
         // A newer photo was chosen, or this one was discarded: ignore the late result.
         if (!counter.current.isLatest(request)) return;
         if (outcome.kind === 'failed') {
@@ -271,8 +279,18 @@ export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) 
         dispatchScan({ type: 'finish', outcome, zoom, replacing: replacingIndex });
       });
     },
-    [profile, loadPixels, dispatch, viewWidthPx, replacingIndex],
+    [profile, dispatch, viewWidthPx, replacingIndex],
   );
+
+  const onFile = useCallback((file: File): void => startRead(file.name, file, loadPixels), [startRead, loadPixels]);
+
+  /** A camera frame takes the same path as a photo: `readPhoto` with the frame as the pixels. */
+  const onFrame = useCallback(
+    (pixels: PixelData): void => startRead(t('scan.camera.frameName'), new Blob(), () => Promise.resolve(pixels)),
+    [startRead, t],
+  );
+
+  const control = cameraControl(cameraEnv);
 
   const reset = (): void => {
     counter.current.begin();
@@ -349,6 +367,18 @@ export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) 
           dispatch({ type: 'batch-commit', mode });
         }}
         onDoneCancel={() => setConfirmingDone(false)}
+        cameraSlot={
+          profile === null ? null : (
+            <LiveCamera
+              control={control}
+              device={cameraDevice}
+              aspectRatio={profile.cardWidthMm / profile.cardHeightMm}
+              disabled={scan.status === 'reading'}
+              t={t}
+              onFrame={onFrame}
+            />
+          )
+        }
       />
     </div>
   );

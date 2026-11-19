@@ -39,6 +39,20 @@ export function autoplay(reducedMotion: boolean): boolean {
   return !reducedMotion;
 }
 
+/** What the page can say about the camera (R18.1, R18.6). */
+export type CameraEnv = { isSecureContext: boolean; hasGetUserMedia: boolean };
+
+/**
+ * `shown`: offer the live camera control. `hidden-with-note`: the page is not secure, so hide it and say why.
+ * `hidden`: the page is secure but the browser has no getUserMedia, so hide it without a note.
+ */
+export type CameraControl = 'shown' | 'hidden-with-note' | 'hidden';
+
+export function cameraControl(env: CameraEnv): CameraControl {
+  if (!env.isSecureContext) return 'hidden-with-note';
+  return env.hasGetUserMedia ? 'shown' : 'hidden';
+}
+
 /** The browser's localStorage, or null when it is missing or blocked. */
 export function browserStorage(): KeyValueStorage | null {
   try {

@@ -165,8 +165,13 @@ describe('src/ui structure', () => {
     expect(offenders).toEqual([]);
     // The isolating files exist, so the allowance above is not stale.
     for (const file of isolating) expect(sources.some((s) => s.relative === file), file).toBe(true);
-    // Inside src/ui the camera API is not used yet, and a file is chosen only through a file input.
-    expect(sources.filter((s) => /getUserMedia|mediaDevices/.test(s.codeNoStrings)).map((s) => s.relative)).toEqual([]);
+    // Inside src/ui the camera API is named only in the one file that isolates it (R18), and a photo file is chosen only through a file input.
+    expect(
+      sources
+        .filter((s) => /getUserMedia|mediaDevices/.test(s.codeNoStrings))
+        .map((s) => s.relative)
+        .sort(),
+    ).toEqual(['ui/screens/scan/camera.ts']);
   });
 
   it('R16.2 package.json dependencies are exactly react and react-dom', () => {
