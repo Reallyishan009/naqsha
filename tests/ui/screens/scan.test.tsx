@@ -284,7 +284,7 @@ describe('scan state', () => {
     expect(hookSpacingCssPx(demoProfile(), { tiltDegrees: 0, pixelsPerMm: 6, originPx: { x: 0, y: 0 }, orientation: 'upright' }, 600, 300)).toBeGreaterThan(0);
   });
 
-  it('R10.6 toggling keeps the grid size and changes one cell', () => {
+  it('R10.6 toggling keeps the grid size and changes one punched hole', () => {
     const profile = demoProfile();
     fc.assert(
       fc.property(cardGridArbitrary(profile), (grid) => {

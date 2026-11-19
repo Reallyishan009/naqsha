@@ -3,6 +3,7 @@ import path from 'node:path';
 import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { BUILD_LOG_STEP_IDS, MANUAL_STEPS, findStep } from '../../scripts/checks/manualSteps.ts';
+import { demoProfile } from '../support/profiles.ts';
 
 const SEED = 60651;
 const NUM_RUNS = 100;
@@ -49,10 +50,14 @@ describe('check:manual step list', () => {
     expect(step?.instructions).toContain('The camera needs a secure page (https).');
   });
 
-  it('the print step states 60 x 45 mm at 100%', () => {
-    const text = findStep('print-100')?.instructions ?? '';
+  it('the print step states the card size of the Card_Profile at 100%', () => {
+    // The size is not written by hand on either side: it comes from public/profiles/demo-12x16.json.
+    const profile = demoProfile();
+    const step = findStep('print-100');
+    const text = step?.instructions ?? '';
     expect(text).toContain('100%');
-    expect(text).toContain('60 mm by 45 mm');
+    expect(text).toContain(`${profile.cardWidthMm} mm by ${profile.cardHeightMm} mm`);
+    expect(step?.expected).toContain(`${profile.cardWidthMm} mm x ${profile.cardHeightMm} mm`);
   });
 
   it('R8.8, R14.12, R16.5, R23.1 and R23.11 exist and their text equals the BUILD_LOG entry', () => {

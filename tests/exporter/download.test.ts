@@ -3,8 +3,12 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import * as fc from 'fast-check';
-import { bmpFileName, downloadBmp } from '../../src/exporter/index.ts';
+import { parseCardProfile } from '../../src/codec/index.ts';
+import { bmpFileName, downloadBmp, exportPatternBmp, parseExportOptions, readPatternBmp } from '../../src/exporter/index.ts';
 import type { DownloadDeps } from '../../src/exporter/index.ts';
+import { FakeDownloadDeps } from '../support/fakes.ts';
+import { exportOptionsArbitrary, patternArbitrary } from '../support/patterns.ts';
+import { REMOVE, mutateProfile, profileArbitrary } from '../support/profiles.ts';
 
 const SAFE = /[A-Za-z0-9_-]/g;
 
@@ -38,7 +42,77 @@ describe('bmpFileName', () => {
   });
 });
 
+type Scenario = { profile: unknown; pattern: unknown; options: unknown };
+
+/** A valid profile with a valid Pattern and valid options, or one of the four ways an export fails. */
+const scenarioArbitrary: fc.Arbitrary<Scenario> = profileArbitrary.chain((profile) =>
+  fc
+    .record({ pattern: patternArbitrary(profile), options: exportOptionsArbitrary })
+    .chain(({ pattern, options }) =>
+      fc.oneof(
+        { weight: 4, arbitrary: fc.constant<Scenario>({ profile, pattern, options }) },
+        {
+          weight: 1,
+          arbitrary: fc
+            .constantFrom(...([[['hookRows'], 0], [['name'], REMOVE], [[], null], [['cardWidthMm'], -1]] as const))
+            .map(([at, replacement]): Scenario => ({ profile: mutateProfile(profile, at, replacement), pattern, options })),
+        },
+        { weight: 1, arbitrary: fc.constant<Scenario>({ profile, pattern: [], options }) },
+        {
+          weight: 1,
+          arbitrary: fc
+            .constantFrom<unknown>(null, 'x', [null], [[]], [[['x']]])
+            .map((damaged): Scenario => ({ profile, pattern: [...pattern, damaged], options })),
+        },
+        {
+          weight: 1,
+          arbitrary: fc
+            .constantFrom<unknown>(null, 3, 'black', [], { bitDepth: 3 }, { liftColour: 'red' }, { pickOrder: 1 })
+            .map((bad): Scenario => ({ profile, pattern, options: bad })),
+        },
+      ),
+    ),
+);
+
 describe('downloadBmp', () => {
+  it('R8.1 downloadBmp offers the exported bytes once under the name of bmpFileName, and a failed export has nothing to offer', () => {
+    // **Validates: Requirements 8.1**
+    // A failed export carries no bytes, so downloadBmp cannot be reached with any: the fakes stay untouched.
+    // That runExport itself never calls downloadBmp after a failure is Property 14 in tests/ui/state/keep.test.ts.
+    let downloaded = 0;
+    let failed = 0;
+    fc.assert(
+      fc.property(scenarioArbitrary, ({ profile, pattern, options }) => {
+        const result = exportPatternBmp(profile, pattern, options);
+        const deps = new FakeDownloadDeps();
+        if (!result.ok) {
+          failed += 1;
+          expect('bytes' in result).toBe(false);
+          expect(deps.downloadCount).toBe(0);
+          expect(deps.revoked).toEqual([]);
+          return;
+        }
+        downloaded += 1;
+        const parsedProfile = parseCardProfile(profile);
+        const parsedOptions = parseExportOptions(options);
+        expect(parsedProfile.ok && parsedOptions.ok).toBe(true);
+        if (!parsedProfile.ok || !parsedOptions.ok) return;
+        const fileName = bmpFileName(parsedProfile.value.name, parsedOptions.value.bitDepth);
+        downloadBmp(result.bytes, fileName, deps);
+        expect(deps.downloadCount).toBe(1);
+        expect(deps.downloads[0]!.fileName).toBe(fileName);
+        expect(deps.downloads[0]!.type).toBe('image/bmp');
+        expect(deps.downloads[0]!.bytes).toBe(result.bytes);
+        expect(readPatternBmp(deps.downloads[0]!.bytes, parsedProfile.value, parsedOptions.value)).toEqual({ ok: true, pattern });
+        // The fake runs the deferred function at once, so the single URL is revoked after the click.
+        expect(deps.revoked).toHaveLength(1);
+      }),
+      { seed: 80211, numRuns: 100 },
+    );
+    expect(downloaded).toBeGreaterThan(0);
+    expect(failed).toBeGreaterThan(0);
+  });
+
   it('R8.1 offers one image/bmp Blob through one click, then revokes the URL', () => {
     const events: string[] = [];
     const blob = { fake: 'blob' } as unknown as Blob;

@@ -65,7 +65,7 @@ const pixels = { width: WIDTH_PX, height: HEIGHT_PX, data };
 const runs = Number(process.argv[2] ?? 15);
 const first = readCard(profile, pixels);
 if (!first.ok) throw new Error(`readCard failed on the synthetic image: ${JSON.stringify(first.failure)}`);
-const matches = first.grid.every((row, r) => row.every((cell, c) => cell === card[r]![c]));
+const matches = first.grid.every((row, r) => row.every((punched, c) => punched === card[r]![c]));
 if (!matches) throw new Error('readCard returned a grid that differs from the ground truth');
 
 const samplesMs: number[] = [];

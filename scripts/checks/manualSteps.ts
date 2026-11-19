@@ -1,12 +1,34 @@
 /**
- * The steps of `npm run check:manual`. Data only.
+ * The steps of `npm run check:manual`. Data, apart from the card size, which is read from the
+ * Card_Profile so that no step text repeats a card dimension (card-geometry.md rule 4).
  *
  * The five steps whose id starts with "R" copy their `instructions` word for word from the
  * "Manual checks" list in the task 3.9 entry of docs/BUILD_LOG.md (the text after "- ").
  * tests/scripts/manualSteps.test.ts reads the log and fails if the two drift apart.
  */
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { parseCardProfile } from '../../src/codec/index.ts';
 
 export const DEPLOYED_URL = 'https://naqsha-ashen.vercel.app/';
+
+/** The demo Card_Profile that the app loads, read from the same file the site serves. */
+export const PROFILE_FILE = 'public/profiles/demo-12x16.json';
+
+function demoProfile(): { cardWidthMm: number; cardHeightMm: number } {
+  const file = path.resolve(import.meta.dirname, '..', '..', PROFILE_FILE);
+  const parsed = parseCardProfile(JSON.parse(readFileSync(file, 'utf8')) as unknown);
+  if (!parsed.ok) throw new Error(`${PROFILE_FILE} is not a valid Card_Profile: ${JSON.stringify(parsed.violations)}`);
+  return parsed.value;
+}
+
+const profile = demoProfile();
+
+/** The printed card size from the Card_Profile, for the print step: "<width> mm by <height> mm". */
+export const CARD_SIZE_BY = `${profile.cardWidthMm} mm by ${profile.cardHeightMm} mm`;
+
+/** The same size written with a times sign: "<width> mm x <height> mm". */
+export const CARD_SIZE_X = `${profile.cardWidthMm} mm x ${profile.cardHeightMm} mm`;
 
 export type ManualStep = {
   /** Unique id, used by `--only <id>`. Matched without regard to letter case. */
@@ -47,9 +69,9 @@ export const MANUAL_STEPS: readonly ManualStep[] = [
       '1. Open the app, go to Try it, choose "Diamond", then on the printable card press "Download PNG".',
       '2. Open the PNG in an image viewer or browser and print it. In the print dialog set the scale to 100% (not "fit to page", not "shrink to fit"), plain paper, no margins scaling.',
       '3. With a ruler in millimetres, measure the card outline: width and height.',
-      '4. Expect 60 mm by 45 mm. Allow a ruler reading error of about 1 mm.',
+      `4. Expect ${CARD_SIZE_BY}. Allow a ruler reading error of about 1 mm.`,
     ].join('\n'),
-    expected: 'The printed card measures 60 mm x 45 mm.',
+    expected: `The printed card measures ${CARD_SIZE_X}.`,
     failMeans:
       'The PNG pixel density or the printable layout is wrong, or your printer scaled the page. Reprint at 100% once before you answer fail, and write the measured size in the note.',
   },

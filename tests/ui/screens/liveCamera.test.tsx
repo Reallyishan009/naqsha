@@ -248,11 +248,12 @@ describe('camera control rendering', () => {
   });
 
   it('R18.2 the live view shows the stream, a guide frame shaped like the card, capture and close buttons', () => {
-    const html = renderToStaticMarkup(
-      <LiveCameraView {...viewProps({ phase: { status: 'live' }, aspectRatio: 60 / 45 })} />,
-    );
+    // The guide frame is the shape of the card in the Card_Profile, never a written-in ratio.
+    const profile = demoProfile();
+    const aspectRatio = profile.cardWidthMm / profile.cardHeightMm;
+    const html = renderToStaticMarkup(<LiveCameraView {...viewProps({ phase: { status: 'live' }, aspectRatio })} />);
     expect(html).toContain('<video');
-    expect(html).toContain('aspect-ratio:1.3333333333333333');
+    expect(html).toContain(`aspect-ratio:${aspectRatio}`);
     expect(html).toContain('>Take picture</button>');
     expect(html).toContain('>Close the camera</button>');
   });

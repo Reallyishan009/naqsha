@@ -159,9 +159,9 @@ export function punchedCount(grid: CardGrid): { punched: number; total: number }
   let punched = 0;
   let total = 0;
   for (const row of grid) {
-    for (const hole of row) {
+    for (const punchedHole of row) {
       total += 1;
-      if (hole) punched += 1;
+      if (punchedHole) punched += 1;
     }
   }
   return { punched, total };

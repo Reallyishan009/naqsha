@@ -361,3 +361,77 @@ Data exports (`DEFAULT_EXPORT_OPTIONS`, `PASS_STEPS`, colour constants, `MIN_PEG
 ## Not done
 
 Nothing was fixed. The custom agent was not invoked. Findings were classified by one reviewer, with regular-expression help for the 250 lines of check A; no second reader checked them.
+
+## Re-check and fixes (task 8.2, part 1)
+
+Everything above is the review as first written. This section is the second reading of the classes, the fixes made, and what was left. It was done in one session by reading the code at each line, not by the regular-expression rules of the first pass.
+
+### Re-check of the category A false positives (80) and acceptable lines (155)
+
+The 80 false positives fall into four classes. Each class was checked against the code, not against the first pass's reason text:
+
+| class | lines | checked | verdict |
+|---|---|---|---|
+| A row of a UI list, an HTML table, a CSS flex class or the fake IndexedDB store | 68 | `.row` is `display: flex` in `src/ui/screens/scan/ScanScreen.module.css:43` and `src/ui/screens/keep/KeepScreen.module.css:91`; `summaryRow` (`src/ui/state/keep.ts:32`) builds one line of the saved-design list; `rows` in `tests/support/fakeIndexedDb.ts` is a `Map` of store records; `scripts/checks/summary.ts:87` and `scripts/checks/manualResults.ts:52` are markdown table rows | unchanged |
+| Page scrolling direction | 4 | `scripts/check_browser.ts:692` and `scripts/checks/manualSteps.ts:154,156,157` all measure `scrollWidth` against `innerWidth`, a viewport property | unchanged |
+| A markdown table cell | 2 | `cell()` in `src/ui/i18n/reviewList.ts:10` escapes `\|` and newlines so a row of `docs/HINDI_REVIEW.md` stays whole | unchanged |
+| A motif tile | 3 | see below | **reclassified** |
+
+**Reclassified, false positive -> acceptable:** `src/ui/samples/sampleDesigns.ts:15, 31, 32` ("Flowers sit in cells twice as wide as a repeat", "tiled along the ends in cells that are `period` ends wide", "`u` and `v` run from -1 to 1 across a cell"). Calling these a false positive was wrong: a motif tile is part of the naksha, so the word is about the weave and the glossary's naming rule applies to it. It is still not a real issue: the tile is not a *repeat*. The diamond tile is one repeat, but the floral tile is two repeats wide, and the glossary has no term for it, so the last rule of the glossary ("choose the most precise plain-English name") allows a plain word. Nothing was renamed for these three lines.
+
+The 155 acceptable lines were read again by class as well: profile field names from `card-geometry.md` (`horizontalPitchMm`, `verticalPitchMm`, `firstHoleCentreMm`), `row`/`column` as short forms of a hook row and hook column, "holes" for punched, peg and lacing holes together where the glossary has no word, the `hole` colour token, BMP format rows, and "thread" for warp and weft together. None changed.
+
+**Counts after the re-check.** A: 7 real issues, 158 acceptable, 77 false positives (242 lines, unchanged total). B: 7 real issues, 13 acceptable, 3 false positives.
+
+### Re-check of the category B false positives (3) and acceptable entries (13)
+
+- `scripts/time_read_card.ts:28,40` — `WIDTH_PX = 1920`, `HEIGHT_PX = 1080` is the camera frame of the R8.8 budget; the card inside it is scaled from `profile.cardHeightMm`. Still a false positive.
+- `tests/ui/screens/weaveWiring.test.ts:23` — `buildReadyCloth(profile, pattern, choices, 320, 192)` passes a viewport width and height in CSS pixels (`WeaveScreen.tsx:151` passes `viewport.width`, `viewport.height` there). Still a false positive.
+- The catch-all row (PNG chunk offsets, byte lengths, R-numbers, CSS percentages) was not re-read entry by entry; it is a class, not a list of lines, and nothing in it is a card dimension.
+- The 13 acceptable entries were read again. They stay acceptable: the demo-profile pins name the demo profile in their test title, and `DEFAULT_PIXELS_PER_MM` is a render resolution, not a card dimension. `tests/scripts/bmpHeader.test.ts` (192 and 36 written by hand) remains the strongest candidate for a later clean-up, as the first pass said.
+
+### Category A: the 7 real findings, all fixed
+
+| was | now | file |
+|---|---|---|
+| `for (const hole of row)`, `if (hole) punched += 1` | `punchedHole` | `src/ui/state/scan.ts:162,164` |
+| `row.every((cell, c) => cell === card[r]![c])` | `punched` | `scripts/time_read_card.ts:68` |
+| "a cell that is not a boolean"; `.map(([row, column, cell])`; `grid[row]![column] = cell` | "a punched hole value that is not a boolean"; `punchedHole` | `tests/ui/printable/download.test.ts:43,57,59` |
+| `it('R10.6 toggling keeps the grid size and changes one cell')` | "... changes one punched hole" | `tests/ui/screens/scan.test.tsx:287` |
+
+The test title keeps its `R10.6` prefix, its seed, its `numRuns` and every assertion; only the words changed.
+
+### Category B: the 7 real findings, all fixed
+
+- `scripts/check_browser.ts:612,613` — `profile.cardWidthMm * 12` is now `profile.cardWidthMm * DEFAULT_PIXELS_PER_MM`, imported from `src/ui/printable/raster.ts`, the constant the app itself renders with.
+- `scripts/check_browser.ts:615` — the downloaded PNG's size is now compared with `widthPx`/`heightPx` from the profile instead of with `720x540`. The pHYs density expectation became `DEFAULT_PIXELS_PER_MM * 1000` as well (the first pass called the literal `12000` acceptable; deriving it keeps the same value and the same strength).
+- `scripts/check_browser.ts:616` — the deliberate demo-profile pin (`profile gives ... not 720x540`) is unchanged, as the first pass classified it acceptable.
+- `scripts/check_browser.ts:667` — the blank PNG of step 11 is now `round(cardWidthMm * DEFAULT_PIXELS_PER_MM)` by `round(cardHeightMm * DEFAULT_PIXELS_PER_MM)`.
+- `scripts/checks/manualSteps.ts:50,52` — the print step text is generated: the module reads `public/profiles/demo-12x16.json` through `parseCardProfile` and exports `CARD_SIZE_BY` ("60 mm by 45 mm") and `CARD_SIZE_X` ("60 mm x 45 mm"). The module is no longer data only, and its header comment says so.
+- `tests/scripts/manualSteps.test.ts` — the test that pinned the text now builds the same two strings from `demoProfile()` (the same profile file) and checks both the instructions and the `expected` field, so neither side has the size written by hand. It still fails if the text drifts. The step text is not one of the five that `BUILD_LOG_STEP_IDS` ties to `docs/BUILD_LOG.md`, so no log text had to change with it.
+- `tests/ui/screens/liveCamera.test.tsx:252` — `aspectRatio: 60 / 45` is now `profile.cardWidthMm / profile.cardHeightMm`, and the expected `aspect-ratio:` string is built from the same number instead of being written as `1.3333333333333333`.
+
+### The `endOrder` finding, `scripts/check_browser.ts:647-650`
+
+The first pass read `shapes[row * hookColumns + column]` as an end index. On a second reading it is not: `shapes` was the list of `button[data-shape]` elements in document order, and that order comes from `hookMarkers` (`src/ui/state/corrections.ts:50-62`), which walks hook rows then hook columns. The formula therefore matched the marker order, not `endOrder`. Indexing that list with `endOrder[hookRow][hookColumn]` would have been wrong for any profile whose `endOrder` is not row-major, so that is not what the fix does.
+
+What was wrong is still real: the step decided which hook a marker belonged to from an unstated assumption about document order, and it reported mismatches as "row R column C", with no end anywhere. The step now:
+
+1. reads each marker's `aria-label` as well as its shape, and finds the marker for a hook position by the accessible name the app itself builds (`Hook row R, column C: punched hole`), so no formula decides which marker is which hook;
+2. checks that the name and the drawn shape agree for every hook;
+3. names each mismatch by its end, taken from `profile.endOrder[hookRow][hookColumn]` (card-geometry.md rule 5);
+4. then asserts separately that the document order of the markers is hook row-major, which is what the arrow keys of R10.8 (`nextMarkerIndex`) depend on. That assumption used to be implicit in the formula; it is now a check of its own with its own message.
+
+**Was step 10 passing for the wrong reason before?** It was passing for a weaker reason than it claimed. Its result was right for the demo profile, whose marker order is row-major, and the formula would have kept agreeing with the markers for any profile, because both sides are built row-major. It never checked an end, so its old failure message could not name one. After the fix it passes with the end range reported from the profile: `all 192 hooks (ends 0 to 191 from the profile's endOrder) equal Diamond pick 6 (96 punched, 96 not); card accepted into the batch`.
+
+A related spot was left: the offline sub-check of step 13 (`scripts/check_browser.ts:864-866`) compares `expected.flat()` with the markers by document index. It carries the same implicit row-major assumption but computes no end index. It is not one of the findings; it is listed here so it is not lost.
+
+### Check C: the `downloadBmp` property test
+
+Added in `tests/exporter/download.test.ts`: `R8.1 downloadBmp offers the exported bytes once under the name of bmpFileName, and a failed export has nothing to offer`, seed 80211, 100 runs, over generated profiles, Patterns and export options (and the four ways an export fails), with `FakeDownloadDeps`. A successful export downloads exactly once, with the identical `Uint8Array` of `exportPatternBmp`, the name of `bmpFileName`, type `image/bmp`, one revoked URL, and the bytes read back by `readPatternBmp` to the same Pattern. A failed export carries no `bytes` field, so nothing can be offered: zero downloads, nothing revoked. The property counts both branches and fails if either never happened, so it cannot pass vacuously.
+
+That `runExport` itself never calls `downloadBmp` after a failed export is Property 14 in `tests/ui/state/keep.test.ts`; the new property does not restate it.
+
+### Not done in part 1
+
+`tests/structure/glossaryTerms.test.ts`, `tests/structure/cardDimensions.test.ts` and the strengthening of `tests/structure/propertyNames.test.ts` (removing `paintToCanvas`, `browserScheduler` and `downloadBmp` from `EXCLUDED_FROM_COVERAGE` and requiring the name inside the same `it(...)` as the `fc.assert`) are the rest of task 8.2 and were not written here.

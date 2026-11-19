@@ -14,6 +14,7 @@ import path from 'node:path';
 import { parseCardProfile } from '../src/codec/index.ts';
 import type { CardGrid, CardProfile } from '../src/codec/index.ts';
 import { DEFAULT_EXPORT_OPTIONS, exportPatternBmp, readPatternBmp } from '../src/exporter/index.ts';
+import { DEFAULT_PIXELS_PER_MM } from '../src/ui/printable/raster.ts';
 import { generateSample } from '../src/ui/samples/sampleDesigns.ts';
 import { bmpMismatches, parseBmpHeader } from './checks/bmpHeader.ts';
 import { connectCdp } from './checks/cdp.ts';
@@ -617,14 +618,22 @@ function buildSteps(ctx: Context): BrowserStep[] {
         expect(parsed.ok, `the downloaded file is not a PNG: ${parsed.ok ? '' : parsed.reason}`);
         const { info } = parsed;
         const profile = ctx.profile;
-        const widthPx = Math.round(profile.cardWidthMm * 12);
-        const heightPx = Math.round(profile.cardHeightMm * 12);
+        const widthPx = Math.round(profile.cardWidthMm * DEFAULT_PIXELS_PER_MM);
+        const heightPx = Math.round(profile.cardHeightMm * DEFAULT_PIXELS_PER_MM);
+        const pixelsPerMetre = DEFAULT_PIXELS_PER_MM * 1000;
         const problems: string[] = [];
-        if (info.width !== 720 || info.height !== 540) problems.push(`size is ${info.width}x${info.height}, expected 720x540`);
+        if (info.width !== widthPx || info.height !== heightPx) {
+          problems.push(`size is ${info.width}x${info.height}, expected ${widthPx}x${heightPx} from the Card_Profile at ${DEFAULT_PIXELS_PER_MM} px/mm`);
+        }
         if (widthPx !== 720 || heightPx !== 540) problems.push(`profile gives ${widthPx}x${heightPx} at 12 px/mm, not 720x540`);
         if (info.pHYsCount !== 1) problems.push(`${info.pHYsCount} pHYs chunks, expected 1`);
-        if (info.density === null || info.density.xPixelsPerMetre !== 12000 || info.density.yPixelsPerMetre !== 12000 || info.density.unit !== 1) {
-          problems.push(`pHYs is ${JSON.stringify(info.density)}, expected 12000 x 12000 per metre, unit 1`);
+        if (
+          info.density === null ||
+          info.density.xPixelsPerMetre !== pixelsPerMetre ||
+          info.density.yPixelsPerMetre !== pixelsPerMetre ||
+          info.density.unit !== 1
+        ) {
+          problems.push(`pHYs is ${JSON.stringify(info.density)}, expected ${pixelsPerMetre} x ${pixelsPerMetre} per metre, unit 1`);
         }
         if (!info.crcsValid) problems.push('a chunk CRC is wrong');
         expect(problems.length === 0, `${file.name}: ${problems.join('; ')}`);
@@ -647,32 +656,63 @@ function buildSteps(ctx: Context): BrowserStep[] {
           30_000,
         );
         expect(outcome === 'read', `the read failed with: ${outcome}`);
-        const shapes = await page.ev<string[]>(`[...document.querySelectorAll('button[data-shape]')].map(b=>b.dataset.shape)`);
-        const { hookRows, hookColumns } = ctx.profile;
-        expect(shapes.length === hookRows * hookColumns, `${shapes.length} markers, expected ${hookRows * hookColumns}`);
+        const markers = await page.ev<{ shape: string; label: string }[]>(
+          `[...document.querySelectorAll('button[data-shape]')].map(b=>({shape:b.dataset.shape,label:b.getAttribute('aria-label')||''}))`,
+        );
+        const { hookRows, hookColumns, endOrder } = ctx.profile;
+        expect(markers.length === hookRows * hookColumns, `${markers.length} markers, expected ${hookRows * hookColumns}`);
         const expected: CardGrid = generateSample(ctx.profile, 'diamond')[ctx.printedPickIndex]!;
+        // Each marker names its own hook row and column, so the read state of a hook comes from its accessible
+        // name, never from its place in the document. The end index comes from the profile's endOrder
+        // (card-geometry.md rule 5), never from a formula.
+        const markerLabel = (hookRow: number, hookColumn: number, punched: boolean): string =>
+          format(EN['scan.marker.name']!, {
+            row: hookRow + 1,
+            column: hookColumn + 1,
+            state: EN[punched ? 'scan.marker.punched' : 'scan.marker.unpunched']!,
+          });
+        const shapeByLabel = new Map(markers.map((marker) => [marker.label, marker.shape]));
         const wrong: string[] = [];
-        for (let row = 0; row < hookRows; row++) {
-          for (let column = 0; column < hookColumns; column++) {
-            const read = shapes[row * hookColumns + column] === 'filled';
-            if (read !== expected[row]![column]) wrong.push(`row ${row + 1} column ${column + 1} read ${read ? 'punched' : 'unpunched'}`);
+        const inOrder: string[] = [];
+        for (let hookRow = 0; hookRow < hookRows; hookRow++) {
+          for (let hookColumn = 0; hookColumn < hookColumns; hookColumn++) {
+            const punchedShape = shapeByLabel.get(markerLabel(hookRow, hookColumn, true));
+            const unpunchedShape = shapeByLabel.get(markerLabel(hookRow, hookColumn, false));
+            const end = endOrder[hookRow]![hookColumn]!;
+            const where = `end ${end} (hook row ${hookRow + 1} column ${hookColumn + 1})`;
+            if ((punchedShape === undefined) === (unpunchedShape === undefined)) {
+              wrong.push(`${where} has no marker, or one for both states`);
+              continue;
+            }
+            const read = punchedShape !== undefined;
+            if ((read ? punchedShape : unpunchedShape) !== (read ? 'filled' : 'ring')) {
+              wrong.push(`${where} is named "${read ? 'punched hole' : 'no punched hole'}" but drawn as ${read ? punchedShape : unpunchedShape}`);
+            }
+            if (read !== expected[hookRow]![hookColumn]) wrong.push(`${where} read ${read ? 'punched' : 'unpunched'}`);
+            inOrder.push(markerLabel(hookRow, hookColumn, expected[hookRow]![hookColumn]!));
           }
         }
-        expect(wrong.length === 0, `${wrong.length} of ${shapes.length} hooks differ from Diamond pick ${ctx.printedPickIndex + 1}: ${wrong.slice(0, 8).join('; ')}`);
+        expect(wrong.length === 0, `${wrong.length} of ${markers.length} hooks differ from Diamond pick ${ctx.printedPickIndex + 1}: ${wrong.slice(0, 8).join('; ')}`);
+        // The arrow keys of R10.8 step through the markers in hook row-major order, so the document order must be that.
+        const outOfOrder = markers.findIndex((marker, index) => marker.label !== inOrder[index]);
+        expect(outOfOrder === -1, `marker ${outOfOrder + 1} in the document is "${markers[outOfOrder]?.label}", expected "${inOrder[outOfOrder]}"`);
         const corrected = await page.ev<number>(`document.querySelectorAll('button[data-corrected="true"]').length`);
         expect(corrected === 0, `${corrected} markers are marked as corrected before any tap`);
         const punched = expected.flat().filter(Boolean).length;
-        expect(punched > 0 && punched < shapes.length, `the printed pick has ${punched} punched holes, so it cannot tell a good read from a blank one`);
+        expect(punched > 0 && punched < markers.length, `the printed pick has ${punched} punched holes, so it cannot tell a good read from a blank one`);
         await page.clickText('button', EN['scan.accept']!);
         await page.waitFor(`document.querySelectorAll('#scan-batch-title ~ ol > li').length===1`, 'one card in the batch');
-        return `all ${shapes.length} hooks equal Diamond pick ${ctx.printedPickIndex + 1} (${punched} punched, ${shapes.length - punched} not); card accepted into the batch`;
+        return `all ${markers.length} hooks (ends ${Math.min(...endOrder.flat())} to ${Math.max(...endOrder.flat())} from the profile's endOrder) equal Diamond pick ${ctx.printedPickIndex + 1} (${punched} punched, ${markers.length - punched} not); card accepted into the batch`;
       },
     },
     {
       name: 'blank image: peg holes not found, batch and pattern unchanged',
       async run() {
         const blank = path.join(ctx.tempDir, 'blank.png');
-        writeFileSync(blank, encodePngRgba(720, 540, new Uint8Array(720 * 540 * 4).fill(255)));
+        // A blank image the size of the card from the Card_Profile, at the printable resolution.
+        const blankWidthPx = Math.round(ctx.profile.cardWidthMm * DEFAULT_PIXELS_PER_MM);
+        const blankHeightPx = Math.round(ctx.profile.cardHeightMm * DEFAULT_PIXELS_PER_MM);
+        writeFileSync(blank, encodePngRgba(blankWidthPx, blankHeightPx, new Uint8Array(blankWidthPx * blankHeightPx * 4).fill(255)));
         const weaveSignature = async (): Promise<string> => {
           await goTo(page, 'weave');
           const shown = parsePick(await page.ev<string | null>(PICK_TEXT));

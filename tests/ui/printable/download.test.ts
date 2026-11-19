@@ -40,7 +40,7 @@ function emptyGrid(hookRows: number, hookColumns: number): boolean[][] {
   return Array.from({ length: hookRows }, () => Array<boolean>(hookColumns).fill(false));
 }
 
-/** Grids of the wrong size or with a cell that is not a boolean, for a profile. */
+/** Grids of the wrong size or with a punched hole value that is not a boolean, for a profile. */
 function invalidGridArbitrary(hookRows: number, hookColumns: number): fc.Arbitrary<unknown> {
   return fc.oneof(
     fc.constantFrom<unknown>(undefined, null, 0, 'grid', {}, []),
@@ -54,9 +54,9 @@ function invalidGridArbitrary(hookRows: number, hookColumns: number): fc.Arbitra
         fc.integer({ min: 0, max: hookColumns - 1 }),
         fc.constantFrom<unknown>(0, 1, 'x', null, undefined),
       )
-      .map(([row, column, cell]) => {
+      .map(([row, column, punchedHole]) => {
         const grid: unknown[][] = emptyGrid(hookRows, hookColumns);
-        grid[row]![column] = cell;
+        grid[row]![column] = punchedHole;
         return grid;
       }),
   );
