@@ -50,7 +50,7 @@ const blankFile = new Blob([new Uint8Array([0])]);
 
 describe('scan screen read path on the synthetic fixtures', () => {
   for (const name of CONDITIONS) {
-    it(`R8.1 R8.3 R17.5 ${name}: the screen's read equals the ground-truth card and the markers match it`, async () => {
+    it(`R8.1 R8.2 R8.3 R17.5 R17.6 ${name}: the screen's read equals the ground-truth card and the markers match it`, async () => {
       const truth = groundTruth(name);
       const outcome = await readPhoto(demoProfile(), fixtureFile(name), loadFixturePixels);
       expect(outcome.kind).toBe('read');

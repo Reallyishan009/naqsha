@@ -18,6 +18,7 @@ import {
   RequestCounter,
   scanReducer,
 } from '../../../src/ui/state/scan.ts';
+import type { ReadFailure } from '../../../src/reader/index.ts';
 import type { ReadOutcome } from '../../../src/ui/state/scan.ts';
 import { cardGridArbitrary, demoProfile } from '../../support/profiles.ts';
 import type { Language, ScanState } from '../../../src/ui/types.ts';
@@ -149,6 +150,45 @@ describe('scan screen render', () => {
     const peg = view('en', { scan: { status: 'failed', failure: { reason: 'peg-holes-not-found' } } });
     expect(peg).toContain('two large alignment holes');
     expect(peg).not.toContain('holeDiameterMm');
+  });
+
+  it('R8.6 a file the browser cannot decode shows the invalid-image message in both languages', async () => {
+    const outcome = await readPhoto(demoProfile(), new Blob([new Uint8Array([0])]), () => Promise.reject(new Error('not an image')));
+    expect(outcome.kind).toBe('failed');
+    if (outcome.kind !== 'failed') return;
+    expect(outcome.failure.reason).toBe('invalid-image');
+    const scan = scanReducer(initialScanState, { type: 'finish', outcome, zoom: 1, replacing: null });
+    expect(scan).toMatchObject({ status: 'failed', failure: { reason: 'invalid-image' } });
+    for (const language of LANGUAGES) {
+      const t = translator(DICTIONARIES, language);
+      const html = view(language, { scan });
+      expect(html).toContain(t('error.read.invalid-image'));
+      expect(t('error.read.invalid-image')).not.toBe('error.read.invalid-image');
+    }
+    expect(view('en', { scan })).toContain('could not be used as an image');
+  });
+
+  it('R9.9 every read failure shows a sentence and never only its raw kind string', () => {
+    const failures: ReadFailure[] = [
+      { reason: 'peg-holes-not-found' },
+      { reason: 'ambiguous-orientation', separation: 0.1 },
+      { reason: 'resolution-too-low', holeDiameterPx: 5, minimumPx: 11 },
+      { reason: 'card-outside-image' },
+      { reason: 'invalid-image', detail: 'x' },
+      { reason: 'invalid-profile', violations: [] },
+    ];
+    for (const failure of failures) {
+      for (const language of LANGUAGES) {
+        const t = translator(DICTIONARIES, language);
+        const message = t(`error.read.${failure.reason}`);
+        expect(message, `${language} ${failure.reason}`).not.toBe(failure.reason);
+        expect(message.trim().split(/\s+/).length, `${language} ${failure.reason}`).toBeGreaterThanOrEqual(5);
+        const html = view(language, { scan: { status: 'failed', failure } });
+        expect(html).toContain(message);
+        // The kind string may not be the visible text of any element.
+        expect(html).not.toContain(`>${failure.reason}<`);
+      }
+    }
   });
 
   it('R8.7 with no card profile the screen says so and offers no file input', () => {

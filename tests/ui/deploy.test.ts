@@ -1,5 +1,5 @@
 import fc from 'fast-check';
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { build } from 'vite';
@@ -48,6 +48,43 @@ describe('deploy configuration', () => {
       /analytics|gtag|googletagmanager|plausible|hotjar|mixpanel|sentry/i.test(readFileSync(file, 'utf8')),
     );
     expect(offenders).toEqual([]);
+  });
+
+  it('R13.2 the source has no account, API key, secret or environment value, and no committed env file', () => {
+    const offenders: string[] = [];
+    for (const file of filesUnder(SRC, /\.(ts|tsx)$/)) {
+      const code = stripComments(readFileSync(file, 'utf8'), false);
+      const relative = path.relative(SRC, file).split(path.sep).join('/');
+      if (/process\.env|import\.meta\.env\.(?!BASE_URL\b)|import\.meta\.env\[/.test(code)) offenders.push(`${relative}: environment value`);
+      if (/\b(api[_-]?key|secret|password|bearer|authorization|credentials)\b/i.test(code)) offenders.push(`${relative}: credential word`);
+    }
+    expect(offenders).toEqual([]);
+    for (const dictionary of ['en.json', 'hi.json']) {
+      const text = readFileSync(path.join(SRC, 'ui', 'i18n', dictionary), 'utf8');
+      expect(text, dictionary).not.toMatch(/log ?in\b|sign ?in\b|password|\baccount\b/i);
+    }
+    const rootFiles = readdirSync(ROOT);
+    expect(rootFiles.filter((name) => name.startsWith('.env') && name !== '.env.example')).toEqual([]);
+    expect(JSON.parse(readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'))).not.toHaveProperty('env');
+  });
+
+  it('R13.5 every font stack ends in a generic family, and no web font is declared', () => {
+    const tokens = readFileSync(path.join(SRC, 'ui', 'theme', 'tokens.css'), 'utf8');
+    const stacks = [...tokens.matchAll(/--font-[\w-]+:\s*([^;]+);/g)].map((match) => match[1]!.trim());
+    expect(stacks.length).toBeGreaterThanOrEqual(3);
+    for (const stack of stacks) {
+      const last = stack.split(',').pop()!.trim();
+      expect(['serif', 'sans-serif', 'monospace', 'system-ui'], stack).toContain(last);
+    }
+    for (const file of filesUnder(SRC, /\.css$/)) {
+      const css = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+      expect(css, `${file} declares a web font`).not.toMatch(/@font-face|@import/);
+      for (const match of css.matchAll(/font-family:\s*([^;]+);/g)) {
+        const value = match[1]!.trim();
+        const generic = /(^|,)\s*(serif|sans-serif|monospace|system-ui)\s*$/.test(value);
+        expect(generic || /^var\(--font-[\w-]+\)$/.test(value), `${file}: ${value}`).toBe(true);
+      }
+    }
   });
 
   it('R13.6 no http font or other URL in the CSS', () => {
@@ -100,6 +137,52 @@ describe('built site', () => {
     const report = checkBundle(outDir);
     expect(report.problems).toEqual([]);
     expect(report.gzippedBytes).toBeGreaterThan(0);
+  });
+
+  it('R13.4 the entry chunk requests the Card_Profile at a path that exists inside the Built_Site', () => {
+    const entry = findEntryChunk(readFileSync(path.join(outDir, 'index.html'), 'utf8'));
+    expect(entry).not.toBeNull();
+    const chunk = readFileSync(path.join(outDir, entry!), 'utf8');
+    expect(chunk).toContain('profiles/demo-12x16.json');
+    expect(existsSync(path.join(outDir, 'profiles', 'demo-12x16.json'))).toBe(true);
+  });
+
+  it('R23.7 the production build contains no third-party URL, no analytics and no network API other than fetch', async () => {
+    // The shared build above runs under NODE_ENV=test, so it holds React's development text. Build a production copy.
+    const productionDir = mkdtempSync(path.join(os.tmpdir(), 'naqsha-dist-prod-'));
+    try {
+      await build({
+        root: ROOT,
+        logLevel: 'silent',
+        mode: 'production',
+        define: { 'process.env.NODE_ENV': JSON.stringify('production') },
+        build: { outDir: productionDir, emptyOutDir: true },
+      });
+      const allowedUrl = /^https?:\/\/(www\.w3\.org\/|react\.dev\/errors)/;
+      const files = filesUnder(productionDir, /\.(js|css|html)$/);
+      expect(files.length).toBeGreaterThan(0);
+      const offenders: string[] = [];
+      for (const file of files) {
+        const text = readFileSync(file, 'utf8');
+        for (const url of text.match(/https?:\/\/[^\s"'`)\\]+/g) ?? []) {
+          if (!allowedUrl.test(url)) offenders.push(`${path.relative(productionDir, file)}: ${url}`);
+        }
+        if (/analytics|gtag|googletagmanager|plausible|hotjar|mixpanel|sentry|XMLHttpRequest|sendBeacon|WebSocket|EventSource/i.test(text)) {
+          offenders.push(`${path.relative(productionDir, file)}: analytics or network API`);
+        }
+      }
+      expect(offenders).toEqual([]);
+    } finally {
+      rmSync(productionDir, { recursive: true, force: true });
+    }
+  }, 120_000);
+
+  it('R23.13 no README media file is part of the Built_Site', () => {
+    const mediaNames = new Set(readdirSync(path.join(ROOT, 'media')).filter((name) => name !== '.gitkeep'));
+    expect(mediaNames.size).toBeGreaterThan(0);
+    const built = filesUnder(outDir, /.*/).map((file) => path.basename(file));
+    expect(built.filter((name) => mediaNames.has(name))).toEqual([]);
+    expect(existsSync(path.join(outDir, 'media'))).toBe(false);
   });
 
   it('R23.8 dist/profiles/demo-12x16.json is valid JSON that parseCardProfile accepts', () => {

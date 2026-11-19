@@ -78,6 +78,26 @@ describe('weave wiring', () => {
     expect(scheduler.pending()).toBe(1);
   });
 
+  it('R2.4 resuming after a pause continues from the paused frame and runs on to the last pick', () => {
+    const ready = readyCloth();
+    const { scheduler, reports, player } = harness(ready);
+    const count = ready.cloth.picks.length;
+    player.play(0, count, RATE);
+    const pausedAt = runTicks(scheduler, 0, 12);
+    const paused = player.current();
+    expect(paused.pick).toBeGreaterThan(0);
+    player.pause();
+    const reportsBefore = reports.length;
+    player.resume();
+    runTicks(scheduler, pausedAt + 10_000, 100_000);
+    const after = reports.slice(reportsBefore);
+    expect(after.length).toBeGreaterThan(0);
+    // No frame after the resume goes back before the paused pick, so playback did not restart from the first pick.
+    for (const report of after) expect(report.frame.pick).toBeGreaterThanOrEqual(paused.pick);
+    expect(after[after.length - 1]?.atEnd).toBe(true);
+    expect(scheduler.pending()).toBe(0);
+  });
+
   it('R3.6 a colour change keeps the current pick', () => {
     const first = harness(readyCloth());
     first.player.seek(5);

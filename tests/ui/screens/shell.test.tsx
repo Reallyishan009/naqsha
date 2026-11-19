@@ -1,8 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { Shell } from '../../../src/ui/App.tsx';
-import { EN, HI } from '../../../src/ui/i18n/messages.ts';
+import { DICTIONARIES, EN, HI, translator } from '../../../src/ui/i18n/messages.ts';
+import { ScanView } from '../../../src/ui/screens/scan/ScanScreen.tsx';
 import { initialAppState } from '../../../src/ui/state/appState.ts';
+import { initialScanState } from '../../../src/ui/state/scan.ts';
+import { demoProfile } from '../../support/profiles.ts';
 import type { AppState, Language, Screen } from '../../../src/ui/types.ts';
 
 function render(state: AppState): string {
@@ -17,6 +20,51 @@ function navLabel(language: Language, screen: Screen): string {
 }
 
 describe('shell', () => {
+  it('R1.1 the shell provides the Weave, Keep and Scan screens, each with its own heading and content', () => {
+    for (const language of LANGUAGES) {
+      const t = translator(DICTIONARIES, language);
+      const ready = { ...initialAppState, language, profile: { status: 'ready' as const, profile: demoProfile() } };
+      const weave = render({ ...ready, screen: 'weave' });
+      expect(weave).toContain(`>${navLabel(language, 'weave')}</h2>`);
+      expect(weave).toContain(t('weave.empty').replaceAll('"', '&quot;'));
+      const keep = render({ ...ready, screen: 'keep' });
+      expect(keep).toContain(`>${navLabel(language, 'keep')}</h2>`);
+      expect(keep).toContain(t('keep.export.button'));
+      // The Scan screen is loaded on demand, so the shell shows the loading text until its chunk arrives. The screen
+      // itself is rendered from its own module.
+      expect(render({ ...ready, screen: 'scan' })).not.toContain(`>${navLabel(language, 'weave')}</h2>`);
+      const scan = renderToStaticMarkup(
+        <ScanView
+          profile={demoProfile()}
+          scan={initialScanState}
+          batch={[]}
+          pendingRemove={null}
+          replacingIndex={null}
+          confirmingDone={false}
+          viewWidthPx={360}
+          t={t}
+          onFile={() => undefined}
+          onToggle={() => undefined}
+          onUndo={() => undefined}
+          onZoom={() => undefined}
+          onAccept={() => undefined}
+          onDiscard={() => undefined}
+          onRemoveRequest={() => undefined}
+          onRemoveConfirm={() => undefined}
+          onRemoveCancel={() => undefined}
+          onMove={() => undefined}
+          onScanAgain={() => undefined}
+          onCancelReplacing={() => undefined}
+          onDone={() => undefined}
+          onCommit={() => undefined}
+          onDoneCancel={() => undefined}
+        />,
+      );
+      expect(scan).toContain(`>${navLabel(language, 'scan')}</h2>`);
+    }
+    expect(SCREENS).toHaveLength(3);
+  });
+
   it('R1.2 the app starts on the Weave screen', () => {
     expect(initialAppState.screen).toBe('weave');
     const html = render({ ...initialAppState, language: 'en' });

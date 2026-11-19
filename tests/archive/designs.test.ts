@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as fc from 'fast-check';
 import { deleteDesign, getDesign, listDesigns, saveDesign } from '../../src/archive/index.ts';
-import type { ArchiveDeps, Metadata } from '../../src/archive/index.ts';
+import type { ArchiveDeps, Metadata, SavedDesign } from '../../src/archive/index.ts';
 import type { Pattern } from '../../src/codec/index.ts';
 import { FakeArchiveStore } from '../support/fakes.ts';
 import type { ArchiveFailurePoint } from '../support/fakes.ts';
@@ -34,7 +34,7 @@ const emptyMetadata: Metadata = { name: '', naqshband: '', weaver: '', place: ''
 const tinyPattern: Pattern = [[[true, false], [false, true]]];
 
 describe('archive example tests', () => {
-  it('R6.3 a saved design stores pattern, profile name, metadata and creation time', async () => {
+  it('R6.2 R6.3 a saved design stores pattern, profile name, metadata and creation time', async () => {
     const { deps, store, setTime } = makeDeps();
     setTime(1234);
     const metadata = { ...emptyMetadata, name: 'Border', notes: 'two lines\nof notes' };
@@ -47,6 +47,45 @@ describe('archive example tests', () => {
     expect(snap.summaries).toEqual([
       { id: 'id-0001', profileName: 'demo', metadata, createdAt: 1234, pickCount: 1 },
     ]);
+  });
+
+  it('R6.1 index.ts exports the four functions and the SavedDesign type; each function returns a promise of a result object and none throws', async () => {
+    expect([saveDesign, getDesign, listDesigns, deleteDesign].map((fn) => typeof fn)).toEqual(Array(4).fill('function'));
+    // A SavedDesign has exactly these fields.
+    const design: SavedDesign = { id: 'a', profileName: 'demo', metadata: emptyMetadata, createdAt: 1, pattern: tinyPattern };
+    expect(Object.keys(design).sort()).toEqual(['createdAt', 'id', 'metadata', 'pattern', 'profileName']);
+    // Every function reports a failed store as a value, not as a throw.
+    const { deps, store } = makeDeps();
+    store.failOn('open');
+    const calls = [
+      saveDesign({ pattern: tinyPattern, profileName: 'demo', metadata: emptyMetadata }, deps),
+      getDesign('x', deps),
+      listDesigns(deps),
+      deleteDesign('x', deps),
+    ];
+    for (const call of calls) expect(call).toBeInstanceOf(Promise);
+    const results = await Promise.all(calls);
+    for (const result of results) {
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(typeof result.failure.reason).toBe('string');
+    }
+    // And a good store gives ok results.
+    const good = makeDeps();
+    const saved = await saveDesign({ pattern: tinyPattern, profileName: 'demo', metadata: emptyMetadata }, good.deps);
+    expect(saved.ok).toBe(true);
+  });
+
+  it('R6.4 getDesign returns a pattern equal to the stored one', async () => {
+    const { deps } = makeDeps();
+    const pattern: Pattern = [
+      [[true, false], [false, true]],
+      [[false, false], [true, true]],
+    ];
+    const saved = await saveDesign({ pattern, profileName: 'demo', metadata: emptyMetadata }, deps);
+    if (!saved.ok) throw new Error('save failed');
+    const got = await getDesign(saved.value, deps);
+    expect(got).toMatchObject({ ok: true, value: { id: saved.value } });
+    if (got.ok) expect(got.value.pattern).toEqual(pattern);
   });
 
   it('R6.5 an empty archive lists no designs', async () => {

@@ -32,6 +32,24 @@ describe('generateSample examples', () => {
     expect(new Set([diamond, border, floral]).size).toBe(3);
   });
 
+  it('R4.6 an equal copy of the Card_Profile gives the same Pattern for each design, and the profile is not changed', () => {
+    const profile = demoProfile();
+    const deepFreeze = <T,>(value: T): T => {
+      if (typeof value === 'object' && value !== null) {
+        for (const inner of Object.values(value)) deepFreeze(inner);
+        Object.freeze(value);
+      }
+      return value;
+    };
+    const frozen = deepFreeze(structuredClone(profile));
+    for (const design of DESIGNS) {
+      const first = generateSample(frozen, design);
+      expect(generateSample(structuredClone(profile), design)).toEqual(first);
+      expect(generateSample(frozen, design)).toEqual(first);
+    }
+    expect(frozen).toEqual(profile);
+  });
+
   it('R4.3 prints the three designs as text pictures, one repeat of picks each', () => {
     const profile = demoProfile();
     const period = Math.max(2, profile.hookRows);

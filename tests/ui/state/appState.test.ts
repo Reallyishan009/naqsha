@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { CardProfile, Pattern } from '../../../src/codec/index.ts';
 import { appReducer, initialAppState } from '../../../src/ui/state/appState.ts';
 import type { ReadFailure as CardReadFailure } from '../../../src/reader/index.ts';
-import type { AppAction, AppState, PatternOrigin, SampleDesign, Screen } from '../../../src/ui/types.ts';
+import type { AppAction, AppState, Language, PatternOrigin, SampleDesign, Screen } from '../../../src/ui/types.ts';
 import { cardGridArbitrary, cardProfileArbitrary, demoProfile } from '../../support/profiles.ts';
 
 const SEED = 20240514;
@@ -136,6 +136,25 @@ describe('appReducer properties', () => {
         expect(next.screen).toBe(screen);
         expect(next.current).toEqual(state.current);
         expect(next.batch).toEqual(state.batch);
+      }),
+      { numRuns: NUM_RUNS, seed: SEED },
+    );
+  });
+
+  it('R1.5 the Current_Pattern stays in the app state through any run of navigation, language, profile, announcement and read-failure actions', () => {
+    const actionArbitrary: fc.Arbitrary<AppAction> = fc.oneof(
+      screenArbitrary.map((screen): AppAction => ({ type: 'navigate', screen })),
+      fc.constantFrom<Language>('hi', 'en').map((language): AppAction => ({ type: 'set-language', language })),
+      fc.constant<AppAction>({ type: 'profile-loaded', state: { status: 'failed', failure: { reason: 'not-json' } } }),
+      fc.constant<AppAction>({ type: 'announce', kind: 'confirmation', messageKey: 'weave.play' }),
+      fc.constant<AppAction>({ type: 'confirm-dismissed' }),
+      fc.constant<AppAction>({ type: 'read-failed', failure: { reason: 'peg-holes-not-found' } }),
+    );
+    fc.assert(
+      fc.property(stateAndPattern, fc.array(actionArbitrary, { minLength: 1, maxLength: 12 }), ({ state }, actions) => {
+        let next = state;
+        for (const action of actions) next = appReducer(next, action);
+        expect(next.current).toBe(state.current);
       }),
       { numRuns: NUM_RUNS, seed: SEED },
     );

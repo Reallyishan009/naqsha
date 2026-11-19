@@ -97,6 +97,78 @@ describe('src/ui structure', () => {
     expect(violations).toEqual([]);
   });
 
+  it('R15.3 every style sheet is a CSS Module in the folder of the component that imports it, and no CSS framework is used', () => {
+    const cssFiles = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) return cssFiles(full);
+        return entry.name.endsWith('.css') ? [full] : [];
+      });
+    const uiDir = path.join(SRC, 'ui');
+    const found = cssFiles(uiDir).map((file) => path.relative(uiDir, file).split(path.sep).join('/'));
+    expect(found.length).toBeGreaterThan(0);
+    // The one global sheet is the token file (R15.1). Every other sheet is a .module.css file.
+    expect(found.filter((file) => !file.endsWith('.module.css'))).toEqual(['theme/tokens.css']);
+
+    const importedModules = new Set<string>();
+    for (const s of uiSources) {
+      for (const match of s.code.matchAll(/import\s+(?:[\w$]+\s+from\s+)?(['"])([^'"]+\.css)\1/g)) {
+        const specifier = match[2]!;
+        const target = path.resolve(path.dirname(s.file), specifier);
+        if (specifier.endsWith('.module.css')) {
+          expect(specifier.startsWith('./'), `${s.relative}: ${specifier} is not in the component folder`).toBe(true);
+          importedModules.add(target);
+        } else {
+          expect(specifier, s.relative).toBe('./theme/tokens.css');
+        }
+      }
+    }
+    for (const file of found.filter((name) => name.endsWith('.module.css'))) {
+      expect(importedModules.has(path.join(uiDir, file)), `${file} is not imported by a component in its folder`).toBe(true);
+    }
+
+    const manifest = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8')) as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+    const packages = Object.keys({ ...manifest.dependencies, ...manifest.devDependencies });
+    expect(
+      packages.filter((name) => /tailwind|bootstrap|bulma|foundation-sites|styled-components|@emotion|@mui|chakra|sass|less|postcss|unocss|windicss/i.test(name)),
+    ).toEqual([]);
+    for (const file of found) {
+      const css = readFileSync(path.join(uiDir, file), 'utf8');
+      expect(css, file).not.toMatch(/@tailwind|@apply|@import/);
+    }
+  });
+
+  it('R16.7 the build script runs tsc --noEmit before the bundler, and tsconfig turns strict mode on', () => {
+    const manifest = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8')) as { scripts: Record<string, string> };
+    expect(manifest.scripts.build).toMatch(/^tsc --noEmit && vite build$/);
+    expect(manifest.scripts.typecheck).toBe('tsc --noEmit');
+    const tsconfig = JSON.parse(readFileSync(path.join(ROOT, 'tsconfig.json'), 'utf8')) as {
+      compilerOptions: { strict?: boolean };
+      include: string[];
+    };
+    expect(tsconfig.compilerOptions.strict).toBe(true);
+    expect(tsconfig.include).toEqual(expect.arrayContaining(['src', 'tests']));
+  });
+
+  it('R16.9 browser APIs for file choice, download, camera and image decoding are named only in src/ui and the files that isolate them', () => {
+    const browserApi =
+      /\b(getUserMedia|mediaDevices|showOpenFilePicker|createObjectURL|createImageBitmap|FileReader|OffscreenCanvas|HTMLInputElement)\b|\b(document|window|navigator)\./;
+    // Each of these is the one place its module reaches the browser: image decoding, the BMP download, the mount point.
+    const isolating = new Set(['reader/canvasSource.ts', 'exporter/download.ts', 'main.tsx']);
+    const offenders = sources
+      .filter((s) => !s.relative.startsWith('ui/') && !isolating.has(s.relative))
+      .filter((s) => browserApi.test(s.codeNoStrings))
+      .map((s) => s.relative);
+    expect(offenders).toEqual([]);
+    // The isolating files exist, so the allowance above is not stale.
+    for (const file of isolating) expect(sources.some((s) => s.relative === file), file).toBe(true);
+    // Inside src/ui the camera API is not used yet, and a file is chosen only through a file input.
+    expect(sources.filter((s) => /getUserMedia|mediaDevices/.test(s.codeNoStrings)).map((s) => s.relative)).toEqual([]);
+  });
+
   it('R16.2 package.json dependencies are exactly react and react-dom', () => {
     const manifest = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8')) as {
       dependencies?: Record<string, string>;

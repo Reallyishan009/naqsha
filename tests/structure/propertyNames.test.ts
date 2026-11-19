@@ -202,6 +202,23 @@ describe('property naming and coverage', () => {
     expect(violations, violations.join('\n')).toEqual([]);
   });
 
+  it('R17.3 every property test title states the requirement in words after its ID', () => {
+    const short: string[] = [];
+    let propertyTests = 0;
+    for (const { path, source } of files) {
+      for (const call of findTestCalls(source)) {
+        if (!call.body.includes(ASSERT_MARKER) || call.title === null) continue;
+        propertyTests++;
+        const statement = call.title.replace(/\$\{[^}]*\}/g, '').replace(/^(?:R\d+\.\d+ )+/, '').trim();
+        if (statement.split(/\s+/).filter((word) => word !== '').length < 3) {
+          short.push(`${relative(ROOT, path)}:${call.line} "${call.title}"`);
+        }
+      }
+    }
+    expect(propertyTests, 'no property tests were found, so the scan is probably broken').toBeGreaterThan(0);
+    expect(short, short.join('\n')).toEqual([]);
+  });
+
   it('R17.2 the property runner is only called inside a test body', () => {
     const stray: string[] = [];
     for (const { path, source } of files) {

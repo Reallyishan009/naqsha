@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { CardProfile } from '../../../src/codec/index.ts';
 import { MIN_HOLE_DIAMETER_PX, readCard } from '../../../src/reader/index.ts';
 import { DEFAULT_PIXELS_PER_MM, printableRaster } from '../../../src/ui/printable/raster.ts';
+import { HOLE_RGB, RING_RGB, STOCK_RGB } from '../../../src/ui/printable/style.ts';
 import { generateSample } from '../../../src/ui/samples/sampleDesigns.ts';
 import type { SampleDesign } from '../../../src/ui/types.ts';
 import { cardGridArbitrary, cardProfileArbitrary, demoProfile } from '../../support/profiles.ts';
@@ -19,7 +20,40 @@ function pixelsPerMmArbitrary(profile: CardProfile): fc.Arbitrary<number> {
 }
 
 describe('printable raster', () => {
-  it('the demo card at 12 pixels per millimetre is 720 by 540 pixels', () => {
+  it('R21.4 the raster has manila stock, hole ink at punched hooks, peg holes and lacing holes, and a different ring at unpunched hooks', () => {
+    const profile = demoProfile();
+    const grid = Array.from({ length: profile.hookRows }, (_, row) =>
+      Array.from({ length: profile.hookColumns }, (_, column) => (row + column) % 2 === 0),
+    );
+    const result = printableRaster(profile, grid, 12);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const { width, data } = result.value;
+    const pixelAt = (xMm: number, yMm: number): number[] => {
+      const offset = (Math.floor(yMm * 12) * width + Math.floor(xMm * 12)) * 4;
+      return [data[offset]!, data[offset + 1]!, data[offset + 2]!];
+    };
+    expect(pixelAt(0.2, 0.2)).toEqual([...STOCK_RGB]);
+    const radiusMm = profile.holeDiameterMm / 2;
+    for (let hookRow = 0; hookRow < profile.hookRows; hookRow++) {
+      for (let hookColumn = 0; hookColumn < profile.hookColumns; hookColumn++) {
+        const x = profile.firstHoleCentreMm.x + hookColumn * profile.horizontalPitchMm;
+        const y = profile.firstHoleCentreMm.y + hookRow * profile.verticalPitchMm;
+        if (grid[hookRow]![hookColumn]) {
+          expect(pixelAt(x, y)).toEqual([...HOLE_RGB]);
+        } else {
+          expect(pixelAt(x, y)).toEqual([...STOCK_RGB]); // the inside of the ring is stock
+          expect(pixelAt(x + 0.9 * radiusMm, y)).toEqual([...RING_RGB]);
+        }
+      }
+    }
+    for (const peg of profile.pegHoles) expect(pixelAt(peg.positionMm.x, peg.positionMm.y)).toEqual([...HOLE_RGB]);
+    for (const lacing of profile.lacingHoles.positionsMm) expect(pixelAt(lacing.x, lacing.y)).toEqual([...HOLE_RGB]);
+    expect(RING_RGB).not.toEqual(HOLE_RGB);
+    expect(RING_RGB).not.toEqual(STOCK_RGB);
+  });
+
+  it('R21.11 the demo card at 12 pixels per millimetre is 720 by 540 pixels', () => {
     const profile = demoProfile();
     const grid = Array.from({ length: profile.hookRows }, () => Array<boolean>(profile.hookColumns).fill(false));
     const result = printableRaster(profile, grid, 12);
@@ -58,7 +92,7 @@ describe('printable raster', () => {
     );
   }, 120_000);
 
-  it('R21.14 Property 38 every pick of each Sample_Design reads back (demo profile)', () => {
+  it('R21.14 R21.15 Property 38 every pick of each Sample_Design reads back (demo profile)', () => {
     const profile = demoProfile();
     for (const design of DESIGNS) {
       generateSample(profile, design).forEach((grid, pickIndex) => {

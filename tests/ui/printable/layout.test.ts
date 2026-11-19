@@ -18,6 +18,35 @@ describe('printable layout', () => {
     expect(centre.y).toBeCloseTo(profile.firstHoleCentreMm.y + 2 * profile.verticalPitchMm);
   });
 
+  it('R21.3 the layout takes the card size, hook positions, peg holes and lacing holes from the profile', () => {
+    const base = demoProfile();
+    const profiles = [
+      base,
+      { ...base, cardWidthMm: base.cardWidthMm + 10, cardHeightMm: base.cardHeightMm + 4 },
+      ...fc.sample(cardProfileArbitrary, { seed: SEED, numRuns: 5 }),
+    ];
+    for (const profile of profiles) {
+      const grid = Array.from({ length: profile.hookRows }, () => Array<boolean>(profile.hookColumns).fill(false));
+      const result = printableLayout(profile, grid);
+      expect(result.ok).toBe(true);
+      if (!result.ok) continue;
+      const layout = result.value;
+      expect(layout.widthMm).toBe(profile.cardWidthMm);
+      expect(layout.heightMm).toBe(profile.cardHeightMm);
+      for (const mark of layout.hookMarks) {
+        expect(mark.centreMm.x).toBeCloseTo(profile.firstHoleCentreMm.x + mark.hookColumn * profile.horizontalPitchMm, 9);
+        expect(mark.centreMm.y).toBeCloseTo(profile.firstHoleCentreMm.y + mark.hookRow * profile.verticalPitchMm, 9);
+        expect(mark.diameterMm).toBe(profile.holeDiameterMm);
+      }
+      expect(layout.pegHoles.map((peg) => peg.centreMm)).toEqual(profile.pegHoles.map((peg) => peg.positionMm));
+      expect(layout.pegHoles.map((peg) => peg.diameterMm)).toEqual(profile.pegHoles.map((peg) => peg.diameterMm));
+      expect(layout.lacingHoles.map((hole) => hole.centreMm)).toEqual(profile.lacingHoles.positionsMm);
+      expect(layout.lacingHoles.map((hole) => hole.diameterMm)).toEqual(
+        profile.lacingHoles.positionsMm.map(() => profile.lacingHoles.diameterMm),
+      );
+    }
+  });
+
   it('a demo grid gives one mark per hook position with the grid value', () => {
     const profile = demoProfile();
     const grid = Array.from({ length: profile.hookRows }, (_, row) =>

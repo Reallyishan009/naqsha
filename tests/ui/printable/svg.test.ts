@@ -1,6 +1,7 @@
 import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { printableLayout } from '../../../src/ui/printable/layout.ts';
+import { HOLE_RGB, RING_RGB, STOCK_RGB, rgbHex } from '../../../src/ui/printable/style.ts';
 import { printableSvg } from '../../../src/ui/printable/svg.ts';
 import { cardGridArbitrary, cardProfileArbitrary, demoProfile } from '../../support/profiles.ts';
 
@@ -11,7 +12,27 @@ function svgFor(profile: ReturnType<typeof demoProfile>, grid: boolean[][]): str
 }
 
 describe('printable SVG', () => {
-  it('the demo card is 60 mm by 45 mm with no text or metadata', () => {
+  it('R21.4 the SVG draws manila stock, a filled round mark per punched hook, a ring per unpunched hook, and the peg and lacing holes', () => {
+    const profile = demoProfile();
+    const grid = Array.from({ length: profile.hookRows }, (_, row) =>
+      Array.from({ length: profile.hookColumns }, (_, column) => (row + column) % 2 === 0),
+    );
+    const punchedCount = grid.flat().filter(Boolean).length;
+    const total = profile.hookRows * profile.hookColumns;
+    const svg = svgFor(profile, grid);
+    expect(svg).toContain(`<rect x="0" y="0" width="60" height="45" fill="${rgbHex(STOCK_RGB)}"/>`);
+    const circles = [...svg.matchAll(/<circle [^>]*\/>/g)].map((match) => match[0]);
+    const rings = circles.filter((circle) => circle.includes('fill="none"'));
+    const filled = circles.filter((circle) => !circle.includes('fill="none"'));
+    expect(rings).toHaveLength(total - punchedCount);
+    expect(filled).toHaveLength(punchedCount + profile.pegHoles.length + profile.lacingHoles.positionsMm.length);
+    for (const circle of filled) expect(circle).toContain(`fill="${rgbHex(HOLE_RGB)}"`);
+    for (const circle of rings) expect(circle).toContain(`stroke="${rgbHex(RING_RGB)}"`);
+    expect(rgbHex(RING_RGB)).not.toBe(rgbHex(HOLE_RGB));
+    expect(rgbHex(STOCK_RGB)).not.toBe(rgbHex(HOLE_RGB));
+  });
+
+  it('R21.7 the demo card is 60 mm by 45 mm with no text or metadata', () => {
     const profile = demoProfile();
     const grid = Array.from({ length: profile.hookRows }, () => Array<boolean>(profile.hookColumns).fill(true));
     const svg = svgFor(profile, grid);

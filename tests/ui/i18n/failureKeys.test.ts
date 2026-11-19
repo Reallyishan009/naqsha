@@ -119,7 +119,7 @@ describe('failure messages (Phase 1 failure types)', () => {
     );
   });
 
-  it('R9.2 to R9.6 read failure texts state the cause and the next step in both languages', () => {
+  it('R9.2 R9.3 R9.4 R9.5 R9.6 read failure texts state the cause and the next step in both languages', () => {
     const text = (reason: CardReadFailure['reason'], hi: boolean): string => {
       const key = `error.read.${reason}`;
       return hi ? HI[key]!.text : EN[key]!;

@@ -39,6 +39,12 @@ const failureArbitrary: fc.Arbitrary<SimFailure> = fc.oneof(
   fc.integer().map((pickCount): SimFailure => ({ reason: 'pick-out-of-range', pick: -1, pickCount })),
 );
 
+const CHOICES_FOR_VIEWPORT: ClothChoices = {
+  warpColour: COLOURS[1]!.hex,
+  weftColour: COLOURS[3]!.hex,
+  zari: { on: false },
+  repeat: 1,
+};
 function readyCloth(profile: CardProfile, choices: ClothChoices): ReadyCloth {
   const cloth = prepareCloth(profile, []);
   const settings = parseRenderSettings(settingsFromChoices(choices, 300, 300));
@@ -137,6 +143,32 @@ describe('cloth properties', () => {
     );
   });
 
+  it('R3.7 the canvas takes the available size when it is within 1 to 4096, and is clamped into that range otherwise', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1, max: 4096 }),
+        fc.integer({ min: 1, max: 4096 }),
+        sizeArbitrary,
+        sizeArbitrary,
+        fc.double({ min: 0, max: 0.99, noNaN: true }),
+        (width, height, anyWidth, anyHeight, fraction) => {
+          // An available size inside the limits is used as it is (a fraction of a pixel is dropped).
+          expect(viewportFor(width, height)).toEqual({ width, height });
+          expect(viewportFor(width + fraction, height + fraction).width).toBe(Math.min(4096, width));
+          // Any other size is brought inside the limits that parseRenderSettings accepts.
+          const viewport = viewportFor(anyWidth, anyHeight);
+          const parsed = parseRenderSettings({ ...(settingsFromChoices(CHOICES_FOR_VIEWPORT, 300, 300) as object), viewport });
+          expect(parsed.ok).toBe(true);
+          for (const side of [viewport.width, viewport.height]) {
+            expect(Number.isInteger(side)).toBe(true);
+            expect(side).toBeGreaterThanOrEqual(1);
+            expect(side).toBeLessThanOrEqual(4096);
+          }
+        },
+      ),
+      { seed: SEED, numRuns: NUM_RUNS },
+    );
+  });
   it('R3.2 the demo profile prepares with every colour pair', () => {
     const profile = demoProfile();
     for (const warp of COLOURS) {

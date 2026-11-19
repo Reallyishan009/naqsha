@@ -38,6 +38,40 @@ describe('weave screen', () => {
     expect(HI['weave.zari']).toBeDefined();
   });
 
+  it('R2.8 the speed control offers slow, normal and fast in both languages', () => {
+    for (const language of LANGUAGES) {
+      const t = translator(DICTIONARIES, language);
+      const html = render({ ...initialAppState, language });
+      const field = new RegExp(`<span>${t('weave.speed')}</span><select[^>]*>(.*?)</select>`).exec(html);
+      expect(field, `${language} speed control`).not.toBeNull();
+      const options = [...field![1]!.matchAll(/<option[^>]*>(.*?)<\/option>/g)].map((match) => match[1]);
+      expect(options).toEqual([t('weave.speed.slow'), t('weave.speed.normal'), t('weave.speed.fast')]);
+      expect(new Set(options).size).toBe(3);
+    }
+  });
+
+  it('R3.8 the screen has only the controls of Requirements 2 and 3: no number entry, no thread size, no float highlight', () => {
+    for (const language of LANGUAGES) {
+      const t = translator(DICTIONARIES, language);
+      const whole = render({ ...initialAppState, language, profile: { status: 'ready', profile: demoProfile() } });
+      // The Try it section has its own print controls (R21.2); R3.8 is about the cloth controls above it.
+      const html = whole.slice(0, whole.indexOf('<section aria-labelledby="tryit-title"'));
+      expect(html.length).toBeGreaterThan(0);
+      expect(html).not.toContain('type="number"');
+      expect(html).not.toContain('type="text"');
+      expect(html.match(/<input/g)).toHaveLength(1); // the scrubber
+      expect(html).toContain('type="range"');
+      // Speed, warp colour, weft colour, zari, repeat.
+      expect(html.match(/<select/g)).toHaveLength(5);
+      const labels = [...html.matchAll(/<label[^>]*><span>(.*?)<\/span>/g)].map((match) => match[1]);
+      expect(labels).toEqual(
+        ['weave.scrubber', 'weave.speed', 'weave.warpColour', 'weave.weftColour', 'weave.zari', 'weave.repeat'].map((key) => t(key)),
+      );
+    }
+    const en = render({ ...initialAppState, language: 'en' });
+    expect(en).not.toMatch(/picks per second|thread size|float|highlight/i);
+  });
+
   it('R4.1 Try it offers three Sample_Designs, enabled once the profile is ready', () => {
     const loading = render({ ...initialAppState, language: 'en' });
     expect((loading.match(/<button[^>]*disabled[^>]*>(Diamond|Border|Floral)</g) ?? []).length).toBe(3);

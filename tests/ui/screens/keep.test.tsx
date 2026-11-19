@@ -77,6 +77,68 @@ describe('keep screen', () => {
     );
   });
 
+  it('R5.1 the export control is labelled with its loom purpose in both languages', () => {
+    // The requirement quotes "For electronic loom (BMP)" as an example; the shipped label is the English and Hindi text
+    // below. This test checks the loom purpose, not the quoted wording.
+    expect(translator(DICTIONARIES, 'en')('keep.export.button')).toMatch(/loom/i);
+    expect(translator(DICTIONARIES, 'hi')('keep.export.button')).toContain('करघे');
+    for (const language of LANGUAGES) {
+      const t = translator(DICTIONARIES, language);
+      const html = view(language);
+      expect(html).toMatch(new RegExp(`<button type="button"[^>]*>${escape(t('keep.export.button'))}</button>`));
+    }
+  });
+
+  it('R5.4 pick order and end order are each described by one short line per choice', () => {
+    const groups = [
+      { name: 'pickOrder', values: ['first-at-top', 'first-at-bottom'] },
+      { name: 'endOrder', values: ['first-at-left', 'first-at-right'] },
+    ];
+    for (const language of LANGUAGES) {
+      const t = translator(DICTIONARIES, language);
+      const html = view(language);
+      for (const group of groups) {
+        expect(html).toContain(`<legend`);
+        expect(html).toContain(escape(t(`keep.export.${group.name}`)));
+        for (const value of group.values) {
+          const text = t(`keep.export.${group.name}.${value}`);
+          expect(text, `${language} ${group.name} ${value}`).not.toMatch(/\n/);
+          expect(text.length).toBeLessThanOrEqual(40);
+          const choice = new RegExp(
+            `<label[^>]*><input type="radio"[^>]*name="keep-option-${group.name}"[^>]*value="${value}"[^>]*/><span>${escape(text)}</span></label>`,
+          );
+          expect(html, `${language} ${group.name} ${value}`).toMatch(choice);
+        }
+      }
+    }
+  });
+
+  it('R15.7 each Keep failure message says what went wrong and what the user can do next, in a visible alert', () => {
+    const expected: Record<string, RegExp> = {
+      'error.export.invalid-profile': /not valid.*Check the profile file and try again\./,
+      'error.export.invalid-card': /damaged.*Scan those cards again and try again\./,
+      'error.export.empty-pattern': /no design.*Pick a sample in Try it or scan a card first\./,
+      'error.export.invalid-options': /not allowed.*Change the choice and try again\./,
+      'error.archive.not-found': /not found.*Check the list\./,
+      'error.archive.storage-unavailable': /cannot be reached.*Check that the browser allows site storage and try again\./,
+      'error.archive.write-failed': /could not be saved.*Try again\./,
+    };
+    for (const [key, pattern] of Object.entries(expected)) {
+      for (const language of LANGUAGES) {
+        const t = translator(DICTIONARIES, language);
+        const text = t(key);
+        if (language === 'en') expect(text, key).toMatch(pattern);
+        else {
+          expect(text, key).toMatch(/\p{Script=Devanagari}/u);
+          expect(text.split(/[।.]/).filter((sentence) => sentence.trim() !== '').length, `${key} (hi) has a cause and a next step`).toBeGreaterThanOrEqual(2);
+        }
+        const html = view(language, { failureKey: key });
+        expect(html, `${language} ${key}`).toContain(`<p role="alert" class="`);
+        expect(html).toContain(escape(text));
+      }
+    }
+  });
+
   it('R5.2 R5.9 the export options, the loom button and the untested sentence are shown', () => {
     for (const language of LANGUAGES) {
       const t = translator(DICTIONARIES, language);
@@ -109,7 +171,7 @@ describe('keep screen', () => {
     ]);
   });
 
-  it('R22.1 R22.4 R22.6 R22.7 the notice shows next to both the export and the save control, and neither is disabled', () => {
+  it('R22.1 R22.2 R22.4 R22.6 R22.7 the notice shows next to both the export and the save control, and neither is disabled', () => {
     const t = translator(DICTIONARIES, 'en');
     const html = view('en');
     const sentence = escape(t('notice.unverifiedProfile'));
@@ -219,6 +281,24 @@ describe('keep screen', () => {
 describe('keep screen actions over the fake archive store', () => {
   const profile = demoProfile();
   const pattern = generateSample(profile, 'border');
+
+  it('R7.1 the six fields are shown, none is required, and a design with every field empty saves', async () => {
+    for (const language of LANGUAGES) {
+      const t = translator(DICTIONARIES, language);
+      const html = view(language);
+      for (const field of ['name', 'naqshband', 'weaver', 'place', 'date', 'notes']) {
+        expect(html, `${language} ${field}`).toContain(`<span>${escape(t(`keep.field.${field}`))}</span>`);
+      }
+      expect(html.match(/<input type="text"/g)).toHaveLength(5);
+      expect(html.match(/<textarea/g)).toHaveLength(1);
+      expect(html).not.toMatch(/\brequired\b|aria-required/);
+      expect(html).toMatch(new RegExp(`<button(?![^>]*disabled)[^>]*>${escape(t('keep.save.button'))}</button>`));
+    }
+    const { deps, store } = fakeDeps();
+    const saved = await runSave(profile, pattern, initialKeepForm, 'untitled', deps);
+    expect(saved).toMatchObject({ ok: true });
+    expect(store.snapshot().records[0]?.metadata).toEqual(EMPTY_METADATA);
+  });
 
   it('R7.3 save stores the pattern and metadata and the label is the trimmed name or untitled', async () => {
     const { deps, store } = fakeDeps();
