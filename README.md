@@ -2,7 +2,7 @@
 
 # Naqsha
 
-A browser app that reads a Jacquard loom punch card through a camera, rebuilds the weave pattern, and (coming) simulates the cloth and exports a bitmap for electronic Jacquard looms.
+A browser app that reads a Jacquard loom punch card through a camera, rebuilds the weave pattern, shows how the cloth will weave, and exports a bitmap for electronic Jacquard looms. It runs at https://naqsha-ashen.vercel.app/ and keeps saved designs in the browser (IndexedDB). It has no server.
 
 The GIFs below were captured from the built site (`npm run preview`) with the demo card profile, whose values are illustrative and unverified. The Scan GIF reads a generated card image, not a camera photo.
 
@@ -14,7 +14,7 @@ The GIFs below were captured from the built site (`npm run preview`) with the de
 
 Public URL: https://naqsha-ashen.vercel.app/ (opens with no login; deployed by hand on Vercel, see "Deploy to Vercel").
 
-**Status:** the app is built and deployed at https://naqsha-ashen.vercel.app/ . Weave has a Try it button and printable sample cards. Keep exports a bitmap and saves designs in the IndexedDB archive. Scan reads a card from an uploaded photo, lets you tap to correct a hole, reads cards in a batch, and uses the live camera on HTTPS. Not verified: the Hindi text has not been reviewed (see `docs/HINDI_REVIEW.md`), the live camera has not been tested on real devices, and the card profile values are illustrative and unverified.
+**Status:** the app is built and deployed at https://naqsha-ashen.vercel.app/ , with three screens (Weave, Scan, Keep). Weave has a Try it button and printable sample cards. Keep exports a bitmap and saves designs in the IndexedDB archive. Scan reads a card from an uploaded photo, lets you tap to correct a hole, reads cards in a batch, and uses the live camera on HTTPS. Not verified: the Hindi text has not been reviewed (see `docs/HINDI_REVIEW.md`), the live camera has not been tested on real devices, and the card profile values are illustrative and unverified.
 
 ## Try it in 60 seconds
 
@@ -32,12 +32,13 @@ To run it yourself, see "Run it locally". Developer-only photo trial tools are l
 |---|---|
 | Read one card from an image into a grid of punched and unpunched hook positions | Built (`src/reader`), synthetic images only |
 | Convert a card grid to a list of ends and back, through the profile's end order | Built (`src/codec`) |
-| Camera screen | Coming |
-| Simulate the cloth pick by pick | Built (`src/simulator`): renders the cloth pick by pick on a canvas from tested pixel code; dev preview page only, no app screen yet |
-| Export a bitmap for an electronic Jacquard loom | Built (`src/exporter`): uncompressed BMP, 1-bit and 8-bit, one pixel per end and one row per pick; reads its own files back; no app screen yet |
-| Archive scanned card sets in the browser | Coming |
+| Scan a card from an uploaded photo or the live camera, correct a hole by tap, read cards in a batch | Built (`src/ui/screens/scan`). The live camera needs HTTPS and has not been tested on real devices |
+| Simulate the cloth pick by pick | Built (`src/simulator`), shown on the Weave screen with play, pause, step, scrub, speed and cloth colours |
+| Export a bitmap for an electronic Jacquard loom | Built (`src/exporter`), offered on the Keep screen: uncompressed BMP, 1-bit and 8-bit, one pixel per end and one row per pick; reads its own files back. No loom controller has been tested with it |
+| Archive designs in the browser | Built (`src/archive`), on the Keep screen: save, list, reopen and delete in IndexedDB. Tested with a fake store in Node; not yet checked in a real browser |
+| Hindi and English text | Built. The Hindi text has not been reviewed by a Hindi speaker |
 
-The card layout is a profile loaded at runtime. The only profile, `public/profiles/demo-12x16.json`, holds ILLUSTRATIVE, UNVERIFIED values for a small demo card (12 hook rows x 16 hook columns). No real card has been measured yet.
+The card layout is a profile loaded at runtime. The only profile, `public/profiles/demo-12x16.json`, holds ILLUSTRATIVE, UNVERIFIED values for a small demo card (12 hook rows x 16 hook columns). No real card has been measured yet, so the profile is unverified.
 
 ### Reader failure reasons
 
@@ -91,7 +92,7 @@ On sparse or small cards, the peg-pair check against the layout can reject a goo
 
 ## Why it matters
 
-**Coming,** with the weaver's own words once the interview is done. In short: many weave designs exist only as physical punch cards, and those cards wear out.
+Many weave designs exist only as physical punch cards, and those cards wear out. Naqsha reads a card with a camera or a photo so that its design can be checked, kept and sent to an electronic loom. No weaver or card maker has tested it yet.
 
 ## How it was built with Kiro
 
@@ -104,13 +105,13 @@ Planning was done with Claude before any Kiro session. The code, specs and tests
 | Property-based tests | fast-check properties named after the requirement they check | Done |
 | Hooks | Related tests and typecheck on save; fixture regeneration with a PNG drift check | Created, not yet seen firing in the IDE |
 | MCP | Context7 documentation server | Configured |
-| Custom MCP server, custom agent | | Coming |
+| Custom MCP server, custom agent | Not used | Not built |
 
 The day-by-day record, including what failed, is in `docs/BUILD_LOG.md`.
 
 ## Architecture
 
-**Coming** as a diagram. Module layout and dependency rules are in `.kiro/steering/structure.md`.
+The modules are `codec`, `reader`, `simulator`, `exporter`, `archive` and `ui` under `src/`. `ui` may import the others; `reader`, `simulator` and `exporter` import only `codec`; `codec` imports nothing. The full rules are in `.kiro/steering/structure.md`.
 
 ## Run it locally
 
@@ -166,7 +167,7 @@ Naqsha is not the first project to read Jacquard punch cards with a camera. It b
 - *Visual system for punched card reading in textile industry*, 2018. A camera-based system for reading the punched cards of mechanical Jacquard looms. [doi:10.1080/00051144.2018.1456097](https://www.tandfonline.com/doi/full/10.1080/00051144.2018.1456097)
 - *Digitization and recognition of Jacquard cards for textile design preservation*, Multimedia Tools and Applications, 2025. A multi-step computer vision method that extracts design information from photos of Jacquard cards. [doi:10.1007/s11042-025-20917-9](https://link.springer.com/article/10.1007/s11042-025-20917-9). Its dataset is published at [ELiRF/telers](https://github.com/ELiRF/telers).
 
-Other credits: coming.
+No other credits are listed.
 
 ## License
 
