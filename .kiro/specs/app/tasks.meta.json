@@ -592,6 +592,66 @@
         "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
         "timestamp": 1795116491329
       }
+    ],
+    "7.1 `check:browser` step 11 flake": [
+      {
+        "executionId": "58c79c6f-e7c3-4fc0-863f-c6444754875d",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795116755912
+      },
+      {
+        "executionId": "ad4cbd61-b7c0-4999-aa35-ff20f095f5f0",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795118319642
+      },
+      {
+        "executionId": "ad4cbd61-b7c0-4999-aa35-ff20f095f5f0",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795119747767
+      }
+    ],
+    "7.2 Hooks evidence": [
+      {
+        "executionId": "ad4cbd61-b7c0-4999-aa35-ff20f095f5f0",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795119752579
+      },
+      {
+        "executionId": "ad4cbd61-b7c0-4999-aa35-ff20f095f5f0",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795119917119
+      }
+    ],
+    "7.3 Manual prerelease steering and offline step": [
+      {
+        "executionId": "ad4cbd61-b7c0-4999-aa35-ff20f095f5f0",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795119922636
+      },
+      {
+        "executionId": "ad4cbd61-b7c0-4999-aa35-ff20f095f5f0",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795120376585
+      }
+    ],
+    "7.4 Workspace custom agent `weave-reviewer` and a real review": [
+      {
+        "executionId": "ad4cbd61-b7c0-4999-aa35-ff20f095f5f0",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795120382744
+      },
+      {
+        "executionId": "ad4cbd61-b7c0-4999-aa35-ff20f095f5f0",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795120841922
+      }
+    ],
+    "7.5 Update `docs/KIRO_USAGE.md`, commit and push": [
+      {
+        "executionId": "ad4cbd61-b7c0-4999-aa35-ff20f095f5f0",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795120847456
+      }
     ]
   }
 }

@@ -10,7 +10,7 @@ The planning files named in that entry (`PLAN.md`, `KIRO_PROMPTS.md`, `RESEARCH.
 
 ## 1. Specs
 
-Four specs exist in `.kiro/specs/`. Each has `requirements.md`, `design.md` and `tasks.md`. Each also has a `tasks.meta.json` (execution records written by Kiro; only the `app` one is tracked in git).
+Four specs exist in `.kiro/specs/`. Each has `requirements.md`, `design.md` and `tasks.md`. Each also has a `tasks.meta.json` (execution records written by Kiro; only the `app` one is tracked in git, the other three are untracked).
 
 | Spec | Requirements | Design properties | Extra files |
 |---|---|---|---|
@@ -34,7 +34,7 @@ This chain is also the decoy peg pair bug in section 5.
 
 ## 2. Steering docs
 
-Six files in `.kiro/steering/`. Five are always loaded; `card-geometry.md` has front matter `inclusion: fileMatch` with `fileMatchPattern: "src/{codec,reader}/**"`.
+Seven files in `.kiro/steering/`. Five are always loaded; `card-geometry.md` has front matter `inclusion: fileMatch` with `fileMatchPattern: "src/{codec,reader}/**"`; `prerelease-check.md` has `inclusion: manual` (see "Steering command" below).
 
 | File | What it constrains |
 |---|---|
@@ -44,6 +44,19 @@ Six files in `.kiro/steering/`. Five are always loaded; `card-geometry.md` has f
 | `weaving-glossary.md` | Domain terms to use in identifiers and comments (`pick`, `end`, `hook`, `punched hole`, `float`, `zari` and so on). |
 | `card-geometry.md` | One card is one pick; a punched hole lifts the hook; the card layout is a runtime profile and never hard-coded in `src/codec` or `src/reader`. Its layout table is marked ILLUSTRATIVE, UNVERIFIED. |
 | `testing.md` | Every pure function in four modules needs a fast-check property; properties are named after the requirement they check; fixtures use fixed seeds; and "Never weaken a property silently". |
+
+### Steering command: `prerelease-check.md`
+
+`.kiro/steering/prerelease-check.md` has front matter `inclusion: manual`. Source: https://kiro.dev/docs/steering/, which says manual steering files are included with `#steering-file-name` in chat and also appear as slash commands (type `/`). It was added in task 7.3 (`7e8de62`). It tells the agent to run four items in order and report PASS or FAIL with the real output of each, never to weaken a check, and never to push, tag or publish:
+
+1. `npm run check:all` (tests, typecheck, build, bundle size, `.kiro` not git-ignored, `LICENSE`, no secrets in tracked files, no "coming" text in the README).
+2. `npm run check:browser` (headless Chrome, 13 steps, step 13 is "works with the network off").
+3. A clean clone in a temporary directory: `npm ci`, `npm run build`, `npm run test:run`.
+4. The newest `docs/BUILD_LOG.md` date against the latest commit dates.
+
+**Not verified:** the command has not been run end to end in the IDE. Its four items were run separately as npm scripts or by hand, not through the steering file. The label the `/` menu shows for it (file name or title) is unverified; the Kiro docs do not say, and the file claims neither. That the `/` menu lists it at all is also unverified.
+
+**`KIRO_PROMPTS.md` is not in the repository** (searched with `git ls-files` and the filesystem), so prompts 38 and 39 could not be read. The custom agent (prompt 38) and this steering command (prompt 39) follow the user's own descriptions of them.
 
 **Which one helped most: this is a judgement.** BUILD_LOG never says "steering rule X caused Y", so the repository cannot prove a ranking. The closest evidence points to `testing.md`:
 
@@ -61,9 +74,27 @@ Two hook files in `.kiro/hooks/`, each with a script in `.kiro/hooks/bin/`. Both
 | `test-on-save.json` ("Related tests and typecheck on save") | `PostFileSave` | `src` or `scripts` `.ts` or `.tsx` files | command: `node .kiro/hooks/bin/related-tests.mjs` (runs the Vitest files related to the saved file, then `tsc --noEmit`) | 10 s |
 | `fixtures-on-profile-change.json` ("Regenerate fixtures on profile or generator change") | `PostFileSave` | `public/profiles/*.json` or `scripts/make_fixtures.ts` | command: `sh .kiro/hooks/bin/check-fixtures.sh` (regenerates `tests/fixtures/`, exits 1 if any PNG byte changed) | 60 s |
 
-**Did they fire? No evidence it fired, for either hook.** BUILD_LOG 2026-11-18 says "shell-command hooks (created, not yet seen firing in the IDE)", and `README.md` says "Created, not yet seen firing in the IDE". The 2026-11-20 entry lists "hooks" under features used for app Phase 1 but records no hook output. No later entry or commit message mentions a hook result. `related-tests.mjs` also states that the field holding the saved file path in the hook's stdin is undocumented, so it falls back to `git status`; that code path was written without having seen a real event.
+Task 7.2 (`f8a7be8`) changed both commands. Each now runs its script, then `node scripts/log_hook.ts "<hook name>" "exit <status>"`, then exits with the script's own status, so the hook result is unchanged. `scripts/log_hook.ts` appends one line (ISO timestamp, tab, hook name, tab, result) to `logs/hooks.log`. `logs/` is git-ignored (`.gitignore` line 11). `npm run check:hooks` (`scripts/check_hooks.ts`, read-only) prints the last 20 log lines and, per hook, how many times it fired and when last.
 
-A related fact: after the R2.11 change the log records that `npm run fixtures` regenerated `tests/fixtures` byte-identically. That is a manual run of the same generator, not a hook firing.
+**Did they fire? Partly, and not proven.** Real output of `npm run check:hooks`, run while writing this file:
+
+```
+last 3 line(s) of logs/hooks.log:
+  2026-11-19T20:26:39.915Z	Related tests and typecheck on save	exit 0
+  2026-11-19T20:26:50.811Z	Related tests and typecheck on save	exit 0
+  2026-11-19T20:27:18.108Z	Related tests and typecheck on save	exit 0
+hooks:
+  Regenerate fixtures on profile or generator change: never fired (no log line)
+  Related tests and typecheck on save: fired 3 times, last at 2026-11-19T20:27:18.108Z
+```
+
+- `Regenerate fixtures on profile or generator change`: **never fired** (no log line). Nobody has saved `public/profiles/*.json` or `scripts/make_fixtures.ts` in the IDE since the logging was added, as far as the log shows.
+- `Related tests and typecheck on save`: three lines, all `exit 0`, all within about 40 seconds of each other. They were written after the task 7.2 entry, which recorded an empty log, and the timestamps fall in the time of task 7.3. They are consistent with the IDE firing the hook on three saves of files under `scripts/` or `src/`. **Unverified:** I cannot tell from the log whether the IDE or a person running the command by hand wrote them. I wrote none by hand.
+- **Timeout risk.** `related-tests.mjs` runs Vitest related tests and `tsc --noEmit`, and the hook's timeout is 10 s. A line is written only if the command reaches its end; if Kiro kills it at 10 s, no line is written. So a missing line for this hook may mean a timeout, not a hook that did not fire. I did not time the script or change the timeout. The three lines that exist show runs that did finish.
+- The field in the hook's stdin that holds the saved file path is undocumented, so `related-tests.mjs` falls back to `git status`. Whether the fallback was used in those three runs is not recorded.
+- Task 7.2 listed what is not verified in the IDE: the label of each entry in the Agent Hooks panel and whether it shows a fired indicator. Still unverified.
+
+Tests for the log format and the report are in `tests/scripts/hooksLog.test.ts` (examples and fast-check properties). `scripts/log_hook.ts` itself is not run in a test, because it writes to `logs/hooks.log`.
 
 ## 4. MCP
 
@@ -101,6 +132,30 @@ Side effects the log says needed the user's confirmation: Property 11 (R2.8) now
 - **CardThumb R15.6 defect (app).** Found by the requirement-ID coverage task 3.9, not by a property from the design: the task wrote a failing test for R15.6 and stopped. `CardThumb` drew only a rectangle and one disc per punched hook, with no Card_Profile input. Fixed in `f352bf3`, with `tests/ui/screens/cardDrawing.test.tsx` (an example and a property). The same commit raised Property 38's `numRuns` from 20 to 100. Source: Log 2026-11-21 (task 3.9 and 4.5).
 - **Archive Property 18** (test bug, mine): see section 7.
 
+### 5a. Property and browser checks (tasks 7.1 and 7.3)
+
+**`check:browser` step 11 flake (task 7.1, `b58a01c`).** Step 11 failed once with `the pick counter did not reach 36 of 36 within 60000 ms (values seen: none)`. It was **not reproduced**: 10 runs of the unchanged check, 10 runs of the changed check, 3 CPU-throttled runs (4, 8, 16) and 6 parallel throttled runs all passed 12 of 12 (the 7.1 log entry). The likely cause, from reading the code and not from a reproduced failure: the old wait only recorded values once it had read a pick below the total, so if one read landed on the one-render `Pick 1 of 36` and the next was already `Pick 36 of 36`, the wait could never finish. The fix is in the check, not the app: the wait now ends as soon as a read shows the last pick (`stepPickWatch` in `scripts/checks/pickWatch.ts`). Timeouts and assertions are unchanged, and the failure message now carries more state. A hidden or background tab was not tried. The app shows `Pick 1 of 36` for one render before it seeks to the end (observed with a `MutationObserver`); I did not judge whether that flicker needs its own fix, and nothing was changed in the app.
+
+**`check:browser` step 13, network off (task 7.3, `7e8de62`). Finding, open, not fixed.** One real run: 12 passed, 1 failed.
+- A (offline, then reload): fails. The site has no service worker, so a reload with no network lands on Chrome's error page (`ERR_INTERNET_DISCONNECTED`); the other four A checks did not run.
+- B (online load, then offline, no reload): Try it play to 36 of 36 and the 1-bit BMP export pass. The Scan read fails with a timeout, because the Scan screen is a lazy chunk (R16.10) that was not fetched before the network went off. A Scan read after the chunk had been loaded once was not tested.
+
+This is a tension between R13.1 and R16.10 plus a missing service worker. Nothing was changed. The options named in the 7.3 log are a service worker that caches `dist/`, prefetching the Scan chunk after first load, or amending R13.1.
+
+### 5b. Custom agent: `weave-reviewer` (task 7.4, `3f62508`)
+
+`.kiro/agents/weave-reviewer.md`, in the Markdown format with YAML front matter that https://kiro.dev/docs/custom-agents/configuration-reference/ describes (the 7.4 log says it fetched that page). Tools `read` and `shell`, shell limited to `git diff`, `git log`, `git show`, `git status`, `grep` and `rg`, writes denied, resources the glossary, `card-geometry.md` and `testing.md`. It checks three things in a diff: weaving terms (A), hard-coded card layout values (B), and exported functions with no fast-check property that names them (C).
+
+**The agent itself was NOT run.** A sub-agent cannot start a custom agent, and the session could not open the Kiro chat to select it. Its checklist was executed by hand by a sub-agent (with `git`, `grep` and throwaway scripts in `/tmp`, not committed) on `a9830f0..HEAD` over `src`, `scripts` and `tests`: 136 files, 17,215 added lines. Whether the agent loads and follows its own file in the IDE is unverified. The review is in `docs/WEAVE_REVIEW.md`. The counts there:
+
+| Check | Real | Acceptable | False positive |
+|---|---|---|---|
+| A. Weaving terms (242 lines) | 7 | 155 | 80 |
+| B. Hard-coded layout (23 entries) | 7 | 13 | 3 |
+| C. Exported functions without a property naming them | 1 of 33 (`downloadBmp`) | | |
+
+C: 32 of 33 functions are named in a test that calls `fc.assert`. `downloadBmp` is not, and `tests/structure/propertyNames.test.ts` hides this because `downloadBmp` is in its `EXCLUDED_FROM_COVERAGE` list. The same list also holds `paintToCanvas` and `browserScheduler`, which now have property tests. The classification into real, acceptable and false positive is the sub-agent's judgement, and the searches only cover the listed words and numbers. **None of the real findings were fixed.**
+
 ## 6. Vibe sessions
 
 No evidence in the repository. BUILD_LOG lists vibe only as an option in its entry template, and no entry names a vibe session. Every recorded session was run from a spec or an ad hoc request described in the log.
@@ -119,14 +174,18 @@ All from `docs/BUILD_LOG.md` unless a hash is given.
 - **Shell limitation:** the shell refused heredocs containing "npm run" text, so some files were written in pieces.
 - **task_update tool failures:** no evidence in the repository. The build log does not record any.
 - **Fixtures and real photos.** All reader tests and fixtures are generated images (`scripts/make_fixtures.ts`, seeded). No real photograph of a card has been read. `scripts/photo-trial/` is a dev-only printable card and `scripts/read-photo.html`; no result of a real-photo trial is recorded. The `ambiguous-orientation`, `resolution-too-low` and `card-outside-image` failures were checked only on synthetic images.
-- **Hooks never seen firing** (section 3). **Context7 used once, with no detail** (section 4).
+- **Hooks:** the fixtures hook has never been seen firing; the related-tests hook has three log lines of unproven origin and a 10 s timeout that may kill it (section 3). **Context7 used once, with no detail** (section 4).
+- **Step 11 flake:** one failure, never reproduced; the cause is a reading, not a proof (section 5a).
+- **Offline:** reload with no network fails and the first Scan open offline fails; no service worker; open and not fixed (section 5a).
+- **Custom agent `weave-reviewer` and the `prerelease-check` command were never run in the IDE** (sections 2 and 5b). The review's 7 + 7 + 1 real findings are unfixed.
+- **Missing `KIRO_PROMPTS.md`:** prompts 38 and 39 could not be read, so the agent and command follow the user's descriptions.
 - **Dropped or left out:** Hindi voice prompts (R19) and the Night loom theme (R20.5) were dropped by the user; hole pop (R20.1) and thread-drawn progress (R20.3) were left out in the trim. The Night tokens exist but nothing switches to them.
 - **Open accessibility gap:** after the rise-from-darkness skip control is used, it disappears and keyboard focus falls back to the page. Not fixed; the test setup has no DOM.
 - **A requirement-ID mismatch:** four existing test titles carry IDs that do not match the criterion of that number (Log, task 3.9). Left unchanged.
 - **README out of date** at the time of the task 3.9 and 4.5 entries; the later commit `1d24fbc` ("Update README status and quick start to match the built app") addresses it. I did not check the current README against the app.
 
-**Unverified, per the log:** real IndexedDB in a browser (tests use a hand-written fake); the live camera on a real phone (fake camera only); printing at 100% scale; a camera photo of a printed card; any loom controller (no exported BMP has been tried); on-device timings (all numbers are from a laptop, Node v24.5.0, Apple M1); the real card dimensions (the demo profile is illustrative); all 178 Hindi strings (`reviewed: false`); the rise-from-darkness look and reduced-motion behaviour; that the README GIFs play on GitHub.
+**Unverified, per the log:** real IndexedDB in a browser (tests use a hand-written fake); the live camera on a real phone (fake camera only); printing at 100% scale; a camera photo of a printed card; that the agent and the steering command work in the IDE; any loom controller (no exported BMP has been tried); on-device timings (all numbers are from a laptop, Node v24.5.0, Apple M1); the real card dimensions (the demo profile is illustrative); all 178 Hindi strings (`reviewed: false`); the rise-from-darkness look and reduced-motion behaviour; that the README GIFs play on GitHub.
 
 ## Checks run for this file
 
-`npm run test:run` (77 files, 589 tests, passing), `npm run typecheck`, `npm run build` and `npm run check-bundle` (entry chunk 93,124 bytes gzipped, limit 204,800) all passed before this file was committed.
+`npm run test:run` (91 files, 730 tests), `npm run typecheck`, `npm run build` and `npm run check-bundle` (entry chunk 93,203 bytes gzipped, limit 204,800) all passed, and `npm run check:hooks` ran (output in section 3), before this file was committed.

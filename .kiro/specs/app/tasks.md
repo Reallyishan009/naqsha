@@ -10,6 +10,7 @@ The plan has exactly four phases, in this order, followed by one final documenta
 4. **Phase 4: CUT-LAST, trimmed by the user.** Live camera (Requirement 18) and one animation extra from Requirement 20: the first weave of a design rises out of darkness, with a skip control, reduced motion respected. Self-hosted fonts only if the app actually loads web fonts. Hindi voice prompts (Requirement 19), the Night loom theme and the other Requirement 20 extras (hole pop, thread-drawn progress) are not built; the first two are DROPPED BY CHOICE of the user.
 5. **Final task: `docs/KIRO_USAGE.md`**, written from the real contents of `.kiro` and `docs/BUILD_LOG.md`.
 6. **Phase 6: fixes and verification scripts**, added after task 5.1: four fixes, then `check:all`, `check:browser`, `check:deployed`, `check:manual` and `check:everything`, then a real run, commit and push.
+7. **Phase 7: flake, hooks evidence, prerelease steering, reviewer agent**, added after task 6.7: the `check:browser` step 11 flake, hook log evidence and `check:hooks`, the manual `prerelease-check` steering file with an offline step, the `weave-reviewer` agent with a real review, then the `KIRO_USAGE.md` update, commit and push.
 
 ## How to read this plan
 
@@ -418,6 +419,56 @@ The plan has exactly four phases, in this order, followed by one final documenta
     - Run `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle`. Commit the specific paths changed. Run `git remote -v`, then `git push`; the user has authorised this push. Never force push.
     - _Requirements: 16.7, 23.1_
 
+- [ ] 7. Phase 7: flake, hooks evidence, prerelease steering, reviewer agent
+  - Every task in this phase ends the same way: run `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle`, then commit the specific paths the task changed (never `git add -A` or `git add .`). Never weaken or delete a test, and never loosen a check: no narrowed arbitrary, no filter, no lower `numRuns`, no longer timeout in place of a condition, no skipped step. If a check fails, fix the cause or report the failure with its real output (for a property, the shrunk counterexample, seed and path).
+  - Say only what is true. Anything that cannot be verified from the repo, the Kiro documentation or a real run is written as "not verified". Never write fake log lines or invented results.
+  - _Requirements: 16.7, 23.1_
+
+  - [x] 7.1 `check:browser` step 11 flake
+    - Files: `scripts/check_browser.ts`, `scripts/checks/` (only the files the cause points to), `docs/BUILD_LOG.md`, and, only if the app has a race, the `src/ui` files holding it with a matching test under `tests/ui/`.
+    - Run `npm run check:browser` 10 times in a row (build `dist/` first). Record every result, per step and per run, in a table in `docs/BUILD_LOG.md`, including the exact output of each failure.
+    - Find the root cause among: a timing wait in the check, a race in the app (for example the Weave pick counter or the player after a failed Scan read, or after navigating from Scan back to Weave), or the check itself. Record the evidence for the cause.
+    - If the app has a race: fix it and add a test that fails before the fix (run it against the unfixed code first and record that it failed). Where the race concerns pure state, add a fast-check property with a fixed seed and at least 100 runs.
+    - If the check is at fault: replace the wait with a condition on observable state, not a longer timeout, and do not loosen what the step asserts.
+    - After the fix, run `npm run check:browser` 10 more times and record every result in the same way. Report any failure that remains; do not hide it.
+    - End with the common steps above. Commit.
+    - _Requirements: 2.8, 9.1, 16.7, 23.1_
+
+  - [x] 7.2 Hooks evidence
+    - Files: `.kiro/hooks/*` (both hooks), `.gitignore`, `scripts/check_hooks.ts`, `scripts/checks/hooksLog.ts`, `package.json`, `tests/scripts/hooksLog.test.ts`, `docs/BUILD_LOG.md`.
+    - Inspect `.kiro/hooks` and read both hooks, including their trigger types. Make each hook leave proof when it fires by appending one line (ISO timestamp, hook name, result) to a git-ignored log file, for example `.kiro/hooks/hooks.log` or `logs/hooks.log`. Use whatever the hook format supports: a command action that appends the line, or an instruction in the hook prompt that tells the agent to append it. Add the log path to `.gitignore` and verify with `git check-ignore -v <path>`; record the output. If the hook format cannot append a line, say so in `docs/BUILD_LOG.md` and use the closest supported mechanism.
+    - Add `npm run check:hooks` (`scripts/check_hooks.ts`): print the last lines of the log and say, per hook, whether it has ever fired. A hook is reported as fired only if the log holds a line for it; with no log file or no line it prints "never fired (no log line)". Never create or edit log lines from the script.
+    - Pure parsing parts (log line parsing, per-hook fired status, last-lines selection) are separate functions with injected input and unit tests. Property tests (fast-check, fixed seed, at least 100 runs): a formatted line parses back to the same timestamp, hook name and result; a hook is reported as fired exactly when a line with its name exists; malformed lines never cause a throw and never count as fired; the last-lines selection returns at most N lines in file order.
+    - Document in `docs/BUILD_LOG.md` how to trigger each hook in the Kiro IDE and what should appear in the Agent Hooks panel. Read the trigger types from the hook files. If the panel location or label cannot be verified from the repo, state what is known and what is not.
+    - Do not write fake log lines. Whether either hook has fired is recorded only from the real log.
+    - End with the common steps above. Commit.
+    - _Requirements: 16.7_
+
+  - [x] 7.3 Manual prerelease steering and offline step
+    - Files: `.kiro/steering/prerelease-check.md`, `scripts/check_browser.ts`, `scripts/checks/offline.ts` (or the file the existing `checks/` layout suggests), `package.json` (only if needed), `tests/scripts/offline.test.ts`, `docs/BUILD_LOG.md`.
+    - Check whether `KIRO_PROMPTS.md` exists in the repo (search the whole tree). If it exists, take the pre-release checks from its prompt 39. If it does not exist, say so in `docs/BUILD_LOG.md` and in the steering file's notes and use the user's list below.
+    - Verify the exact front matter syntax for manual inclusion from the existing files under `.kiro/steering` and from Kiro documentation (Context7 tool or web search if needed). Record the source. Write the file with `inclusion: manual` so it runs as a slash command in Kiro, and state in the log if the slash command itself was not verified in the IDE.
+    - The steering file instructs the agent to run these checks and report each as pass or fail with the real output: tests pass; `.kiro` is not git-ignored; `LICENSE` exists; README run steps work from a clean clone (`git clone` to a temporary directory, `npm ci`, `npm run build`, with the real output reported); no API keys; the app loads with the network off; the build log is up to date (compare the date of the last `docs/BUILD_LOG.md` entry with the latest commit date and report both). It calls `npm run check:all` and `npm run check:browser` and reports their real output.
+    - Offline check: if `check:browser` has no offline step, add one as a real step. After the first load of the built site, call `Network.emulateNetworkConditions` with `offline: true` and check that the app still works for Weave (a Try it sample plays to its last pick). The step must claim nothing it does not test. If the app does not work offline, report the failure and what fails; do not weaken the step. The pure parts (building the offline emulation parameters, the pass or fail decision from observed page state) get unit tests and a fast-check property with a fixed seed and at least 100 runs. The steering file may describe the offline check only once it exists.
+    - End with the common steps above. Commit.
+    - _Requirements: 13.1, 13.3, 16.7, 23.1_
+
+  - [x] 7.4 Workspace custom agent `weave-reviewer` and a real review
+    - Files: the agent file or the fallback steering file (see below), `docs/WEAVE_REVIEW.md`, `docs/BUILD_LOG.md`.
+    - First establish from Kiro documentation (Context7 tool, web search or local docs) and from what this Kiro installation supports whether workspace custom agents exist, where they live (for example `.kiro/agents/*.json`) and their exact schema. Record the sources and the result in `docs/BUILD_LOG.md`. If this Kiro version does not support custom agents, say so plainly and use the fallback: `.kiro/steering/weave-reviewer.md` with manual inclusion.
+    - Check whether `KIRO_PROMPTS.md` exists (prompt 38). If it exists, use prompt 38 for the agent's content. If not, say so and use this description: review a diff for (a) wrong use of weaving terms against `.kiro/steering/weaving-glossary.md`, (b) card layout values hard-coded instead of coming from a Card_Profile, (c) functions in `src/codec`, `src/exporter` or `src/simulator` without property tests.
+    - Create the agent (or the fallback), then run the review on the current branch diff against the first commit of the app work. State the base commit used and how it was chosen. Run it by invoking the `semantic_reviewer` sub-agent if it fits, or execute the checklist by hand. Save the real report in `docs/WEAVE_REVIEW.md` and state truthfully how it was run (the custom agent itself, the sub-agent, or the checklist done by hand).
+    - Record in `docs/BUILD_LOG.md` what the review found, with counts and file names, without softening any finding.
+    - Do not fix findings in this task; list them.
+    - End with the common steps above. Commit.
+    - _Requirements: 16.7, 17.1_
+
+  - [-] 7.5 Update `docs/KIRO_USAGE.md`, commit and push
+    - Files: `docs/KIRO_USAGE.md`, the task status files under `.kiro/specs/app/`.
+    - Update the document for: the hooks evidence (only what `.kiro/hooks` log and `npm run check:hooks` show), the steering command (`prerelease-check`), the custom agent or the fallback, and the flake investigation (cause, fix, before and after results). Say only what is true and mark anything unverified. Do not describe a Kiro feature without evidence.
+    - Run `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle`. Commit the specific paths changed, including the task status files. Run `git remote -v`, then `git push`; the user has authorised this push. Never force push.
+    - _Requirements: 16.7_
+
 ## Notes
 
 - **Phases.** Exactly four, in order: (1) Weave, Try it, printable card and deployment; (2) Keep and archive; (3) Scan; (4) CUT-LAST, trimmed. Each ends with a push task (1.14, 2.8, 3.8, 4.6). Task 5.1 follows Phase 4 and commits and pushes itself. Task 3.9 was added after 3.8 and does not push; its commit goes out with the push in 4.6. Tasks in the same wave touch different files and may run in parallel.
@@ -429,6 +480,7 @@ The plan has exactly four phases, in this order, followed by one final documenta
 - **Not verified by any task.** Real card dimensions (the demo profile is illustrative and unverified), any loom controller, and the Hindi wording. These are stated in the README and in `docs/HINDI_REVIEW.md`.
 - **Phase 4 scope.** Built: live camera (R18), rise from darkness with skip control (R20.2, 20.4, 20.6). Conditional: self-hosted fonts (4.3), built only if the app loads web fonts, otherwise recorded as not needed. Not built: Hindi voice prompts (R19) and the Night loom theme (R20.5), DROPPED BY CHOICE of the user and recorded in task 4.4; hole pop (R20.1) and thread-drawn progress (R20.3) are also left out. `requirements.md` and `design.md` are unchanged, so those requirements stay in them as not implemented.
 - **Phase 6.** Added after task 5.1, so the order is 1 to 5, then 6. Tasks 6.1 to 6.7 run one after another, each in its own wave, because they share `package.json`, `README.md` and `docs/BUILD_LOG.md`. Each ends with `npm run test:run`, `npm run typecheck`, `npm run build`, `npm run check-bundle` and a commit of specific paths. No test is weakened or deleted. The property tests of the pure parts are written in the same task as the code; none is cuttable. 6.2 reports the spec format validators as SKIPPED if the repo has no command for them. 6.3 uses no new dependency unless `docs/BUILD_LOG.md` justifies one first. The real runs, which need Chrome and a built `dist/`, happen in 6.7; `check:manual` needs the user and a phone and is run by the user. 6.7 pushes (authorised, never forced).
+- **Phase 7.** Added after task 6.7, so the order is 1 to 6, then 7. Tasks 7.1 to 7.5 run one after another, each in its own wave, because they share `package.json`, `scripts/check_browser.ts` and `docs/BUILD_LOG.md`. Each ends with `npm run test:run`, `npm run typecheck`, `npm run build`, `npm run check-bundle` and a commit of specific paths. No test is weakened or deleted and no check is loosened. 7.1 replaces a wait with a condition and never with a longer timeout. 7.2 never writes fake log lines. 7.3 and 7.4 first check whether `KIRO_PROMPTS.md` exists and say so if it does not. 7.4 states how the review was run and does not fix findings. 7.5 pushes (authorised, never forced).
 - **Pushes.** The phase-end tasks (1.14, 2.8, 3.8, 4.6) and task 5.1 push; the user authorised the pushes in 4.6 and 5.1. None adds a remote without asking the user.
 
 ## Task Dependency Graph
@@ -468,7 +520,12 @@ The plan has exactly four phases, in this order, followed by one final documenta
     { "id": 29, "tasks": ["6.4"] },
     { "id": 30, "tasks": ["6.5"] },
     { "id": 31, "tasks": ["6.6"] },
-    { "id": 32, "tasks": ["6.7"] }
+    { "id": 32, "tasks": ["6.7"] },
+    { "id": 33, "tasks": ["7.1"] },
+    { "id": 34, "tasks": ["7.2"] },
+    { "id": 35, "tasks": ["7.3"] },
+    { "id": 36, "tasks": ["7.4"] },
+    { "id": 37, "tasks": ["7.5"] }
   ]
 }
 ```
