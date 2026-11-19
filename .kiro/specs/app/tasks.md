@@ -2,12 +2,13 @@
 
 ## Overview
 
-The plan has exactly four phases, in this order. Each phase ends with a push task.
+The plan has exactly four phases, in this order, followed by one final documentation task. Each phase ends with a push task; the final task commits and pushes itself.
 
 1. **Phase 1: Weave, Try it, printable sample card, deployment.** App foundations, shell, Weave screen with Try it, the printable sample card inside Try it (Requirement 21), the deploy configuration (Requirement 23: `base: './'`, `vercel.json`, README Vercel steps) and a build-log entry.
 2. **Phase 2: Keep and the archive.** Archive module, BMP export, save and list, and the Card_Profile notice on Keep (Requirement 22).
 3. **Phase 3: Scan.** Photo read, tap-to-correct, Scan_Batch, the Card_Profile notice on Scan (Requirement 22), and the README media (Requirement 23).
-4. **Phase 4: CUT-LAST.** Live camera (Requirement 18), Hindi voice prompts (Requirement 19), animation extras and Night loom theme (Requirement 20), self-hosted fonts.
+4. **Phase 4: CUT-LAST, trimmed by the user.** Live camera (Requirement 18) and one animation extra from Requirement 20: the first weave of a design rises out of darkness, with a skip control, reduced motion respected. Self-hosted fonts only if the app actually loads web fonts. Hindi voice prompts (Requirement 19), the Night loom theme and the other Requirement 20 extras (hole pop, thread-drawn progress) are not built; the first two are DROPPED BY CHOICE of the user.
+5. **Final task: `docs/KIRO_USAGE.md`**, written from the real contents of `.kiro` and `docs/BUILD_LOG.md`.
 
 ## How to read this plan
 
@@ -273,51 +274,91 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
     - Run `npm run test:run`, `npm run typecheck` and `npm run build`, then `git push`. Run `git remote -v` first; if no remote is configured, ask the user before pushing.
     - _Requirements: 16.7_
 
-- [ ] 4. Phase 4: CUT-LAST features
-  - These are the first items to drop. Dropping one is reported to the user.
-  - _Requirements: 13.5, 13.6, 18.1, 18.2, 18.3, 18.4, 18.5, 18.6, 18.7, 19.1, 19.2, 19.3, 19.4, 19.5, 20.1, 20.2, 20.3, 20.4, 20.5, 20.6_
+  - [x] 3.9 Requirement-ID coverage
+    - Not demo-essential.
+    - Files: existing test files under `tests/`, `docs/BUILD_LOG.md`.
+    - The Phase 3 build-log entry (task 3.7) lists 55 requirement IDs that appear in no test title. Take that list from `docs/BUILD_LOG.md`, start with the 21.x and 23.x IDs, then the rest. For each ID choose exactly one of three outcomes:
+      1. An existing test already checks the requirement: add the ID prefix to its title.
+      2. No test checks it: write a new test with the ID prefix (property-based where the requirement is about a pure function, per `testing.md`).
+      3. It cannot be tested automatically: list it in `docs/BUILD_LOG.md` as a manual check with exact steps (what to open, what to do, what to expect).
+    - Never weaken, narrow, skip or delete a test. Changing a title prefix is the only edit allowed on an existing test. If a new test fails, stop and report the shrunk counterexample, seed and path.
+    - Re-run the title check used in task 3.7 and confirm that every one of the 55 IDs is now in a test title or in the manual-check list.
+    - Report three counts to the user and in the build log: IDs given a prefix on an existing title, new tests written, manual checks.
+    - Run `npm run test:run` and `npm run typecheck`. Commit. Do not push (the next push is task 4.7).
+    - _Requirements: 17.1, 17.3_
 
-  - [ ] 4.1 Live camera scan
+- [ ] 4. Phase 4: CUT-LAST features, trimmed
+  - Scope set by the user: the live camera, and one animation extra (rise from darkness). Self-hosted fonts are conditional. Hindi voice prompts and the Night loom theme are dropped by choice.
+  - Every task in this phase ends by running `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle` (the npm script that runs `scripts/check_bundle.ts`), and committing when all four pass. No property is weakened: no narrowed arbitrary, no filter, no lower `numRuns`, no looser check.
+  - _Requirements: 13.5, 13.6, 18.1, 18.2, 18.3, 18.4, 18.5, 18.6, 18.7, 20.2, 20.4, 20.6_
+
+  - [x] 4.1 Live camera scan
     - Files: `src/ui/screens/scan/LiveCamera.tsx`, `src/ui/screens/scan/ScanScreen.tsx`, `src/ui/platform/browser.ts`, `tests/ui/platform/browser.test.ts`, `tests/ui/screens/liveCamera.test.ts`.
     - `cameraControl(env)` decision, `getUserMedia` stream with a card-shaped guide frame, capture of one frame through the existing `loadPixelData` and `readCard` path, a refused or missing camera message with photo upload kept, track stop on leave, and the secure-page note.
     - **Property 33** (Cuttable property): the camera control follows the secure-page rule.
     - Example with `FakeCamera` that counts stopped tracks after leaving the screen, and a refused-permission example that leaves photo upload usable (failure path).
+    - Run the four checks named in the task 4 header.
     - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5, 18.6, 18.7_
 
-  - [ ] 4.2 Hindi voice prompts
-    - Files: `src/ui/screens/scan/SpeakButton.tsx`, `src/ui/screens/scan/ScanScreen.tsx`, `src/ui/platform/browser.ts`, `tests/ui/screens/speak.test.ts`.
-    - Speak control shown only when a Hindi voice exists, speaks the `hi` text on activation only, never automatically, uses installed voices only. Examples with `FakeSpeech`.
-    - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5_
+  - [x] 4.2 Rise from darkness, with skip control
+    - Only this animation extra of Requirement 20 is built. The hole pop (20.1), the thread-drawn progress (20.3) and the Night loom theme switch (20.5) are not built.
+    - Files: `src/ui/screens/weave/WeaveScreen.tsx`, `src/ui/screens/weave/WeaveScreen.module.css`, `src/ui/state/playback.ts`, `src/ui/i18n/en.json`, `src/ui/i18n/hi.json`, `tests/ui/state/playback.test.ts`, `tests/ui/screens/weave.test.tsx`.
+    - The first weave of a design rises out of darkness once: the cloth fades in from dark to full colour while the first playback runs. A skip control (48 px target, text label in both languages, keyboard operable) ends the effect at once and shows the cloth at full colour. Later plays of the same design, step, scrub and settings changes do not repeat it. The effect is a pure function of an elapsed fraction so it can be tested without a browser.
+    - Under `prefers-reduced-motion: reduce` the effect never starts and no skip control is shown (reuses `autoplay`, Property 32).
+    - Add no dependency and no image or font asset; the entry chunk must stay under 200 KB gzipped (`check_bundle`).
+    - Property test with a recorded seed: the effect level is between 0 and 1, never decreases as the fraction grows, equals 1 once skipped, and is always 1 under reduced motion. Example tests: it runs once per design, skip ends it, reduced motion shows none.
+    - Run the four checks named in the task 4 header.
+    - _Requirements: 20.2, 20.4, 20.6_
 
-  - [ ] 4.3 Animation extras and Night loom theme
-    - Files: `src/ui/screens/scan/CardOverlay.module.css`, `src/ui/screens/weave/WeaveScreen.module.css`, `src/ui/App.tsx`, `src/ui/theme/tokens.css`, `tests/ui/theme/theme.test.ts`.
-    - Hole pop under 400 ms in total, rise-from-darkness once with a skip control, thread-drawn progress, all off under `prefers-reduced-motion` (reuses `autoplay`, Property 32). Theme switch with a 48 px target using the Night loom tokens; check the Night loom token pairs through the contrast function of Property 31. Re-run `check_bundle`.
-    - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5, 20.6_
-
-  - [ ] 4.4 Self-hosted fonts
-    - Files: `public/fonts/`, `src/ui/theme/fonts.css`, `src/main.tsx`.
-    - Add `woff2` subsets (Devanagari and Latin) for Rozha One, Hind and IBM Plex Mono only if their licences allow redistribution; reference them by relative `@font-face` URLs with `font-display: swap`. Check the licence of each first and record it in `docs/BUILD_LOG.md`. Re-run `check_bundle` and the no-third-party-host test.
+  - [x] 4.3 Self-hosted fonts (conditional)
+    - Check first: does the app actually load web fonts? Search `src`, `index.html`, `public` and `dist` for `@font-face`, `fonts.googleapis`, `fonts.gstatic`, `.woff`, `.woff2` and any `<link>` to a font. The earlier tasks use fallback font stacks only.
+    - If no web font is loaded: build nothing. Record in `docs/BUILD_LOG.md` that self-hosted fonts are not needed, with the files searched and the result. Do not add `public/fonts/` or `src/ui/theme/fonts.css`.
+    - If a web font is loaded: add `woff2` subsets only if the licence allows redistribution (record each licence in `docs/BUILD_LOG.md`), referenced by relative `@font-face` URLs with `font-display: swap`; Files: `public/fonts/`, `src/ui/theme/fonts.css`, `src/main.tsx`; re-run the no-third-party-host test.
+    - Run the four checks named in the task 4 header.
     - _Requirements: 13.5, 13.6_
 
-  - [ ] 4.5 Phase 4 build-log entry
+  - [x] 4.4 Record dropped features
+    - Files: `docs/BUILD_LOG.md`.
+    - Add one entry stating that Hindi voice prompts (Requirement 19) and the Night loom theme (Requirement 20.5) were DROPPED BY CHOICE of the user, not for lack of time or because of a failure, and that the hole pop (20.1) and thread-drawn progress (20.3) were left out when the user trimmed Phase 4. No implementation task exists for any of them; do not add code, tests, strings or tokens for them. The Night loom tokens already in `src/ui/theme/tokens.css` stay as they are.
+    - Run the four checks named in the task 4 header.
+    - _Requirements: 16.7_
+
+  - [x] 4.5 Phase 4 build-log entry
     - Files: `docs/BUILD_LOG.md`, `docs/HINDI_REVIEW.md`.
-    - Record which Phase 4 items were built and which were dropped. Re-run `npm run test:run`, `npm run typecheck`, `npm run build` and `check_bundle`, regenerate `docs/HINDI_REVIEW.md`, and update the "not verified" list.
+    - Record what was built (4.1, 4.2), the result of the font check (4.3), the dropped features (4.4), the check results and bundle sizes, any Hindi strings added, and the updated "not verified" list (live camera on a real device, the rise-from-darkness effect in a real browser).
+    - Regenerate `docs/HINDI_REVIEW.md` with `npm run review-list`. Run the four checks named in the task 4 header.
     - _Requirements: 12.12, 16.7_
 
-  - [ ] 4.6 Phase 4 push
-    - Run `npm run test:run`, `npm run typecheck` and `npm run build`, then `git push`. Run `git remote -v` first; if no remote is configured, ask the user before pushing.
+  - [-] 4.6 Phase 4 push
+    - Run `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle`, then `git push`. The user has authorised this push. Run `git remote -v` first; if no remote is configured, ask the user before pushing and do not add one yourself.
+    - _Requirements: 16.7_
+
+- [ ] 5. Final task: Kiro usage document
+  - [ ] 5.1 Write docs/KIRO_USAGE.md
+    - Files: `docs/KIRO_USAGE.md`. Read-only inputs: everything under `.kiro` (specs, steering, hooks, settings including the MCP configuration), `docs/BUILD_LOG.md`, `git log`.
+    - Describe only what was done, and verify each statement against the files, the build log or git history. Do not describe a Kiro feature without evidence. For each Kiro feature actually used, give the file names and one concrete example:
+      - Specs: the four specs, each with its `requirements.md`, `design.md` and `tasks.md`, and one example of a requirement flowing into a design property and a task.
+      - Steering docs: each file under `.kiro/steering`, what it says, and which one helped most with the evidence for that.
+      - Hooks: which hooks exist under `.kiro/hooks`, and whether each fired, from evidence only (build log, git history). If there is no evidence a hook fired, say so.
+      - MCP: Context7, only if the build log or history shows it was used. Otherwise say it was configured and not used, or not configured.
+      - Property-based tests and the real bugs they caught: verify each in `docs/BUILD_LOG.md` or git history before listing it, including the decoy peg pair, overlapping holes, the Property 46 and Property 5 changes and any other. Give the commit or log entry for each.
+      - Vibe sessions: only if the log or history shows one.
+    - Include what did not work (failures, parked tasks, tool limits, things Kiro got wrong and how they were fixed).
+    - State plainly: planning and prompt drafting were done with Claude; Kiro wrote the specs and the code.
+    - Run `npm run test:run` and `npm run typecheck`. Commit and `git push`; the user has authorised this push. Run `git remote -v` first; if no remote is configured, ask the user.
     - _Requirements: 16.7_
 
 ## Notes
 
-- **Phases.** Exactly four, in order: (1) Weave, Try it, printable card and deployment; (2) Keep and archive; (3) Scan; (4) CUT-LAST. Each ends with a push task (1.14, 2.8, 3.8, 4.6). Tasks in the same wave touch different files and may run in parallel.
-- **Where properties live.** Phase 1: 1, 2, 3, 4, 5, 6 (sim, profile, print failures), 7, 8, 9, 10, 11, 12, 13 (Sample_Design half), 14 (print half), 28, 29, 30, 31, 32, 34, 35, 36, 37, 38. Phase 2: 6 (export, BMP read, archive failures), 13 (runExport half), 14 (export half), 15, 16, 17, 18, 19, 20, 21, 39. Phase 3: 6 (read failures), 22, 23, 24, 25, 26, 27. Phase 4: 33. Property 6 is split across phases because each failure-to-key function ships with the module it serves; it is complete after task 3.2.
+- **Phases.** Exactly four, in order: (1) Weave, Try it, printable card and deployment; (2) Keep and archive; (3) Scan; (4) CUT-LAST, trimmed. Each ends with a push task (1.14, 2.8, 3.8, 4.6). Task 5.1 follows Phase 4 and commits and pushes itself. Task 3.9 was added after 3.8 and does not push; its commit goes out with the push in 4.6. Tasks in the same wave touch different files and may run in parallel.
+- **Where properties live.** Phase 1: 1, 2, 3, 4, 5, 6 (sim, profile, print failures), 7, 8, 9, 10, 11, 12, 13 (Sample_Design half), 14 (print half), 28, 29, 30, 31, 32, 34, 35, 36, 37, 38. Phase 2: 6 (export, BMP read, archive failures), 13 (runExport half), 14 (export half), 15, 16, 17, 18, 19, 20, 21, 39. Phase 3: 6 (read failures), 22, 23, 24, 25, 26, 27. Phase 4: 33, and a new property for the rise-from-darkness effect level in task 4.2 (it has no number in `design.md`; `design.md` is unchanged). Property 6 is split across phases because each failure-to-key function ships with the module it serves; it is complete after task 3.2.
 - **Never cuttable.** Round-trip: 13, 15, 24, 36, 37, 38. Failure-path: 2, 6, 7, 14, 18, 20, 23, 34. Also not cuttable: 1, 3, 5, 8, 9, 10, 11, 12, 17, 22, 26, 27, 28, 39.
 - **Cuttable property.** 4, 16, 19, 21, 25, 29, 30, 31, 32, 33, 35. R17.1 asks for a property on each pure function, so cutting one is reported to the user with the function it leaves without a property.
-- **Demo-essential.** Tasks 1.1 to 1.8, 1.12 to 1.14 and 2.1 to 2.8. Printing (1.9 to 1.11) and Scan (Phase 3) follow the guaranteed demo.
+- **Demo-essential.** Tasks 1.1 to 1.8, 1.12 to 1.14 and 2.1 to 2.8. Tasks 3.9 and 5.1 are not demo-essential. Printing (1.9 to 1.11) and Scan (Phase 3) follow the guaranteed demo.
 - **Manual checks.** Real IndexedDB in a browser (2.2), on-device timings (1.8, 1.10, 3.5), printing at 100% scale (1.13), the README media (3.6). These need the user.
 - **Not verified by any task.** Real card dimensions (the demo profile is illustrative and unverified), any loom controller, and the Hindi wording. These are stated in the README and in `docs/HINDI_REVIEW.md`.
-- **Pushes.** Only the phase-end tasks push, and none adds a remote without asking the user.
+- **Phase 4 scope.** Built: live camera (R18), rise from darkness with skip control (R20.2, 20.4, 20.6). Conditional: self-hosted fonts (4.3), built only if the app loads web fonts, otherwise recorded as not needed. Not built: Hindi voice prompts (R19) and the Night loom theme (R20.5), DROPPED BY CHOICE of the user and recorded in task 4.4; hole pop (R20.1) and thread-drawn progress (R20.3) are also left out. `requirements.md` and `design.md` are unchanged, so those requirements stay in them as not implemented.
+- **Pushes.** The phase-end tasks (1.14, 2.8, 3.8, 4.6) and task 5.1 push; the user authorised the pushes in 4.6 and 5.1. None adds a remote without asking the user.
 
 ## Task Dependency Graph
 
@@ -343,10 +384,13 @@ The plan has exactly four phases, in this order. Each phase ends with a push tas
     { "id": 16, "tasks": ["3.6"] },
     { "id": 17, "tasks": ["3.7"] },
     { "id": 18, "tasks": ["3.8"] },
-    { "id": 19, "tasks": ["4.1", "4.4"] },
-    { "id": 20, "tasks": ["4.2", "4.3"] },
-    { "id": 21, "tasks": ["4.5"] },
-    { "id": 22, "tasks": ["4.6"] }
+    { "id": 19, "tasks": ["3.9"] },
+    { "id": 20, "tasks": ["4.1", "4.3"] },
+    { "id": 21, "tasks": ["4.2"] },
+    { "id": 22, "tasks": ["4.4"] },
+    { "id": 23, "tasks": ["4.5"] },
+    { "id": 24, "tasks": ["4.6"] },
+    { "id": 25, "tasks": ["5.1"] }
   ]
 }
 ```

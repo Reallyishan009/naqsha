@@ -391,6 +391,85 @@
         "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
         "timestamp": 1795028689548
       }
+    ],
+    "3.9 Requirement-ID coverage": [
+      {
+        "executionId": "d1a275b2-0ee5-4b34-bc80-03acd2d19067",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795110376111
+      },
+      {
+        "executionId": "d1a275b2-0ee5-4b34-bc80-03acd2d19067",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795111789704
+      }
+    ],
+    "4.1 Live camera scan": [
+      {
+        "executionId": "d1a275b2-0ee5-4b34-bc80-03acd2d19067",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795111799474
+      },
+      {
+        "executionId": "d1a275b2-0ee5-4b34-bc80-03acd2d19067",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795112143598
+      }
+    ],
+    "4.3 Self-hosted fonts (conditional)": [
+      {
+        "executionId": "d1a275b2-0ee5-4b34-bc80-03acd2d19067",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795112149466
+      },
+      {
+        "executionId": "d1a275b2-0ee5-4b34-bc80-03acd2d19067",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795112229234
+      }
+    ],
+    "4.2 Rise from darkness, with skip control": [
+      {
+        "executionId": "d1a275b2-0ee5-4b34-bc80-03acd2d19067",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795112233641
+      },
+      {
+        "executionId": "d1a275b2-0ee5-4b34-bc80-03acd2d19067",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795112375417
+      }
+    ],
+    "4.4 Record dropped features": [
+      {
+        "executionId": "d1a275b2-0ee5-4b34-bc80-03acd2d19067",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795112379876
+      },
+      {
+        "executionId": "d1a275b2-0ee5-4b34-bc80-03acd2d19067",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795112472357
+      }
+    ],
+    "4.5 Phase 4 build-log entry": [
+      {
+        "executionId": "d1a275b2-0ee5-4b34-bc80-03acd2d19067",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795112478212
+      },
+      {
+        "executionId": "d1a275b2-0ee5-4b34-bc80-03acd2d19067",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795112581148
+      }
+    ],
+    "4.6 Phase 4 push": [
+      {
+        "executionId": "d1a275b2-0ee5-4b34-bc80-03acd2d19067",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795112581225
+      }
     ]
   }
 }
