@@ -9,6 +9,7 @@ The plan has exactly four phases, in this order, followed by one final documenta
 3. **Phase 3: Scan.** Photo read, tap-to-correct, Scan_Batch, the Card_Profile notice on Scan (Requirement 22), and the README media (Requirement 23).
 4. **Phase 4: CUT-LAST, trimmed by the user.** Live camera (Requirement 18) and one animation extra from Requirement 20: the first weave of a design rises out of darkness, with a skip control, reduced motion respected. Self-hosted fonts only if the app actually loads web fonts. Hindi voice prompts (Requirement 19), the Night loom theme and the other Requirement 20 extras (hole pop, thread-drawn progress) are not built; the first two are DROPPED BY CHOICE of the user.
 5. **Final task: `docs/KIRO_USAGE.md`**, written from the real contents of `.kiro` and `docs/BUILD_LOG.md`.
+6. **Phase 6: fixes and verification scripts**, added after task 5.1: four fixes, then `check:all`, `check:browser`, `check:deployed`, `check:manual` and `check:everything`, then a real run, commit and push.
 
 ## How to read this plan
 
@@ -348,6 +349,75 @@ The plan has exactly four phases, in this order, followed by one final documenta
     - Run `npm run test:run` and `npm run typecheck`. Commit and `git push`; the user has authorised this push. Run `git remote -v` first; if no remote is configured, ask the user.
     - _Requirements: 16.7_
 
+- [ ] 6. Phase 6: fixes and verification scripts
+  - Every task in this phase ends the same way: run `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle`, then commit the specific paths the task changed (never `git add -A` or `git add .`). No test is weakened or deleted; if a check fails, fix the cause or report the failure with its output (for a property, the shrunk counterexample, seed and path).
+  - _Requirements: 2.8, 8.8, 14.12, 16.5, 16.7, 20.4, 23.1, 23.11_
+
+  - [x] 6.1 Fixes: structure test, test IDs, README, Skip focus
+    - Files: `tests/ui/structure.test.ts`, `docs/BUILD_LOG.md`, the four test files named in the task 3.9 log, `README.md`, `tests/ui/deploy.test.ts` (only if the README test needs the new text, never loosened), the Skip control component and its focus target function under `src/ui/` (find them from the task 4.2 log entry), `src/ui/state/` or the file that holds the pure function, and the matching test files.
+    - (a) Read the working-tree change to `tests/ui/structure.test.ts` with `git diff`. Accept it only if it reads: only `src/ui/screens/scan/camera.ts` may mention `getUserMedia` or `mediaDevices`. If the diff says something else, stop and report it. Record the acceptance, with the date and the exact rule, in `docs/BUILD_LOG.md`.
+    - (b) Fix the four test titles that carry the wrong requirement ID. Take all four from the task 3.9 entry in `docs/BUILD_LOG.md` (the list that starts "Existing titles carry an ID that does not match"): `tests/ui/printable/raster.test.ts` Property 38 over generated profiles (R21.14 to R21.15), `tests/ui/state/playback.test.ts` "there are three speeds" (R2.6 to R2.8), `tests/ui/state/cloth.test.ts` "the viewport clamps" (R3.4 to R3.7), `tests/ui/screens/weave.test.tsx` "thread size ... absent" (R2.13 to R3.8). Check each against `requirements.md` before editing. Change only the ID in the title; the body, seed, `numRuns` and assertions stay as they are. Note the change in `docs/BUILD_LOG.md`.
+    - (c) Fix `README.md`: remove "coming" and "no app screen yet" everywhere (the intro line and the "What it does" table rows for the Camera screen, simulator, exporter and Archive). Describe the app as it is now, with the live URL https://naqsha-ashen.vercel.app/. Claim nothing that does not exist: state that the Hindi text is unreviewed, the camera is untested on real devices, no loom controller is tested and the Card_Profile is unverified. Keep the README test in `tests/ui/deploy.test.ts` passing without changing what it checks.
+    - (d) Close the Skip button focus gap from task 4.2. Write a pure function that returns the focus target after Skip: the Pause control, or the Play control when playback is paused. Unit test it and add a fast-check property. Wire it in the component with a ref, keep the reduced-motion behaviour unchanged, and add a render or wiring test that Skip moves focus to the target. Mark the open gap in `docs/BUILD_LOG.md` as closed, with the date.
+    - Property test names state the requirement in words and carry the comment `Feature: app, Property N: <text>` only where a design property applies; otherwise the title states the requirement ID and plain statement.
+    - End with the common steps above.
+    - _Requirements: 2.8, 3.7, 3.8, 14.11, 16.7, 20.4, 21.15, 23.1_
+
+  - [x] 6.2 `npm run check:all`
+    - Files: `scripts/check_all.ts`, `scripts/checks/hygiene.ts`, `scripts/checks/secrets.ts`, `scripts/checks/summary.ts`, `package.json`, `tests/scripts/hygiene.test.ts`, `tests/scripts/secrets.test.ts`, `tests/scripts/summary.test.ts`.
+    - `check:all` runs these steps in order: typecheck, the full test suite, build, bundle check, the spec format validators, repo hygiene. For the spec format validators, look in the repo for an existing command (a script in `package.json` or a file under `scripts/`); if none exists, report the step as SKIPPED with the reason "no spec format validator command in the repo" and do not invent one.
+    - Repo hygiene checks: `LICENSE` present; `.kiro` is not git-ignored (use `git check-ignore`); `.kiro/specs`, `.kiro/hooks` and `.kiro/settings` exist; no API keys or tokens in tracked files (a pattern scan over `git ls-files` with a documented allowlist in the source, each allowlist entry carrying a reason); `README.md` has no "coming"; the git working tree state, reported as info and never a failure.
+    - Output: PASS, FAIL or SKIPPED per step, the exact output of any failed step, then a summary table. Exit code is non-zero if any step fails. `--bail` stops at the first failure; without it every step runs.
+    - The pure parts are separate functions: each hygiene check over injected file and git data, the secret scan, the summary formatting and the argument parsing. They take injected dependencies and are tested with fakes.
+    - Property tests (fast-check, fixed seed, at least 100 runs): the secret detector flags every planted key from generators for the formats it claims to detect (embedded in arbitrary surrounding text) and passes generated clean text that contains no such pattern; the summary table has one row per step and its exit code is non-zero exactly when a step failed; `--bail` output never contains a step after the first failure.
+    - Example tests: each hygiene check passes and fails on a fake repository; allowlisted text is not flagged; SKIPPED does not count as failure.
+    - End with the common steps above.
+    - _Requirements: 16.7, 23.1_
+
+  - [x] 6.3 `npm run check:browser`
+    - Files: `scripts/check_browser.ts`, `scripts/checks/cdp.ts`, `scripts/checks/chrome.ts`, `scripts/checks/bmpHeader.ts`, `package.json`, `.gitignore`, `docs/BUILD_LOG.md`, `tests/scripts/bmpHeader.test.ts`, `tests/scripts/chrome.test.ts`.
+    - Drive real headless Chrome with the same approach as the README media capture (look at how `scripts/` or the task 3.6 log entry did it): the installed Chrome, controlled over the DevTools protocol. Prefer no new dependency: write a small CDP client over Node's built-in WebSocket. If a dev-only dependency turns out to be needed, justify it in `docs/BUILD_LOG.md` first, with its size and why the built-in route was not enough.
+    - The script starts `npm run preview` on the built `dist/` itself, waits until it answers, and stops it on exit, including after a failure. It fails with a clear message if Chrome is not found, and honours a `CHROME_PATH` override. It requires `dist/` to exist and says so otherwise.
+    - Steps, each reported PASS or FAIL with the reason: load the app; switch the language; play each Try it sample; save a design in Keep, hard reload, the design is still listed; open it; delete it, and it is still gone after a reload; export the 1-bit and 8-bit BMP and check the width (ends), height (picks), colour count and file size, by direct header parse; download the printable card PNG; upload it to Scan and check the read grid equals the sample pick; upload a blank image and check the failure message; no horizontal scroll at 320, 390 and 1280 px.
+    - Screenshots go in `media/check/`, which is added to `.gitignore`. Exit code is non-zero if any step fails.
+    - The pure parts get unit tests: the BMP header parse (agrees with `readPatternBmp` on exported files), the Chrome path search over an injected file system, and the result formatting.
+    - Property test (fast-check, fixed seed, at least 100 runs): for any generated pattern and export options, the direct header parse of `exportPatternBmp` output gives the same width, height, colour count and file size as `bmpLayout`.
+    - End with the common steps above. Do not run the script against Chrome in this task beyond a smoke run; the real run is task 6.7.
+    - _Requirements: 14.12, 21.15, 23.1_
+
+  - [x] 6.4 `npm run check:deployed`
+    - Files: `scripts/check_deployed.ts`, `scripts/checks/deployed.ts`, `package.json`, `tests/scripts/deployed.test.ts`.
+    - `npm run check:deployed -- <url>`; the default is https://naqsha-ashen.vercel.app/. Steps, each PASS or FAIL: HTTP 200 with no redirect to a login page; `profiles/demo-12x16.json` loads and passes `parseCardProfile`; the JS and CSS assets referenced by `index.html` each load with 200; the page title is the expected one (read it from `index.html`); print the key response headers (content type, cache control, server). Exit code is non-zero on failure.
+    - The pure parts are separate and unit tested: URL normalisation (trailing slash, relative asset resolution against the base), extraction of script and stylesheet references and the title from HTML, login-redirect detection, header selection and result formatting.
+    - Property tests (fast-check, fixed seed, at least 100 runs): asset extraction finds every generated `src` and `href` of script and stylesheet tags and no others; URL resolution of a relative asset against a base stays on the base origin; normalisation is idempotent.
+    - End with the common steps above.
+    - _Requirements: 23.1, 23.3_
+
+  - [x] 6.5 `npm run check:manual`
+    - Files: `scripts/check_manual.ts`, `scripts/checks/manualSteps.ts`, `scripts/checks/manualResults.ts`, `docs/MANUAL_TEST_RESULTS.md` (created on first answer by the script, not by hand), `package.json`, `tests/scripts/manualSteps.test.ts`, `tests/scripts/manualResults.test.ts`.
+    - An interactive terminal walkthrough: one step at a time with exact instructions, then asks pass, fail or skip. Each answer is appended with the date to `docs/MANUAL_TEST_RESULTS.md`; earlier answers are never overwritten or removed.
+    - Steps: live camera on the phone using the deployed URL; printing at 100% and measuring with a ruler; a real card photo; the rise-from-darkness look; reduced motion; IndexedDB in a real browser, if not already covered by `check:browser`; and the five manual items R8.8, R14.12, R16.5, R23.1 and R23.11. Read the five items' real steps from the "Manual coverage list" in the task 3.9 entry of `docs/BUILD_LOG.md`. Keep them in a data file (`manualSteps.ts`) that duplicates the steps exactly, with a test that reads `docs/BUILD_LOG.md` and checks that the IDs and the step text in the data file match the log.
+    - The pure parts are separate and unit tested: the step list, answer parsing (accepts p, pass, f, fail, s, skip in any case; rejects anything else and asks again), and results formatting (append-only). Input and output are injected so the walkthrough is tested with fake streams.
+    - Property tests (fast-check, fixed seed, at least 100 runs): answer parsing accepts exactly the documented words in any letter case and with surrounding whitespace, and rejects other text; appending a result keeps every earlier line of the file unchanged.
+    - End with the common steps above. This task does not run the walkthrough; the user does.
+    - _Requirements: 8.8, 14.12, 16.5, 23.1, 23.11_
+
+  - [x] 6.6 `npm run check:everything`, README and build-log entry
+    - Files: `scripts/check_everything.ts`, `package.json`, `README.md`, `docs/BUILD_LOG.md`, `tests/scripts/everything.test.ts`, `tests/ui/deploy.test.ts` (only to add checks, never to loosen).
+    - `check:everything` runs `check:all`, then `check:browser`, then `check:deployed` (printing its result), and runs `check:manual` only when `--manual` is given. It exits non-zero if any step it ran failed, and prints a summary table with the exit status of each.
+    - README gets a "Verify it yourself" heading that documents all five commands: `check:all`, `check:browser`, `check:deployed`, `check:manual` and `check:everything`. For each, say what it does and what it needs; state that `check:browser` needs Chrome (with the `CHROME_PATH` override) and a built `dist/`, `check:deployed` needs network access, and `check:manual` needs a person and a phone. The README must still contain no "coming".
+    - Add a `docs/BUILD_LOG.md` entry for Phase 6: what each script checks, what it cannot check, and any dependency decision.
+    - The pure planning part (which steps run for which flags) is separate and unit tested, with a property that the step order is always all, browser, deployed, then manual, and manual is present exactly when `--manual` is given.
+    - End with the common steps above.
+    - _Requirements: 16.7, 23.1_
+
+  - [-] 6.7 Run the checks for real, fix, commit and push
+    - Files: whichever scripts or files the real runs show to be wrong; `docs/BUILD_LOG.md`.
+    - Run `npm run check:all` and `npm run check:browser` for real. Report the exact output, including every failure. Do not weaken, skip or remove any check, test or property to make a run pass.
+    - Fix real bugs in the scripts. Report real app bugs without hiding them: for each, record the step, the output and the cause in `docs/BUILD_LOG.md`, and fix it only if the fix is small and a test covers it; otherwise leave it reported and open.
+    - Run `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle`. Commit the specific paths changed. Run `git remote -v`, then `git push`; the user has authorised this push. Never force push.
+    - _Requirements: 16.7, 23.1_
+
 ## Notes
 
 - **Phases.** Exactly four, in order: (1) Weave, Try it, printable card and deployment; (2) Keep and archive; (3) Scan; (4) CUT-LAST, trimmed. Each ends with a push task (1.14, 2.8, 3.8, 4.6). Task 5.1 follows Phase 4 and commits and pushes itself. Task 3.9 was added after 3.8 and does not push; its commit goes out with the push in 4.6. Tasks in the same wave touch different files and may run in parallel.
@@ -358,6 +428,7 @@ The plan has exactly four phases, in this order, followed by one final documenta
 - **Manual checks.** Real IndexedDB in a browser (2.2), on-device timings (1.8, 1.10, 3.5), printing at 100% scale (1.13), the README media (3.6). These need the user.
 - **Not verified by any task.** Real card dimensions (the demo profile is illustrative and unverified), any loom controller, and the Hindi wording. These are stated in the README and in `docs/HINDI_REVIEW.md`.
 - **Phase 4 scope.** Built: live camera (R18), rise from darkness with skip control (R20.2, 20.4, 20.6). Conditional: self-hosted fonts (4.3), built only if the app loads web fonts, otherwise recorded as not needed. Not built: Hindi voice prompts (R19) and the Night loom theme (R20.5), DROPPED BY CHOICE of the user and recorded in task 4.4; hole pop (R20.1) and thread-drawn progress (R20.3) are also left out. `requirements.md` and `design.md` are unchanged, so those requirements stay in them as not implemented.
+- **Phase 6.** Added after task 5.1, so the order is 1 to 5, then 6. Tasks 6.1 to 6.7 run one after another, each in its own wave, because they share `package.json`, `README.md` and `docs/BUILD_LOG.md`. Each ends with `npm run test:run`, `npm run typecheck`, `npm run build`, `npm run check-bundle` and a commit of specific paths. No test is weakened or deleted. The property tests of the pure parts are written in the same task as the code; none is cuttable. 6.2 reports the spec format validators as SKIPPED if the repo has no command for them. 6.3 uses no new dependency unless `docs/BUILD_LOG.md` justifies one first. The real runs, which need Chrome and a built `dist/`, happen in 6.7; `check:manual` needs the user and a phone and is run by the user. 6.7 pushes (authorised, never forced).
 - **Pushes.** The phase-end tasks (1.14, 2.8, 3.8, 4.6) and task 5.1 push; the user authorised the pushes in 4.6 and 5.1. None adds a remote without asking the user.
 
 ## Task Dependency Graph
@@ -390,7 +461,14 @@ The plan has exactly four phases, in this order, followed by one final documenta
     { "id": 22, "tasks": ["4.4"] },
     { "id": 23, "tasks": ["4.5"] },
     { "id": 24, "tasks": ["4.6"] },
-    { "id": 25, "tasks": ["5.1"] }
+    { "id": 25, "tasks": ["5.1"] },
+    { "id": 26, "tasks": ["6.1"] },
+    { "id": 27, "tasks": ["6.2"] },
+    { "id": 28, "tasks": ["6.3"] },
+    { "id": 29, "tasks": ["6.4"] },
+    { "id": 30, "tasks": ["6.5"] },
+    { "id": 31, "tasks": ["6.6"] },
+    { "id": 32, "tasks": ["6.7"] }
   ]
 }
 ```

@@ -501,6 +501,85 @@
         "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
         "timestamp": 1795112896766
       }
+    ],
+    "6.1 Fixes: structure test, test IDs, README, Skip focus": [
+      {
+        "executionId": "5bfae74b-7499-4eca-bd1b-4c04e58c0fca",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795113191003
+      },
+      {
+        "executionId": "5bfae74b-7499-4eca-bd1b-4c04e58c0fca",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795113383734
+      }
+    ],
+    "6.2 `npm run check:all`": [
+      {
+        "executionId": "5bfae74b-7499-4eca-bd1b-4c04e58c0fca",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795113387254
+      },
+      {
+        "executionId": "5bfae74b-7499-4eca-bd1b-4c04e58c0fca",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795113692943
+      }
+    ],
+    "6.3 `npm run check:browser`": [
+      {
+        "executionId": "5bfae74b-7499-4eca-bd1b-4c04e58c0fca",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795113696690
+      },
+      {
+        "executionId": "5bfae74b-7499-4eca-bd1b-4c04e58c0fca",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795115026237
+      }
+    ],
+    "6.4 `npm run check:deployed`": [
+      {
+        "executionId": "5bfae74b-7499-4eca-bd1b-4c04e58c0fca",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795115031277
+      },
+      {
+        "executionId": "5bfae74b-7499-4eca-bd1b-4c04e58c0fca",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795115237754
+      }
+    ],
+    "6.5 `npm run check:manual`": [
+      {
+        "executionId": "5bfae74b-7499-4eca-bd1b-4c04e58c0fca",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795115241534
+      },
+      {
+        "executionId": "5bfae74b-7499-4eca-bd1b-4c04e58c0fca",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795115548471
+      }
+    ],
+    "6.6 `npm run check:everything`, README and build-log entry": [
+      {
+        "executionId": "5bfae74b-7499-4eca-bd1b-4c04e58c0fca",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795115553203
+      },
+      {
+        "executionId": "5bfae74b-7499-4eca-bd1b-4c04e58c0fca",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795116008582
+      }
+    ],
+    "6.7 Run the checks for real, fix, commit and push": [
+      {
+        "executionId": "5bfae74b-7499-4eca-bd1b-4c04e58c0fca",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795116012590
+      }
     ]
   }
 }
