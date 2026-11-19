@@ -130,6 +130,7 @@ export function ScanView(props: ScanViewProps) {
         </h3>
         <BatchList
           batch={batch}
+          profile={profile}
           pendingRemove={props.pendingRemove}
           t={t}
           onRemoveRequest={props.onRemoveRequest}

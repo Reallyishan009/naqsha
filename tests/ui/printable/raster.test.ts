@@ -120,7 +120,7 @@ describe('printable raster', () => {
           });
         }
       }),
-      { seed: 3801, numRuns: 20 },
+      { seed: 3801, numRuns: 100 },
     );
   }, 300_000);
 });

@@ -189,6 +189,3 @@
 .thumbCard {
   fill: var(--card);
 }
-.thumbHole {
-  fill: var(--hole);
-}
