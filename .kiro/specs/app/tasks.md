@@ -349,7 +349,7 @@ The plan has exactly four phases, in this order, followed by one final documenta
     - Run `npm run test:run` and `npm run typecheck`. Commit and `git push`; the user has authorised this push. Run `git remote -v` first; if no remote is configured, ask the user.
     - _Requirements: 16.7_
 
-- [ ] 6. Phase 6: fixes and verification scripts
+- [x] 6. Phase 6: fixes and verification scripts
   - Every task in this phase ends the same way: run `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle`, then commit the specific paths the task changed (never `git add -A` or `git add .`). No test is weakened or deleted; if a check fails, fix the cause or report the failure with its output (for a property, the shrunk counterexample, seed and path).
   - _Requirements: 2.8, 8.8, 14.12, 16.5, 16.7, 20.4, 23.1, 23.11_
 
@@ -411,7 +411,7 @@ The plan has exactly four phases, in this order, followed by one final documenta
     - End with the common steps above.
     - _Requirements: 16.7, 23.1_
 
-  - [-] 6.7 Run the checks for real, fix, commit and push
+  - [x] 6.7 Run the checks for real, fix, commit and push
     - Files: whichever scripts or files the real runs show to be wrong; `docs/BUILD_LOG.md`.
     - Run `npm run check:all` and `npm run check:browser` for real. Report the exact output, including every failure. Do not weaken, skip or remove any check, test or property to make a run pass.
     - Fix real bugs in the scripts. Report real app bugs without hiding them: for each, record the step, the output and the cause in `docs/BUILD_LOG.md`, and fix it only if the fix is small and a test covers it; otherwise leave it reported and open.
