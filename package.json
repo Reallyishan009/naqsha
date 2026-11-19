@@ -17,6 +17,7 @@
     "check:browser": "node scripts/check_browser.ts",
     "check:deployed": "node scripts/check_deployed.ts",
     "check:manual": "node scripts/check_manual.ts",
+    "check:everything": "node scripts/check_everything.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit",

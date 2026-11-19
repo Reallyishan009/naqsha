@@ -141,6 +141,22 @@ Developer-only photo trial: start the dev server with `npx vite --host`, print `
 
 Developer-only simulator preview: start the dev server with `npx vite --host` and open `/scripts/sim-preview.html`.
 
+## Verify it yourself
+Five commands check the project. Run them from the repository root. Run times are one measurement on a MacBook with a good connection; yours will differ.
+| Command | What it does | What it needs | Run time (measured) | Where the output goes |
+|---|---|---|---|---|
+| `npm run check:all` | Type-check, the full test suite, build, bundle check, repo hygiene (LICENSE, `.kiro` not ignored, no secrets in tracked files, a README without placeholder wording), then the state of the git working tree. Every step prints PASS, FAIL, SKIPPED or INFO. The spec format validators are SKIPPED because the repo has no command for them. | Node 22.18 or newer, and `npm install` | about 40 seconds | the terminal |
+| `npm run check:browser` | It serves the built `dist/` (it runs `npm run build` first if `dist/` is missing) and drives a real headless Chrome through twelve steps: load, Hindi/English switch, the three Try it samples, Keep (save, reload, open, delete), BMP and PNG downloads parsed byte by byte, a PNG read back on Scan, a blank image, and no horizontal scroll at 320, 390 and 1280 px. | Google Chrome or Chromium (set `CHROME_PATH` to its executable if it is not found) | about 1 minute | the terminal, and one screenshot per step in `media/check/` (git-ignored) |
+| `npm run check:deployed` | Fetches the published site and checks: HTTP 200 and not a login page, the page title, the JS and CSS assets, and that `profiles/demo-12x16.json` passes `parseCardProfile`. It also prints the response headers. Pass another address with `npm run check:deployed -- <url>`. | Network access | under 5 seconds | the terminal |
+| `npm run check:manual` | An interactive walkthrough of the checks no script can do: the live camera on a phone, printing at 100% and measuring with a ruler, a real card photo, the rise-from-darkness look, reduced motion, and the five manual items R8.8, R14.12, R16.5, R23.1 and R23.11. You answer pass, fail or skip for each step. | A person at a terminal (it refuses to run without one), and a phone for most steps | depends on you | your answers are written to `docs/MANUAL_TEST_RESULTS.md` |
+| `npm run check:everything` | Runs `check:all`, then `check:browser`, then `check:deployed`, even if an earlier one failed, and prints a summary with PASS, FAIL or SKIPPED and the exit code of each. If Chrome is missing, `check:browser` shows as FAIL with its message. It exits non-zero if any stage failed. Add `--manual` to run `check:manual` last, `--bail` to stop after the first failure, and `--url <url>` to choose the address `check:deployed` checks. Use `npm run check:everything -- --manual --bail`. | everything the stages above need | about 1.5 minutes without `--manual` | the terminal, plus the places named above |
+What these commands cannot prove:
+- They do not use a real phone camera, so the live camera on a real device is untested.
+- They do not measure print scale. Only you can print the card at 100% and measure it with a ruler.
+- They do not read a photograph of a real card. The card images used are synthetic or printed by this app.
+- They do not judge the Hindi text. A native speaker has to review it.
+- They do not test a loom or a loom controller. The exported bitmaps are checked against the BMP format, not against a machine.
+- `check:browser` uses Chrome only. Firefox, Safari and iOS are not tested.
 ## Deploy to Vercel
 
 The site is deployed at https://naqsha-ashen.vercel.app/ . The steps below are how to deploy your own copy by hand.
