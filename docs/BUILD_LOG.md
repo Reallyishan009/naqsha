@@ -464,3 +464,37 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **Judgement call from 4.2:** A manual step or scrub ends the rise (`seekTo` dispatches `seek` to `riseReducer`). This was chosen in task 4.2; the requirements do not say it.
 **What I changed by hand:** No files edited by hand.
 **Kiro features used:** spec.
+## 2026-11-21 (app phase 4, task 4.5: Phase 4 summary)
+**Goal today:** Record what Phase 4 built, checked and left out, from the commits after `fb74897` (`git log fb74897..`), and list what nobody has verified.
+**Commits in range:** `390524a` (task 3.9 tests and log), `f352bf3` (CardThumb fix), `a4e2617` (live camera), `65efbf2` (fonts log), `024e767` (rise from darkness), `4da9ccc` (dropped features log). `dce5d2d` only marks Phase 3 tasks complete.
+**Built:**
+- **Live camera, task 4.1 (R18), `a4e2617`.** A live camera option on the Scan screen. `src/ui/screens/scan/camera.ts` holds the camera logic (failure kinds `denied`, `no-camera`, `failed`; stopping every track), `LiveCamera.tsx` the view, and `src/ui/platform/browser.ts` the browser hookup. It sits in the lazy Scan chunk. Tests use a fake camera (`tests/ui/screens/liveCamera.test.tsx`, `tests/ui/platform/browser.test.ts`). 12 new Hindi strings.
+- **Rise from darkness, task 4.2 (R20.2, R20.4), `024e767`.** The first weave of a loaded design rises from darkness, with a skip control shown only while the effect runs. State logic is in `src/ui/state/playback.ts` (`riseReducer`, `riseLevel`, `riseFraction`). With reduced motion on, the effect does not start (the reducer takes `reducedMotion`; its look and the toggle have not been seen on a screen).
+**Checked and not built:**
+- **Fonts, task 4.3.** The app loads no web font (system stacks in `src/ui/theme/tokens.css`), so no font was self-hosted. Details are in the task 4.3 entry.
+- **Dropped features, task 4.4.** Hindi voice prompts (R19) and the night loom theme (R20.5) were dropped by the user. Hole pop (R20.1) and thread-drawn progress (R20.3) were left out in the trim. The night tokens exist but nothing switches to them. Details are in the task 4.4 entry.
+**Defect found by task 3.9, fixed in `f352bf3`:** R15.6 says a punch card is drawn with manila stock, round holes, peg holes and lacing holes wherever one appears. `CardThumb` (`src/ui/screens/scan/BatchList.tsx`) drew only a rectangle and one disc per punched hook, and had no Card_Profile input. Task 3.9 wrote a failing test and stopped on that ID. The fix: `CardThumb` takes the Card_Profile and draws from `printableLayout`; unpunched positions get no mark; with no profile or an invalid layout it draws the plain outline. New test `tests/ui/screens/cardDrawing.test.tsx` (an example and a property). `design.md` line 271 ("an SVG of the grid") is now loosely worded; `design.md` and `requirements.md` were not edited.
+**Property 38 raised from 20 to 100 runs (`f352bf3`):** `tests/ui/printable/raster.test.ts`, `numRuns: 20` to `numRuns: 100`, seed 3801 unchanged. `design.md` line 684 and `tasks.md` line 18 ask for at least 100. The file went from about 6 s to about 28 s (about 22 s more); I did not re-time it in this task. This replaces the note in the task 3.9 entry that said the property still ran 20 times.
+**One edited test, needs the user's confirmation:** `tests/ui/structure.test.ts` (in `a4e2617`). The old assertion said no file in `src/ui` mentions `getUserMedia` or `mediaDevices`. It is now: the only file that does is `ui/screens/scan/camera.ts` (sorted list equals that one path). This is a narrowing of what the test allows, made because R18 needs the camera API. It is stricter than "anywhere in `src/ui`" only in that it pins the file. Please confirm the change is acceptable; if not, revert that hunk and the camera needs another design.
+**Manual coverage list from task 3.9 (still manual, not run by me):** R23.1 public URL needs no login or key; R23.11 media show the profile name and the "Unverified" notice; R8.8 1080p read within 300 ms on a mid-range 2020 phone; R14.12 no horizontal scroll from 320 to 1920 px; R16.5 100-pick simulation within 16 ms per frame on a phone. Steps are in the task 3.9 entry. Also by hand: the Resume button after pause (R2.4).
+**Sizes (`npm run build`, `npm run check-bundle`):**
+- Entry chunk `index-CYTYaTQc.js`: 93,124 bytes gzipped (310.27 kB raw). Limit 204,800. It was 92,251 at the end of task 3.9.
+- Scan chunk `ScanScreen-fWL-CVEZ.js`: 9,118 bytes gzipped (27.32 kB raw), plus 1.12 kB gzipped CSS. The Scan chunk had no figure in earlier entries.
+**Final checks:** `npm run test:run`: **77 files, 589 tests, all passing** (75 files and 565 tests at the end of task 3.9). `npm run typecheck`, `npm run build` and `npm run check-bundle` pass.
+**Hindi review:** `npm run review-list` regenerated `docs/HINDI_REVIEW.md` with no change, so it was already current. **178 strings unreviewed** (166 at the end of Phase 3). No Hindi speaker has read them.
+**Not verified (needs the user's hand test):**
+- Live camera on a real phone: permission prompt, denial, no camera, back camera choice, stopping the camera when leaving the screen. Only a fake camera was tested.
+- Real IndexedDB in a browser (the archive tests use a hand-written fake).
+- Printing a Printable_Card at 100% and measuring it with a ruler.
+- A real photo of a printed card read by the Scan screen. All reader tests use generated images.
+- The rise-from-darkness look, and the reduced-motion toggle (that the effect is skipped with the system setting on).
+- Keyboard focus after the skip control is used. This gap is open, as recorded in the task 4.4 entry; the control disappears and focus falls back to the page.
+- On-device timings: `readCard`, `printableRaster`, simulation at 16 ms per frame, the rise effect.
+- Any loom controller: no exported BMP has been tried on one.
+- Hindi text, including the 12 strings added for the camera and the rise.
+- Real card dimensions: the demo Card_Profile values are illustrative.
+- Also still open from earlier entries: the README's Status section still says the camera screen, archive and UI are not built and there is no hosted site; the GIFs were not played back in a browser.
+**What I changed by hand:** No files edited by hand.
+**Kiro features used:** spec, steering, property tests (fast-check).
+**Credits left:** Not recorded.
+**Commit:** Phase 4 work spans `390524a` to `4da9ccc`; see the commit that adds this entry.
