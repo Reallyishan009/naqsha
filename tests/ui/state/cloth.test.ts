@@ -57,7 +57,7 @@ describe('cloth examples', () => {
     expect(COLOURS.length).toBeGreaterThanOrEqual(6);
     for (const colour of COLOURS) expect(parseColour(colour.hex)).not.toBeNull();
   });
-  it('R3.4 the viewport clamps to 1..4096', () => {
+  it('R3.7 the viewport clamps to 1..4096', () => {
     expect(viewportFor(0, 99999)).toEqual({ width: 1, height: 4096 });
     expect(viewportFor(NaN, 12.9)).toEqual({ width: 1, height: 12 });
   });

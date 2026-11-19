@@ -106,7 +106,7 @@ describe('printable raster', () => {
     }
   }, 120_000);
 
-  it('R21.14 Property 38 every pick of each Sample_Design reads back (generated profiles)', () => {
+  it('R21.15 Property 38 every pick of each Sample_Design reads back (generated profiles)', () => {
     fc.assert(
       fc.property(cardProfileArbitrary, (profile) => {
         for (const design of DESIGNS) {

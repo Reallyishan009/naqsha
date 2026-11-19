@@ -29,7 +29,7 @@ describe('weave screen', () => {
     }
   });
 
-  it('R2.13 thread size, float highlight and the other preview controls are absent', () => {
+  it('R3.8 thread size, float highlight and the other preview controls are absent', () => {
     const html = render({ ...initialAppState, language: 'en' });
     for (const word of ['thread size', 'Thread size', 'float', 'Float', 'highlight', 'Highlight']) {
       expect(html).not.toContain(word);
