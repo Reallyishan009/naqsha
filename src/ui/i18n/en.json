@@ -14,6 +14,7 @@
   "weave.play": "Play",
   "weave.pause": "Pause",
   "weave.resume": "Resume",
+  "weave.skipRise": "Skip fade-in",
   "weave.stepBack": "Previous pick",
   "weave.stepForward": "Next pick",
   "weave.scrubber": "Go to pick",

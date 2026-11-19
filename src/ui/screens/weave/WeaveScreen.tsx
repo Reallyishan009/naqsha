@@ -15,7 +15,17 @@ import {
   settingsFromChoices,
   viewportFor,
 } from '../../state/cloth.ts';
-import { canvasAltText, pickPositionText, scrubTo, SPEEDS, stepBack, stepForward } from '../../state/playback.ts';
+import {
+  canvasAltText,
+  pickPositionText,
+  riseFraction,
+  riseLevel,
+  riseReducer,
+  scrubTo,
+  SPEEDS,
+  stepBack,
+  stepForward,
+} from '../../state/playback.ts';
 import type { AppAction, AppState, ClothChoices, ClothView, PlaybackState, ReadyCloth } from '../../types.ts';
 import { ClothCanvas, createClothPlayer } from './ClothCanvas.tsx';
 import type { FrameReport } from './ClothCanvas.tsx';
@@ -65,6 +75,16 @@ function shownCloth(view: ClothView): ReadyCloth | null {
 
 type EntryMode = 'show-finished' | 'autoplay' | 'keep';
 
+/** The skip control of the rise from darkness. Not shown unless the effect is running (R20.2, R20.4). */
+export function RiseSkipControl({ running, t, onSkip }: { running: boolean; t: Translate; onSkip: () => void }) {
+  if (!running) return null;
+  return (
+    <button type="button" className={styles.button} onClick={onSkip}>
+      {t('weave.skipRise')}
+    </button>
+  );
+}
+
 export type WeaveScreenProps = {
   state: AppState;
   dispatch: Dispatch<AppAction>;
@@ -81,6 +101,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
   const [speedIndex, setSpeedIndex] = useState(DEFAULT_SPEED_INDEX);
   const [view, dispatchCloth] = useReducer(clothReducer, { status: 'empty' } satisfies ClothView);
   const [playback, setPlayback] = useState<PlaybackState>({ status: 'idle', pick: 0 });
+  const [rise, dispatchRise] = useReducer(riseReducer, 'off');
   const [availableWidth, setAvailableWidth] = useState(FALLBACK_WIDTH);
 
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -136,6 +157,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
 
   const handleFrame = useCallback((report: FrameReport): void => {
     if (report.atEnd) {
+      dispatchRise({ type: 'finished' });
       setPlayback({ status: 'finished', pick: report.frame.pick });
     } else if (report.kind === 'tick') {
       setPlayback({ status: 'playing', pick: report.frame.pick });
@@ -148,6 +170,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
   useEffect(() => {
     if (shown === null) {
       playerRef.current = null;
+      dispatchRise({ type: 'cleared' });
       return;
     }
     const context = canvasRef.current?.getContext('2d') ?? null;
@@ -166,6 +189,11 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
     const mode = entryRef.current;
     entryRef.current = 'keep';
     const before = playbackRef.current;
+    if (mode === 'autoplay') {
+      dispatchRise({ type: 'design-loaded', reducedMotion: reducedMotionRef.current });
+    } else if (mode === 'show-finished') {
+      dispatchRise({ type: 'cleared' });
+    }
     if (mode === 'autoplay' && autoplay(reducedMotionRef.current)) {
       player.play(0, count, speedRef.current ?? 4);
       setPlayback({ status: 'playing', pick: 0 });
@@ -207,6 +235,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
     setPlayback({ status: 'paused', pick: playback.pick });
   };
   const seekTo = (pick: number): void => {
+    dispatchRise({ type: 'seek' });
     playerRef.current?.seek(pick);
   };
   const onSpeed = (index: number): void => {
@@ -219,6 +248,8 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
   const gapText = shown === null ? '' : gapPickNumbers(shown.cloth.gaps).join(', ');
   const playing = playback.status === 'playing';
   const playLabel = playback.status === 'paused' ? t('weave.resume') : t('weave.play');
+  const riseRunning = rise === 'running' && !state.prefersReducedMotion;
+  const level = riseRunning ? riseLevel(riseFraction(playback.pick, pickCount), false, false) : 1;
   const canvasSize = shown?.settings.viewport ?? viewport;
   const colourOptions = COLOURS.map((colour) => (
     <option key={colour.hex} value={colour.hex}>
@@ -235,7 +266,10 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
 
       <div ref={wrapperRef} className={styles.clothArea}>
         {empty ? <p className={styles.empty}>{t('weave.empty')}</p> : null}
-        <div className={empty ? styles.hidden : undefined}>
+        <div
+          className={empty ? styles.hidden : riseRunning ? styles.rise : undefined}
+          style={riseRunning ? { filter: `brightness(${level})` } : undefined}
+        >
           <ClothCanvas
             canvasRef={canvasRef}
             width={canvasSize.width}
@@ -276,6 +310,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
         >
           {t('weave.stepForward')}
         </button>
+        <RiseSkipControl running={riseRunning} t={t} onSkip={() => dispatchRise({ type: 'skip' })} />
       </div>
 
       <label className={styles.field}>

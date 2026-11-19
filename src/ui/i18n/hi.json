@@ -59,6 +59,10 @@
     "text": "फिर चलाएँ",
     "reviewed": false
   },
+  "weave.skipRise": {
+    "text": "सीधे देखें",
+    "reviewed": false
+  },
   "weave.stepBack": {
     "text": "पिछली पिक",
     "reviewed": false

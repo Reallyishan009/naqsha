@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { WeaveScreen } from '../../../src/ui/screens/weave/WeaveScreen.tsx';
+import { RiseSkipControl, WeaveScreen } from '../../../src/ui/screens/weave/WeaveScreen.tsx';
 import { TryIt } from '../../../src/ui/screens/weave/TryIt.tsx';
 import { EN, HI, translator, DICTIONARIES } from '../../../src/ui/i18n/messages.ts';
 import { initialAppState } from '../../../src/ui/state/appState.ts';
@@ -111,5 +111,22 @@ describe('weave screen', () => {
       profile: { status: 'failed', failure: { reason: 'not-json' } },
     });
     expect((html.match(/<button[^>]*disabled[^>]*>(Diamond|Border|Floral)</g) ?? []).length).toBe(3);
+  });
+});
+
+describe('rise skip control', () => {
+  it('R20.2 the skip control is a labelled button in both languages while the effect runs', () => {
+    for (const language of LANGUAGES) {
+      const t = translator(DICTIONARIES, language);
+      const html = renderToStaticMarkup(<RiseSkipControl running={true} t={t} onSkip={() => undefined} />);
+      expect(html).toContain(`>${t('weave.skipRise')}</button>`);
+      expect(html).toContain('type="button"');
+    }
+    expect(HI['weave.skipRise']).toBeDefined();
+  });
+  it('R20.4 no skip control is shown when the effect is not running', () => {
+    const t = translator(DICTIONARIES, 'en');
+    expect(renderToStaticMarkup(<RiseSkipControl running={false} t={t} onSkip={() => undefined} />)).toBe('');
+    expect(render({ ...initialAppState, prefersReducedMotion: true })).not.toContain(t('weave.skipRise'));
   });
 });

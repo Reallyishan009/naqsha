@@ -36,6 +36,53 @@ export function pickPositionText(t: Translate, pick: number, pickCount: number):
   return t('weave.pickPosition', { pick: current, total });
 }
 
+/** Whether the first weave of a design is rising out of darkness (R20.2). */
+export type RiseState = 'off' | 'running';
+
+export type RiseEvent =
+  | { type: 'design-loaded'; reducedMotion: boolean }
+  | { type: 'finished' }
+  | { type: 'skip' }
+  | { type: 'seek' }
+  | { type: 'cleared' };
+
+/**
+ * The effect starts only when a design is loaded and reduced motion is off (R20.4). It ends on finish, skip, or a
+ * step or scrub. Nothing else (replay, colour change, pause) starts it again, so it runs once per design (R20.2).
+ */
+export function riseReducer(state: RiseState, event: RiseEvent): RiseState {
+  switch (event.type) {
+    case 'design-loaded':
+      return event.reducedMotion ? 'off' : 'running';
+    case 'finished':
+    case 'skip':
+    case 'seek':
+    case 'cleared':
+      return 'off';
+    default: {
+      const unreachable: never = event;
+      return unreachable;
+    }
+  }
+}
+
+/** How far the weave has come, from 0 to 1. An empty cloth counts as done. */
+export function riseFraction(pick: number, pickCount: number): number {
+  if (!Number.isInteger(pickCount) || pickCount <= 0) return 1;
+  return Math.min(1, Math.max(0, clampPick(pick, pickCount) / pickCount));
+}
+
+/**
+ * The brightness of the cloth canvas, from 0 (dark) to 1 (full colour). It never decreases as the fraction grows and
+ * reaches 1 at fraction 1. It is 1 once skipped and always 1 under reduced motion (R20.2, R20.4).
+ */
+export function riseLevel(fraction: number, skipped: boolean, reducedMotion: boolean): number {
+  if (skipped || reducedMotion) return 1;
+  if (Number.isNaN(fraction)) return 0;
+  const x = Math.min(1, Math.max(0, fraction));
+  return x * x * (3 - 2 * x);
+}
+
 /** The alternative text of the cloth canvas; it names the pick and the total. */
 export function canvasAltText(t: Translate, pick: number, pickCount: number): string {
   const { current, total } = pickLabel(pick, pickCount);

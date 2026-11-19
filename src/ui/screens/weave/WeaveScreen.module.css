@@ -28,6 +28,10 @@
   border-radius: var(--radius-panel);
 }
 
+.rise {
+  will-change: filter;
+}
+
 .hidden {
   display: none;
 }
