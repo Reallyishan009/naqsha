@@ -333,8 +333,8 @@ The plan has exactly four phases, in this order, followed by one final documenta
     - Run `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle`, then `git push`. The user has authorised this push. Run `git remote -v` first; if no remote is configured, ask the user before pushing and do not add one yourself.
     - _Requirements: 16.7_
 
-- [ ] 5. Final task: Kiro usage document
-  - [-] 5.1 Write docs/KIRO_USAGE.md
+- [x] 5. Final task: Kiro usage document
+  - [x] 5.1 Write docs/KIRO_USAGE.md
     - Files: `docs/KIRO_USAGE.md`. Read-only inputs: everything under `.kiro` (specs, steering, hooks, settings including the MCP configuration), `docs/BUILD_LOG.md`, `git log`.
     - Describe only what was done, and verify each statement against the files, the build log or git history. Do not describe a Kiro feature without evidence. For each Kiro feature actually used, give the file names and one concrete example:
       - Specs: the four specs, each with its `requirements.md`, `design.md` and `tasks.md`, and one example of a requirement flowing into a design property and a task.
