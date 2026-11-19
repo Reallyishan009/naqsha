@@ -1,6 +1,6 @@
 /**
  * `npm run check:browser`: drives a real headless Chrome over the DevTools protocol against `vite preview`
- * of the built `dist/`, and reports PASS or FAIL for twelve steps. Needs Chrome (set CHROME_PATH to choose one)
+ * of the built `dist/`, and reports PASS or FAIL for thirteen steps. Needs Chrome (set CHROME_PATH to choose one)
  * and a built `dist/` (it runs `npm run build` itself when `dist/` is missing).
  * Screenshots go to `media/check/` (git-ignored). Exit code is non-zero if any step failed.
  * The pure parts are in `scripts/checks/`: cdp.ts, chrome.ts, bmpHeader.ts, pngHeader.ts, report.ts.
@@ -20,6 +20,8 @@ import { connectCdp } from './checks/cdp.ts';
 import type { CdpClient } from './checks/cdp.ts';
 import { chromeArgs, findChrome, parseDevToolsActivePort } from './checks/chrome.ts';
 import { parsePngInfo } from './checks/pngHeader.ts';
+import { decideOffline, formatOffline, offlineConditions } from './checks/offline.ts';
+import type { OfflineCheck, OfflineGroup } from './checks/offline.ts';
 import { newPickWatch, stepPickWatch } from './checks/pickWatch.ts';
 import { encodePngRgba } from './png_rgba.ts';
 import { exitCodeFor, formatResult, formatSummary, runBrowserSteps } from './checks/report.ts';
@@ -717,6 +719,170 @@ function buildSteps(ctx: Context): BrowserStep[] {
         }
         if (failures.length > 0) throw new Error([...failures.map((line) => `OVERFLOW ${line}`), ...lines].join('\n'));
         return lines.join('\n');
+      },
+    },
+    {
+      name: 'works with the network off',
+      async run() {
+        const { cdp } = page;
+        const setOffline = (offline: boolean): Promise<unknown> => cdp.call('Network.emulateNetworkConditions', offlineConditions(offline));
+        const pending = new Map<string, string>();
+        const failedRequests: string[] = [];
+        const offs = [
+          cdp.on('Network.requestWillBeSent', (params) => {
+            const request = params.request as { url?: string } | undefined;
+            pending.set(String(params.requestId), request?.url ?? '?');
+          }),
+          cdp.on('Network.loadingFailed', (params) => {
+            failedRequests.push(`${pending.get(String(params.requestId)) ?? '?'} -> ${String(params.errorText)}`);
+          }),
+        ];
+        const run = async (name: string, fn: () => Promise<string>): Promise<OfflineCheck> => {
+          try {
+            return { name, status: 'pass', note: await fn() };
+          } catch (error) {
+            return { name, status: 'fail', note: error instanceof Error ? error.message : String(error) };
+          }
+        };
+        const notRun = (name: string, why: string): OfflineCheck => ({ name, status: 'not-run', note: why });
+        /** The network is really off for the page: the browser says so and a fetch that skips the cache fails. */
+        const confirmOffline = async (): Promise<string> => {
+          const seen = await page.ev<{ onLine: boolean; fetchFailed: boolean; fetchError: string }>(
+            `fetch('./profiles/demo-12x16.json',{cache:'no-store'}).then(()=>({onLine:navigator.onLine,fetchFailed:false,fetchError:''}),e=>({onLine:navigator.onLine,fetchFailed:true,fetchError:String(e)}))`,
+          );
+          expect(!seen.onLine && seen.fetchFailed, `the network is not off for the page (navigator.onLine ${seen.onLine}, no-store fetch of the profile ${seen.fetchFailed ? 'failed' : 'succeeded'})`);
+          return `navigator.onLine false, no-store fetch of the profile failed (${seen.fetchError})`;
+        };
+        const languageSwitches = async (): Promise<string> => {
+          await page.clickText('button', EN['language.en']!);
+          await page.waitFor(`document.documentElement.lang==='en'`, 'lang en');
+          await page.clickText('button', HI['language.hi']!);
+          await page.waitFor(`document.documentElement.lang==='hi'`, 'lang hi');
+          const hiHeading = await page.ev<string>(`document.querySelector('#screen-title')?.textContent.trim()`);
+          await page.clickText('button', EN['language.en']!);
+          await page.waitFor(`document.documentElement.lang==='en'`, 'lang back to en');
+          const enHeading = await page.ev<string>(`document.querySelector('#screen-title')?.textContent.trim()`);
+          expect(hiHeading === HI['nav.weave'], `Hindi heading is "${hiHeading}", expected "${HI['nav.weave']}"`);
+          expect(enHeading === EN['nav.weave'], `English heading is "${enHeading}", expected "${EN['nav.weave']}"`);
+          return `hi "${hiHeading}", back to en "${enHeading}"`;
+        };
+        const playDiamond = async (): Promise<string> => {
+          const expected = await chooseSample(page, 'diamond');
+          const seen = await playToEnd(page, expected);
+          return `Diamond counter reached ${expected} of ${expected} (${seen.length} values seen)`;
+        };
+        const groups: OfflineGroup[] = [];
+        try {
+          await cdp.call('Network.enable');
+          await cdp.call('Network.setCacheDisabled', { cacheDisabled: false });
+
+          // A: after the first load, go offline and reload the page.
+          await goTo(page, 'weave');
+          await setOffline(true);
+          const reloadChecks: OfflineCheck[] = [];
+          const loaded = await run('the page reloads offline and the app is on screen', async () => {
+            const done = new Promise<boolean>((resolve) => {
+              const off = cdp.on('Page.loadEventFired', () => {
+                off();
+                resolve(true);
+              });
+              setTimeout(() => {
+                off();
+                resolve(false);
+              }, 20_000);
+            });
+            await cdp.call('Page.reload', { ignoreCache: false });
+            const fired = await done;
+            const state = await page.ev<{ href: string; title: string; text: string; app: boolean }>(
+              `({href:location.href,title:document.title,text:(document.body?.innerText||'').slice(0,160).replace(/\\s+/g,' '),app:!!document.querySelector('#screen-title')})`,
+            );
+            let app = state.app;
+            if (!app && fired) {
+              await sleep(1500);
+              app = await page.ev<boolean>(`!!document.querySelector('#screen-title')`);
+            }
+            const failed = failedRequests.length === 0 ? 'none' : failedRequests.join(' | ');
+            expect(app, `the reloaded page has no app: load event ${fired ? 'fired' : 'did not fire in 20 s'}; location ${state.href}; title "${state.title}"; page text "${state.text}"; failed requests: ${failed}`);
+            return `app on screen at ${state.href}; failed requests: ${failed}`;
+          });
+          reloadChecks.push(loaded);
+          if (loaded.status === 'pass') {
+            reloadChecks.push(await run('the network is really off', confirmOffline));
+            reloadChecks.push(
+              await run('Weave renders', async () => {
+                await goTo(page, 'weave');
+                await page.waitFor(`!!document.querySelector('canvas')`, 'the cloth canvas', 10_000);
+                return 'Weave screen with a canvas';
+              }),
+            );
+            reloadChecks.push(await run('a Try it sample plays to its last pick', playDiamond));
+            reloadChecks.push(await run('language switching works', languageSwitches));
+          } else {
+            for (const name of ['the network is really off', 'Weave renders', 'a Try it sample plays to its last pick', 'language switching works']) {
+              reloadChecks.push(notRun(name, 'not tested: the page did not load after the reload'));
+            }
+          }
+          groups.push({ title: 'A. offline, then reload the page', checks: reloadChecks });
+
+          // B: load the site again online, go offline and do not reload.
+          await setOffline(false);
+          await page.navigate(ctx.baseUrl);
+          await page.waitFor(
+            `[...document.querySelectorAll('button')].some(b=>(b.textContent.trim()===${JSON.stringify(EN['tryit.diamond'])}||b.textContent.trim()===${JSON.stringify(HI['tryit.diamond'])})&&!b.disabled)`,
+            'the app to load again online (Try it enabled)',
+            20_000,
+          );
+          await setOffline(true);
+          const keepChecks: OfflineCheck[] = [];
+          keepChecks.push(await run('the network is really off', confirmOffline));
+          keepChecks.push(await run('a Try it sample plays to its last pick', playDiamond));
+          keepChecks.push(
+            await run('export a 1-bit BMP and parse its header', async () => {
+              const picks = generateSample(ctx.profile, 'diamond').length;
+              const ends = ctx.profile.hookRows * ctx.profile.hookColumns;
+              clearDownloads(ctx.downloadDir);
+              await goTo(page, 'keep');
+              await page.clickText('label span', EN['keep.export.bitDepth.1']!);
+              await page.clickText('button', EN['keep.export.button']!);
+              const file = await takeDownload(ctx.downloadDir);
+              const parsed = parseBmpHeader(file.bytes);
+              expect(parsed.ok, `not a BMP: ${parsed.ok ? '' : parsed.reason}`);
+              const problems = bmpMismatches(parsed.header, { width: ends, height: picks, bitsPerPixel: 1 });
+              expect(problems.length === 0, `${file.name}: ${problems.join('; ')}`);
+              return `${file.name}: ${ends}x${picks}, 1 bit, ${file.bytes.length} bytes`;
+            }),
+          );
+          keepChecks.push(
+            await run('a Scan read of the printable PNG equals Diamond pick', async () => {
+              const cardPng = need(ctx.cardPng, 'step 9 saved no PNG');
+              await goTo(page, 'scan');
+              await page.setFile('#scan-file', cardPng);
+              const outcome = await page.waitFor<string>(
+                `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[role="alert"]')?.textContent.trim()||null)`,
+                'the read to finish',
+                30_000,
+              );
+              expect(outcome === 'read', `the read failed with: ${outcome}`);
+              const shapes = await page.ev<string[]>(`[...document.querySelectorAll('button[data-shape]')].map(b=>b.dataset.shape)`);
+              const expected = generateSample(ctx.profile, 'diamond')[ctx.printedPickIndex]!.flat();
+              const wrong = expected.filter((punched, index) => (shapes[index] === 'filled') !== punched).length;
+              expect(shapes.length === expected.length && wrong === 0, `${shapes.length} markers, ${wrong} differ from Diamond pick ${ctx.printedPickIndex + 1}`);
+              return `all ${shapes.length} hooks equal Diamond pick ${ctx.printedPickIndex + 1}`;
+            }),
+          );
+          groups.push({ title: 'B. offline, no reload', checks: keepChecks });
+        } finally {
+          try {
+            await setOffline(false);
+          } catch {
+            // Chrome is closed by the cleanup anyway
+          }
+          for (const off of offs) off();
+        }
+        const verdict = decideOffline(groups);
+        const text = formatOffline(groups);
+        if (!verdict.ok) throw new Error(text);
+        return text;
       },
     },
   ];
