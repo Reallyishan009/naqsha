@@ -438,3 +438,16 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **Final checks:** `npm run test:run` 75 files, 565 tests, all passing (69 files and 520 tests at the end of Phase 3). `npm run typecheck`, `npm run build` and `npm run check-bundle` pass (entry chunk 92,251 bytes gzipped).
 **What I changed by hand:** No files edited by hand.
 **Kiro features used:** spec, property tests.
+## 2026-11-21 (app phase 4, task 4.3: self-hosted fonts, conditional)
+**Goal today:** Find out whether the app loads any web font, and self-host fonts only if it does.
+**Result:** It does not, so no fonts were self-hosted and no font files were added.
+**Evidence:**
+- `src/ui/theme/tokens.css` lines 16 to 18 are the only font definitions: `--font-display: Georgia, serif`, `--font-body: system-ui, sans-serif`, `--font-data: ui-monospace, monospace`. Every `font-family` in `src` uses one of these three variables.
+- No `@font-face`, no `fonts.googleapis.com` or `fonts.gstatic.com`, and no `.woff`, `.woff2`, `.ttf` or `.otf` reference in `src`, `index.html` or `public`. `index.html` has no font `<link>`.
+- No font file exists in the repository outside `node_modules`.
+- Built `dist/`: 0 `@font-face` in both CSS files, no `url(` in either, and no font host or font file name in `dist/index.html` or the JS. The only `rel="preload"` and `rel="stylesheet"` strings in the JS are React DOM internals; `dist/index.html` links one stylesheet from `./assets`.
+**Why not built:** `docs/DESIGN_BRIEF.md` line 46 asks for Google Fonts with Devanagari subsets (IBM Plex Mono for data). The app deliberately uses system stacks, because the product must work without network access and Google Fonts would add a third-party request on every page load.
+**Visual consequence:** Text renders in whatever font the device provides. Devanagari (Hindi) uses the system's Devanagari font, so its appearance varies by device and operating system. Headings use Georgia where it exists. The data font is the system monospace, not IBM Plex Mono. If a consistent look is wanted later, self-hosting Devanagari-capable fonts needs a decision on licences and file sizes against the 200 KB JS budget (fonts are not JS, but they cost load time).
+**Final checks:** see the commit that adds this entry.
+**What I changed by hand:** No files edited by hand.
+**Kiro features used:** spec.
