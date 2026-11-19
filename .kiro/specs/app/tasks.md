@@ -419,7 +419,7 @@ The plan has exactly four phases, in this order, followed by one final documenta
     - Run `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle`. Commit the specific paths changed. Run `git remote -v`, then `git push`; the user has authorised this push. Never force push.
     - _Requirements: 16.7, 23.1_
 
-- [ ] 7. Phase 7: flake, hooks evidence, prerelease steering, reviewer agent
+- [x] 7. Phase 7: flake, hooks evidence, prerelease steering, reviewer agent
   - Every task in this phase ends the same way: run `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle`, then commit the specific paths the task changed (never `git add -A` or `git add .`). Never weaken or delete a test, and never loosen a check: no narrowed arbitrary, no filter, no lower `numRuns`, no longer timeout in place of a condition, no skipped step. If a check fails, fix the cause or report the failure with its real output (for a property, the shrunk counterexample, seed and path).
   - Say only what is true. Anything that cannot be verified from the repo, the Kiro documentation or a real run is written as "not verified". Never write fake log lines or invented results.
   - _Requirements: 16.7, 23.1_
@@ -463,7 +463,7 @@ The plan has exactly four phases, in this order, followed by one final documenta
     - End with the common steps above. Commit.
     - _Requirements: 16.7, 17.1_
 
-  - [-] 7.5 Update `docs/KIRO_USAGE.md`, commit and push
+  - [x] 7.5 Update `docs/KIRO_USAGE.md`, commit and push
     - Files: `docs/KIRO_USAGE.md`, the task status files under `.kiro/specs/app/`.
     - Update the document for: the hooks evidence (only what `.kiro/hooks` log and `npm run check:hooks` show), the steering command (`prerelease-check`), the custom agent or the fallback, and the flake investigation (cause, fix, before and after results). Say only what is true and mark anything unverified. Do not describe a Kiro feature without evidence.
     - Run `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle`. Commit the specific paths changed, including the task status files. Run `git remote -v`, then `git push`; the user has authorised this push. Never force push.
