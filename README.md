@@ -14,11 +14,17 @@ The GIFs below were captured from the built site (`npm run preview`) with the de
 
 Public URL: https://naqsha-ashen.vercel.app/ (opens with no login; deployed by hand on Vercel, see "Deploy to Vercel").
 
-**Status:** the card codec and the card reader are built and tested on synthetic card images, and the simulator renders cloth on a canvas (dev preview page only). The exporter writes and reads back BMP files (no app screen yet). The camera screen, archive and UI are not built yet.
+**Status:** the app is built and deployed at https://naqsha-ashen.vercel.app/ . Weave has a Try it button and printable sample cards. Keep exports a bitmap and saves designs in the IndexedDB archive. Scan reads a card from an uploaded photo, lets you tap to correct a hole, reads cards in a batch, and uses the live camera on HTTPS. Not verified: the Hindi text has not been reviewed (see `docs/HINDI_REVIEW.md`), the live camera has not been tested on real devices, and the card profile values are illustrative and unverified.
 
 ## Try it in 60 seconds
 
-**Coming.** There is no hosted site and no camera screen yet. Today you can run a developer-only photo trial: print a rendered card, photograph it, and read the photo on a local page (see "Run it locally").
+Open https://naqsha-ashen.vercel.app/ . It needs no login.
+
+1. On Weave, choose **Try it** to weave a sample design pick by pick.
+2. Print a sample card from Weave, or use a photo of a card, and open Scan to read it. Tap a hole to correct it.
+3. On Keep, export the bitmap or save the design to the archive.
+
+To run it yourself, see "Run it locally". Developer-only photo trial tools are listed there too.
 
 ## What it does
 
