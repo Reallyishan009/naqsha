@@ -287,7 +287,7 @@ The plan has exactly four phases, in this order, followed by one final documenta
     - Run `npm run test:run` and `npm run typecheck`. Commit. Do not push (the next push is task 4.7).
     - _Requirements: 17.1, 17.3_
 
-- [ ] 4. Phase 4: CUT-LAST features, trimmed
+- [x] 4. Phase 4: CUT-LAST features, trimmed
   - Scope set by the user: the live camera, and one animation extra (rise from darkness). Self-hosted fonts are conditional. Hindi voice prompts and the Night loom theme are dropped by choice.
   - Every task in this phase ends by running `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle` (the npm script that runs `scripts/check_bundle.ts`), and committing when all four pass. No property is weakened: no narrowed arbitrary, no filter, no lower `numRuns`, no looser check.
   - _Requirements: 13.5, 13.6, 18.1, 18.2, 18.3, 18.4, 18.5, 18.6, 18.7, 20.2, 20.4, 20.6_
@@ -329,12 +329,12 @@ The plan has exactly four phases, in this order, followed by one final documenta
     - Regenerate `docs/HINDI_REVIEW.md` with `npm run review-list`. Run the four checks named in the task 4 header.
     - _Requirements: 12.12, 16.7_
 
-  - [-] 4.6 Phase 4 push
+  - [x] 4.6 Phase 4 push
     - Run `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle`, then `git push`. The user has authorised this push. Run `git remote -v` first; if no remote is configured, ask the user before pushing and do not add one yourself.
     - _Requirements: 16.7_
 
 - [ ] 5. Final task: Kiro usage document
-  - [ ] 5.1 Write docs/KIRO_USAGE.md
+  - [-] 5.1 Write docs/KIRO_USAGE.md
     - Files: `docs/KIRO_USAGE.md`. Read-only inputs: everything under `.kiro` (specs, steering, hooks, settings including the MCP configuration), `docs/BUILD_LOG.md`, `git log`.
     - Describe only what was done, and verify each statement against the files, the build log or git history. Do not describe a Kiro feature without evidence. For each Kiro feature actually used, give the file names and one concrete example:
       - Specs: the four specs, each with its `requirements.md`, `design.md` and `tasks.md`, and one example of a requirement flowing into a design property and a task.
