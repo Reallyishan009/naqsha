@@ -6,3 +6,6 @@ dist/
 .env.*
 !.env.example
 media/check/
+
+# hooks evidence log (written by .kiro/hooks commands via scripts/log_hook.ts)
+logs/

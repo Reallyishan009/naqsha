@@ -578,3 +578,32 @@ A dated record of how Naqsha was built. Add an entry every working day. The Kiro
 **Root cause:** not reproduced; most likely the wait described above.
 **What I changed by hand:** No files edited by hand.
 **Kiro features used:** spec, steering, property tests (fast-check).
+## 2026-11-22 (app phase 7, task 7.2: hooks evidence)
+**Goal today:** Make each hook in `.kiro/hooks` leave one log line when it fires, and a command that reports from the real log only.
+**Hooks found (exact):** both are in `.kiro/hooks/*.json`, schema `"version": "v1"`, trigger `PostFileSave`, action type `command`, no agent prompt.
+| File | Name | Matcher (regex on the saved file path) | Command (now) | Timeout |
+|---|---|---|---|---|
+| `test-on-save.json` | `Related tests and typecheck on save` | `(^|/)(src|scripts)/.+\.(ts|tsx)$` | `sh -c 'node .kiro/hooks/bin/related-tests.mjs; s=$?; node scripts/log_hook.ts "<name>" "exit $s"; exit $s'` | 10 s |
+| `fixtures-on-profile-change.json` | `Regenerate fixtures on profile or generator change` | `(^|/)(public/profiles/[^/]+\.json|scripts/make_fixtures\.ts)$` | `sh -c 'sh .kiro/hooks/bin/check-fixtures.sh; s=$?; node scripts/log_hook.ts "<name>" "exit $s"; exit $s'` | 60 s |
+`.kiro/hooks/bin/` holds the two scripts the commands call (not hooks).
+**Mechanism.** The action is a shell command, so the command appends the line itself: after the real work it runs `node scripts/log_hook.ts <hook-name> "exit <status>"` and then exits with the original status, so the hook result is unchanged. The line format (`<ISO timestamp>TAB<hook name>TAB<result>`) is in `scripts/checks/hooksLog.ts` only. Log file: `logs/hooks.log`. `git check-ignore -v logs/hooks.log` prints `.gitignore:11:logs/	logs/hooks.log`.
+**Schema check.** Fields used (`version`, `hooks[].name`, `description`, `trigger`, `matcher`, `action.type`, `action.command`, `timeout`) match the Kiro hooks documentation (https://kiro.dev/docs/hooks/, fetched today) and the existing files. No field was added. The docs also list an optional `enabled` field (default true) which these files do not set.
+**Known limit.** A line is written only if the command runs to the end. If Kiro kills the command at its timeout, no line is written. `Related tests and typecheck on save` has a 10 s timeout and runs Vitest related tests plus `tsc --noEmit`, which may take longer; I did not time it or change the timeout. A missing line for that hook may mean a timeout, not a hook that did not fire.
+**`npm run check:hooks`** (`scripts/check_hooks.ts`, read-only): prints the last 20 log lines, then per hook `fired N times, last at T` or `never fired (no log line)`. A missing log file is the same as an empty one. Malformed lines are printed and not counted, and the exit code is 1 if any exist or a hook file cannot be read. Real output today:
+```
+last 0 line(s) of logs/hooks.log (no log file or it is empty):
+hooks:
+  Regenerate fixtures on profile or generator change: never fired (no log line)
+  Related tests and typecheck on save: never fired (no log line)
+```
+**Did either hook fire?** No. I cannot fire a `PostFileSave` hook from a shell: it fires when the Kiro IDE saves a matching file. I wrote no log line by hand and no test touches `logs/`.
+**How to trigger in the Kiro IDE.**
+- `Related tests and typecheck on save`: save any `.ts` or `.tsx` file under `src/` or `scripts/` (for example edit and save `src/codec/types.ts`). Then run `npm run check:hooks`; the count should go from 0 to 1 (if the command finished within 10 s).
+- `Regenerate fixtures on profile or generator change`: save `public/profiles/demo-12x16.json` or `scripts/make_fixtures.ts`. This regenerates `tests/fixtures/` (`git checkout -- tests/fixtures` discards a change). Then run `npm run check:hooks`.
+- Saving `scripts/make_fixtures.ts` matches both matchers, so it should fire both hooks.
+- The Kiro docs say hooks activate when a session starts; if a hook does not fire, start a new session.
+**Agent Hooks panel.** From the docs: the IDE has an "Agent Hooks" section in the Kiro panel, with a `+` button to create a hook. Not verified (I cannot open the IDE from here, and the docs page does not say): the exact label of each entry (presumably the hook `name` above), how the enabled state is shown, whether a manual run button exists, and whether `PostFileSave` hooks show a fired indicator. Verified only in the repo: the files set no `enabled` field, which the docs define as default true.
+**Tests.** `tests/scripts/hooksLog.test.ts`: examples for format and parse, malformed lines, an empty log, last lines and reading hook names; fast-check properties (seed 72002, 200 runs): format then parse round-trips; the per-hook count equals the number of lines with that name; malformed lines are reported and never counted; last-lines returns at most N lines, the last ones, in file order. The round-trip generator excludes tab and line break in names and results, because formatting replaces those by a space. `scripts/log_hook.ts` itself is not run in a test because it writes to `logs/hooks.log`.
+**Verification:** `npm run test:run` 90 files, 719 tests passed; `npm run typecheck`, `npm run build` and `npm run check-bundle` (93203 bytes gzipped) pass.
+**What I changed by hand:** No files edited by hand.
+**Kiro features used:** spec, steering, hooks, property tests (fast-check).

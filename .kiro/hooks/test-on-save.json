@@ -6,7 +6,7 @@
       "description": "When a TypeScript file under src/ or scripts/ is saved, run the Vitest files related to it and tsc --noEmit. Shell command only, no agent prompt.",
       "trigger": "PostFileSave",
       "matcher": "(^|/)(src|scripts)/.+\\.(ts|tsx)$",
-      "action": { "type": "command", "command": "node .kiro/hooks/bin/related-tests.mjs" },
+      "action": { "type": "command", "command": "sh -c 'node .kiro/hooks/bin/related-tests.mjs; s=$?; node scripts/log_hook.ts \"Related tests and typecheck on save\" \"exit $s\"; exit $s'" },
       "timeout": 10
     }
   ]

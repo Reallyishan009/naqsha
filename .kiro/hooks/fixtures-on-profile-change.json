@@ -6,7 +6,7 @@
       "description": "When a card profile in public/profiles/ or scripts/make_fixtures.ts is saved, regenerate tests/fixtures/ and fail loudly if any PNG changed. Shell command only, no agent prompt.",
       "trigger": "PostFileSave",
       "matcher": "(^|/)(public/profiles/[^/]+\\.json|scripts/make_fixtures\\.ts)$",
-      "action": { "type": "command", "command": "sh .kiro/hooks/bin/check-fixtures.sh" },
+      "action": { "type": "command", "command": "sh -c 'sh .kiro/hooks/bin/check-fixtures.sh; s=$?; node scripts/log_hook.ts \"Regenerate fixtures on profile or generator change\" \"exit $s\"; exit $s'" },
       "timeout": 60
     }
   ]
