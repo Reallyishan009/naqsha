@@ -21,6 +21,7 @@ import {
   riseFraction,
   riseLevel,
   riseReducer,
+  focusAfterSkip,
   scrubTo,
   SPEEDS,
   stepBack,
@@ -106,6 +107,8 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
 
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const playButtonRef = useRef<HTMLButtonElement | null>(null);
+  const pauseButtonRef = useRef<HTMLButtonElement | null>(null);
   const playerRef = useRef<Player | null>(null);
   const playbackRef = useRef(playback);
   playbackRef.current = playback;
@@ -234,6 +237,11 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
     playerRef.current?.pause();
     setPlayback({ status: 'paused', pick: playback.pick });
   };
+  // The skip control disappears when used, so focus moves to the next control while it is still enabled.
+  const onSkip = (): void => {
+    focusAfterSkip(playback.status, { pause: pauseButtonRef.current, play: playButtonRef.current });
+    dispatchRise({ type: 'skip' });
+  };
   const seekTo = (pick: number): void => {
     dispatchRise({ type: 'seek' });
     playerRef.current?.seek(pick);
@@ -288,10 +296,10 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
       <p className={styles.position}>{pickPositionText(t, playback.pick, pickCount)}</p>
 
       <div className={styles.row}>
-        <button type="button" className={styles.button} disabled={disabled || playing} onClick={onPlay}>
+        <button ref={playButtonRef} type="button" className={styles.button} disabled={disabled || playing} onClick={onPlay}>
           {playLabel}
         </button>
-        <button type="button" className={styles.button} disabled={disabled || !playing} onClick={onPause}>
+        <button ref={pauseButtonRef} type="button" className={styles.button} disabled={disabled || !playing} onClick={onPause}>
           {t('weave.pause')}
         </button>
         <button
@@ -310,7 +318,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
         >
           {t('weave.stepForward')}
         </button>
-        <RiseSkipControl running={riseRunning} t={t} onSkip={() => dispatchRise({ type: 'skip' })} />
+        <RiseSkipControl running={riseRunning} t={t} onSkip={onSkip} />
       </div>
 
       <label className={styles.field}>

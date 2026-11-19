@@ -1,7 +1,7 @@
 import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { DICTIONARIES, translator } from '../../../src/ui/i18n/messages.ts';
-import { canvasAltText, pickLabel, pickPositionText, riseFraction, riseLevel, riseReducer, scrubTo, SPEEDS, stepBack, stepForward } from '../../../src/ui/state/playback.ts';
+import { canvasAltText, focusAfterSkip, focusTargetAfterSkip, pickLabel, pickPositionText, riseFraction, riseLevel, riseReducer, scrubTo, SPEEDS, stepBack, stepForward } from '../../../src/ui/state/playback.ts';
 import type { Language } from '../../../src/ui/types.ts';
 
 const SEED = 20240701;
@@ -31,7 +31,7 @@ describe('playback examples', () => {
     expect(pickLabel(36, 36)).toEqual({ current: 36, total: 36 });
     expect(pickLabel(0, 0)).toEqual({ current: 0, total: 0 });
   });
-  it('R2.6 there are three speeds', () => {
+  it('R2.8 there are three speeds', () => {
     expect(SPEEDS).toHaveLength(3);
   });
 });
@@ -120,6 +120,40 @@ describe('rise from darkness', () => {
           if (skipped || reducedMotion) expect(lowLevel).toBe(1);
         },
       ),
+      { seed: SEED, numRuns: NUM_RUNS },
+    );
+  });
+});
+
+describe('focus after the skip control', () => {
+  const STATUSES = ['idle', 'playing', 'paused', 'finished'] as const;
+  it('R20.2 after skip focus goes to Pause while playing and to Play when paused or finished', () => {
+    expect(focusTargetAfterSkip('playing')).toBe('pause');
+    expect(focusTargetAfterSkip('paused')).toBe('play');
+    expect(focusTargetAfterSkip('finished')).toBe('play');
+    expect(focusTargetAfterSkip('idle')).toBe('play');
+  });
+  it('R20.2 for every playback status the focus target is Pause exactly when playing', () => {
+    fc.assert(
+      fc.property(fc.constantFrom(...STATUSES), (status) => {
+        expect(focusTargetAfterSkip(status)).toBe(status === 'playing' ? 'pause' : 'play');
+      }),
+      { seed: SEED, numRuns: NUM_RUNS },
+    );
+  });
+  it('R20.2 skip focuses exactly the chosen control and no other, and does nothing when it is missing', () => {
+    fc.assert(
+      fc.property(fc.constantFrom(...STATUSES), (status) => {
+        const calls: string[] = [];
+        const controls = {
+          pause: { focus: () => calls.push('pause') },
+          play: { focus: () => calls.push('play') },
+        };
+        const target = focusAfterSkip(status, controls);
+        expect(calls).toEqual([focusTargetAfterSkip(status)]);
+        expect(target).toBe(focusTargetAfterSkip(status));
+        expect(focusAfterSkip(status, { pause: null, play: null })).toBeNull();
+      }),
       { seed: SEED, numRuns: NUM_RUNS },
     );
   });

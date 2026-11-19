@@ -1,4 +1,5 @@
 import type { Translate } from '../i18n/messages.ts';
+import type { PlaybackState } from '../types.ts';
 
 /** Picks per second for the three speeds: slow, normal, fast (design: Playback speeds). */
 export const SPEEDS: readonly [number, number, number] = [1, 4, 12];
@@ -87,4 +88,23 @@ export function riseLevel(fraction: number, skipped: boolean, reducedMotion: boo
 export function canvasAltText(t: Translate, pick: number, pickCount: number): string {
   const { current, total } = pickLabel(pick, pickCount);
   return t('weave.canvasAlt', { pick: current, total });
+}
+
+/** The control that takes keyboard focus once the skip control has gone: Pause while playing, otherwise Play. */
+export type FocusTarget = 'pause' | 'play';
+export function focusTargetAfterSkip(status: PlaybackState['status']): FocusTarget {
+  return status === 'playing' ? 'pause' : 'play';
+}
+/** Something that can take focus; a button element in the browser, a fake in tests. */
+export type Focusable = { focus: () => void };
+/** Moves focus to the control chosen by `focusTargetAfterSkip`. Returns the target, or null when its control is missing. */
+export function focusAfterSkip(
+  status: PlaybackState['status'],
+  controls: { pause: Focusable | null; play: Focusable | null },
+): FocusTarget | null {
+  const target = focusTargetAfterSkip(status);
+  const control = controls[target];
+  if (control === null) return null;
+  control.focus();
+  return target;
 }
