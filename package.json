@@ -14,6 +14,7 @@
     "preview": "vite preview",
     "check-bundle": "node scripts/check_bundle.ts",
     "check:all": "node scripts/check_all.ts",
+    "check:browser": "node scripts/check_browser.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit",
