@@ -44,6 +44,9 @@ Scope notes:
 - **Unverified_Profile**: A Card_Profile whose Profile_Status text contains the word "UNVERIFIED".
 - **Deploy_Host**: A static file hosting service (Vercel in the documented steps) that serves the Built_Site at a public URL.
 - **README_Media**: The banner image and the GIF files stored in `media/` and referenced from `README.md`.
+- **Service_Worker**: The script `sw.js` of the Built_Site, registered by the App, that holds a copy of the Built_Site's files and answers requests for them from that copy.
+- **Precache**: The named cache the Service_Worker fills when it installs, holding one response per file of the Built_Site.
+- **Web_Manifest**: The `manifest.webmanifest` file of the Built_Site, with the App's name, start address, colours and icons, that lets a browser install the App.
 
 ## Requirements
 
@@ -250,7 +253,7 @@ Scope notes:
 
 #### Acceptance Criteria
 
-1. THE Built_Site SHALL run reading, weaving, exporting and archiving with no network request after the Initial_Load and the Card_Profile fetch.
+1. THE Built_Site SHALL run reading, weaving, exporting and archiving with no network request after the Initial_Load, the Card_Profile fetch and the Service_Worker's one-off Precache of the Built_Site's own files (Requirement 24). (Amended in task 8.1: the Service_Worker fetches each file of the Built_Site once while it installs, so the earlier wording, which allowed no request after the Initial_Load and the Card_Profile fetch, was untrue. Every such request is for a file of the Built_Site and for no other origin, and no request of any kind is needed once the Precache is filled.)
 2. THE App SHALL use no backend, no account, no API key and no secret.
 3. WHEN `npm run build` completes, THE Built_Site SHALL work when served as static files (as by `npm run preview`) with all assets resolved by relative path.
 4. THE App SHALL load the Card_Profile from a file inside the Built_Site.
@@ -306,7 +309,7 @@ Scope notes:
 7. WHEN `npm run build` runs, THE build SHALL complete `tsc --noEmit` with no errors, with `strict` mode on.
 8. THE App SHALL contain no use of `any`.
 9. THE App SHALL keep all browser API calls for camera, file choice and download inside the `src/ui` boundary or the modules that already isolate them.
-10. THE App SHALL load the Scan_Screen code only when the user first opens the Scan_Screen, so that Weave remains inside the Initial_Load budget.
+10. THE App SHALL request and evaluate the Scan_Screen code only when the user first opens the Scan_Screen, so that Weave remains inside the Initial_Load budget. THE Service_Worker MAY fetch the Scan_Screen chunk into the Precache before that (R24.2); such a fetch SHALL not put the chunk in the Initial_Load and SHALL not evaluate it. (Amended in task 8.1: the Precache fetches that chunk while the Service_Worker installs, so the earlier wording, which said the Scan code loads only when the user first opens Scan, was untrue for fetching. The budget rule is about what the Initial_Load transfers and executes, which is unchanged.)
 
 ### Requirement 17: Testing
 
@@ -427,3 +430,20 @@ Scope notes:
 12. THE README_Media SHALL each have a file size of at most 5 MB, and SHALL have alternative text in the `README.md` that states what the image or GIF shows.
 13. THE README_Media SHALL not be part of the Built_Site and SHALL not add to the Initial_Load.
 14. THE `README.md` SHALL state that the Card_Profile values are illustrative and unverified, and that no loom controller has been tested with the exported file.
+
+### Requirement 24: Service worker, offline reload and installability
+
+*Added in task 8.1. Requirements 1 to 23 keep their numbers and text, except R13.1 and R16.10, which were amended in that task because the Precache made their wording untrue.*
+
+**User Story:** As a weaver in a workshop with no connection, I want the app to open again after I close it or reload the page, and to sit on my home screen like any other app, so that I do not need the network to work.
+
+#### Acceptance Criteria
+
+1. THE Built_Site SHALL register the Service_Worker, and THE dev server SHALL not register it.
+2. WHEN the Service_Worker installs, THE Service_Worker SHALL fetch into the Precache `index.html`, the start address of its own scope, the entry chunk, every style sheet, the lazy Scan_Screen chunk, every other JavaScript chunk of the Built_Site, the Card_Profile file, the Web_Manifest and every icon the Web_Manifest names, and SHALL install nothing when any one of them cannot be fetched.
+3. THE Precache name SHALL carry a version, and WHEN the Service_Worker activates, THE Service_Worker SHALL delete every cache whose name is not that version.
+4. WHILE the device has no network, WHEN the user reloads the Built_Site, THE App SHALL be served from the Precache and SHALL show the Weave_Screen, play a Sample_Design, open the Scan_Screen for the first time and export a BMP.
+5. WHEN a new Service_Worker is installed and waiting, THE App SHALL tell the user that a newer version is ready and SHALL offer a control that makes the new Service_Worker take over and loads the page again exactly once, so that no visitor stays on stale files; THE App SHALL not reload the page by itself when a Service_Worker first takes control of a page.
+6. THE Precache list SHALL be generated from `dist/` after the bundler runs, so that no hashed file name is written by hand, and THE Precache name SHALL change when any precached file's content changes.
+7. THE Built_Site SHALL contain the Web_Manifest and its icons, SHALL reference them from `index.html` by relative paths, and THE Web_Manifest SHALL hold the App name, a short name, the start address `./`, a display mode, a theme colour and a background colour from the Day loom tokens, and an icon of 192 by 192 and one of 512 by 512 pixels.
+8. THE Service_Worker SHALL resolve every Precache entry against its own scope and SHALL use no absolute path, so that the Built_Site works under `base: './'` from the root of a static host and from a sub-path.

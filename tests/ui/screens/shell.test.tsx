@@ -111,6 +111,21 @@ describe('shell', () => {
     expect((/<nav[^>]*>(.*?)<\/nav>/.exec(html)?.[1] ?? '').match(/<button/g)?.length).toBe(3);
   });
 
+  it('R24.5 a waiting new version is announced with a control that loads it, and nothing is shown otherwise', () => {
+    for (const language of LANGUAGES) {
+      const t = translator(DICTIONARIES, language);
+      const quiet = renderToStaticMarkup(<Shell state={{ ...initialAppState, language }} dispatch={() => undefined} />);
+      expect(quiet).not.toContain(t('update.ready'));
+      const html = renderToStaticMarkup(
+        <Shell state={{ ...initialAppState, language }} dispatch={() => undefined} updateReady onLoadUpdate={() => undefined} />,
+      );
+      expect(html).toContain(t('update.ready'));
+      expect(html).toContain(`>${t('update.load')}</button>`);
+      // The navigation is still there, so the notice never blocks the app.
+      expect((/<nav[^>]*>(.*?)<\/nav>/.exec(html)?.[1] ?? '').match(/<button/g)?.length).toBe(3);
+    }
+  });
+
   it('R14.1 the shell styles give controls a 48 px minimum', async () => {
     const { readFileSync } = await import('node:fs');
     const path = await import('node:path');

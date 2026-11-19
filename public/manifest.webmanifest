@@ -1,0 +1,17 @@
+{
+  "name": "Naqsha",
+  "short_name": "Naqsha",
+  "description": "Read Jacquard punch cards, see the cloth and make a file for a loom.",
+  "lang": "hi",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#FFFBF2",
+  "background_color": "#F6EFE0",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

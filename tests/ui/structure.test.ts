@@ -143,7 +143,8 @@ describe('src/ui structure', () => {
 
   it('R16.7 the build script runs tsc --noEmit before the bundler, and tsconfig turns strict mode on', () => {
     const manifest = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8')) as { scripts: Record<string, string> };
-    expect(manifest.scripts.build).toMatch(/^tsc --noEmit && vite build$/);
+    // The precache list is generated from dist/ after the bundler, so the build ends with that step (R24.6).
+    expect(manifest.scripts.build).toMatch(/^tsc --noEmit && vite build && node scripts\/build_precache\.ts$/);
     expect(manifest.scripts.typecheck).toBe('tsc --noEmit');
     const tsconfig = JSON.parse(readFileSync(path.join(ROOT, 'tsconfig.json'), 'utf8')) as {
       compilerOptions: { strict?: boolean };

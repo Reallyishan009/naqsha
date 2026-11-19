@@ -78,6 +78,34 @@
   color: var(--ink-soft);
 }
 
+/* A new version of the app is waiting; the control beside the sentence loads it. */
+.updateBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 16px;
+  padding: 12px 16px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 2px solid var(--zari);
+  border-radius: var(--radius-panel);
+}
+
+.updateBanner p {
+  margin: 0;
+}
+
+.updateButton {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: 0 16px;
+  color: var(--ink);
+  background: var(--ground);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+
 .main {
   padding: 16px;
 }

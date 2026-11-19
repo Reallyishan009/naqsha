@@ -142,6 +142,8 @@ Side effects the log says needed the user's confirmation: Property 11 (R2.8) now
 
 This is a tension between R13.1 and R16.10 plus a missing service worker. Nothing was changed. The options named in the 7.3 log are a service worker that caches `dist/`, prefetching the Scan chunk after first load, or amending R13.1.
 
+**Closed in task 8.1** by the first of those options: a hand-written service worker with a build-time precache list, the amendments to R13.1 and R16.10, and Requirement 24. Step 13 was rebuilt (it now stops the preview server, so the network is really gone) and passes: 13 of 13 steps, with the offline reload, the first Scan open and a BMP export all served from the cache. The two paragraphs above describe the run of task 7.3 and the repository as it was then.
+
 ### 5b. Custom agent: `weave-reviewer` (task 7.4, `3f62508`)
 
 `.kiro/agents/weave-reviewer.md`, in the Markdown format with YAML front matter that https://kiro.dev/docs/custom-agents/configuration-reference/ describes (the 7.4 log says it fetched that page). Tools `read` and `shell`, shell limited to `git diff`, `git log`, `git show`, `git status`, `grep` and `rg`, writes denied, resources the glossary, `card-geometry.md` and `testing.md`. It checks three things in a diff: weaving terms (A), hard-coded card layout values (B), and exported functions with no fast-check property that names them (C).

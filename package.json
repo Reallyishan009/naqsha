@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node scripts/build_precache.ts",
     "preview": "vite preview",
     "check-bundle": "node scripts/check_bundle.ts",
     "check:all": "node scripts/check_all.ts",
@@ -25,7 +25,8 @@
     "fixtures": "node scripts/make_fixtures.ts --all",
     "sample-cloth": "node scripts/render_sample.ts",
     "sample-bmp": "node scripts/export_sample.ts",
-    "review-list": "node scripts/review_list.ts"
+    "review-list": "node scripts/review_list.ts",
+    "icons": "node scripts/make_icons.ts"
   },
   "dependencies": {
     "react": "^19.3.1",

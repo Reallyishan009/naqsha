@@ -414,6 +414,41 @@ IndexedDB schema (`idbStore.ts`): database `naqsha-archive`, version 1.
 - The site makes no request except the page assets and the profile file. No analytics, no third-party font host.
 - `README.md` gets the banner at the top, the Vercel steps, the local `npm run build` and `npm run preview` check, the public URL once known, a line that no login is needed, and the unverified-profile and untested-loom statements (R23.4 to R23.6, R23.10, R23.14). The banner and GIFs are captured by hand from the running Built_Site, each at most 5 MB, stored in `media/`, with alternative text in the README (R23.9, R23.11, R23.12). They are not imported by the app (R23.13).
 
+### Service worker and installability (`public/sw.js`, `src/ui/platform/serviceWorker.ts`)
+
+*Added in task 8.1 (Requirement 24).*
+
+`public/sw.js` is hand-written plain JavaScript, a classic worker script with no build step and no dependency. It holds two generated constants between the markers `/* naqsha:precache-start */` and `/* naqsha:precache-end */`: `CACHE_NAME` and `PRECACHE`. `scripts/build_precache.ts` runs after `vite build` as the last step of `npm run build`, reads `dist/`, and writes those two constants into `dist/sw.js`, so no hashed name is ever typed by hand (R24.6). The repository copy keeps placeholders. The pure parts live in `scripts/checks/precache.ts`: `precacheEntries`, `precacheCacheName` (the format version plus a SHA-256 of every precached file's path and bytes, so changed content gives a new cache and new worker bytes), `renderPrecacheBlock`, `readPrecacheBlock`, `injectPrecacheBlock` and `precacheProblems`. `scripts/check_bundle.ts` checks the generated block, the Web_Manifest and the icons of `dist/` (R24.2, R24.7).
+
+The worker's three rules: on `install` it fetches every entry once, resolved against `self.registration.scope`, and puts it in `CACHE_NAME`, rejecting if any entry is not ok (R24.2, R24.8); on `activate` it deletes every cache whose name is not `CACHE_NAME` and then claims the open pages (R24.3); on `fetch` it answers a GET from the cache when it is there and otherwise goes to the network exactly once (R24.4). The lookup passes `{ ignoreVary: true }`, because the precache is keyed by address and a host may answer with `Vary: Origin` while the page asks for its own scripts with `crossorigin`. A page navigation whose network request fails falls back to the cached start page, so an address with a query string still opens the app. The logic is put on `self.naqshaServiceWorker` so tests can call it with a fake `CacheStorage` and a fake `fetch`.
+
+The update path (R24.5): a new worker waits; the app shows a notice with a control, and only when the visitor presses it does the page post `naqsha:skip-waiting` to the waiting worker and reload once, on `controllerchange`. Nothing reloads by itself, and the first worker of a visit taking control reloads nothing.
+
+```ts
+type ServiceWorkerState =
+  | { status: 'not-registered' }
+  | { status: 'registered' }
+  | { status: 'update-ready' }
+  | { status: 'loading-update' };
+
+type ServiceWorkerEvent =
+  | { type: 'registered'; waiting: boolean }
+  | { type: 'new-worker-waiting' }
+  | { type: 'update-requested' }
+  | { type: 'controller-changed' };
+
+type ServiceWorkerStep = { state: ServiceWorkerState; tellUser: boolean; reload: boolean };
+
+stepServiceWorker(state: ServiceWorkerState, event: ServiceWorkerEvent): ServiceWorkerStep;
+shouldRegister(env: { builtSite: boolean; supported: boolean }): boolean;
+serviceWorkerUrl(baseUrl: string): string;
+registerServiceWorker(deps: ServiceWorkerDeps): { state(): ServiceWorkerState; loadUpdate(): void };
+```
+
+Registration happens only in the Built_Site: `vite.config.ts` carries a small plugin that defines `__BUILT_SITE__` as true for `vite build` and false for the dev server and the test run, and `shouldRegister` needs it (R24.1). The address is `${import.meta.env.BASE_URL}sw.js`, relative like the profile.
+
+`public/manifest.webmanifest` holds the name, short name, `start_url: './'`, `scope: './'`, `display: 'standalone'`, `theme_color` from `--surface` and `background_color` from `--ground` (the Day loom tokens), and the two icons. `scripts/make_icons.ts` reads the rectangles of `public/favicon.svg` and fills them into an RGBA buffer, written with the existing `scripts/png_rgba.ts` encoder, so the icons need no dependency; the generated files are checked in and a test compares them with a fresh run of the generator (R24.7).
+
 ## Correctness Properties
 
 *A property is a characteristic or behavior that should hold true across all valid executions of a system-essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
@@ -656,6 +691,30 @@ For any optional status text, `profileNotice` returns a notice exactly when the 
 
 **Validates: Requirements 22.3, 22.4, 22.5, 22.8, 22.9, 22.13**
 
+### Property 40: Install requests every precache entry once and caches it
+
+For any precache list and any worker scope, `precacheAll` asks the network for each entry exactly once, at the address the entry resolves to against that scope, and the cache of the current version ends with one response per entry and no other cache exists.
+
+**Validates: Requirements 24.2, 24.8**
+
+### Property 41: Activate deletes every cache but the current version
+
+For any set of existing cache names, with or without the current version among them, `deleteOldCaches` deletes exactly the names that are not the current version and leaves the current one in place.
+
+**Validates: Requirements 24.3**
+
+### Property 42: Cache first, network once for anything not cached
+
+For any request whose address is in the cache, `respond` returns the cached response and does not call the network. For any request whose address is not in the cache, `respond` calls the network exactly once and returns its response.
+
+**Validates: Requirements 24.4**
+
+### Property 43: The precache list equals the asset list of `dist/`
+
+For any listing of a built site, the list `scripts/build_precache.ts` writes is the start page followed by every file of that listing except `sw.js`, each as a path relative to the worker's scope, with no absolute path and no built file missing, under a cache name of the form `naqsha-v<n>-<hash>`; the worker written to the built site reads back exactly that list and name.
+
+**Validates: Requirements 24.2, 24.6, 24.8**
+
 ## Error Handling
 
 Every failure is a value, not an exception. Each has one message key in `en.json` and `hi.json`, says what went wrong and what to do (R15.7), and is announced through the live region.
@@ -681,9 +740,10 @@ Property-based testing applies. The design is mostly pure functions (reducers, c
 
 Dual approach:
 
-- Property tests (fast-check) cover Properties 1 to 39. Each is one `fc.assert` with at least 100 runs and a fixed seed recorded in the test. Each test title starts with the requirement ID and states the requirement in plain words, for example `it('R6.10 saving then getting a design returns an equal pattern and metadata', ...)`. Each test also carries the comment `Feature: app, Property 15: Saving then getting returns the same design`.
+- Property tests (fast-check) cover Properties 1 to 43 (40 to 43 were added in task 8.1 with Requirement 24). Each is one `fc.assert` with at least 100 runs and a fixed seed recorded in the test. Each test title starts with the requirement ID and states the requirement in plain words, for example `it('R6.10 saving then getting a design returns an equal pattern and metadata', ...)`. Each test also carries the comment `Feature: app, Property 15: Saving then getting returns the same design`.
 - Example tests cover initial state, wiring with fake scheduler and fake paint, confirmation dialogs, translation examples, and render-to-string checks (R7.10 escaped markup, R3.8 hidden controls, R1.3 navigation controls, R10.8 buttons for keyboard use).
-- Smoke and source-scan tests cover import boundaries, the dependency list, no `localStorage` in `src/archive`, no `any`, `vercel.json` content, `base: './'`, relative asset paths in the built `index.html`, the 200 KB budget and the Scan chunk split (`scripts/check_bundle.ts` after `npm run build`).
+- Smoke and source-scan tests cover import boundaries, the dependency list, no `localStorage` in `src/archive`, no `any`, `vercel.json` content, `base: './'`, relative asset paths in the built `index.html`, the 200 KB budget, the Scan chunk split, and the generated precache list, Web_Manifest and icons of the built site (`scripts/check_bundle.ts` after `npm run build`).
+- The service worker is tested through its real file: `tests/support/serviceWorkerFakes.ts` evaluates `public/sw.js` with a fake `CacheStorage`, a fake `fetch` and a fake `self`, since a classic worker script cannot be imported. The page's side uses a fake `navigator.serviceWorker`. What no fake reaches: the browser's own install, activate and update lifecycle, `skipWaiting` and `clients.claim` semantics, and whether a given host's headers let a cached response match. Step 13 of `npm run check:browser` covers those in a real Chrome, with the preview server stopped.
 - Performance checks (R4.8, R8.8, R16.5, R21.19) are timing examples in Node plus a manual device check recorded in `docs/BUILD_LOG.md`. They are not properties.
 
 Generators (`tests/support/`):

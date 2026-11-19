@@ -5,6 +5,7 @@ import path from 'node:path';
 import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseCardProfile } from '../../src/codec/index.ts';
+import { buildPrecache } from '../../scripts/build_precache.ts';
 import { checkBundle, findAbsoluteUrls, findEntryChunk } from '../../scripts/check_bundle.ts';
 import viteConfig from '../../vite.config.ts';
 import { stripComments } from '../support/source.ts';
@@ -127,6 +128,9 @@ describe('built site', () => {
   beforeAll(async () => {
     outDir = mkdtempSync(path.join(os.tmpdir(), 'naqsha-dist-'));
     await build({ root: ROOT, logLevel: 'silent', build: { outDir, emptyOutDir: true } });
+    // `npm run build` ends with this step, so the built site checked below is the one a host would serve (R24.6).
+    const precache = buildPrecache(outDir);
+    expect(precache.problems, precache.problems.join('\n')).toEqual([]);
   }, 120_000);
 
   afterAll(() => {

@@ -197,7 +197,7 @@ async function freePort(): Promise<number> {
 
 type Cleanup = () => Promise<void>;
 
-async function startPreview(cleanups: Cleanup[]): Promise<string> {
+async function startPreview(cleanups: Cleanup[]): Promise<{ url: string; stop: () => Promise<void> }> {
   const { preview } = await import('vite');
   const port = await freePort();
   const server = await preview({
@@ -205,12 +205,18 @@ async function startPreview(cleanups: Cleanup[]): Promise<string> {
     logLevel: 'warn',
     preview: { port, strictPort: true, host: '127.0.0.1', open: false },
   });
-  cleanups.push(() => server.close());
+  let stopped = false;
+  const stop = async (): Promise<void> => {
+    if (stopped) return;
+    stopped = true;
+    await server.close();
+  };
+  cleanups.push(stop);
   const url = `http://127.0.0.1:${port}/`;
   const end = Date.now() + 20_000;
   for (;;) {
     try {
-      if ((await fetch(url)).ok) return url;
+      if ((await fetch(url)).ok) return { url, stop };
     } catch {
       // not listening yet
     }
@@ -276,6 +282,8 @@ type Context = {
   page: Page;
   profile: CardProfile;
   baseUrl: string;
+  /** Stops the preview server, so the offline step can take the network away for real. Runs once. */
+  stopPreview: () => Promise<void>;
   downloadDir: string;
   tempDir: string;
   expectedTitle: string;
@@ -745,15 +753,43 @@ function buildSteps(ctx: Context): BrowserStep[] {
           }
         };
         const notRun = (name: string, why: string): OfflineCheck => ({ name, status: 'not-run', note: why });
-        /** The network is really off for the page: the browser says so and a fetch that skips the cache fails. */
+        /**
+         * The network is really off for the page: the browser says so, and a request for an address that is in
+         * no cache fails. The profile is asked for too: it is precached, so it answers from the service worker
+         * and shows that the cache, not the network, is what keeps the app working.
+         */
         const confirmOffline = async (): Promise<string> => {
-          const seen = await page.ev<{ onLine: boolean; fetchFailed: boolean; fetchError: string }>(
-            `fetch('./profiles/demo-12x16.json',{cache:'no-store'}).then(()=>({onLine:navigator.onLine,fetchFailed:false,fetchError:''}),e=>({onLine:navigator.onLine,fetchFailed:true,fetchError:String(e)}))`,
+          const seen = await page.ev<{ onLine: boolean; probeFailed: boolean; probeError: string; profileOk: boolean }>(
+            `(async()=>{const probe='./never-cached-'+Date.now()+'.txt';let probeFailed=false,probeError='';try{const r=await fetch(probe,{cache:'no-store'});probeError='HTTP '+r.status}catch(e){probeFailed=true;probeError=String(e)}let profileOk=false;try{const r=await fetch('./profiles/demo-12x16.json');profileOk=r.ok&&!!(await r.json()).name}catch(e){profileOk=false}return {onLine:navigator.onLine,probeFailed,probeError,profileOk}})()`,
           );
-          expect(!seen.onLine && seen.fetchFailed, `the network is not off for the page (navigator.onLine ${seen.onLine}, no-store fetch of the profile ${seen.fetchFailed ? 'failed' : 'succeeded'})`);
-          return `navigator.onLine false, no-store fetch of the profile failed (${seen.fetchError})`;
+          expect(
+            !seen.onLine && seen.probeFailed,
+            `the network is not off for the page (navigator.onLine ${seen.onLine}, a request for an address in no cache ${seen.probeFailed ? 'failed' : `succeeded: ${seen.probeError}`})`,
+          );
+          expect(seen.profileOk, 'the card profile could not be read from the cache while the network was off');
+          return `navigator.onLine false, a request for an uncached address failed (${seen.probeError}), the card profile came from the cache`;
+        };
+        /** The service worker that must serve the reload: it controls this page and its cache is in place. */
+        const confirmWorker = async (): Promise<string> => {
+          const seen = await page.waitFor<{ controlled: boolean; caches: string[]; precached: number }>(
+            `(async()=>{if(!('serviceWorker' in navigator))return null;const r=await navigator.serviceWorker.ready.catch(()=>null);if(!r||!navigator.serviceWorker.controller)return null;const names=await caches.keys();const name=names.find(n=>n.startsWith('naqsha-'));if(!name)return null;const kept=await (await caches.open(name)).keys();return kept.length>0?{controlled:true,caches:names,precached:kept.length}:null})()`,
+            'a service worker in control of the page with a filled cache',
+            30_000,
+          );
+          return `controlled by the worker, caches ${seen.caches.join(', ')}, ${seen.precached} precached responses`;
+        };
+        /** What the worker's caches hold and what a match for each entry gives: the detail a failed check needs. */
+        const cacheReport = async (): Promise<string> => {
+          try {
+            return await page.ev<string>(
+              `(async()=>{const names=await caches.keys();const lines=[];for(const name of names){const cache=await caches.open(name);const keys=await cache.keys();lines.push(name+' holds '+keys.length+' responses');for(const key of keys){const hit=await cache.match(key.url);lines.push('  '+key.url+' [mode '+key.mode+', cache '+key.cache+'] -> '+(hit?('HTTP '+hit.status+', vary '+(hit.headers.get('vary')||'none')):'no match'))}}return lines.join('\\n')})()`,
+            );
+          } catch (error) {
+            return `the caches could not be read: ${error instanceof Error ? error.message : String(error)}`;
+          }
         };
         const languageSwitches = async (): Promise<string> => {
+          await goTo(page, 'weave');
           await page.clickText('button', EN['language.en']!);
           await page.waitFor(`document.documentElement.lang==='en'`, 'lang en');
           await page.clickText('button', HI['language.hi']!);
@@ -771,14 +807,98 @@ function buildSteps(ctx: Context): BrowserStep[] {
           const seen = await playToEnd(page, expected);
           return `Diamond counter reached ${expected} of ${expected} (${seen.length} values seen)`;
         };
+        /** Opening Scan for the first time on this page: its chunk must come from the cache, and then read a card. */
+        const firstScanOpen = async (): Promise<string> => {
+          const cardPng = need(ctx.cardPng, 'step 9 saved no PNG');
+          const before = await page.ev<boolean>(`!!document.querySelector('#scan-file')`);
+          expect(!before, 'the Scan screen was already open, so this is not the first open');
+          await goTo(page, 'scan');
+          await page.waitFor(`!!document.querySelector('#scan-file')`, 'the Scan screen chunk to arrive from the cache', 20_000);
+          await page.setFile('#scan-file', cardPng);
+          const outcome = await page.waitFor<string>(
+            `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[role="alert"]')?.textContent.trim()||null)`,
+            'the read to finish',
+            30_000,
+          );
+          expect(outcome === 'read', `the read failed with: ${outcome}`);
+          const shapes = await page.ev<string[]>(`[...document.querySelectorAll('button[data-shape]')].map(b=>b.dataset.shape)`);
+          const expected = generateSample(ctx.profile, 'diamond')[ctx.printedPickIndex]!.flat();
+          const wrong = expected.filter((punched, index) => (shapes[index] === 'filled') !== punched).length;
+          expect(shapes.length === expected.length && wrong === 0, `${shapes.length} markers, ${wrong} differ from Diamond pick ${ctx.printedPickIndex + 1}`);
+          return `the Scan chunk loaded with no network and all ${shapes.length} hooks equal Diamond pick ${ctx.printedPickIndex + 1}`;
+        };
+        const exportOneBitBmp = async (): Promise<string> => {
+          const picks = generateSample(ctx.profile, 'diamond').length;
+          const ends = ctx.profile.hookRows * ctx.profile.hookColumns;
+          clearDownloads(ctx.downloadDir);
+          await goTo(page, 'keep');
+          await page.clickText('label span', EN['keep.export.bitDepth.1']!);
+          await page.clickText('button', EN['keep.export.button']!);
+          const file = await takeDownload(ctx.downloadDir);
+          const parsed = parseBmpHeader(file.bytes);
+          expect(parsed.ok, `not a BMP: ${parsed.ok ? '' : parsed.reason}`);
+          const problems = bmpMismatches(parsed.header, { width: ends, height: picks, bitsPerPixel: 1 });
+          expect(problems.length === 0, `${file.name}: ${problems.join('; ')}`);
+          return `${file.name}: ${ends}x${picks}, 1 bit, ${file.bytes.length} bytes`;
+        };
         const groups: OfflineGroup[] = [];
         try {
           await cdp.call('Network.enable');
           await cdp.call('Network.setCacheDisabled', { cacheDisabled: false });
 
-          // A: after the first load, go offline and reload the page.
+          // The site is loaded online once, with a plain navigation: the hard reloads of steps 5 and 7 bypass
+          // the service worker, so a page left by one of them is not controlled and could not be served from
+          // the cache.
+          await page.navigate(ctx.baseUrl);
+          await page.waitFor(
+            `[...document.querySelectorAll('button')].some(b=>(b.textContent.trim()===${JSON.stringify(EN['tryit.diamond'])}||b.textContent.trim()===${JSON.stringify(HI['tryit.diamond'])})&&!b.disabled)`,
+            'the app to load online (Try it enabled)',
+            20_000,
+          );
           await goTo(page, 'weave');
+          const worker = await run('a service worker controls the page before the network goes off', confirmWorker);
+
+          // The network is taken away for real: Chrome is put offline and the preview server is stopped.
+          // Chrome's network emulation does not reach the service worker's own requests, so without stopping
+          // the server the worker could still answer from the network and the step would prove nothing.
+          // Chrome's HTTP cache is left as it is: `Network.setCacheDisabled` makes requests bypass the service
+          // worker as well, which would hide the very cache this step is about. What answers instead of the
+          // HTTP cache is shown by the marker check below.
           await setOffline(true);
+          await ctx.stopPreview();
+          const serverGone = await run('the preview server is stopped, so no request can be answered from it', async () => {
+            let answered = '';
+            try {
+              answered = `answered with HTTP ${(await fetch(ctx.baseUrl)).status}`;
+            } catch (error) {
+              answered = `refused the connection (${error instanceof Error ? error.message : String(error)})`;
+            }
+            expect(answered.startsWith('refused'), `${ctx.baseUrl} still ${answered}, so the server is still serving`);
+            return `${ctx.baseUrl} ${answered}`;
+          });
+          const cacheAnswers = await run("the worker's cache, and not the network, is what answers a request", async () => {
+            const body = `naqsha-cache-marker-${Date.now()}`;
+            const seen = await page.ev<{ cache: string | null; body: string; removed: boolean }>(
+              `(async()=>{const names=await caches.keys();const name=names.find(n=>n.startsWith('naqsha-'));if(!name)return {cache:null,body:'',removed:false};const cache=await caches.open(name);const url='./cache-only-probe.txt';await cache.put(url,new Response(${JSON.stringify(body)},{status:200}));let body='';try{body=await (await fetch(url)).text()}catch(e){body='fetch failed: '+e}const removed=await cache.delete(url);return {cache:name,body,removed}})()`,
+            );
+            expect(seen.cache !== null, 'the page has no naqsha cache to put a marker in');
+            expect(
+              seen.body === body,
+              `a response put only in the cache ${seen.cache} came back as ${JSON.stringify(seen.body)}, expected ${JSON.stringify(body)}`,
+            );
+            return `a response put only in the cache ${seen.cache}, at an address the server never served, came back through fetch (and was removed again: ${seen.removed})`;
+          });
+
+          // A: the page stays as it is and the network goes away.
+          const keepChecks: OfflineCheck[] = [worker, serverGone, cacheAnswers];
+          keepChecks.push(await run('the network is really off', confirmOffline));
+          keepChecks.push(await run('a Try it sample plays to its last pick', playDiamond));
+          keepChecks.push(await run('language switching works', languageSwitches));
+          keepChecks.push(await run('the first Scan open works offline', firstScanOpen));
+          keepChecks.push(await run('a BMP export works offline', exportOneBitBmp));
+          groups.push({ title: 'A. offline, no reload', checks: keepChecks });
+
+          // B: reload with no network at all; everything must come from the worker's cache.
           const reloadChecks: OfflineCheck[] = [];
           const loaded = await run('the page reloads offline and the app is on screen', async () => {
             const done = new Promise<boolean>((resolve) => {
@@ -802,75 +922,36 @@ function buildSteps(ctx: Context): BrowserStep[] {
               app = await page.ev<boolean>(`!!document.querySelector('#screen-title')`);
             }
             const failed = failedRequests.length === 0 ? 'none' : failedRequests.join(' | ');
-            expect(app, `the reloaded page has no app: load event ${fired ? 'fired' : 'did not fire in 20 s'}; location ${state.href}; title "${state.title}"; page text "${state.text}"; failed requests: ${failed}`);
+            const held = app ? '' : `; ${await cacheReport()}`;
+            expect(app, `the reloaded page has no app: load event ${fired ? 'fired' : 'did not fire in 20 s'}; location ${state.href}; title "${state.title}"; page text "${state.text}"; failed requests: ${failed}${held}`);
             return `app on screen at ${state.href}; failed requests: ${failed}`;
           });
           reloadChecks.push(loaded);
+          const afterReload = [
+            'the network is really off',
+            'Weave renders',
+            'a Try it sample plays to its last pick',
+            'the first Scan open works offline',
+            'a BMP export works offline',
+            'language switching works',
+          ] as const;
           if (loaded.status === 'pass') {
-            reloadChecks.push(await run('the network is really off', confirmOffline));
+            reloadChecks.push(await run(afterReload[0], confirmOffline));
             reloadChecks.push(
-              await run('Weave renders', async () => {
+              await run(afterReload[1], async () => {
                 await goTo(page, 'weave');
                 await page.waitFor(`!!document.querySelector('canvas')`, 'the cloth canvas', 10_000);
                 return 'Weave screen with a canvas';
               }),
             );
-            reloadChecks.push(await run('a Try it sample plays to its last pick', playDiamond));
-            reloadChecks.push(await run('language switching works', languageSwitches));
+            reloadChecks.push(await run(afterReload[2], playDiamond));
+            reloadChecks.push(await run(afterReload[3], firstScanOpen));
+            reloadChecks.push(await run(afterReload[4], exportOneBitBmp));
+            reloadChecks.push(await run(afterReload[5], languageSwitches));
           } else {
-            for (const name of ['the network is really off', 'Weave renders', 'a Try it sample plays to its last pick', 'language switching works']) {
-              reloadChecks.push(notRun(name, 'not tested: the page did not load after the reload'));
-            }
+            for (const name of afterReload) reloadChecks.push(notRun(name, 'not tested: the page did not load after the reload'));
           }
-          groups.push({ title: 'A. offline, then reload the page', checks: reloadChecks });
-
-          // B: load the site again online, go offline and do not reload.
-          await setOffline(false);
-          await page.navigate(ctx.baseUrl);
-          await page.waitFor(
-            `[...document.querySelectorAll('button')].some(b=>(b.textContent.trim()===${JSON.stringify(EN['tryit.diamond'])}||b.textContent.trim()===${JSON.stringify(HI['tryit.diamond'])})&&!b.disabled)`,
-            'the app to load again online (Try it enabled)',
-            20_000,
-          );
-          await setOffline(true);
-          const keepChecks: OfflineCheck[] = [];
-          keepChecks.push(await run('the network is really off', confirmOffline));
-          keepChecks.push(await run('a Try it sample plays to its last pick', playDiamond));
-          keepChecks.push(
-            await run('export a 1-bit BMP and parse its header', async () => {
-              const picks = generateSample(ctx.profile, 'diamond').length;
-              const ends = ctx.profile.hookRows * ctx.profile.hookColumns;
-              clearDownloads(ctx.downloadDir);
-              await goTo(page, 'keep');
-              await page.clickText('label span', EN['keep.export.bitDepth.1']!);
-              await page.clickText('button', EN['keep.export.button']!);
-              const file = await takeDownload(ctx.downloadDir);
-              const parsed = parseBmpHeader(file.bytes);
-              expect(parsed.ok, `not a BMP: ${parsed.ok ? '' : parsed.reason}`);
-              const problems = bmpMismatches(parsed.header, { width: ends, height: picks, bitsPerPixel: 1 });
-              expect(problems.length === 0, `${file.name}: ${problems.join('; ')}`);
-              return `${file.name}: ${ends}x${picks}, 1 bit, ${file.bytes.length} bytes`;
-            }),
-          );
-          keepChecks.push(
-            await run('a Scan read of the printable PNG equals Diamond pick', async () => {
-              const cardPng = need(ctx.cardPng, 'step 9 saved no PNG');
-              await goTo(page, 'scan');
-              await page.setFile('#scan-file', cardPng);
-              const outcome = await page.waitFor<string>(
-                `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[role="alert"]')?.textContent.trim()||null)`,
-                'the read to finish',
-                30_000,
-              );
-              expect(outcome === 'read', `the read failed with: ${outcome}`);
-              const shapes = await page.ev<string[]>(`[...document.querySelectorAll('button[data-shape]')].map(b=>b.dataset.shape)`);
-              const expected = generateSample(ctx.profile, 'diamond')[ctx.printedPickIndex]!.flat();
-              const wrong = expected.filter((punched, index) => (shapes[index] === 'filled') !== punched).length;
-              expect(shapes.length === expected.length && wrong === 0, `${shapes.length} markers, ${wrong} differ from Diamond pick ${ctx.printedPickIndex + 1}`);
-              return `all ${shapes.length} hooks equal Diamond pick ${ctx.printedPickIndex + 1}`;
-            }),
-          );
-          groups.push({ title: 'B. offline, no reload', checks: keepChecks });
+          groups.push({ title: 'B. offline, then reload the page', checks: reloadChecks });
         } finally {
           try {
             await setOffline(false);
@@ -937,7 +1018,7 @@ async function main(): Promise<number> {
     const downloadDir = path.join(tempDir, 'downloads');
     mkdirSync(downloadDir);
 
-    const baseUrl = await startPreview(cleanups);
+    const { url: baseUrl, stop: stopPreview } = await startPreview(cleanups);
     console.log(`preview: ${baseUrl}`);
     console.log(`chrome:  ${chrome.path}`);
     const { port } = await startChrome(chrome.path, cleanups);
@@ -947,7 +1028,19 @@ async function main(): Promise<number> {
     await page.init(downloadDir);
     await page.navigate(baseUrl);
 
-    const ctx: Context = { page, profile: await profileOf(), baseUrl, downloadDir, tempDir, expectedTitle, hashes: {}, saved: null, cardPng: null, printedPickIndex: 0 };
+    const ctx: Context = {
+      page,
+      profile: await profileOf(),
+      baseUrl,
+      stopPreview,
+      downloadDir,
+      tempDir,
+      expectedTitle,
+      hashes: {},
+      saved: null,
+      cardPng: null,
+      printedPickIndex: 0,
+    };
     const steps = buildSteps(ctx);
     const errorsAfterLoad: string[] = [];
     let errorsSeen = 0;

@@ -8,6 +8,8 @@
   "language.hi": "हिन्दी",
   "language.en": "English",
   "status.loading": "Loading the card profile…",
+  "update.ready": "A newer Naqsha is ready on this device.",
+  "update.load": "Use the newer Naqsha",
   "placeholder.keep": "Keep is coming soon.",
   "weave.title": "Weave",
   "weave.empty": "No design yet. Pick a sample in Try it to see the cloth.",

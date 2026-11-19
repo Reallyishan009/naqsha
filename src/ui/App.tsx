@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useEffect, useMemo, useReducer } from 'react';
+import { Component, lazy, Suspense, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { Dispatch, ErrorInfo, ReactNode } from 'react';
 import { DICTIONARIES, profileFailureKey, translator } from './i18n/messages.ts';
 import type { Translate } from './i18n/messages.ts';
@@ -10,6 +10,8 @@ import {
   storeLanguage,
 } from './platform/browser.ts';
 import type { KeyValueStorage } from './platform/browser.ts';
+import { browserServiceWorkers, isBuiltSite, registerServiceWorker, reloadPage } from './platform/serviceWorker.ts';
+import type { ServiceWorkerHandle } from './platform/serviceWorker.ts';
 import { loadProfile } from './profile/loadProfile.ts';
 import { profileUrl } from './profile/profileUrl.ts';
 import styles from './Shell.module.css';
@@ -51,10 +53,13 @@ export type ShellProps = {
   dispatch: Dispatch<AppAction>;
   /** Called when the user picks a language, so the choice can be stored. */
   onLanguageChosen?: (language: Language) => void;
+  /** True when a new version of the app is waiting, so the visitor is offered the control that loads it (R24.5). */
+  updateReady?: boolean;
+  onLoadUpdate?: () => void;
 };
 
 /** The shell: navigation, language switch, profile banner, the current screen and one live region. Pure of browser APIs. */
-export function Shell({ state, dispatch, onLanguageChosen }: ShellProps) {
+export function Shell({ state, dispatch, onLanguageChosen, updateReady = false, onLoadUpdate }: ShellProps) {
   const t = useMemo(() => translator(DICTIONARIES, state.language), [state.language]);
   const { profile, announcement } = state;
   return (
@@ -92,6 +97,14 @@ export function Shell({ state, dispatch, onLanguageChosen }: ShellProps) {
           ))}
         </div>
       </header>
+      {updateReady ? (
+        <div className={styles.updateBanner}>
+          <p>{t('update.ready')}</p>
+          <button type="button" className={styles.updateButton} onClick={() => onLoadUpdate?.()}>
+            {t('update.load')}
+          </button>
+        </div>
+      ) : null}
       {profile.status === 'failed' ? (
         <div className={styles.banner}>
           <p>
@@ -162,5 +175,29 @@ export function App({ fetchText = defaultFetchText, storage, prefersReducedMotio
     setDocumentLanguage(state.language);
   }, [state.language]);
 
-  return <Shell state={state} dispatch={dispatch} onLanguageChosen={(language) => storeLanguage(store, language)} />;
+  const [updateReady, setUpdateReady] = useState(false);
+  const serviceWorker = useRef<ServiceWorkerHandle | null>(null);
+
+  useEffect(() => {
+    const container = browserServiceWorkers();
+    serviceWorker.current = registerServiceWorker({
+      container,
+      env: { builtSite: isBuiltSite(), supported: container !== null },
+      onUpdateReady: () => setUpdateReady(true),
+      reload: reloadPage,
+      baseUrl: import.meta.env.BASE_URL,
+    });
+    // The worker is registered once per page, like the profile above (R24.1).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <Shell
+      state={state}
+      dispatch={dispatch}
+      onLanguageChosen={(language) => storeLanguage(store, language)}
+      updateReady={updateReady}
+      onLoadUpdate={() => serviceWorker.current?.loadUpdate()}
+    />
+  );
 }

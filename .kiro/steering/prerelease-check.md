@@ -20,10 +20,12 @@ Covers: tests, typecheck, build, bundle size, `.kiro` not git-ignored, `LICENSE`
 
 Needs Google Chrome (set `CHROME_PATH` if it is not found) and a built `dist/`. It drives a real headless Chrome through 13 steps. Step 13 is "works with the network off":
 
-- A. after the first load, `Network.emulateNetworkConditions` with `offline: true` (cache not disabled), then a page reload. It then checks that Weave renders, that a Try it sample plays to its last pick, and that language switching works.
-- B. the site is loaded online again, the network is turned off, and the page is **not** reloaded. It checks a Try it play, a 1-bit BMP export and a Scan read of the printable card PNG.
+The step first loads the site online with a plain navigation and waits until the service worker controls the page. Then it takes the network away for real: `Network.emulateNetworkConditions` with `offline: true` (Chrome's HTTP cache left enabled, because disabling it makes requests bypass the service worker) **and** the `vite preview` server is stopped, since Chrome's network emulation does not reach the worker's own requests. It then shows that the worker's cache is what answers: a response put only in that cache, at an address the server never served, comes back through `fetch`.
 
-Report every step line and the summary, and for step 13 the A and B results separately. If A fails because the reload itself fails (the site has no service worker, so nothing caches it for a reload), that is a real finding about R13: report it as FAIL with the evidence in the output. Do not hide it behind B.
+- A. the page is **not** reloaded: the network is confirmed off (a request for an uncached address fails while the card profile still reads), a Try it sample plays to its last pick, language switching works, the **first** Scan open works (the lazy chunk comes from the cache) and a 1-bit BMP export works.
+- B. the page is reloaded with no network at all: the app must be on screen, and then the same checks run again on the reloaded page, including Weave rendering.
+
+Report every step line and the summary, and for step 13 the A and B results separately, with the note of every sub-check. If the reload in B fails, the later B checks are reported NOT RUN, never PASS. A failure here is a real finding about R13 and R24: report it with the evidence in the output and do not weaken the step.
 
 ## 3. Clean clone
 

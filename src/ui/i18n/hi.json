@@ -35,6 +35,14 @@
     "text": "कार्ड प्रोफ़ाइल लोड हो रही है…",
     "reviewed": false
   },
+  "update.ready": {
+    "text": "इस डिवाइस पर नक्शा का नया रूप तैयार है।",
+    "reviewed": false
+  },
+  "update.load": {
+    "text": "नया नक्शा चालू करें",
+    "reviewed": false
+  },
   "placeholder.keep": {
     "text": "सहेजने की सुविधा जल्द आ रही है।",
     "reviewed": false
