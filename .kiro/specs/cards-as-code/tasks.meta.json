@@ -1,0 +1,561 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Record the entry-chunk size before this feature": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928033
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160939581
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795161145108
+      }
+    ],
+    "1.2 Module files, types, the `structure.md` entry and the test arbitraries": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928112
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795161151589
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795161698382
+      }
+    ],
+    "1.3 The boundary test": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928145
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795161702455
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795162373127
+      }
+    ],
+    "1.4 `cardToBits` and `groupBits`": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928185
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795161706622
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795162372439
+      }
+    ],
+    "1.5 `patternToLines`": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928227
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795162379163
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795162682151
+      }
+    ],
+    "1.6 `lineKey` and `alignLines`": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928265
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795161707434
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795162373784
+      }
+    ],
+    "1.7 P1: a Bit_Line holds one character per end and agrees with `encodeCardGrid`": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928311
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795162693937
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795163248512
+      }
+    ],
+    "1.8 P2: reading a Bit_Line back through `decodeEnds` returns the original card": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928349
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795163254692
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795163769735
+      }
+    ],
+    "1.9 `diffPatterns`: entries and counts": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928381
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795162693075
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795163248702
+      }
+    ],
+    "1.10 The three refusals": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928417
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795163255615
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795163769951
+      }
+    ],
+    "1.11 `applyDiff`": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928455
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795163776397
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795164412967
+      }
+    ],
+    "1.12 `diffToText`": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928488
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795162688593
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795163248848
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795177369750
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795177911812
+      }
+    ],
+    "1.13 P3: a design compared with itself reports no change": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928538
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795164419509
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795177364455
+      }
+    ],
+    "1.14 P4: applying a diff to the first design gives the second": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928584
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795177370531
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795177912495
+      }
+    ],
+    "1.15 P5: flipping one hole gives one changed card and one changed hole": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928617
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795177918231
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795178272997
+      }
+    ],
+    "1.16 P6: inserting one card gives one added card and nothing else": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928653
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795178278702
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795178555243
+      }
+    ],
+    "1.17 P7: the diff of two designs is the mirror of the diff the other way round": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928688
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795178561208
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795179147111
+      }
+    ],
+    "1.18 Well-formedness property: every Diff is well formed": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928721
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795179152772
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795179544617
+      }
+    ],
+    "1.19 P8: the Diff_Text holds one line per entry, one summary line, and never goes backwards": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928753
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795163256526
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795163770807
+      }
+    ],
+    "1.20 P10: every exported function returns a value and throws nothing": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928786
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795164420234
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795177913049
+      }
+    ],
+    "1.21 Checkpoint - the pure module": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928817
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795179554351
+      },
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795180440091
+      }
+    ],
+    "2.1 `AppState.selectedPick`, `select-pick`, breakpoints and cloth choices": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928851
+      }
+    ],
+    "2.2 `buildReadyCloth` moved into `src/ui/state/cloth.ts`": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928883
+      }
+    ],
+    "2.3 Translation keys, English and Hindi": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928917
+      }
+    ],
+    "2.4 `windowFor` and `pickNumberWidth`": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160928993
+      }
+    ],
+    "2.5 Breakpoints and the jump parse": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929020
+      }
+    ],
+    "2.6 Accessible-name builders, and the property on them": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929052
+      }
+    ],
+    "2.7 `focusTargetAfterWindowMove`": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929083
+      }
+    ],
+    "2.8 P9: the Window holds at most Window_Size Lines and always holds the Selected_Pick": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929111
+      }
+    ],
+    "2.9 Reducer property: one pick and one breakpoint set": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929144
+      }
+    ],
+    "2.10 Checkpoint - state and view logic": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929175
+      }
+    ],
+    "3.1 The lazy fourth Screen, its navigation entry and the marker": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929210
+      }
+    ],
+    "3.2 The listing and one Line": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929249
+      }
+    ],
+    "3.3 Step, jump and run-to-next-breakpoint, and the live region": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929281
+      }
+    ],
+    "3.4 The cloth beside the current card": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929312
+      }
+    ],
+    "3.5 The diff panel: choosers, counts and entries": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929345
+      }
+    ],
+    "3.6 The Diff_Text: copy and download": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929378
+      }
+    ],
+    "3.7 Refusals, empty, missing and failing inputs": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929412
+      }
+    ],
+    "3.8 Keyboard, focus, colour and motion": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929447
+      }
+    ],
+    "3.9 R4.7: both screens derive one image from one `renderFrame` call": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929479
+      }
+    ],
+    "3.10 Listing timing at 10,000 picks": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929511
+      }
+    ],
+    "3.11 Checkpoint - the screen": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929545
+      }
+    ],
+    "4.1 Parameterise `check_bundle` over chunk markers": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929581
+      }
+    ],
+    "4.2 The precache test for the Code view chunk": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929615
+      }
+    ],
+    "4.3 `check:browser`: the offline Code view checks and the width sweep": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929649
+      }
+    ],
+    "4.4 The bundle numbers and the documentation": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929683
+      }
+    ],
+    "4.5 Final checkpoint": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795160929715
+      }
+    ],
+    "1. The pure module `src/codec-view`": [
+      {
+        "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795180440453
+      }
+    ]
+  }
+}

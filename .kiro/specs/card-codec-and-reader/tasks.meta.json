@@ -1,0 +1,502 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Allow `.ts` import extensions": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794977746831
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794977809205
+      }
+    ],
+    "1.2 New CardProfile shape, demo profile and per-peg rendering": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794977815683
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794977884592
+      }
+    ],
+    "1.3 `pixelsPerMm` render option and regenerated fixtures": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794977890882
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978011553
+      }
+    ],
+    "1.4 Steering docs for the new profile shape": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978018470
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978151665
+      }
+    ],
+    "1. Project changes the design needs": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978151745
+      }
+    ],
+    "2.1 Validate a CardProfile, and the profile arbitraries": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978178812
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978439294
+      }
+    ],
+    "2.2 Validate a CardGrid": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978446428
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978568226
+      }
+    ],
+    "2.3 Encode and decode through the profile's end-order": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978569305
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978715221
+      }
+    ],
+    "2.4 Wire the generator to the codec": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978722948
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978818384
+      }
+    ],
+    "2. Codec: validation, encode and decode": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978818456
+      }
+    ],
+    "3.1 Reader types, pixel data check and greyscale": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978832485
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978920675
+      }
+    ],
+    "3.2 Threshold choice": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794978921504
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794979004847
+      }
+    ],
+    "3.3 Dark regions": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794979004933
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794979294971
+      }
+    ],
+    "3.4 Orientation rule": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794979295480
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794979366080
+      }
+    ],
+    "3.5 Angle helpers and card-to-image mapping": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794979366641
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794979558508
+      }
+    ],
+    "3.6 Peg hole pair search": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794979559370
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794979808644
+      }
+    ],
+    "3.7 Pose from the peg hole pair": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794979809509
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794979904547
+      }
+    ],
+    "3.8 Sampling": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794979905354
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794980087986
+      }
+    ],
+    "3.9 `readCard`": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794980088177
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794980211231
+      }
+    ],
+    "3.10 PNG test helper and fixture accuracy tests": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794980210301
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794980460947
+      }
+    ],
+    "3. Reader pipeline up to `readCard` and the fixture accuracy tests": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794980460976
+      }
+    ],
+    "4. Checkpoint: measured accuracy on every fixture": [
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794980476288
+      },
+      {
+        "executionId": "b191039a-1151-4a45-80ee-f5b49538ace9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794980610422
+      }
+    ],
+    "5.1 CardProfile validation: integrity properties": [
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794980820774
+      },
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794980932291
+      }
+    ],
+    "5.4 Encode and decode: rejection properties": [
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794980932526
+      },
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794980997651
+      }
+    ],
+    "5.6 Pixel data and the Canvas 2D conversion": [
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794980998390
+      },
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794991191722
+      }
+    ],
+    "5.8 Threshold: remaining properties": [
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794991190808
+      },
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794991267954
+      }
+    ],
+    "5.10 Orientation: remaining properties": [
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794991267010
+      },
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794991335248
+      }
+    ],
+    "5.11 Peg hole search and pose: remaining properties": [
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794991334298
+      },
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794991394232
+      }
+    ],
+    "5.12 Sampling: remaining properties": [
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794991395056
+      },
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794992848130
+      }
+    ],
+    "5.13 `readCard`: failure paths, orientation and the R18.8 scale": [
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794992848912
+      },
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794993130743
+      },
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794994116827
+      },
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794994455737
+      },
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795001344591
+      },
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795001703011
+      }
+    ],
+    "5.16 Check each peg hole pair against the card layout": [
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794993136397
+      },
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794994116241
+      }
+    ],
+    "5.17 Refuse images whose punched holes are too small": [
+      {
+        "executionId": "63adc188-9803-4ac8-a053-f62d6951996b",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794994463643
+      },
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1794995393103
+      },
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795001327056
+      }
+    ],
+    "5.14 `readCard`: image properties": [
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795001718679
+      },
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795002058160
+      }
+    ],
+    "5.15 Generator: per-peg drawing property": [
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795002073560
+      },
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795002266457
+      }
+    ],
+    "6.1 Module boundary and dependency tests": [
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795002267398
+      },
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795002436819
+      }
+    ],
+    "6.2 Property naming and coverage test": [
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795002436938
+      },
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795002611922
+      }
+    ],
+    "6.3 Benchmark": [
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795002613242
+      },
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795002729985
+      }
+    ],
+    "6.4 README and structure.md": [
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795002731253
+      },
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795002802261
+      }
+    ],
+    "6. Structure tests, benchmark and docs": [
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795002802296
+      }
+    ],
+    "7.1 Print a rendered card, photograph it and try the reader": [
+      {
+        "executionId": "87a9f5ed-ff25-4b65-b4dd-a7ef381e4525",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795002838354
+      },
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011489298
+      }
+    ],
+    "5.19 Profile name must be a string": [
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011489383
+      },
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011592081
+      }
+    ]
+  }
+}

@@ -24,7 +24,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
 
 ## Tasks
 
-- [ ] 1. The pure module `src/codec-view`
+- [x] 1. The pure module `src/codec-view`
   - _Requirements: R1.1, R1.2, R1.3, R1.4, R1.5, R1.6, R1.7, R1.8, R1.9, R1.10, R5.1, R5.2, R5.3, R5.4, R5.5, R5.6, R5.7, R5.8, R5.9, R5.10, R6.1, R6.2, R6.3, R6.4, R6.5, R6.9, R6.10, R6.11, R6.14, R6.15, R8.1, R8.2, R8.3, R8.4, R8.5, R8.6, R8.7, R8.8, R8.9, R8.11, R8.12_
 
   - [x] 1.1 Record the entry-chunk size before this feature
@@ -179,7 +179,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - **Validates: Requirements R1.8, R6.9, R6.10, R6.11**
     - _Requirements: R1.8, R6.9, R6.10, R6.11, R12.1, R12.2, R12.4_
 
-  - [-] 1.21 Checkpoint - the pure module
+  - [x] 1.21 Checkpoint - the pure module
     - Ensure all tests pass, ask the user if questions arise.
     - Confirm each of the five exported functions has at least one property and at least one example-based test (R12.1), and that P1 to P7 and P10 all exist (R12.5). Add a test that runs a 2,000 × 2,000 diff and reports its measured time, so a regression in the alignment is visible. Report the measured number.
     - _Requirements: R12.1, R12.5, R12.9_
