@@ -348,7 +348,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - One test renders a 10,000-pick listing and asserts the Lines of the Window are in the document, with at most `WINDOW_SIZE` `li.line` elements, inside a generous ceiling; one moves the Selected_Pick and asserts the moved Window is in the document inside a generous ceiling (R2.6, R2.10). Record the measured numbers and say in the test that jsdom timing is not phone timing: the number that matters is in `check:browser`.
     - _Requirements: R2.6, R2.10_
 
-  - [-] 3.11 Checkpoint - the screen
+  - [x] 3.11 Checkpoint - the screen
     - Ensure all tests pass, ask the user if questions arise.
     - The boundary test of task 1.3 now has a non-empty `src/ui` file set; confirm it passes and reports on the real Code view files.
     - _Requirements: R8.4, R12.9_
