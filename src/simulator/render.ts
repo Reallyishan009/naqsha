@@ -70,10 +70,10 @@ function zariHighlight(weft: Weft): number | undefined {
 }
 
 /**
- * Marks the cells of one woven pick that belong to a weft float longer than `limit` (R3.3): one left-to-right pass over
- * the tiled width `mask.length`, which is `baseEnds * repeat`. A run of weft-on-face cells (lift 0) that is longer than
+ * Marks the intersections of one woven pick that belong to a weft float longer than `limit` (R3.3): one left-to-right pass over
+ * the tiled width `mask.length`, which is `baseEnds * repeat`. A run of weft-on-face intersections (lift 0) that is longer than
  * `limit` sets `mask[end]` to 1 for each of its ends; every other end is set to 0. Repeat boundaries join runs (R14.4).
- * The result equals `floatLengthAt(...) > limit` for every end of the pick, with no per-cell scan.
+ * The result equals `floatLengthAt(...) > limit` for every end of the pick, with no per-intersection scan.
  */
 function markWeftFloats(lift: ArrayLike<number>, baseEnds: number, limit: number, mask: Uint8Array): void {
   const tiledEnds = mask.length;
@@ -87,11 +87,11 @@ function markWeftFloats(lift: ArrayLike<number>, baseEnds: number, limit: number
 }
 
 /**
- * Marks the cells of the picks `firstPick..lastPick` that belong to a warp float longer than `limit` (R3.3), one pass
- * per base end. `mask` has one row of `baseEnds` entries per pick, row 0 being `firstPick`; a cell is set to 1 when its
+ * Marks the intersections of the picks `firstPick..lastPick` that belong to a warp float longer than `limit` (R3.3), one pass
+ * per base end. `mask` has one block of `baseEnds` entries per pick, block 0 being `firstPick`; an intersection is set to 1 when its
  * run of warp-on-face woven picks (lift 1, counted down to pick 0 and up to `lastPick`, ended by a gap pick or a
  * weft-on-face pick) is longer than `limit`, and to 0 otherwise. The pass starts `limit` picks below `firstPick`, which
- * is enough to know whether a run reaching into the first row is longer than `limit`. The cost is
+ * is enough to know whether a run reaching into the first pick of the block is longer than `limit`. The cost is
  * `baseEnds * (lastPick - firstPick + 1 + limit)`, whatever the pick index. The warp floats repeat identically across
  * repeats, so a base end serves every tiled end that maps onto it.
  */
@@ -110,8 +110,8 @@ function markWarpFloats(
     let runStart = startPick;
     for (let pick = startPick; pick <= lastPick + 1; pick++) {
       if (pick <= lastPick) {
-        const row = picks[pick]!;
-        if (row.kind === 'woven' && row.lift[baseEnd] === 1) continue;
+        const pickRow = picks[pick]!;
+        if (pickRow.kind === 'woven' && pickRow.lift[baseEnd] === 1) continue;
       }
       if (pick - runStart > limit) {
         for (let q = Math.max(runStart, firstPick); q < pick; q++) mask[(q - firstPick) * baseEnds + baseEnd] = 1;
@@ -155,7 +155,7 @@ export function renderFrame(clothInput: PreparedCloth, settingsInput: RenderSett
   const warpRgb: Rgb = parseColour(settings.warpColour) ?? [0, 0, 0];
   const warpByColumn = shade.map((s) => packShaded(warpRgb, s));
   const raisedByColumn = shade.map((s) => packRaised(warpRgb, s));
-  const weftByRow = settings.weftPlan.map((weft) => {
+  const weftByPick = settings.weftPlan.map((weft) => {
     const rgb = weftBaseColour(weft);
     return shade.map((s) => packShaded(rgb, s));
   });
@@ -175,7 +175,7 @@ export function renderFrame(clothInput: PreparedCloth, settingsInput: RenderSett
   const fellY = height - shedHeight;
 
   // Repeat (R14.2): with float highlighting off a pixel row is drawn for one base width and copied across the cloth.
-  // With highlighting on, floats join across repeats (R14.4), so every cell is drawn and measured on its own.
+  // With highlighting on, floats join across repeats (R14.4), so every intersection is drawn and measured on its own.
   const copyRepeats = settings.floatHighlight === null;
   const baseWidth = baseEnds * t;
   const drawnWidth = copyRepeats ? Math.min(baseWidth, clothWidth) : clothWidth;
@@ -187,38 +187,38 @@ export function renderFrame(clothInput: PreparedCloth, settingsInput: RenderSett
   };
 
   // In lift(p) and pass(p, s) the ends in pick p's lift set are drawn raised (R9.2).
-  const shedRow = read.phase === 'rest' ? undefined : cloth.picks[p];
-  const raisedLift = shedRow !== undefined && shedRow.kind === 'woven' ? shedRow.lift : undefined;
+  const shedPick = read.phase === 'rest' ? undefined : cloth.picks[p];
+  const raisedLift = shedPick !== undefined && shedPick.kind === 'woven' ? shedPick.lift : undefined;
 
-  // Draws every end of one pixel row as a vertical warp thread, raised ends lighter.
+  // Draws every end of one pixel row as a warp thread running down the image, raised ends lighter.
   const drawWarpRow = (rowStart: number): void => {
-    for (let cell = 0, x0 = 0; x0 < drawnWidth; cell++, x0 += t) {
+    for (let end = 0, x0 = 0; x0 < drawnWidth; end++, x0 += t) {
       const xEnd = Math.min(x0 + t, drawnWidth);
-      const columns = raisedLift !== undefined && raisedLift[cell % baseEnds] === 1 ? raisedByColumn : warpByColumn;
+      const columns = raisedLift !== undefined && raisedLift[end % baseEnds] === 1 ? raisedByColumn : warpByColumn;
       for (let x = x0; x < xEnd; x++) pixels[rowStart + x] = columns[x - x0];
     }
     if (copyRepeats) copyAcross(rowStart);
   };
 
-  // The shed: the first row is drawn and the rest are copies of it.
+  // The shed: the first pixel row is drawn and the rest are copies of it.
   if (shedHeight > 0) {
     drawWarpRow(fellY * width);
     for (let y = fellY + 1; y < height; y++) pixels.copyWithin(y * width, fellY * width, (fellY + 1) * width);
   }
 
-  // pass(p, s): pick p's weft is a band of t rows centred in the shed, from x = 0 to floor((s + 1) * clothWidthPx / PASS_STEPS) - 1,
-  // cropped at the viewport and clipped to the shed rows. It is drawn directly over the warp, after the tiling,
+  // pass(p, s): pick p's weft is a band of t pixel rows centred in the shed, from x = 0 to floor((s + 1) * clothWidthPx / PASS_STEPS) - 1,
+  // cropped at the viewport and clipped to the shed pixel rows. It is drawn directly over the warp, after the tiling,
   // because its right end is not periodic.
   if (read.phase === 'pass' && shedHeight > 0) {
     const clothWidthPx = baseEnds * settings.repeat * t;
     const bandEnd = Math.min(width, Math.floor(((read.step + 1) * clothWidthPx) / PASS_STEPS));
-    const weftIndex = p % weftByRow.length;
+    const weftIndex = p % weftByPick.length;
     const bandTop = fellY + Math.floor((shedHeight - t) / 2);
     for (let i = 0; i < t; i++) {
       const y = bandTop + i;
       if (y < fellY || y >= height) continue;
       const rowStart = y * width;
-      pixels.fill(weftByRow[weftIndex][i], rowStart, rowStart + bandEnd);
+      pixels.fill(weftByPick[weftIndex][i], rowStart, rowStart + bandEnd);
       const highlight = i === centreRow ? highlightByWeft[weftIndex] : undefined;
       if (highlight !== undefined) {
         for (let x = 0; x < bandEnd; x++) if ((x % baseWidth) % ZARI_HIGHLIGHT_COLUMN_STEP === 0) pixels[rowStart + x] = highlight;
@@ -238,46 +238,46 @@ export function renderFrame(clothInput: PreparedCloth, settingsInput: RenderSett
   if (highlighting && warpMask.length > 0) markWarpFloats(cloth, firstVisiblePick, p - 1, limit, warpMask);
   let weftMaskPick = -1;
 
-  // Woven rows above the fell. Row i (0 nearest the fell) holds y from fellY-(i+1)*t to fellY-i*t-1 and shows pick p-1-i.
+  // Woven pixel rows above the fell. Pixel row i (0 nearest the fell) holds y from fellY-(i+1)*t to fellY-i*t-1 and shows pick p-1-i.
   for (let y = 0; y < fellY; y++) {
     const rowIndex = Math.floor((fellY - 1 - y) / t);
     const pick = p - 1 - rowIndex;
     if (pick < 0) continue;
-    const row = cloth.picks[pick];
-    if (row === undefined) continue;
+    const pickRow = cloth.picks[pick];
+    if (pickRow === undefined) continue;
     const rowStart = y * width;
-    if (row.kind !== 'woven') {
-      // Gap row: hatch across the full cloth width, no warp, weft or shading (R4.1 to R4.5).
-      // The hatch is measured from the start of each repeat, u = x mod baseWidth, so the row tiles (R14.2).
-      const ink = row.kind === 'missing' ? missingInk : damagedInk;
-      const inked = row.kind === 'missing' ? isSlashInk : isCrossInk;
+    if (pickRow.kind !== 'woven') {
+      // Gap pick: hatch across the full cloth width, no warp, weft or shading (R4.1 to R4.5).
+      // The hatch is measured from the start of each repeat, u = x mod baseWidth, so the pixel row tiles (R14.2).
+      const ink = pickRow.kind === 'missing' ? missingInk : damagedInk;
+      const inked = pickRow.kind === 'missing' ? isSlashInk : isCrossInk;
       for (let x = 0; x < drawnWidth; x++) pixels[rowStart + x] = inked(x % baseWidth, y) ? ink : gapWhite;
       if (copyRepeats) copyAcross(rowStart);
       continue;
     }
     const withinRow = y - (fellY - (rowIndex + 1) * t);
     if (highlighting && weftMaskPick !== pick) {
-      markWeftFloats(row.lift, baseEnds, limit, weftMask);
+      markWeftFloats(pickRow.lift, baseEnds, limit, weftMask);
       weftMaskPick = pick;
     }
-    const warpMaskRow = (pick - firstVisiblePick) * baseEnds;
-    const weftIndex = pick % weftByRow.length;
-    const weftRow = weftByRow[weftIndex][withinRow];
+    const warpMaskStart = (pick - firstVisiblePick) * baseEnds;
+    const weftIndex = pick % weftByPick.length;
+    const weftInk = weftByPick[weftIndex][withinRow];
     const highlight = withinRow === centreRow ? highlightByWeft[weftIndex] : undefined;
-    for (let cell = 0, x0 = 0; x0 < drawnWidth; cell++, x0 += t) {
+    for (let end = 0, x0 = 0; x0 < drawnWidth; end++, x0 += t) {
       const xEnd = Math.min(x0 + t, drawnWidth);
-      if (row.lift[cell % baseEnds] === 1) {
+      if (pickRow.lift[end % baseEnds] === 1) {
         for (let x = x0; x < xEnd; x++) pixels[rowStart + x] = warpByColumn[x - x0];
       } else {
-        pixels.fill(weftRow, rowStart + x0, rowStart + xEnd);
+        pixels.fill(weftInk, rowStart + x0, rowStart + xEnd);
         if (highlight !== undefined) {
-          // Highlight columns are measured from the start of each repeat: u = x mod baseWidth, u mod 4 = 0 (R14.2).
+          // Highlight pixel columns are measured from the start of each repeat: u = x mod baseWidth, u mod 4 = 0 (R14.2).
           for (let x = x0; x < xEnd; x++) if ((x % baseWidth) % ZARI_HIGHLIGHT_COLUMN_STEP === 0) pixels[rowStart + x] = highlight;
         }
       }
-      // Every pixel of a cell in a float longer than the limit, zari highlight pixels included, is blended halfway
+      // Every pixel of an intersection in a float longer than the limit, zari highlight pixels included, is blended halfway
       // toward the highlight colour.
-      if (highlighting && (row.lift[cell % baseEnds] === 1 ? warpMask[warpMaskRow + (cell % baseEnds)] : weftMask[cell]) === 1) {
+      if (highlighting && (pickRow.lift[end % baseEnds] === 1 ? warpMask[warpMaskStart + (end % baseEnds)] : weftMask[end]) === 1) {
         for (let x = x0; x < xEnd; x++) {
           const o = (rowStart + x) * 4;
           data[o] = blendHalfway(data[o], highlightTarget[0]);

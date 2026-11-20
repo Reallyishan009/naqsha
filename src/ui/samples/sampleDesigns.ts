@@ -27,7 +27,7 @@ const BORDER_ZIGZAG_THICKNESS = 2;
 const BORDER_LINE_OFFSET = 12;
 
 /**
- * Where an end and a pick sit in the motif. The cloth is made of square threads, so the diamond and the floral are
+ * Where an end and a pick sit in the motif. The cloth is made of square warp and weft threads, so the diamond and the floral are
  * tiled along the ends in cells that are `period` ends wide, the same size as one repeat along the picks.
  * `u` and `v` run from -1 to 1 across a cell; `floralU` runs from -2 to 2 across a floral cell, which is two repeats
  * wide, with the flower in the middle (|floralU| <= 1) and a leaf at the boundary; `edgeDistance` counts ends from the nearer edge of the card;

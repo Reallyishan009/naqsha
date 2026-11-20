@@ -1,6 +1,6 @@
 export type PointMm = { x: number; y: number };
 
-/** A fixed alignment hole. Not part of the pattern. */
+/** A peg hole: fixed alignment, in the same place on every card, and not part of the pattern. */
 export type PegHole = { positionMm: PointMm; diameterMm: number };
 
 /**

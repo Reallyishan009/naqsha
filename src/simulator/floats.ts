@@ -1,23 +1,23 @@
 import type { PreparedCloth } from './types.ts';
 
 /**
- * A float: a run of at least 2 adjacent threads of one set that pass over the other set without interlacing.
+ * A float: a run of at least 2 adjacent warp threads, or weft threads, that pass over the other set without interlacing.
  * `pick` and `end` give the start of the run. A weft float starts at its pick and its first end. A warp float
  * starts at its end and its first pick. `length` is the number of ends (weft) or picks (warp) in the run.
  */
 export type Float = { set: 'warp' | 'weft'; pick: number; end: number; length: number };
 
 /**
- * Length of the float that the woven cell at (`pick`, tiled end `end`) belongs to, scanning at most
- * `maxLength + 1` cells in each direction, so the cost depends on `maxLength` only, never on the pick index (R3.3).
+ * Length of the float that the woven intersection at (`pick`, tiled end `end`) belongs to, scanning at most
+ * `maxLength + 1` intersections in each direction, so the cost depends on `maxLength` only, never on the pick index (R3.3).
  *
- * The cell is warp-on-face when its end is lifted. Then the run is of warp-on-face picks at the same end, going down
+ * The intersection is warp-on-face when its end is lifted. Then the run is of warp-on-face picks at the same end, going down
  * to pick 0 and up to `lastPick`; a gap pick or a weft-on-face pick ends the run. Otherwise the run is of weft-on-face
  * ends in the same pick across the tiled width `baseEnds * repeat` (repeat boundaries join, R14.4); the run stops at
  * the first and last tiled end.
  *
  * The result is exact when it is at most `maxLength`, and larger than `maxLength` exactly when the true length is.
- * A run of 1 is not a float but is returned as 1. Returns 0 when the cell is not a woven cell in range.
+ * A run of 1 is not a float but is returned as 1. Returns 0 when there is no woven intersection there.
  */
 export function floatLengthAt(
   cloth: PreparedCloth,
@@ -28,11 +28,11 @@ export function floatLengthAt(
   lastPick: number,
 ): number {
   const { baseEnds, picks } = cloth;
-  const row = picks[pick];
+  const pickRow = picks[pick];
   const tiledEnds = baseEnds * repeat;
-  if (row === undefined || row.kind !== 'woven' || pick > lastPick || end < 0 || end >= tiledEnds) return 0;
+  if (pickRow === undefined || pickRow.kind !== 'woven' || pick > lastPick || end < 0 || end >= tiledEnds) return 0;
   const reach = maxLength + 1;
-  const warpOnFace = row.lift[end % baseEnds] === 1;
+  const warpOnFace = pickRow.lift[end % baseEnds] === 1;
   let length = 1;
 
   if (warpOnFace) {
@@ -44,8 +44,8 @@ export function floatLengthAt(
     for (let q = pick - 1, n = 0; q >= 0 && n < reach && isWarp(q); q--, n++) length++;
     for (let q = pick + 1, n = 0; q <= lastPick && q < picks.length && n < reach && isWarp(q); q++, n++) length++;
   } else {
-    for (let e = end - 1, n = 0; e >= 0 && n < reach && row.lift[e % baseEnds] === 0; e--, n++) length++;
-    for (let e = end + 1, n = 0; e < tiledEnds && n < reach && row.lift[e % baseEnds] === 0; e++, n++) length++;
+    for (let e = end - 1, n = 0; e >= 0 && n < reach && pickRow.lift[e % baseEnds] === 0; e--, n++) length++;
+    for (let e = end + 1, n = 0; e < tiledEnds && n < reach && pickRow.lift[e % baseEnds] === 0; e++, n++) length++;
   }
   return length;
 }
@@ -73,11 +73,11 @@ export function computeFloats(cloth: PreparedCloth, repeat = 1): Float[] {
   const floats: Float[] = [];
 
   for (let pick = 0; pick < picks.length; pick++) {
-    const row = picks[pick]!;
-    if (row.kind !== 'woven') continue;
+    const pickRow = picks[pick]!;
+    if (pickRow.kind !== 'woven') continue;
     let runStart = -1;
     for (let end = 0; end <= tiledEnds; end++) {
-      const weftOnFace = end < tiledEnds && row.lift[end % baseEnds] === 0;
+      const weftOnFace = end < tiledEnds && pickRow.lift[end % baseEnds] === 0;
       if (weftOnFace) {
         if (runStart < 0) runStart = end;
       } else if (runStart >= 0) {
@@ -91,8 +91,8 @@ export function computeFloats(cloth: PreparedCloth, repeat = 1): Float[] {
     const baseEnd = end % baseEnds;
     let runStart = -1;
     for (let pick = 0; pick <= picks.length; pick++) {
-      const row = pick < picks.length ? picks[pick]! : undefined;
-      const warpOnFace = row !== undefined && row.kind === 'woven' && row.lift[baseEnd] === 1;
+      const pickRow = pick < picks.length ? picks[pick]! : undefined;
+      const warpOnFace = pickRow !== undefined && pickRow.kind === 'woven' && pickRow.lift[baseEnd] === 1;
       if (warpOnFace) {
         if (runStart < 0) runStart = pick;
       } else if (runStart >= 0) {

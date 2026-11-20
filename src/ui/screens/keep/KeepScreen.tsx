@@ -295,7 +295,7 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
     void refresh();
   }, [refresh]);
 
-  // Focus follows the action: the saved text after a save, the row's Delete button or the list heading after a confirmation closes.
+  // Focus follows the action: the saved text after a save, the list row's Delete button or the list heading after a confirmation closes.
   useEffect(() => {
     if (focusSavedRef.current && savedText !== null) {
       focusSavedRef.current = false;

@@ -5,7 +5,7 @@ export const ZARI_SILVER_COLOUR = '#b8bcc4';
 /** Zari highlight colours, drawn unshaded (R5.5). */
 export const ZARI_GOLD_HIGHLIGHT_COLOUR = '#fff2c4';
 export const ZARI_SILVER_HIGHLIGHT_COLOUR = '#ffffff';
-/** A zari weft cell gets a highlight pixel in its centre row at every column with u mod 4 = 0, u = x mod (baseEnds * t) measured from the start of each repeat. */
+/** A zari weft intersection gets a highlight pixel in its centre pixel row at every pixel column with u mod 4 = 0, u = x mod (baseEnds * t) measured from the start of each repeat. */
 export const ZARI_HIGHLIGHT_COLUMN_STEP = 4;
 
 /** Float highlight colour (R3.3). */
@@ -13,13 +13,13 @@ export const FLOAT_HIGHLIGHT_COLOUR = '#ff00c8';
 
 /**
  * Blends one colour channel halfway toward a target channel, integer only: (channel + target) >> 1.
- * A highlighted cell has every pixel blended this way with the target #ff00c8, zari highlight pixels included.
+ * A highlighted intersection has every pixel blended this way with the target #ff00c8, zari highlight pixels included.
  */
 export function blendHalfway(channel: number, target: number): number {
   return (channel + target) >> 1;
 }
 
-/** Gap row colours (R4.2, R4.3): grey `/` hatch for a missing card, dark red `X` cross-hatch for a damaged card, on white. */
+/** Gap pick colours (R4.2, R4.3): grey `/` hatch for a missing card, dark red `X` cross-hatch for a damaged card, on white. */
 export const GAP_WHITE_COLOUR = '#ffffff';
 export const GAP_MISSING_COLOUR = '#808080';
 export const GAP_DAMAGED_COLOUR = '#b00020';
@@ -32,7 +32,7 @@ export function positiveModulo(value: number, modulus: number): number {
   return ((value % modulus) + modulus) % modulus;
 }
 
-/** True where the `/` diagonal is inked: (x + y) mod 6 < 2, with x the column measured from the start of each repeat (u) and y the absolute image row. */
+/** True where the `/` diagonal is inked: (x + y) mod 6 < 2, with x the pixel column measured from the start of each repeat (u) and y the absolute image row. */
 export function isSlashInk(x: number, y: number): boolean {
   return positiveModulo(x + y, GAP_HATCH_PERIOD) < GAP_HATCH_WIDTH;
 }
@@ -43,7 +43,7 @@ export function isCrossInk(x: number, y: number): boolean {
 }
 
 /**
- * Shade factor for each position 0..t-1 across a thread t px wide or tall: edges 160, centre about 255.
+ * Shade factor for each position 0..t-1 across a warp or weft thread t px wide or tall: edges 160, centre about 255.
  * Integer only, so the same input gives the same table everywhere (R8.3).
  */
 export function shadeTable(t: number): number[] {

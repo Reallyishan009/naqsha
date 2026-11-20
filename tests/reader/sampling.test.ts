@@ -58,6 +58,26 @@ describe('sampling examples', () => {
     expect(decidePunched(6, 10)).toBe(true);
   });
 
+  // Added in task 8.2: the strengthened coverage check in tests/structure/propertyNames.test.ts
+  // reported decidePunched as an exported function with example tests only.
+  it('R11.1 a hook position is punched exactly when more than half of its sampling pixels are dark', () => {
+    // **Validates: Requirements 11.1**
+    fc.assert(
+      fc.property(
+        fc.nat({ max: 10000 }).chain((sampleCount) => fc.tuple(fc.constant(sampleCount), fc.nat({ max: sampleCount }))),
+        ([sampleCount, darkCount]) => {
+          expect(decidePunched(darkCount, sampleCount)).toBe(darkCount > sampleCount / 2);
+          // The majority is of the sampled pixels, so the decision never depends on the scale.
+          expect(decidePunched(darkCount * 3, sampleCount * 3)).toBe(decidePunched(darkCount, sampleCount));
+          // Dark and light swapped: both halves cannot be the majority, and a tie is not punched.
+          expect(decidePunched(darkCount, sampleCount) && decidePunched(sampleCount - darkCount, sampleCount)).toBe(false);
+          if (darkCount * 2 === sampleCount) expect(decidePunched(darkCount, sampleCount)).toBe(false);
+        },
+      ),
+      { seed: 80219, numRuns: 300 },
+    );
+  });
+
   it('R10.4 a card shifted so one hook position leaves the image returns null', () => {
     const pose: Pose = { tiltDegrees: 0, pixelsPerMm: 5, originPx: { x: 0, y: 0 }, orientation: 'upright' };
     const width = Math.ceil(demo.cardWidthMm * 5);

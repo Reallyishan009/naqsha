@@ -123,20 +123,20 @@ function findHoleOverlaps(
     for (let j = i + 1; j < pegs.length; j++) add(pegs[i]!, pegs[j]!);
     for (const lacingHole of lacing) add(pegs[i]!, lacingHole);
   }
-  // Peg or lacing hole against the hook grid: test only the grid cells within reach of the disc.
+  // Peg or lacing hole against the hook grid: test only the hook positions within reach of the disc.
   if (grid !== undefined) {
     let remaining = MAX_UNASSIGNED_VIOLATIONS;
     for (const disc of [...pegs, ...lacing]) {
       const reachMm = disc.radiusMm + hookRadiusMm;
-      const cellRange = (centre: number, first: number, pitch: number, count: number): [number, number] => {
+      const hookRange = (centre: number, first: number, pitch: number, count: number): [number, number] => {
         const low = Math.ceil((centre - reachMm - first) / pitch) - 1;
         const high = Math.floor((centre + reachMm - first) / pitch) + 1;
         return [Math.max(0, low), Math.min(count - 1, high)];
       };
-      const [firstColumn, lastColumn] = cellRange(disc.centre.x, grid.firstHoleCentreMm.x, grid.horizontalPitchMm, grid.hookColumns);
-      const [firstRow, lastRow] = cellRange(disc.centre.y, grid.firstHoleCentreMm.y, grid.verticalPitchMm, grid.hookRows);
-      for (let hookRow = firstRow; hookRow <= lastRow && remaining > 0; hookRow++) {
-        for (let hookColumn = firstColumn; hookColumn <= lastColumn && remaining > 0; hookColumn++) {
+      const [firstHookColumn, lastHookColumn] = hookRange(disc.centre.x, grid.firstHoleCentreMm.x, grid.horizontalPitchMm, grid.hookColumns);
+      const [firstHookRow, lastHookRow] = hookRange(disc.centre.y, grid.firstHoleCentreMm.y, grid.verticalPitchMm, grid.hookRows);
+      for (let hookRow = firstHookRow; hookRow <= lastHookRow && remaining > 0; hookRow++) {
+        for (let hookColumn = firstHookColumn; hookColumn <= lastHookColumn && remaining > 0; hookColumn++) {
           const hook = hookDisc(hookRow, hookColumn);
           if (discsOverlap(disc, hook)) {
             found.push(overlapOf(hook, disc));
@@ -329,7 +329,7 @@ export function validateCardProfile(input: unknown): Violation[] {
       });
     }
     const total = hookRows !== undefined && hookColumns !== undefined ? hookRows * hookColumns : undefined;
-    const firstCell = new Map<number, true>();
+    const endIndexSeen = new Map<number, true>();
     for (let hookRowIndex = 0; hookRowIndex < endOrder.length; hookRowIndex++) {
       const row: unknown = endOrder[hookRowIndex];
       const rowLocation = `endOrder[${hookRowIndex}]`;
@@ -347,37 +347,37 @@ export function validateCardProfile(input: unknown): Violation[] {
         });
       }
       for (let hookColumnIndex = 0; hookColumnIndex < row.length; hookColumnIndex++) {
-        const cell: unknown = row[hookColumnIndex];
-        const cellLocation = `${rowLocation}[${hookColumnIndex}]`;
-        if (typeof cell !== 'number' || !Number.isInteger(cell)) {
-          report({ kind: 'end-order-shape', location: cellLocation, message: `${cellLocation} must be an integer end index.` });
+        const endIndex: unknown = row[hookColumnIndex];
+        const endLocation = `${rowLocation}[${hookColumnIndex}]`;
+        if (typeof endIndex !== 'number' || !Number.isInteger(endIndex)) {
+          report({ kind: 'end-order-shape', location: endLocation, message: `${endLocation} must be an integer end index.` });
           continue;
         }
         if (total === undefined) continue;
-        if (cell < 0 || cell >= total) {
+        if (endIndex < 0 || endIndex >= total) {
           report({
             kind: 'end-order-out-of-range',
-            location: cellLocation,
-            message: `${cellLocation} is ${cell}, outside 0 to ${total - 1}.`,
+            location: endLocation,
+            message: `${endLocation} is ${endIndex}, outside 0 to ${total - 1}.`,
             expected: total - 1,
-            actual: cell,
+            actual: endIndex,
           });
-        } else if (firstCell.has(cell)) {
+        } else if (endIndexSeen.has(endIndex)) {
           report({
             kind: 'end-order-duplicate',
-            location: cellLocation,
-            message: `${cellLocation} repeats end index ${cell}.`,
-            actual: cell,
+            location: endLocation,
+            message: `${endLocation} repeats end index ${endIndex}.`,
+            actual: endIndex,
           });
         } else {
-          firstCell.set(cell, true);
+          endIndexSeen.set(endIndex, true);
         }
       }
     }
-    if (total !== undefined && firstCell.size < total) {
+    if (total !== undefined && endIndexSeen.size < total) {
       let reported = 0;
       for (let endIndex = 0; endIndex < total && reported < MAX_UNASSIGNED_VIOLATIONS; endIndex++) {
-        if (firstCell.has(endIndex)) continue;
+        if (endIndexSeen.has(endIndex)) continue;
         reported++;
         report({
           kind: 'end-order-unassigned',

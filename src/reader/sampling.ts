@@ -2,7 +2,7 @@ import type { CardGrid, CardProfile } from '../codec/index.ts';
 import { cardToImage } from './pose.ts';
 import type { DarkMap, Pose } from './types.ts';
 
-/** Fraction of the hole radius that is sampled (R10.3). */
+/** Fraction of the punched hole radius that is sampled (R10.3). */
 export const SAMPLING_RADIUS_FRACTION = 0.6;
 
 /** Radius in pixels of the sampling disc at one hook position. */

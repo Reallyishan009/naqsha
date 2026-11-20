@@ -84,7 +84,7 @@ export function formatStepReport(result: StepResult): string {
   return head;
 }
 
-/** A markdown-style table with a header, a separator and one row per result, then a totals line. */
+/** A markdown-style table with a header, a separator and one table row per result, then a totals line. */
 export function formatSummary(results: readonly StepResult[]): string {
   const lines = ['| Step | Status | Detail |', '|---|---|---|'];
   for (const result of results) {

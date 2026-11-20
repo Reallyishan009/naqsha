@@ -435,3 +435,123 @@ That `runExport` itself never calls `downloadBmp` after a failed export is Prope
 ### Not done in part 1
 
 `tests/structure/glossaryTerms.test.ts`, `tests/structure/cardDimensions.test.ts` and the strengthening of `tests/structure/propertyNames.test.ts` (removing `paintToCanvas`, `browserScheduler` and `downloadBmp` from `EXCLUDED_FROM_COVERAGE` and requiring the name inside the same `it(...)` as the `fc.assert`) are the rest of task 8.2 and were not written here.
+
+## The three checks (task 8.2, part 2)
+
+Part 1 fixed the findings. Part 2 adds the checks that would have caught each class, and a shared
+detector, `tests/support/termScan.ts` (`scanTerms`, `scanNumbers`, `splitWords`,
+`identifierTokens`, `extractComments`), which holds no word list and no allowlist of its own: the
+words, the numbers and the policy stay with each check.
+
+### `tests/structure/glossaryTerms.test.ts` (check A)
+
+Scans the identifiers and the comments of `src` and `scripts` for the review's word list (row,
+column, col, thread, hole, cell, overlap, horizontal, vertical) and reports every use no allowance
+covers. 888 uses of these words exist; 16 allowances explain them, each with a reason, in two
+kinds: word sequences that are the glossary term, a profile field name or a documented
+non-weaving term (`hook row`, `punched hole`, `hole diameter`, `pixel row`, `row major`, `table
+row`, `pick row`, `warp thread`, `thread size`), and word-and-file classes (the `.row` CSS class
+and the saved-design list row in the screens, the BMP and PNG byte-layout rows in `src/exporter`,
+the pixel rows and columns of the renderer, the three hole kinds together in the eight files that
+treat them alike, hole-disc overlap in the profile checker, the markdown table cell of
+`reviewList.ts`, the motif tile of `sampleDesigns.ts`). The file states what the check cannot
+find: a synonym outside the word list, an inflected form, anything inside a string literal, the
+`tests/` tree, and whatever an allowance covers. A test fails if an allowance covers nothing, so a
+stale one cannot stay.
+
+**It reported 105 uses on first run. Nine were real and are fixed; none was in the review's 242
+lines, because the review read only the lines the app spec added and these are older code.**
+
+| was | now | file |
+|---|---|---|
+| `const cell: unknown = endOrder[r][c]`, `cellLocation`, `firstCell` | `endIndex`, `endLocation`, `endIndexSeen` (the value is an end index, which the next loop in the same file already called `endIndex`) | `src/codec/validateCardProfile.ts:332,350-373` |
+| `cellRange`, `firstRow`/`lastRow`/`firstColumn`/`lastColumn`, "the grid cells within reach" | `hookRange`, `firstHookRow`/`lastHookRow`/`firstHookColumn`/`lastHookColumn`, "the hook positions within reach" | `src/codec/validateCardProfile.ts:126-139` |
+| `for (let cell = 0, ...)` indexing ends across the drawn width (twice), "cells of one woven pick", "per-cell scan", "every cell is drawn", "every pixel of a cell" | `end`, "intersections", "per-intersection scan" (the glossary uses "intersection" in its `face` entry) | `src/simulator/render.ts:71-91,178,195-197,267-280` |
+| `weftByRow` (indexed by pick), `shedRow` (a pick), `weftRow`, `warpMaskRow` (an offset), `row = cloth.picks[pick]` | `weftByPick`, `shedPick`, `weftInk`, `warpMaskStart`, `pickRow` | `src/simulator/render.ts:156-280` |
+| `row = picks[pick]` (a `PickRow`) | `pickRow` | `src/simulator/floats.ts:31-95` |
+| "a run of at least 2 adjacent threads", "the woven cell at (pick, end)" | "adjacent warp threads, or weft threads", "the woven intersection" | `src/simulator/floats.ts:3-20` |
+| "A zari weft cell ... centre row ... every column", "A highlighted cell", "Gap row colours", "x the column", "across a thread t px wide" | "intersection", "centre pixel row", "pixel column", "Gap pick colours", "a warp or weft thread" | `src/simulator/style.ts:8,16,22,35,46` |
+| "A fixed alignment hole" (the `PegHole` doc), "Fraction of the hole radius" | "A peg hole: fixed alignment ...", "Fraction of the punched hole radius" | `src/codec/types.ts:3`, `src/reader/sampling.ts:5` |
+| "row by row", "square threads", "the row's Delete button", "one row per result" | "hook row by hook row", "square warp and weft threads", "the list row's Delete button", "one table row per result" | `src/ui/printable/layout.ts:9`, `src/ui/samples/sampleDesigns.ts:30`, `src/ui/screens/keep/KeepScreen.tsx:298`, `scripts/checks/summary.ts:87` |
+
+No behaviour changed: every edit is a local name or a comment, and the 790 tests pass unchanged.
+
+**Proof that it catches category A.** `src/ui/state/scan.ts:162,164` were put back as they were
+before part 1 (`for (const hole of row) ... if (hole)`). The check failed with exactly those two
+lines, then passed again after the revert:
+
+```
+AssertionError: 2 use(s) of a non-glossary word:
+src/ui/state/scan.ts:162 "hole" (identifier) uses "hole" where the glossary has punched hole, peg hole or lacing hole
+src/ui/state/scan.ts:164 "hole" (identifier) uses "hole" where the glossary has punched hole, peg hole or lacing hole
+ Tests  1 failed | 11 passed (12)
+```
+
+Six of the seven category A findings are pinned as planted text in the test file and are all
+flagged. The seventh was the wording of a test title, which is a string literal: the check cannot
+read it, and a test asserts that it is *not* reported, so the gap stays visible.
+
+### `tests/structure/cardDimensions.test.ts` (check B)
+
+Reads `public/profiles/demo-12x16.json`, works out every number it gives (60, 45, 12, 16, 192, 36,
+720, 540 and the millimetre values) and reports numeric literals in `src` and `scripts` that hold
+one of them as card geometry, in three tiers: always (a value only a card produces, or a
+fractional millimetre value), on a line that names card geometry (whole numbers of 10 and above),
+and beside its partner (`720, 540`, `60 / 45`, `12` and `16`, `192` and `36`). Nothing in the
+check is written by hand from the card: the numbers come from the profile and the print resolution
+from `DEFAULT_PIXELS_PER_MM`.
+
+**It reports four literals in the current tree, all explained by three allowances, each tied to
+one line of one file so that a second copy anywhere is still reported:**
+`DEFAULT_PIXELS_PER_MM = 12` (a print resolution, not a card dimension), the deliberate
+demo-profile pin at `scripts/check_browser.ts:628` that part 1 kept, and `ICON_SIZES = [192, 512]`
+in `scripts/make_icons.ts` (icon pixels; 192 equals the ends per pick by coincidence).
+
+**Proof that it catches category B.** `scripts/check_browser.ts:621` was put back to
+`profile.cardWidthMm * 12`:
+
+```
+AssertionError: 1 hard-coded card number(s):
+scripts/check_browser.ts:621 literal 12 (context) is hookRows of the demo profile
+    const widthPx = Math.round(profile.cardWidthMm * 12);
+ Tests  1 failed | 10 passed (11)
+```
+
+Five of the seven category B findings are pinned as planted text and all flagged. The two
+low-weight ones were "60 mm by 45 mm" inside instruction strings; strings are not scanned, and a
+test pins that gap too.
+
+### `tests/structure/propertyNames.test.ts` (check C), strengthened
+
+The coverage rule now requires the function to be named inside the same `it(...)` as the property
+runner, plus the declarations of the same file that the test body names, followed through (a
+property written as a named helper is still a property of the function). `paintToCanvas`,
+`browserScheduler` and `downloadBmp` are out of `EXCLUDED_FROM_COVERAGE`; only `loadPixelData`
+remains, with the reason beside it (it is the browser boundary: `createImageBitmap`,
+`OffscreenCanvas`, `getImageData`, no pure rule to state).
+
+Run before the helper rule existed, the strict text reported four functions:
+
+```
+AssertionError: not named inside any test that calls the property runner:
+src/reader/layout.ts: layoutMatches
+src/reader/pegHoles.ts: rankPegHolePairs
+src/reader/sampling.ts: decidePunched
+src/reader/selectPegHoles.ts: selectPegHolePair
+```
+
+Three of the four are covered by properties whose body sits in a named helper
+(`checkTrueBeatsDecoys` in `tests/reader/layout.test.ts`, `notMistakenProperty` and
+`notMistakenForPegHoles` in `tests/reader/pegHoles.test.ts`), which is what the helper rule
+follows; this agrees with the review's own by-hand result that only `downloadBmp` was missing.
+`decidePunched` (`src/reader/sampling.ts`) genuinely had example tests only, so a property was
+written for it: `R11.1 a hook position is punched exactly when more than half of its sampling
+pixels are dark`, seed 80219, 300 runs (majority rule, scale invariance, no tie counted as
+punched, dark and light swapped). Nothing was added to the exclusion list.
+
+Two more points of the strengthened rule: a name only counts when it stands on its own, not after
+a dot, so `fc.nat` is no longer read as a use of a function called `nat`; and the rule itself now
+has a property (seed 80220, 200 runs) over generated test files, which checks that a name counts
+from inside a property, from a helper it names and from a helper of that helper, and does not
+count when it appears in an example test beside a property about another function. The rule still
+cannot tell whether a property says anything worth saying about the function it names.

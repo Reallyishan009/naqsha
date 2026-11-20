@@ -6,7 +6,7 @@ export type HookMark = Disc & { hookRow: number; hookColumn: number; punched: bo
 export type PrintableLayout = {
   widthMm: number;
   heightMm: number;
-  hookMarks: HookMark[]; // hookRows * hookColumns, row by row
+  hookMarks: HookMark[]; // hookRows * hookColumns, hook row by hook row
   pegHoles: [Disc, Disc];
   lacingHoles: Disc[];
 };

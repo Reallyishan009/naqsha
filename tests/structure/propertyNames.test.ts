@@ -1,3 +1,4 @@
+import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -6,9 +7,21 @@ import { join, relative } from 'node:path';
 // does not count as a property test just by naming it.
 const ASSERT_MARKER = ['fc', 'assert'].join('.');
 const ROOT = process.cwd();
-// paintToCanvas and browserScheduler (src/simulator/canvas.ts) have example tests with fakes.
-// downloadBmp (src/exporter/download.ts) has an example test with fakes.
-const EXCLUDED_FROM_COVERAGE = new Set(['loadPixelData', 'paintToCanvas', 'browserScheduler', 'downloadBmp']);
+/**
+ * Exported functions with no property of their own, each with the reason it has none.
+ * Nothing goes in here to make the coverage check below pass: a function without a property is
+ * either given one or listed here with a reason a reader can check.
+ *
+ * - loadPixelData (src/reader/canvasSource.ts): it is the browser boundary. Its whole body is
+ *   createImageBitmap, OffscreenCanvas and getImageData, so there is no pure input-output rule
+ *   to state; tests/reader/canvasSource.test.ts drives it with fakes.
+ *
+ * paintToCanvas and browserScheduler (src/simulator/canvas.ts) were in this list until task 8.2
+ * and are not any more: tests/simulator/canvas.test.ts has a property for each. downloadBmp
+ * (src/exporter/download.ts) was removed in the same task, when its property was written in
+ * tests/exporter/download.test.ts.
+ */
+const EXCLUDED_FROM_COVERAGE = new Set(['loadPixelData']);
 const ID_PREFIX = /^R\d+\.\d+ /;
 
 function listFiles(dir: string, accept: (name: string) => boolean): string[] {
@@ -145,6 +158,91 @@ function findTestCalls(source: string): TestCall[] {
   return calls;
 }
 
+/**
+ * Named declarations of a test file: `function name(...) {...}`, `const name = ...;` and
+ * `let name = ...;`, at any nesting. Used to follow a property that is written as a named
+ * helper: a test that runs the property with `checkTheRule` names the function it checks
+ * inside `checkTheRule`, not inside the `it(...)` body.
+ */
+function findDeclarations(source: string): { name: string; text: string }[] {
+  const found: { name: string; text: string }[] = [];
+  const opener = /(?<![\w$.])(?:function|const|let)\s+([A-Za-z_$][\w$]*)/g;
+  let j = 0;
+  while (j < source.length) {
+    const next = skipLiteral(source, j);
+    if (next !== j) {
+      j = next;
+      continue;
+    }
+    opener.lastIndex = j;
+    const m = opener.exec(source);
+    if (m === null || m.index !== j) {
+      j++;
+      continue;
+    }
+    const start = j + m[0].length;
+    let end = start;
+    let depth = 0;
+    // A function body ends at its closing brace; a const or let ends at the `;` or the line end
+    // that follows it at depth 0.
+    while (end < source.length) {
+      const skipped = skipLiteral(source, end);
+      if (skipped !== end) {
+        end = skipped;
+        continue;
+      }
+      const c = source[end];
+      if (c === '(' || c === '[' || c === '{') depth++;
+      else if (c === ')' || c === ']' || c === '}') {
+        depth--;
+        if (depth === 0 && c === '}' && m[0].startsWith('function')) {
+          end++;
+          break;
+        }
+        if (depth < 0) break;
+      } else if (depth === 0 && (c === ';' || (c === '\n' && /[;}]\s*$/.test(source.slice(Math.max(0, end - 2), end))))) {
+        end++;
+        break;
+      }
+      end++;
+    }
+    found.push({ name: m[1], text: source.slice(j, end) });
+    j = start;
+  }
+  return found;
+}
+
+/** The test body, plus the text of every declaration of the same file it names, followed through. */
+function withHelpers(body: string, declarations: { name: string; text: string }[]): string {
+  let text = body;
+  const taken = new Set<string>();
+  for (let round = 0; round < 5; round++) {
+    const next = declarations.filter(
+      ({ name }) => !taken.has(name) && new RegExp(`(?<![\\w$.])${name.replace(/\$/g, '\\$')}(?![\\w$])`).test(text),
+    );
+    if (next.length === 0) break;
+    for (const declaration of next) {
+      taken.add(declaration.name);
+      text += `\n${declaration.text}`;
+    }
+  }
+  return text;
+}
+
+/** The searched text of every property test of one file: its body plus the helpers it names. */
+function propertyBodies(source: string): string[] {
+  const declarations = findDeclarations(source);
+  return findTestCalls(source)
+    .filter((call) => call.body.includes(ASSERT_MARKER))
+    .map((call) => withHelpers(call.body, declarations));
+}
+
+/** True when one of those texts names `name` as a whole word. */
+function namedInAProperty(bodies: readonly string[], name: string): boolean {
+  const named = new RegExp(`(?<![\\w$.])${name.replace(/\$/g, '\\$')}(?![\\w$])`);
+  return bodies.some((body) => named.test(body));
+}
+
 function readTestFiles(): { path: string; source: string }[] {
   return listFiles(join(ROOT, 'tests'), (name) => name.endsWith('.test.ts')).map((path) => ({
     path,
@@ -234,7 +332,27 @@ describe('property naming and coverage', () => {
     expect(stray, stray.join('\n')).toEqual([]);
   });
 
-  it('R17.1 and R13.1 every exported function in src/codec, src/reader, src/simulator and src/exporter is named in a test file that calls the property runner', () => {
+  /**
+   * Since task 8.2 the rule is the stricter one the review used by hand: the function must be
+   * named inside the same `it(...)` or `test(...)` block as the property runner, so the property
+   * is a property *of that function*. Being named somewhere in a file that happens to contain a
+   * property elsewhere is not enough.
+   *
+   * One extension, because a property may be written as a named helper: the text searched is the
+   * test body plus the text of the declarations of the same file that the body names, followed
+   * through (the property of tests/reader/layout.test.ts runs `checkTrueBeatsDecoys`, and
+   * reaches `layoutMatches` that way; tests/reader/pegHoles.test.ts reaches
+   * `selectPegHolePair` through two such hops). The helper is part of the property, so this is
+   * still a property of the function; what it does not allow is a name that appears only in an
+   * example test, or anywhere else in the file.
+   *
+   * The name must also stand on its own, not after a dot: `fc.nat` is not a use of a function
+   * called `nat`, and `deps.frameAt` is not a use of the exported `frameAt`.
+   *
+   * What it still cannot tell: that the property says something worth saying about the function.
+   * A test that calls the function once and asserts nothing about it would pass.
+   */
+  it('R17.1 and R13.1 every exported function in src/codec, src/reader, src/simulator and src/exporter is named inside a test that calls the property runner', () => {
     const exported = [
       ...exportedFunctionNames(join(ROOT, 'src', 'codec')),
       ...exportedFunctionNames(join(ROOT, 'src', 'reader')),
@@ -243,13 +361,65 @@ describe('property naming and coverage', () => {
     ].filter(({ name }) => !EXCLUDED_FROM_COVERAGE.has(name));
     expect(exported.length, 'no exported functions were found, so the scan is probably broken').toBeGreaterThan(0);
 
-    const propertyFiles = files.filter(({ source }) => source.includes(ASSERT_MARKER));
-    const missing = exported.filter(
-      ({ name }) => !propertyFiles.some(({ source }) => new RegExp(`(?<![\\w$])${name.replace(/\$/g, '\\$')}(?![\\w$])`).test(source)),
-    );
+    const bodies = files.flatMap(({ source }) => propertyBodies(source));
+    expect(bodies.length, 'no property tests were found, so the scan is probably broken').toBeGreaterThan(0);
+    const missing = exported.filter(({ name }) => !namedInAProperty(bodies, name));
     expect(
       missing,
-      `not named in any test file that calls the property runner:\n${missing.map((m) => `${m.file}: ${m.name}`).join('\n')}`,
+      `not named inside any test that calls the property runner:\n${missing.map((m) => `${m.file}: ${m.name}`).join('\n')}`,
     ).toEqual([]);
+  });
+
+  it('R17.1 the coverage rule reads the test body, not the whole file', () => {
+    const source = [
+      "import * as fc from 'fast-check';",
+      "it('R1.1 a property of one function', () => {",
+      `  ${ASSERT_MARKER}(fc.property(fc.nat(), (n) => covered(n) === n));`,
+      '});',
+      "it('R1.2 an example of another function', () => {",
+      '  expect(notCovered(1)).toBe(1);',
+      '});',
+    ].join('\n');
+    const bodies = findTestCalls(source)
+      .filter((call) => call.body.includes(ASSERT_MARKER))
+      .map((call) => call.body);
+    expect(bodies).toHaveLength(1);
+    expect(bodies[0]).toContain('covered');
+    expect(bodies[0]).not.toContain('notCovered');
+    // The old rule, which searched the whole file, could not tell these two apart.
+    expect(source).toContain('notCovered');
+    expect(namedInAProperty(propertyBodies(source), 'covered')).toBe(true);
+    expect(namedInAProperty(propertyBodies(source), 'notCovered')).toBe(false);
+  });
+
+  it('R17.1 a function counts as covered from inside a property or its helper, and not from an example test', () => {
+    // **Validates: Requirements 17.1**
+    const place = fc.constantFrom('property', 'helper', 'helper-of-helper', 'example');
+    fc.assert(
+      fc.property(fc.stringMatching(/^[a-z]{3,10}$/), place, fc.nat({ max: 4 }), (name, where, spare) => {
+        // A file that always has one property test, about a function this one is not.
+        const other = `${name}Other`;
+        const lines = [
+          "import * as fc from 'fast-check';",
+          ...Array.from({ length: spare }, (_, i) => `const unused${i} = ${i};`),
+          where === 'helper' ? `const check = (n: number) => ${name}(n) === n;` : '',
+          where === 'helper-of-helper' ? `const inner = (n: number) => ${name}(n) === n;\nconst check = (n: number) => inner(n);` : '',
+          `it('R1.1 a property that is about ${where}', () => {`,
+          where === 'property'
+            ? `  ${ASSERT_MARKER}(fc.property(fc.nat(), (n) => ${name}(n) === n));`
+            : where === 'example'
+              ? `  ${ASSERT_MARKER}(fc.property(fc.nat(), (n) => ${other}(n) === n));`
+              : `  ${ASSERT_MARKER}(fc.property(fc.nat(), check));`,
+          '});',
+          where === 'example' ? `it('R1.2 an example only', () => {\n  expect(${name}(1)).toBe(1);\n});` : '',
+        ].filter((line) => line !== '');
+        const source = lines.join('\n');
+        const bodies = propertyBodies(source);
+        expect(bodies.length).toBe(1);
+        expect(source).toContain(name);
+        expect(namedInAProperty(bodies, name)).toBe(where !== 'example');
+      }),
+      { seed: 80220, numRuns: 200 },
+    );
   });
 });
