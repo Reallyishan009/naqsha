@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { encodeCardGrid, validateCardGrid } from '../../../src/codec/index.ts';
 import type { CardProfile, Pattern } from '../../../src/codec/index.ts';
 import { exportPatternBmp, readPatternBmp } from '../../../src/exporter/index.ts';
-import { generateSample } from '../../../src/ui/samples/sampleDesigns.ts';
+import { suggestRepairs } from '../../../src/repair/index.ts';
+import { generateSample, lostCardPicks, sampleWithLostCards } from '../../../src/ui/samples/sampleDesigns.ts';
 import type { SampleDesign } from '../../../src/ui/types.ts';
 import { exportOptionsArbitrary } from '../../support/patterns.ts';
 import { cardProfileArbitrary, demoProfile } from '../../support/profiles.ts';
@@ -114,5 +115,28 @@ describe('generateSample properties', () => {
       expect(exported.ok).toBe(true);
       if (exported.ok) expect(readPatternBmp(exported.bytes, profile)).toEqual({ ok: true, pattern });
     }
+  });
+});
+describe('the sample with lost cards', () => {
+  const profile = demoProfile();
+  it('R7.1 it has exactly three gaps, the rest are the diamond sample, and every gap has a suggestion', () => {
+    const lost = sampleWithLostCards(profile);
+    const diamond = generateSample(profile, 'diamond');
+    expect(lost).toHaveLength(diamond.length);
+    const gaps = lost.flatMap((card, pick) => (validateCardGrid(profile, card).length > 0 ? [pick] : []));
+    expect(gaps).toEqual(lostCardPicks(diamond.length));
+    expect(gaps).toHaveLength(3);
+    lost.forEach((card, pick) => {
+      if (!gaps.includes(pick)) expect(card).toEqual(diamond[pick]);
+    });
+    const result = suggestRepairs(lost, profile);
+    expect(result.ok && result.gaps.map((gap) => gap.suggestions.length > 0)).toEqual([true, true, true]);
+  });
+  it('R7.1 the first suggestion for each gap is the diamond card that was lost', () => {
+    const lost = sampleWithLostCards(profile);
+    const diamond = generateSample(profile, 'diamond');
+    const result = suggestRepairs(lost, profile);
+    if (!result.ok) throw new Error('failed');
+    for (const gap of result.gaps) expect(gap.suggestions[0]?.card).toEqual(diamond[gap.pick]);
   });
 });

@@ -1,4 +1,5 @@
-import type { AppAction, AppState, ClothChoices, CurrentPattern } from '../types.ts';
+import type { Pattern } from '../../codec/index.ts';
+import type { AppAction, AppState, ClothChoices, CurrentPattern, RepairState, RepairedSlot } from '../types.ts';
 import { appendCard, commitBatch, moveCard, removeCard, replaceCard } from './batch.ts';
 import { COLOURS } from './cloth.ts';
 import { toggleBreakpoint } from './codeView.ts';
@@ -11,6 +12,8 @@ export const DEFAULT_CLOTH_CHOICES: ClothChoices = {
   repeat: 1,
 };
 
+/** No accepted repairs. */
+export const NO_REPAIRS: RepairState = { picks: [], history: [] };
 export const initialAppState: AppState = {
   screen: 'weave',
   language: 'hi',
@@ -24,6 +27,7 @@ export const initialAppState: AppState = {
   breakpoints: [],
   clothChoices: DEFAULT_CLOTH_CHOICES,
   compare: null,
+  repairs: NO_REPAIRS,
 };
 
 /**
@@ -31,7 +35,7 @@ export const initialAppState: AppState = {
  * breakpoints are discarded together with the design they were set on (R3.10, R4.6).
  */
 function withNewPattern(state: AppState, current: CurrentPattern): AppState {
-  return { ...state, current, selectedPick: 0, breakpoints: [], compare: null };
+  return { ...state, current, selectedPick: 0, breakpoints: [], compare: null, repairs: NO_REPAIRS };
 }
 
 function lastPickIndex(state: AppState): number {
@@ -91,6 +95,37 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     case 'set-archive-origin': {
       if (state.current.origin.kind !== 'archive') return state;
       return { ...state, current: { ...state.current, origin: { kind: 'archive', id: action.id } } };
+    }
+    case 'accept-repairs': {
+      // Only picks of the design can change, and only on a click: this action is sent by the Accept controls.
+      const items = action.items.filter(
+        (item) => Number.isInteger(item.pick) && item.pick >= 0 && item.pick < state.current.pattern.length && Array.isArray(item.card),
+      );
+      if (items.length === 0) return state;
+      const pattern = [...state.current.pattern];
+      const before: RepairedSlot[] = [];
+      for (const item of items) {
+        before.push({ pick: item.pick, before: pattern[item.pick] });
+        pattern[item.pick] = item.card;
+      }
+      const picks = [...new Set([...state.repairs.picks, ...items.map((item) => item.pick)])].sort((a, b) => a - b);
+      return {
+        ...state,
+        current: { ...state.current, pattern },
+        repairs: { picks, history: [...state.repairs.history, before] },
+      };
+    }
+    case 'undo-repair': {
+      const last = state.repairs.history[state.repairs.history.length - 1];
+      if (last === undefined) return state;
+      const pattern = [...state.current.pattern];
+      for (const slot of last) pattern[slot.pick] = slot.before as Pattern[number];
+      const undone = new Set(last.map((slot) => slot.pick));
+      return {
+        ...state,
+        current: { ...state.current, pattern },
+        repairs: { picks: state.repairs.picks.filter((pick) => !undone.has(pick)), history: state.repairs.history.slice(0, -1) },
+      };
     }
     case 'compare-versions':
       return { ...state, compare: { first: action.first, second: action.second }, screen: 'code' };

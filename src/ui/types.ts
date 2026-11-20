@@ -39,6 +39,14 @@ export type Confirm =
 export type CompareChoice = { kind: 'current' } | { kind: 'saved'; id: string };
 /** Two sides the Code view should compare as soon as it shows. Set by Keep, cleared on any other navigation. */
 export type CompareRequest = { first: CompareChoice; second: CompareChoice };
+/** One accepted repair: the pick, and what the Current_Pattern held there before (a gap, so not always a card). */
+export type RepairedSlot = { pick: number; before: unknown };
+/** Picks whose card came from an accepted suggestion, and one group of slots per accept, for Undo. */
+export type RepairState = {
+  /** Ascending, no repeats. */
+  picks: ReadonlyArray<number>;
+  history: ReadonlyArray<ReadonlyArray<RepairedSlot>>;
+};
 export type AnnouncementParams = Readonly<Record<string, string | number>>;
 
 export type Announcement = {
@@ -67,6 +75,8 @@ export type AppState = {
   clothChoices: ClothChoices;
   /** A comparison Keep asked the Code view to show, or null. */
   compare: CompareRequest | null;
+  /** Suggested repairs the weaver accepted into the Current_Pattern. Cleared whenever another design is loaded. */
+  repairs: RepairState;
 };
 
 export type AppAction =
@@ -81,6 +91,8 @@ export type AppAction =
   | { type: 'restore-saved'; id: string; pattern: Pattern } // load a version as the open design, stay on this screen
   | { type: 'set-archive-origin'; id: string } // the open design is now this saved version
   | { type: 'compare-versions'; first: CompareChoice; second: CompareChoice }
+  | { type: 'accept-repairs'; items: ReadonlyArray<{ pick: number; card: CardGrid }> }
+  | { type: 'undo-repair' }
   | { type: 'batch-accept'; grid: CardGrid }
   | { type: 'batch-remove'; index: number }
   | { type: 'batch-move'; index: number; by: -1 | 1 }

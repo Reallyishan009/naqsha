@@ -94,3 +94,17 @@ export function generateSample(profile: CardProfile, design: SampleDesign): Patt
   }
   return pattern;
 }
+/** The picks of the diamond sample that are lost in the "design with lost cards" sample: two inside the chain and the last. */
+export function lostCardPicks(pickCount: number): number[] {
+  return pickCount < 6 ? [] : [4, 15, pickCount - 1].filter((pick, index, picks) => pick < pickCount && picks.indexOf(pick) === index);
+}
+/**
+ * The diamond sample with three cards lost, so a design with gaps can be tried without a damaged card. A lost
+ * card is an empty grid, which no card profile accepts, so the simulator and the Code view show it as damaged.
+ * The diamond repeats and mirrors, so every lost card has a suggestion.
+ */
+export function sampleWithLostCards(profile: CardProfile): Pattern {
+  const pattern = generateSample(profile, 'diamond');
+  const lost = new Set(lostCardPicks(pattern.length));
+  return pattern.map((card, pick) => (lost.has(pick) ? [] : card));
+}

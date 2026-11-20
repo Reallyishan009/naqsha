@@ -387,3 +387,64 @@ describe('version history actions', () => {
     expect(appReducer(compared, { type: 'restore-saved', id: 'x', pattern }).compare).toBeNull();
   });
 });
+describe('repair actions', () => {
+  const card = (hook: number): Pattern[number] => [[hook === 0, hook === 1]];
+  const lostSlot = [] as Pattern[number];
+  const damaged: AppState = {
+    ...initialAppState,
+    current: { pattern: [card(0), lostSlot, card(1), lostSlot], origin: { kind: 'sample', design: 'diamond' } },
+  };
+  it('R4.1 accepting replaces only that card, marks the pick and keeps what was there for Undo', () => {
+    const accepted = appReducer(damaged, { type: 'accept-repairs', items: [{ pick: 1, card: card(1) }] });
+    expect(accepted.current.pattern).toEqual([card(0), card(1), card(1), lostSlot]);
+    expect(accepted.current.origin).toEqual(damaged.current.origin);
+    expect(accepted.repairs.picks).toEqual([1]);
+    expect(damaged.current.pattern[1]).toBe(lostSlot); // the old state is not changed
+  });
+  it('R4.2 Undo reverses the last accept only, restores the old slot and removes the mark', () => {
+    const one = appReducer(damaged, { type: 'accept-repairs', items: [{ pick: 1, card: card(1) }] });
+    const two = appReducer(one, { type: 'accept-repairs', items: [{ pick: 3, card: card(0) }] });
+    expect(two.repairs.picks).toEqual([1, 3]);
+    const undone = appReducer(two, { type: 'undo-repair' });
+    expect(undone.current.pattern).toEqual(one.current.pattern);
+    expect(undone.repairs).toEqual(one.repairs);
+    const back = appReducer(undone, { type: 'undo-repair' });
+    expect(back.current.pattern).toEqual(damaged.current.pattern);
+    expect(back.repairs).toEqual(initialAppState.repairs);
+  });
+  it('R4.2 Undo with nothing to undo changes nothing', () => {
+    expect(appReducer(damaged, { type: 'undo-repair' })).toBe(damaged);
+  });
+  it('R4.2 R4.3 one accept of several cards is one Undo', () => {
+    const both = appReducer(damaged, {
+      type: 'accept-repairs',
+      items: [{ pick: 3, card: card(0) }, { pick: 1, card: card(1) }],
+    });
+    expect(both.repairs.picks).toEqual([1, 3]);
+    expect(both.repairs.history).toHaveLength(1);
+    expect(appReducer(both, { type: 'undo-repair' }).current.pattern).toEqual(damaged.current.pattern);
+  });
+  it('R4.3 a pick outside the design is ignored, and nothing else is accepted by itself', () => {
+    expect(appReducer(damaged, { type: 'accept-repairs', items: [{ pick: 9, card: card(1) }, { pick: -1, card: card(1) }] })).toBe(damaged);
+    expect(appReducer(damaged, { type: 'accept-repairs', items: [] })).toBe(damaged);
+    const other = appReducer(damaged, { type: 'select-pick', pick: 2 });
+    expect(other.repairs).toEqual(damaged.repairs);
+    expect(other.current.pattern).toEqual(damaged.current.pattern);
+  });
+  it('R5.3 opening, restoring, a sample or a scan commit clears the repairs', () => {
+    const repaired = appReducer(damaged, { type: 'accept-repairs', items: [{ pick: 1, card: card(1) }] });
+    const next: Pattern = [card(0)];
+    expect(appReducer(repaired, { type: 'open-saved', id: 'a', pattern: next }).repairs).toEqual(initialAppState.repairs);
+    expect(appReducer(repaired, { type: 'restore-saved', id: 'a', pattern: next }).repairs).toEqual(initialAppState.repairs);
+    expect(appReducer(repaired, { type: 'request-sample', design: 'border', pattern: next }).repairs).toEqual(initialAppState.repairs);
+  });
+  it('R5.1 saving (the origin moving to the saved version) keeps the pattern and the marks of the session', () => {
+    const repaired = appReducer(
+      { ...damaged, current: { ...damaged.current, origin: { kind: 'archive', id: 'v1' } } },
+      { type: 'accept-repairs', items: [{ pick: 1, card: card(1) }] },
+    );
+    const saved = appReducer(repaired, { type: 'set-archive-origin', id: 'v2' });
+    expect(saved.current.pattern).toEqual(repaired.current.pattern);
+    expect(saved.repairs).toEqual(repaired.repairs);
+  });
+});
