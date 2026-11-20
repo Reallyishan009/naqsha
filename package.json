@@ -22,6 +22,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit",
+    "typecheck:loom-mcp": "npm --prefix tools/loom-mcp run typecheck",
+    "test:loom-mcp": "npm --prefix tools/loom-mcp test",
     "fixtures": "node scripts/make_fixtures.ts --all",
     "sample-cloth": "node scripts/render_sample.ts",
     "sample-bmp": "node scripts/export_sample.ts",
