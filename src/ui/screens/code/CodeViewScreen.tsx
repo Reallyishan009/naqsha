@@ -311,6 +311,7 @@ export function CodeViewScreen({
         t={t}
         archiveDeps={archiveDeps}
         diffTextDeps={diffTextDeps}
+        request={state.compare}
       />
     </section>
   );

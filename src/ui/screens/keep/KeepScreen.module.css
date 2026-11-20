@@ -98,6 +98,7 @@
 .button {
   min-width: var(--touch-target);
   min-height: var(--touch-target);
+  max-width: 100%;
   padding: 0 16px;
   color: var(--ink);
   background: var(--surface);
@@ -150,4 +151,32 @@
   background: var(--surface);
   border: 2px solid var(--zari);
   border-radius: var(--radius-panel);
+}
+.versions {
+  margin: 8px 0 0;
+  padding: 8px 0 0 12px;
+  border-left: 2px solid var(--line);
+}
+.versionsTitle {
+  margin: 0 0 4px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.version {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 0 8px;
+  font-weight: 400;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-control);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
 }

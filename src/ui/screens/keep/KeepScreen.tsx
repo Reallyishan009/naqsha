@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import type { Dispatch, KeyboardEvent } from 'react';
-import { deleteDesign, getDesign, listDesigns, saveDesign } from '../../../archive/index.ts';
+import type { Dispatch } from 'react';
+import { NOTE_MAX, deleteDesign, getDesign, groupDesigns, listDesigns, saveDesign } from '../../../archive/index.ts';
 import type { ArchiveDeps, ArchiveFailure, DesignSummary, Metadata } from '../../../archive/index.ts';
 import type { CardProfile, Pattern } from '../../../codec/index.ts';
 import type { DownloadDeps, ExportOptions } from '../../../exporter/index.ts';
@@ -10,15 +10,16 @@ import {
   afterSaveFailure,
   canExport,
   canSave,
+  continuesId,
   initialKeepForm,
   keepFormReducer,
   runExport,
   savedLabel,
-  summaryRow,
 } from '../../state/keep.ts';
 import type { KeepForm, KeepFormAction } from '../../state/keep.ts';
 import { ProfileNotice } from '../../ProfileNotice.tsx';
-import type { AppAction, AppState } from '../../types.ts';
+import type { AppAction, AppState, CompareChoice, Language, PatternOrigin } from '../../types.ts';
+import { DesignEntry } from './DesignEntry.tsx';
 import styles from './KeepScreen.module.css';
 
 const FIELDS: ReadonlyArray<keyof Metadata> = ['name', 'naqshband', 'weaver', 'place', 'date', 'notes'];
@@ -44,8 +45,19 @@ export async function runSave(
   form: KeepForm,
   untitled: string,
   deps?: ArchiveDeps,
+  /** The id of the version this save continues; without it the save starts a new design. */
+  continues?: string,
 ): Promise<SaveOutcome> {
-  const result = await saveDesign({ pattern, profileName: profile.name, metadata: form.metadata }, deps);
+  const result = await saveDesign(
+    {
+      pattern,
+      profileName: profile.name,
+      metadata: form.metadata,
+      note: form.note,
+      ...(continues === undefined ? {} : { continues }),
+    },
+    deps,
+  );
   if (!result.ok) return { ok: false, failure: result.failure };
   return { ok: true, id: result.value, label: savedLabel(form.metadata, untitled) };
 }
@@ -58,7 +70,16 @@ export async function runOpen(id: string, deps?: ArchiveDeps): Promise<OpenOutco
   return { ok: true, id, pattern: result.value.pattern };
 }
 
-/** Deletes one design, then reads the list again so the screen shows what is stored. */
+export type RestoreOutcome =
+  | { ok: true; id: string; pattern: Pattern; metadata: Metadata }
+  | { ok: false; failure: ArchiveFailure };
+/** Reads one version to load as the open design. It writes nothing, so every stored version stays as it is. */
+export async function runRestore(id: string, deps?: ArchiveDeps): Promise<RestoreOutcome> {
+  const result = await getDesign(id, deps);
+  if (!result.ok) return { ok: false, failure: result.failure };
+  return { ok: true, id, pattern: result.value.pattern, metadata: result.value.metadata };
+}
+/** Deletes one version, then reads the list again so the screen shows what is stored. */
 export async function runDelete(
   id: string,
   deps?: ArchiveDeps,
@@ -91,41 +112,25 @@ export type KeepViewProps = {
   onDeleteRequest: (id: string) => void;
   onDeleteConfirm: () => void;
   onDeleteCancel: () => void;
+  /** The version history controls. All optional, so a view without them is a view of single designs only. */
+  language?: Language;
+  /** Where the Current_Pattern came from; the save choice and "compare with the open design" depend on it. */
+  origin?: PatternOrigin;
+  expandedDesignId?: string | null;
+  onToggleVersions?: (designId: string) => void;
+  onRestore?: (id: string) => void;
+  onCompare?: (first: CompareChoice, second: CompareChoice) => void;
 };
-
-type ConfirmProps = { t: Translate; onYes: () => void; onNo: () => void };
-
-/** Asks before deleting. Focus starts on the safe choice; Escape cancels (R7.8). */
-function DeleteConfirm({ t, onYes, onNo }: ConfirmProps) {
-  const safeRef = useRef<HTMLButtonElement | null>(null);
-  useEffect(() => {
-    safeRef.current?.focus();
-  }, []);
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
-    if (event.key === 'Escape') onNo();
-  };
-  return (
-    <div role="group" aria-label={t('keep.list.deleteConfirm')} className={styles.confirm} onKeyDown={onKeyDown}>
-      <p>{t('keep.list.deleteConfirm')}</p>
-      <div className={styles.row}>
-        <button ref={safeRef} type="button" className={styles.button} onClick={onNo}>
-          {t('keep.list.deleteNo')}
-        </button>
-        <button type="button" className={styles.button} onClick={onYes}>
-          {t('keep.list.deleteYes')}
-        </button>
-      </div>
-    </div>
-  );
-}
 
 /** What Keep draws. No state of its own, so tests can render every case (R5, R7, R22). */
 export function KeepView(props: KeepViewProps) {
   const { profile, pattern, form, designs, pendingDeleteId, savedText, exportDone, failureKey, t } = props;
   const exportEnabled = profile !== null && canExport(pattern);
   const saveEnabled = profile !== null && canSave(pattern);
-  const untitled = t('keep.untitled');
   const profileName = profile === null ? '' : profile.name;
+  const origin: PatternOrigin = props.origin ?? { kind: 'none' };
+  const language = props.language ?? 'en';
+  const noop = (): void => undefined;
   const notice = profile === null ? null : <ProfileNotice profile={profile} t={t} />;
 
   return (
@@ -197,6 +202,34 @@ export function KeepView(props: KeepViewProps) {
             </label>
           ))}
         </div>
+        <label className={styles.field}>
+          <span>{t('keep.save.note')}</span>
+          <input
+            type="text"
+            className={styles.input}
+            maxLength={NOTE_MAX}
+            value={form.note}
+            onChange={(event) => props.onFormAction({ type: 'set-note', value: event.currentTarget.value })}
+          />
+        </label>
+        {origin.kind !== 'archive' ? null : (
+          <fieldset className={styles.fieldset}>
+            <legend className={styles.legend}>{t('keep.save.mode.legend')}</legend>
+            {(['version', 'design'] as const).map((mode) => (
+              <label key={mode} className={styles.choice}>
+                <input
+                  type="radio"
+                  name="keep-save-mode"
+                  className={styles.radio}
+                  value={mode}
+                  checked={form.saveMode === mode}
+                  onChange={() => props.onFormAction({ type: 'set-save-mode', mode })}
+                />
+                <span>{t(`keep.save.mode.${mode}`)}</span>
+              </label>
+            ))}
+          </fieldset>
+        )}
         {notice}
         <button type="button" className={styles.button} disabled={!saveEnabled} onClick={props.onSave}>
           {t('keep.save.button')}
@@ -216,43 +249,25 @@ export function KeepView(props: KeepViewProps) {
         {designs !== null && designs.length === 0 ? <p>{t('keep.list.empty')}</p> : null}
         {designs === null || designs.length === 0 ? null : (
           <ul className={styles.list}>
-            {designs.map((summary) => {
-              const row = summaryRow(summary, profileName, untitled);
-              const confirming = pendingDeleteId === summary.id;
-              return (
-                <li key={summary.id} className={styles.item}>
-                  <p className={styles.itemName}>{row.name}</p>
-                  <p className={styles.itemDetail}>
-                    {[row.place, row.date, t('keep.list.picks', { count: row.pickCount })]
-                      .filter((part) => part !== '')
-                      .join(' · ')}
-                  </p>
-                  {row.profileName === null ? null : (
-                    <p className={styles.itemDetail}>{t('keep.list.profile', { name: row.profileName })}</p>
-                  )}
-                  <div className={styles.row}>
-                    <button
-                      type="button"
-                      className={styles.button}
-                      aria-label={`${t('keep.list.open')}: ${row.name}`}
-                      onClick={() => props.onOpen(summary.id)}
-                    >
-                      {t('keep.list.open')}
-                    </button>
-                    <button
-                      type="button"
-                      id={`keep-delete-${summary.id}`}
-                      className={styles.button}
-                      aria-label={`${t('keep.list.delete')}: ${row.name}`}
-                      onClick={() => props.onDeleteRequest(summary.id)}
-                    >
-                      {t('keep.list.delete')}
-                    </button>
-                  </div>
-                  {confirming ? <DeleteConfirm t={t} onYes={props.onDeleteConfirm} onNo={props.onDeleteCancel} /> : null}
-                </li>
-              );
-            })}
+            {groupDesigns(designs).map((group) => (
+              <DesignEntry
+                key={group.designId}
+                group={group}
+                profileName={profileName}
+                origin={origin}
+                language={language}
+                expanded={props.expandedDesignId === group.designId}
+                pendingDeleteId={pendingDeleteId}
+                t={t}
+                onToggle={props.onToggleVersions ?? noop}
+                onOpen={props.onOpen}
+                onRestore={props.onRestore ?? noop}
+                onCompare={props.onCompare ?? noop}
+                onDeleteRequest={props.onDeleteRequest}
+                onDeleteConfirm={props.onDeleteConfirm}
+                onDeleteCancel={props.onDeleteCancel}
+              />
+            ))}
           </ul>
         )}
       </section>
@@ -278,6 +293,7 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
   const [savedText, setSavedText] = useState<string | null>(null);
   const [exportDone, setExportDone] = useState(false);
   const [failureKey, setFailureKey] = useState<string | null>(null);
+  const [expandedDesignId, setExpandedDesignId] = useState<string | null>(null);
   const returnFocusRef = useRef<string | null>(null);
   const focusSavedRef = useRef(false);
 
@@ -328,12 +344,21 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
   const onSave = (): void => {
     if (profile === null) return;
     setSavedText(null);
-    void runSave(profile, pattern, form, t('keep.untitled'), archiveDeps).then(async (outcome) => {
+    const origin = state.current.origin;
+    const continues = continuesId(form, origin);
+    void runSave(profile, pattern, form, t('keep.untitled'), archiveDeps, continues).then(async (outcome) => {
       if (outcome.ok) {
         setFailureKey(null);
         focusSavedRef.current = true;
-        setSavedText(t('keep.saved', { name: outcome.label }));
+        setSavedText(t(continues === undefined ? 'keep.saved' : 'keep.saved.version', { name: outcome.label }));
         dispatch({ type: 'mark-saved', id: outcome.id });
+        if (origin.kind === 'archive') {
+          // The saved version is now the open design, so the next save continues from it.
+          dispatch({ type: 'set-archive-origin', id: outcome.id });
+          dispatchForm({ type: 'set-note', value: '' });
+          dispatchForm({ type: 'set-save-mode', mode: 'version' });
+          setExpandedDesignId(null);
+        }
         await refresh();
       } else {
         // The form is not touched: what the user typed stays (R7.4).
@@ -356,6 +381,22 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
     });
   };
 
+  const onRestore = (id: string): void => {
+    void runRestore(id, archiveDeps).then((outcome) => {
+      if (outcome.ok) {
+        setFailureKey(null);
+        dispatch({ type: 'restore-saved', id: outcome.id, pattern: outcome.pattern });
+        dispatchForm({ type: 'set-metadata', metadata: outcome.metadata });
+        dispatchForm({ type: 'set-save-mode', mode: 'version' });
+        focusSavedRef.current = true;
+        setSavedText(t('keep.version.restored'));
+      } else {
+        const key = archiveFailureKey(outcome.failure);
+        setFailureKey(key);
+        dispatch({ type: 'announce', kind: 'error', messageKey: key });
+      }
+    });
+  };
   const onDeleteConfirm = (): void => {
     const id = pendingDeleteId;
     if (id === null) return;
@@ -389,6 +430,12 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
       onExport={onExport}
       onSave={onSave}
       onOpen={onOpen}
+      language={state.language}
+      origin={state.current.origin}
+      expandedDesignId={expandedDesignId}
+      onToggleVersions={(designId) => setExpandedDesignId((current) => (current === designId ? null : designId))}
+      onRestore={onRestore}
+      onCompare={(first, second) => dispatch({ type: 'compare-versions', first, second })}
       onDeleteRequest={setPendingDeleteId}
       onDeleteConfirm={onDeleteConfirm}
       onDeleteCancel={() => {

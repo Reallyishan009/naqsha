@@ -18,7 +18,7 @@ import {
   runExport,
   savedLabel,
   summaryRow,
-  versionRow,
+  versionDetails,
   EMPTY_METADATA,
 } from '../../../src/ui/state/keep.ts';
 import type { KeepForm } from '../../../src/ui/state/keep.ts';
@@ -239,10 +239,10 @@ describe('version history helpers', () => {
     expect(filled.note).toBe('');
   });
   it('R3.2 a version row shows the date in the language in use, the note and the pick count', () => {
-    const row = versionRow(summary('a', Date.UTC(2026, 10, 20, 12, 0), undefined, 'wider border'), 'en', 'untitled');
+    const row = versionDetails(summary('a', Date.UTC(2026, 10, 20, 12, 0), undefined, 'wider border'), 'en', 'untitled');
     expect(row).toMatchObject({ name: 'untitled', note: 'wider border', pickCount: 4 });
     expect(row.savedAt).toContain('2026');
-    expect(versionRow(summary('a', 0), 'hi', 'untitled').note).toBe('');
+    expect(versionDetails(summary('a', 0), 'hi', 'untitled').note).toBe('');
     expect(formatSavedAt(Number.NaN, 'en')).toBe('');
   });
   it('R4.1 Compare offers the previous version and, unless it is the open one, the open design', () => {

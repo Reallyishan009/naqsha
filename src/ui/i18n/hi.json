@@ -483,6 +483,78 @@
     "text": "सहेजा हुआ डिज़ाइन मिटा दिया गया।",
     "reviewed": false
   },
+  "keep.save.mode.legend": {
+    "text": "कैसे सहेजें",
+    "reviewed": false
+  },
+  "keep.save.mode.version": {
+    "text": "नए संस्करण के रूप में सहेजें",
+    "reviewed": false
+  },
+  "keep.save.mode.design": {
+    "text": "नए डिज़ाइन के रूप में सहेजें",
+    "reviewed": false
+  },
+  "keep.save.note": {
+    "text": "इस संस्करण पर टिप्पणी (वैकल्पिक, 200 अक्षरों तक)",
+    "reviewed": false
+  },
+  "keep.saved.version": {
+    "text": "नया संस्करण सहेजा गया: {name}",
+    "reviewed": false
+  },
+  "keep.list.versionCount.one": {
+    "text": "1 संस्करण",
+    "reviewed": false
+  },
+  "keep.list.versionCount.other": {
+    "text": "{count} संस्करण",
+    "reviewed": false
+  },
+  "keep.list.showVersions": {
+    "text": "संस्करण दिखाएँ",
+    "reviewed": false
+  },
+  "keep.list.hideVersions": {
+    "text": "संस्करण छिपाएँ",
+    "reviewed": false
+  },
+  "keep.version.heading": {
+    "text": "{name} के संस्करण, सबसे नया ऊपर",
+    "reviewed": false
+  },
+  "keep.version.saved": {
+    "text": "सहेजा गया {date}",
+    "reviewed": false
+  },
+  "keep.version.note": {
+    "text": "टिप्पणी: {note}",
+    "reviewed": false
+  },
+  "keep.version.noNote": {
+    "text": "कोई टिप्पणी नहीं",
+    "reviewed": false
+  },
+  "keep.version.newest": {
+    "text": "सबसे नया संस्करण",
+    "reviewed": false
+  },
+  "keep.version.comparePrevious": {
+    "text": "पिछले संस्करण से मिलाएँ",
+    "reviewed": false
+  },
+  "keep.version.compareOpen": {
+    "text": "खुले डिज़ाइन से मिलाएँ",
+    "reviewed": false
+  },
+  "keep.version.restore": {
+    "text": "वापस लाएँ",
+    "reviewed": false
+  },
+  "keep.version.restored": {
+    "text": "वापस लाया गया। अगला सहेजना नया संस्करण बनेगा। कुछ मिटाया नहीं गया।",
+    "reviewed": false
+  },
   "colour.madder": {
     "text": "मजीठ लाल",
     "reviewed": false

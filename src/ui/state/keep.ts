@@ -40,6 +40,10 @@ export function summaryRow(summary: DesignSummary, currentProfileName: string, u
   };
 }
 
+/** What a design entry of the list shows for its newest version. */
+export function designHeading(summary: DesignSummary, currentProfileName: string, untitled: string): SummaryRow {
+  return summaryRow(summary, currentProfileName, untitled);
+}
 export type ExportOutcome = { ok: true } | { ok: false; failure: ExportFailure };
 
 /** Builds the BMP and offers it as a download only when the export succeeded (R5.7, R5.8). */
@@ -101,8 +105,8 @@ export function formatSavedAt(createdAt: number, language: Language): string {
   if (Number.isNaN(date.getTime())) return '';
   return date.toLocaleString(language === 'hi' ? 'hi-IN' : 'en-IN', { dateStyle: 'medium', timeStyle: 'short' });
 }
-export type VersionRow = { name: string; savedAt: string; note: string; pickCount: number };
-export function versionRow(summary: DesignSummary, language: Language, untitled: string): VersionRow {
+export type VersionDetails = { name: string; savedAt: string; note: string; pickCount: number };
+export function versionDetails(summary: DesignSummary, language: Language, untitled: string): VersionDetails {
   return {
     name: savedLabel(summary.metadata, untitled),
     savedAt: formatSavedAt(summary.createdAt, language),

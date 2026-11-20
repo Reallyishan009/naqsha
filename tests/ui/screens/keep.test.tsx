@@ -289,7 +289,8 @@ describe('keep screen actions over the fake archive store', () => {
       for (const field of ['name', 'naqshband', 'weaver', 'place', 'date', 'notes']) {
         expect(html, `${language} ${field}`).toContain(`<span>${escape(t(`keep.field.${field}`))}</span>`);
       }
-      expect(html.match(/<input type="text"/g)).toHaveLength(5);
+      // Five Metadata inputs and, since version-history, the note input: changed on purpose from 5 to 6.
+      expect(html.match(/<input type="text"/g)).toHaveLength(6);
       expect(html.match(/<textarea/g)).toHaveLength(1);
       expect(html).not.toMatch(/\brequired\b|aria-required/);
       expect(html).toMatch(new RegExp(`<button(?![^>]*disabled)[^>]*>${escape(t('keep.save.button'))}</button>`));

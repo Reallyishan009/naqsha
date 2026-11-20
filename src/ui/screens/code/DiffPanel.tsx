@@ -2,6 +2,7 @@ import { memo, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { getDesign, listDesigns } from '../../../archive/index.ts';
 import type { ArchiveDeps, ArchiveFailure, DesignSummary } from '../../../archive/index.ts';
+import type { CompareRequest } from '../../types.ts';
 import type { CardProfile } from '../../../codec/index.ts';
 import { DIFF_MARKERS, diffPatterns, diffToText, groupBits, patternToLines } from '../../../codec-view/index.ts';
 import type { BitLine, Diff, DiffEntry, DiffRefusal, Line, LineSet } from '../../../codec-view/index.ts';
@@ -590,10 +591,12 @@ export type DiffPanelProps = {
   archiveDeps?: ArchiveDeps;
   /** Injected so tests use fakes for the clipboard and the download, as `archiveDeps` is for the Archive. */
   diffTextDeps?: DiffTextDeps;
+  /** Two sides Keep asked to see. Each request is chosen and compared once, with the same `runComparison`. */
+  request?: CompareRequest | null;
 };
 
 /** The diff panel: two choosers, a compare control, and the counts and entries of one comparison (R6.6, R6.7, R6.16). */
-export function DiffPanel({ profile, currentLineSet, t, archiveDeps, diffTextDeps }: DiffPanelProps) {
+export function DiffPanel({ profile, currentLineSet, t, archiveDeps, diffTextDeps, request = null }: DiffPanelProps) {
   const [summaries, setSummaries] = useState<Summaries>({ status: 'loading' });
   const [first, setFirst] = useState<SideChoice | null>(null);
   const [second, setSecond] = useState<SideChoice | null>(null);
@@ -625,12 +628,12 @@ export function DiffPanel({ profile, currentLineSet, t, archiveDeps, diffTextDep
   );
   const untitled = t('keep.untitled');
 
-  const onCompare = (): void => {
-    if (profile === null || first === null || second === null) return;
+  const startComparison = (firstSide: SideChoice, secondSide: SideChoice): void => {
+    if (profile === null) return;
     latestRequest.current += 1;
-    const request = latestRequest.current;
+    const requestNumber = latestRequest.current;
     setComparison({ status: 'loading' });
-    void runComparison({ first, second, profile, current, untitled }, archiveDeps).then((run) => {
+    void runComparison({ first: firstSide, second: secondSide, profile, current, untitled }, archiveDeps).then((run) => {
       // After a `not-found` the list is fetched again, so the user sees the Saved_Designs that exist now (R7.4).
       const fresh = run.summaries;
       if (fresh !== null) {
@@ -638,9 +641,25 @@ export function DiffPanel({ profile, currentLineSet, t, archiveDeps, diffTextDep
         setFirst((choice) => keepIfListed(choice, fresh));
         setSecond((choice) => keepIfListed(choice, fresh));
       }
-      if (latestRequest.current === request) setComparison(run.comparison);
+      if (latestRequest.current === requestNumber) setComparison(run.comparison);
     });
   };
+  const onCompare = (): void => {
+    if (first === null || second === null) return;
+    startComparison(first, second);
+  };
+  // A request from Keep chooses both sides and compares them once, as if the weaver had pressed Compare.
+  const handledRequest = useRef<CompareRequest | null>(null);
+  useEffect(() => {
+    if (request === null || handledRequest.current === request || profile === null) return;
+    const needsCurrent = request.first.kind === 'current' || request.second.kind === 'current';
+    if (needsCurrent && current === null) return;
+    handledRequest.current = request;
+    setFirst(request.first);
+    setSecond(request.second);
+    startComparison(request.first, request.second);
+    // startComparison is rebuilt on every render; the request, profile and current pattern are what matter.
+  }, [request, profile, current]);
 
   return (
     <DiffPanelView
