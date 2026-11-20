@@ -470,7 +470,7 @@ The plan has exactly four phases, in this order, followed by one final documenta
     - Run `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle`. Commit the specific paths changed, including the task status files. Run `git remote -v`, then `git push`; the user has authorised this push. Never force push.
     - _Requirements: 16.7_
 
-- [ ] 8. Phase 8: offline, review fixes, flicker, hook timeout
+- [x] 8. Phase 8: offline, review fixes, flicker, hook timeout
   - Every task in this phase ends the same way: run `npm run test:run`, `npm run typecheck`, `npm run build` and `npm run check-bundle`, then commit the specific paths the task changed (never `git add -A` or `git add .`). Never weaken or delete a test, and never loosen a check: no narrowed arbitrary, no `fc.pre` or `.filter` that hides a failing input, no lower `numRuns`, no looser tolerance, no longer timeout in place of a condition, no skipped or deleted property. If a check fails, fix the cause or report the failure with its real output (for a property, the shrunk counterexample, seed and path).
   - Say only what is true. Anything that cannot be verified from the repo or a real run is written as "not verified". Never write a fake log line, a fake measurement or an invented result.
   - Add no runtime dependency. No PWA plugin, no workbox, no icon generator. `package.json` dependencies stay `react` and `react-dom`, which `tests/ui/structure.test.ts` already checks.
@@ -529,7 +529,7 @@ The plan has exactly four phases, in this order, followed by one final documenta
     - End with the common steps above. Report the measured minimum, median and maximum, the chosen timeout and the simulated-timeout evidence.
     - _Requirements: 16.7_
 
-  - [-] 8.5 Phase 8 checks, documentation, commit and push
+  - [x] 8.5 Phase 8 checks, documentation, commit and push
     - Files: whichever files the real runs show to be wrong, `docs/BUILD_LOG.md`, `docs/KIRO_USAGE.md`, the task status files under `.kiro/specs/app/`.
     - Run `npm run test:run`, `npm run typecheck`, `npm run build`, `npm run check-bundle`, `npm run check:all` and `npm run check:browser`. Report the exact output of every failure. Fix real failures; never loosen a check, never weaken or delete a test or a property. A failure that cannot be fixed here is recorded in `docs/BUILD_LOG.md` with its output and left open, not hidden.
     - `docs/BUILD_LOG.md`: add one Phase 8 entry covering the service worker and installability (what is precached, the cache version, the update path chosen, the gzipped entry chunk size, what the fakes cannot test), the review fixes (reclassified entries, findings fixed, findings left), the two new structure checks and the strengthened property-name check, the flicker fix with the failing output before it, and the hook timing numbers with the chosen timeout.
