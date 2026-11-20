@@ -35,6 +35,10 @@ export type Confirm =
   | { kind: 'remove-batch-card'; index: number }
   | { kind: 'commit-batch' }; // replace or append question (R11.8)
 
+/** One side of a comparison: the Current_Pattern, or one saved version. Same shape as the Code view's SideChoice. */
+export type CompareChoice = { kind: 'current' } | { kind: 'saved'; id: string };
+/** Two sides the Code view should compare as soon as it shows. Set by Keep, cleared on any other navigation. */
+export type CompareRequest = { first: CompareChoice; second: CompareChoice };
 export type AnnouncementParams = Readonly<Record<string, string | number>>;
 
 export type Announcement = {
@@ -61,6 +65,8 @@ export type AppState = {
   breakpoints: ReadonlyArray<number>;
   /** The cloth choices made on Weave, shared with Code view (R4.1). */
   clothChoices: ClothChoices;
+  /** A comparison Keep asked the Code view to show, or null. */
+  compare: CompareRequest | null;
 };
 
 export type AppAction =
@@ -72,6 +78,9 @@ export type AppAction =
   | { type: 'confirm-dismissed' }
   | { type: 'open-saved'; id: string; pattern: Pattern }
   | { type: 'mark-saved'; id: string }
+  | { type: 'restore-saved'; id: string; pattern: Pattern } // load a version as the open design, stay on this screen
+  | { type: 'set-archive-origin'; id: string } // the open design is now this saved version
+  | { type: 'compare-versions'; first: CompareChoice; second: CompareChoice }
   | { type: 'batch-accept'; grid: CardGrid }
   | { type: 'batch-remove'; index: number }
   | { type: 'batch-move'; index: number; by: -1 | 1 }

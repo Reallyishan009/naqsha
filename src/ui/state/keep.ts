@@ -1,9 +1,10 @@
-import type { ArchiveFailure, DesignSummary, Metadata } from '../../archive/index.ts';
+import { NOTE_MAX, previousVersion } from '../../archive/index.ts';
+import type { ArchiveFailure, DesignGroup, DesignSummary, Metadata } from '../../archive/index.ts';
 import type { Pattern } from '../../codec/index.ts';
 import { DEFAULT_EXPORT_OPTIONS, bmpFileName, downloadBmp, exportPatternBmp, parseExportOptions } from '../../exporter/index.ts';
 import type { DownloadDeps, ExportFailure, ExportOptions } from '../../exporter/index.ts';
 import { archiveFailureKey } from '../i18n/messages.ts';
-import type { AppAction } from '../types.ts';
+import type { AppAction, Language, PatternOrigin } from '../types.ts';
 
 /** Both Keep controls need a non-empty Current_Pattern and nothing else (R5.6, R7.2). */
 export function canExport(pattern: Pattern): boolean {
@@ -52,29 +53,74 @@ export function runExport(profile: unknown, pattern: unknown, options: unknown, 
   return { ok: true };
 }
 
-export type KeepForm = { metadata: Metadata; options: ExportOptions };
-
+export type SaveMode = 'version' | 'design';
+export type KeepForm = { metadata: Metadata; options: ExportOptions; note: string; saveMode: SaveMode };
 export const EMPTY_METADATA: Metadata = { name: '', naqshband: '', weaver: '', place: '', date: '', notes: '' };
-
-export const initialKeepForm: KeepForm = { metadata: EMPTY_METADATA, options: DEFAULT_EXPORT_OPTIONS };
-
+export const initialKeepForm: KeepForm = {
+  metadata: EMPTY_METADATA,
+  options: DEFAULT_EXPORT_OPTIONS,
+  note: '',
+  saveMode: 'version',
+};
 export type KeepFormAction =
   | { type: 'set-field'; field: keyof Metadata; value: string }
-  | { type: 'set-option'; options: ExportOptions };
-
+  | { type: 'set-option'; options: ExportOptions }
+  | { type: 'set-note'; value: string }
+  | { type: 'set-save-mode'; mode: SaveMode }
+  /** Restore fills the form with the restored version's Metadata and clears the note. */
+  | { type: 'set-metadata'; metadata: Metadata };
 export function keepFormReducer(form: KeepForm, action: KeepFormAction): KeepForm {
   switch (action.type) {
     case 'set-field':
       return { ...form, metadata: { ...form.metadata, [action.field]: action.value } };
     case 'set-option':
       return { ...form, options: action.options };
+    case 'set-note':
+      return { ...form, note: action.value.slice(0, NOTE_MAX) };
+    case 'set-save-mode':
+      return { ...form, saveMode: action.mode };
+    case 'set-metadata':
+      return { ...form, metadata: { ...action.metadata }, note: '' };
     default: {
       const unreachable: never = action;
       return unreachable;
     }
   }
 }
-
+/** The save choice only exists for a design that came from the archive; anything else saves as a new design. */
+export function effectiveSaveMode(form: KeepForm, origin: PatternOrigin): SaveMode {
+  return origin.kind === 'archive' ? form.saveMode : 'design';
+}
+/** The id of the version a save continues, or undefined when the save starts a new design. */
+export function continuesId(form: KeepForm, origin: PatternOrigin): string | undefined {
+  return origin.kind === 'archive' && effectiveSaveMode(form, origin) === 'version' ? origin.id : undefined;
+}
+/** The date and time a version was saved, in the language in use. */
+export function formatSavedAt(createdAt: number, language: Language): string {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString(language === 'hi' ? 'hi-IN' : 'en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+}
+export type VersionRow = { name: string; savedAt: string; note: string; pickCount: number };
+export function versionRow(summary: DesignSummary, language: Language, untitled: string): VersionRow {
+  return {
+    name: savedLabel(summary.metadata, untitled),
+    savedAt: formatSavedAt(summary.createdAt, language),
+    note: summary.note ?? '',
+    pickCount: summary.pickCount,
+  };
+}
+export type CompareTargets = { previous: DesignSummary | null; openDesignId: string | null };
+/**
+ * What Compare offers for one version: the next older version of its design, and the open design. The open design
+ * is offered only when the Current_Pattern came from the archive and is not this very version.
+ */
+export function compareTargets(group: DesignGroup, id: string, origin: PatternOrigin): CompareTargets {
+  return {
+    previous: previousVersion(group, id),
+    openDesignId: origin.kind === 'archive' && origin.id !== id ? origin.id : null,
+  };
+}
 /** A failed save keeps the form as it is and asks for an error announcement (R7.4). */
 export function afterSaveFailure(
   form: KeepForm,

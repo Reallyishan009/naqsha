@@ -23,6 +23,7 @@ export const initialAppState: AppState = {
   selectedPick: 0,
   breakpoints: [],
   clothChoices: DEFAULT_CLOTH_CHOICES,
+  compare: null,
 };
 
 /**
@@ -30,7 +31,7 @@ export const initialAppState: AppState = {
  * breakpoints are discarded together with the design they were set on (R3.10, R4.6).
  */
 function withNewPattern(state: AppState, current: CurrentPattern): AppState {
-  return { ...state, current, selectedPick: 0, breakpoints: [] };
+  return { ...state, current, selectedPick: 0, breakpoints: [], compare: null };
 }
 
 function lastPickIndex(state: AppState): number {
@@ -41,7 +42,7 @@ function lastPickIndex(state: AppState): number {
 export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'navigate':
-      return { ...state, screen: action.screen };
+      return { ...state, screen: action.screen, compare: null };
     case 'profile-loaded':
       return { ...state, profile: action.state };
     case 'set-language':
@@ -84,6 +85,15 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       if (origin.kind !== 'scanned') return state;
       return { ...state, current: { ...state.current, origin: { kind: 'scanned', saved: true } } };
     }
+    case 'restore-saved':
+      // Same as opening, except the screen stays where it is, so Keep can offer the next save at once.
+      return withNewPattern(state, { pattern: action.pattern, origin: { kind: 'archive', id: action.id } });
+    case 'set-archive-origin': {
+      if (state.current.origin.kind !== 'archive') return state;
+      return { ...state, current: { ...state.current, origin: { kind: 'archive', id: action.id } } };
+    }
+    case 'compare-versions':
+      return { ...state, compare: { first: action.first, second: action.second }, screen: 'code' };
     case 'confirm-dismissed':
       return { ...state, confirm: null };
     case 'announce':

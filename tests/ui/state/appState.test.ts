@@ -347,3 +347,43 @@ describe('appReducer properties', () => {
     );
   });
 });
+describe('version history actions', () => {
+  const pattern: Pattern = [[[true, false]]];
+  const archived: AppState = {
+    ...initialAppState,
+    screen: 'keep',
+    current: { pattern: [[[false, true]]], origin: { kind: 'archive', id: 'v1' } },
+    selectedPick: 3,
+    breakpoints: [1, 2],
+  };
+  it('R4.2 restore-saved loads the version as the open design from the archive and stays on the same screen', () => {
+    const restored = appReducer(archived, { type: 'restore-saved', id: 'v7', pattern });
+    expect(restored.screen).toBe('keep');
+    expect(restored.current).toEqual({ pattern, origin: { kind: 'archive', id: 'v7' } });
+    expect(restored.selectedPick).toBe(0);
+    expect(restored.breakpoints).toEqual([]);
+  });
+  it('R1.1 set-archive-origin moves the archive origin to the version just saved, and changes nothing else', () => {
+    const moved = appReducer(archived, { type: 'set-archive-origin', id: 'v2' });
+    expect(moved.current).toEqual({ pattern: archived.current.pattern, origin: { kind: 'archive', id: 'v2' } });
+    expect({ ...moved, current: archived.current }).toEqual(archived);
+  });
+  it('R1.2 set-archive-origin leaves a design that did not come from the archive as it is', () => {
+    const scanned: AppState = { ...archived, current: { pattern, origin: { kind: 'scanned', saved: false } } };
+    expect(appReducer(scanned, { type: 'set-archive-origin', id: 'v2' })).toEqual(scanned);
+  });
+  it('R4.1 compare-versions asks for the Code view with both sides chosen', () => {
+    const first = { kind: 'saved', id: 'v1' } as const;
+    const second = { kind: 'current' } as const;
+    const compared = appReducer(archived, { type: 'compare-versions', first, second });
+    expect(compared.screen).toBe('code');
+    expect(compared.compare).toEqual({ first, second });
+    expect(compared.current).toEqual(archived.current);
+  });
+  it('R4.1 the request is cleared by navigating and by loading another pattern', () => {
+    const compared = appReducer(archived, { type: 'compare-versions', first: { kind: 'current' }, second: { kind: 'current' } });
+    expect(appReducer(compared, { type: 'navigate', screen: 'weave' }).compare).toBeNull();
+    expect(appReducer(compared, { type: 'open-saved', id: 'x', pattern }).compare).toBeNull();
+    expect(appReducer(compared, { type: 'restore-saved', id: 'x', pattern }).compare).toBeNull();
+  });
+});
