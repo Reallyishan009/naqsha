@@ -4,6 +4,7 @@ import type { Pattern } from '../../codec/index.ts';
 import { DEFAULT_EXPORT_OPTIONS, bmpFileName, downloadBmp, exportPatternBmp, parseExportOptions } from '../../exporter/index.ts';
 import type { DownloadDeps, ExportFailure, ExportOptions } from '../../exporter/index.ts';
 import { archiveFailureKey } from '../i18n/messages.ts';
+import type { Translate } from '../i18n/messages.ts';
 import type { AppAction, Language, PatternOrigin } from '../types.ts';
 
 /** Both Keep controls need a non-empty Current_Pattern and nothing else (R5.6, R7.2). */
@@ -124,6 +125,24 @@ export function compareTargets(group: DesignGroup, id: string, origin: PatternOr
     previous: previousVersion(group, id),
     openDesignId: origin.kind === 'archive' && origin.id !== id ? origin.id : null,
   };
+}
+/**
+ * The form to save when some picks are accepted suggestions: the typed notes, then one line saying how many cards
+ * are guesses and which picks (from 1). The line is added to the design's notes, never to the version note, so the
+ * 200-character rule of the version note is not touched, and what the weaver typed is never replaced. A line that is
+ * already there is not added twice. With no repaired pick the form comes back as it is.
+ */
+export function withGuessesLine(form: KeepForm, repairedPicks: ReadonlyArray<number>, t: Translate): KeepForm {
+  const picks = [...new Set(repairedPicks)].sort((a, b) => a - b).map((pick) => pick + 1);
+  if (picks.length === 0) return form;
+  const line = t(picks.length === 1 ? 'keep.save.guessesNote.one' : 'keep.save.guessesNote.other', {
+    count: picks.length,
+    picks: picks.join(', '),
+  });
+  const typed = form.metadata.notes.trimEnd();
+  if (typed.includes(line)) return form;
+  const notes = typed === '' ? line : `${typed}\n${line}`;
+  return { ...form, metadata: { ...form.metadata, notes } };
 }
 /** A failed save keeps the form as it is and asks for an error announcement (R7.4). */
 export function afterSaveFailure(

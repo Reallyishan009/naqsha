@@ -439,6 +439,14 @@
     "text": "सहेजा गया: {name}",
     "reviewed": false
   },
+  "keep.save.guessesNote.one": {
+    "text": "इसमें 1 सुझाया हुआ कार्ड (अंदाज़ा) है: पिक {picks}।",
+    "reviewed": false
+  },
+  "keep.save.guessesNote.other": {
+    "text": "इसमें {count} सुझाए हुए कार्ड (अंदाज़े) हैं: पिक {picks}।",
+    "reviewed": false
+  },
   "keep.untitled": {
     "text": "बिना नाम",
     "reviewed": false

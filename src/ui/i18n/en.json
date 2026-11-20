@@ -109,6 +109,8 @@
   "keep.save.button": "Save",
   "keep.save.legal": "This is a record of the design. It is not legal protection.",
   "keep.saved": "Saved: {name}",
+  "keep.save.guessesNote.one": "Includes 1 suggested card (a guess): pick {picks}.",
+  "keep.save.guessesNote.other": "Includes {count} suggested cards (guesses): picks {picks}.",
   "keep.untitled": "untitled",
   "keep.list.heading": "Saved designs",
   "keep.list.empty": "No saved designs yet.",

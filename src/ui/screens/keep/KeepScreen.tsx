@@ -14,6 +14,7 @@ import {
   initialKeepForm,
   keepFormReducer,
   runExport,
+  withGuessesLine,
   savedLabel,
 } from '../../state/keep.ts';
 import type { KeepForm, KeepFormAction } from '../../state/keep.ts';
@@ -349,7 +350,9 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
     setSavedText(null);
     const origin = state.current.origin;
     const continues = continuesId(form, origin);
-    void runSave(profile, pattern, form, t('keep.untitled'), archiveDeps, continues).then(async (outcome) => {
+    // Picks that are suggested guesses are named in the design's notes; the typed notes stay as they are in the form.
+    const toSave = withGuessesLine(form, state.repairs.picks, t);
+    void runSave(profile, pattern, toSave, t('keep.untitled'), archiveDeps, continues).then(async (outcome) => {
       if (outcome.ok) {
         setFailureKey(null);
         focusSavedRef.current = true;
