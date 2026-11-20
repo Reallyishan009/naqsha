@@ -52,12 +52,16 @@ Key exports: exportPatternBmp, readPatternBmp, parseExportOptions, DEFAULT_EXPOR
 ### src/archive
 Thin wrapper around IndexedDB. Stores and retrieves saved designs (Pattern, Metadata, Card_Profile name, creation time) and a summary row per design for listing. Every function returns a result value and never throws. Callers do not touch IndexedDB; only `idbStore.ts` mentions it. `designs.ts` takes an injected `ArchiveStore`, `now` and `newId`, defaulting to the browser's. Imports only types from src/codec.
 
-Key exports: saveDesign, getDesign, listDesigns, deleteDesign, openIndexedDbStore (in idbStore.ts, not re-exported from index.ts), StoreUnavailableError; types Metadata, SavedDesign, DesignSummary, ArchiveFailure, ArchiveResult, ArchiveStore, ArchiveDeps
+A saved design is one or more *versions*. Each version is one ordinary record and summary; an optional `designId` names the design it continues (absent on the first version, whose own id is the design id) and an optional `note` holds at most NOTE_MAX characters. `versions.ts` holds the pure grouping (no I/O). The IndexedDB schema is at version 2: the upgrade from 1 adds a `designId` index on the summaries store and rewrites no record.
+
+Key exports: saveDesign (optional `continues` and `note`), getDesign, listDesigns, deleteDesign, designIdOf, groupDesigns, previousVersion, NOTE_MAX, openIndexedDbStore (in idbStore.ts, not re-exported from index.ts), StoreUnavailableError; types Metadata, SavedDesign, DesignSummary, DesignGroup, SaveInput, ArchiveFailure, ArchiveResult, ArchiveStore, ArchiveDeps
 
 ### src/ui
 All React components, pages, and hooks. Composes the other modules into user-facing flows. Screens live in ui/screens/ (weave, keep), with state logic in ui/state/, the Card_Profile notice in ui/ProfileNotice.tsx, the printable card in ui/printable/, and translations in ui/i18n/. Each component has a .tsx file and a .module.css beside it.
 
-Key exports: App; type exports from ui/types.ts (for example Screen, Language, AppState, AppAction, CurrentPattern, ClothChoices, ScanState). The Scan screen is not built yet.
+Keep lists designs grouped by version (ui/screens/keep/DesignEntry.tsx); Compare hands two sides to the Code view through `AppState.compare`.
+
+Key exports: App; type exports from ui/types.ts (for example Screen, Language, AppState, AppAction, CurrentPattern, ClothChoices, CompareRequest, ScanState). The Scan screen is not built yet.
 
 ### tests/
 Mirrors src/ one-for-one. Each module has a corresponding test file, so the Codec_View_Module's tests live in tests/codec-view/. Integration tests that span multiple modules live in tests/integration/.

@@ -10,7 +10,7 @@ The planning files named in that entry (`PLAN.md`, `KIRO_PROMPTS.md`, `RESEARCH.
 
 ## 1. Specs
 
-Four specs exist in `.kiro/specs/`. Each has `requirements.md`, `design.md` and `tasks.md`. Each also has a `tasks.meta.json` (execution records written by Kiro; only the `app` one is tracked in git, the other three are untracked).
+Five specs exist in `.kiro/specs/` (the first four are in the table; `cards-as-code` and `version-history` are described in BUILD_LOG). Each has `requirements.md`, `design.md` and `tasks.md`. Each also has a `tasks.meta.json` (execution records written by Kiro; only the `app` one is tracked in git, the other three are untracked).
 
 | Spec | Requirements | Design properties | Extra files |
 |---|---|---|---|
@@ -32,6 +32,8 @@ This chain is also the decoy peg pair bug in section 5.
 
 **Example of a spec changing during the build.** `card-codec-and-reader/requirements.md` gained criterion R2.10 (profile `name` must be a string, commit `f6b7e75`) and R2.11 (overlapping holes rejected, commit `d8f047f`). Both were added by the user's decision after a test or generator exposed a gap. See section 5.
 
+### The `version-history` spec (one unattended run)
+A fifth spec, `.kiro/specs/version-history/`, was written in one run with no review stop: `requirements.md` (8 requirements, 15 criteria, the cap the user set), `design.md` (one page, one correctness property) and `tasks.md` (12 tasks in four groups, one git commit per group). The Kiro requirement-detailing step ran once per requirement and was told to keep the criteria count; it still changed R2.1 (it added a failure for a note over 200 characters), and `BUILD_LOG.md` records how that was reconciled with the three archive failure reasons. The code was then written group by group; the steering glossary and `structure.md` were updated in the last group. See the BUILD_LOG entry "version-history" for what changed, the tests that were edited on purpose, and what was not run (no browser, no `check:browser`, no `check:all`).
 ## 2. Steering docs
 
 Seven files in `.kiro/steering/`. Five are always loaded; `card-geometry.md` has front matter `inclusion: fileMatch` with `fileMatchPattern: "src/{codec,reader}/**"`; `prerelease-check.md` has `inclusion: manual` (see "Steering command" below).

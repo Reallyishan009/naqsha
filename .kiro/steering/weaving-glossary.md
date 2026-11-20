@@ -25,6 +25,7 @@ This glossary defines domain terms as used in this codebase. **Use these exact t
 | **naksha** | The weave pattern or design itself; the arrangement of lifts across a full *repeat* (Urdu/Hindi: नक्शा). |
 | **naqshband** | The craftsperson who reads a design and translates it into a *card chain* by punching each *card* (Urdu: नक्शबंद). |
 | **zari** | Metallic thread (gold or silver) used as weft in certain picks; represented in the simulator as a distinct thread type. |
+| **version** | One saved record of a *naksha* in the archive, with its metadata and an optional short note. A design is one or more versions, each continuing the one before it, so a change is saved without overwriting the earlier *naksha*. |
 
 ## Naming Rule
 
