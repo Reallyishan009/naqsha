@@ -17,6 +17,7 @@ This glossary defines domain terms as used in this codebase. **Use these exact t
 | **lacing** | The physical joining of *cards* end-to-end to form a *card chain*; also the cord used for that joining. |
 | **peg hole** | A fixed alignment hole in the same place on every *card*; it is not part of the pattern and is ignored when decoding. |
 | **punched hole** | A hole punched at a hook position on a *card*; its presence (1) raises the corresponding *hook*, its absence (0) leaves it down. |
+| **changed hole** | One *end* position at which the two bit lines of a changed *card* differ when two designs are compared; that is, a *punched hole* present on one card and absent on the other. |
 | **lift** | The act of raising a subset of *warp* ends for one *pick*; determined by which *hooks* are activated. |
 | **face** | The side of the cloth intended to be visible; determines which thread (warp or weft) appears on top at each intersection. |
 | **float** | A warp or weft thread that passes over two or more consecutive threads on the opposite axis without interlacing. |

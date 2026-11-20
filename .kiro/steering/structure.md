@@ -6,6 +6,7 @@
 Naqsha/
 ├── src/
 │   ├── codec/       # Punch card encoding and decoding
+│   ├── codec-view/  # Bit lines, diff and diff text for Code view
 │   ├── reader/      # Camera capture and image pre-processing
 │   ├── simulator/   # Weave simulation and cloth rendering
 │   ├── exporter/    # Bitmap generation and file export
@@ -25,6 +26,11 @@ Naqsha/
 Converts between raw hole-grid data and the application's internal PunchCard representation. Contains the encoder, decoder, and all shared domain types (types.ts). No I/O, no React — pure data transformation only.
 
 Key exports: validateCardProfile, parseCardProfile, validateCardGrid, endsPerPick, encodeCardGrid, decodeEnds; types CardProfile, PegHole, PointMm, CardGrid, Pattern, Ends, Result, Violation, ViolationKind
+
+### src/codec-view
+Turns codec data into text for reading and comparing: a card into a Bit_Line, a Pattern into a Line_Set, two Line_Sets into a Diff, a Diff back into a Line_Set, and a Diff into plain text. Pure data transformation; no React, no DOM, no browser API, no I/O. Imports only from src/codec, and takes the hook-position-to-end mapping only from encodeCardGrid.
+
+Key exports: cardToBits, patternToLines, diffPatterns, applyDiff, diffToText; also groupBits, lineKey, alignLines, GROUP_SEPARATOR, DIFF_MARKERS, DIFF_PICK_LIMIT; types BitLine, BitsLine, DamagedLine, Line, LineSet, LineSetHeader, Diff, DiffEntry, DiffCounts, DiffRefusal, BitsResult, LinesFailure, LinesResult, ApplyFailure, ApplyResult, Alignment
 
 ### src/reader
 Handles everything between the physical card and the codec: loading an image into pixel data, greyscale, thresholding, dark region detection, peg hole selection (pegHoles.ts, selectPegHoles.ts), layout check (layout.ts), orientation, pose, and sampling the hook positions into a card grid. Isolates all browser image API calls so the rest of the app does not depend on them. No perspective correction. Camera stream acquisition is not built yet.
@@ -54,17 +60,18 @@ All React components, pages, and hooks. Composes the other modules into user-fac
 Key exports: App; type exports from ui/types.ts (for example Screen, Language, AppState, AppAction, CurrentPattern, ClothChoices, ScanState). The Scan screen is not built yet.
 
 ### tests/
-Mirrors src/ one-for-one. Each module has a corresponding test file. Integration tests that span multiple modules live in tests/integration/.
+Mirrors src/ one-for-one. Each module has a corresponding test file, so the Codec_View_Module's tests live in tests/codec-view/. Integration tests that span multiple modules live in tests/integration/.
 
 ## Module Dependency Rules
 
 Dependencies flow in one direction only:
 
 ```
-ui → simulator, exporter, archive, reader
+ui → simulator, exporter, archive, reader, codec-view
 reader → codec
 simulator → codec
 exporter → codec
+codec-view → codec
 archive → (IndexedDB only, no other src/ modules)
 codec → (no src/ dependencies)
 ```

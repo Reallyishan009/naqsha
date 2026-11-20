@@ -900,3 +900,142 @@ Nothing failed, so nothing was fixed and no check was touched.
 **What I changed by hand:** No files edited by hand.
 **Kiro features used:** spec, steering, hooks, property tests (fast-check).
 ---
+## 2026-11-20 (cards-as-code phase 1, task 1.1: the entry chunk before Code view)
+
+**Goal today:** Record the gzipped entry-chunk size of the current build, before any file of the `cards-as-code` feature exists, so that task 4.4 can state what Code view cost (R9.4).
+
+**What changed:** This entry only. No source file was written, edited or stubbed; `src/codec-view` does not exist yet, and `src/` still holds `archive`, `codec`, `exporter`, `reader`, `simulator`, `ui`, `main.tsx` and `globals.d.ts`.
+
+**Bundle sizes, `check-bundle` (R9.4).** Measured on this machine (Node v24.5.0, darwin arm64) by `npm run build` followed by `npm run check-bundle`, on branch `auto/build` with no file of this feature present. Nothing under `src/`, `tests/`, `scripts/` or `package.json` differed from the last commit while the build ran; the only paths `git status` listed were this log and untracked `.kiro/specs/` files. `check-bundle` gzips at level 9 and counts bytes; `vite build` prints its own gzip level and uses kB = 1000 bytes, which is why the two disagree for the same file (vite said `gzip: 95.46 kB`, the check said 94191 bytes).
+
+| Row | Chunk | Gzipped bytes | Limit |
+|---|---|---|---|
+| **before** (this task) | `./assets/index-BxQUVtbs.js` | **94191** | 204800 |
+| after (task 4.4) | — | — | 204800 |
+| Code view chunk (task 4.4) | — | — | — |
+
+The **after** row and the **Code view chunk** row are filled in by **task 4.4**, which measures them the same way once the feature is built, and which also records the 204,800-byte limit beside them.
+
+**The real output, quoted.** `npm run build`, from the size table onward (vite's `transforming...`, `✓ 94 modules transformed.`, `rendering chunks...` and `computing gzip size...` progress lines are left out; vite reported itself as v8.3.8):
+```
+dist/index.html                        0.74 kB │ gzip:  0.43 kB
+dist/assets/ScanScreen-Baka5qIY.css    3.66 kB │ gzip:  1.12 kB
+dist/assets/index-BDdimImO.css         7.45 kB │ gzip:  1.87 kB
+dist/assets/style-uXsjHezt.js          0.94 kB │ gzip:  0.53 kB
+dist/assets/download-nsz99dzb.js       4.83 kB │ gzip:  2.22 kB
+dist/assets/ScanScreen-usaqXbWI.js    27.32 kB │ gzip:  9.17 kB
+dist/assets/index-BxQUVtbs.js        313.73 kB │ gzip: 95.46 kB
+✓ built in 160ms
+precache: 13 entries in cache naqsha-v1-be994549d044
+```
+`npm run check-bundle`:
+```
+entry chunk: ./assets/index-BxQUVtbs.js, 94191 bytes gzipped (limit 204800)
+scan chunk: assets/ScanScreen-usaqXbWI.js, 9116 bytes gzipped
+precache: 13 entries in cache naqsha-v1-be994549d044
+icon: ./icons/icon-192.png, 192x192
+icon: ./icons/icon-512.png, 512x512
+bundle check passed
+```
+Both commands exited 0. The before figure leaves **110,609 bytes** of the 204,800-byte budget for everything Code view adds to the entry chunk, which R9.1 and R9.3 intend to be nothing but the lazy import of the Code view chunk.
+
+**Not verified:** nothing about Code view — no chunk of this feature exists to measure. The 94191-byte figure is from this laptop's build of the current working tree; it is not the size of whatever the deployed site serves (the deploy was already behind at the end of Phase 8, see the task 8.5 entry).
+
+**Evidence saved:** None beyond the quoted output; `dist/` is not committed.
+
+---
+## 2026-11-20 (cards-as-code phase 1, tasks 1.2 to 1.21: the pure module and its checkpoint)
+
+**Goal:** Build `src/codec-view`, the pure module Code view rests on — Bit_Lines, the alignment, the Diff, `applyDiff` and the Diff_Text — with its properties and its boundary test, and close Phase 1 at the task 1.21 checkpoint. Nothing in `src/ui` was touched; Phases 2, 3 and 4 are not started.
+
+**What Phase 1 built.**
+- `src/codec-view/` (1,156 lines): `types.ts` (every type of the feature), `bits.ts` (`cardToBits`, `patternToLines`, `groupBits`, `GROUP_SEPARATOR`), `align.ts` (`lineKey`, `alignLines`), `diff.ts` (`DIFF_PICK_LIMIT`, `diffPatterns`, `applyDiff`), `diffText.ts` (`DIFF_MARKERS`, `diffToText`), `index.ts` (the five key exports plus the six named helpers and constants). No `src/` dependency but `src/codec`; no React, no DOM, no browser API, no `any`.
+- `tests/codec-view/` (7 files, 116 tests): `bits.test.ts` (P1, P2), `align.test.ts`, `diff.test.ts` (P3, P4, P5, P6, P7 and the R5.5 well-formedness property), `diffText.test.ts` (P8), `totality.test.ts` (P10), `boundaries.test.ts` (the eleven boundary rows plus eleven planted-breach example tests), and `benchmark.test.ts` (task 1.21, new in this entry).
+- Test support: `tests/support/lineSets.ts` (new: `lineSetArbitrary`, `diffRefusalArbitrary`, `diffArbitrary`), a `PickCountRange` parameter on `patternArbitrary`, and `importSpecifiers` moved into `tests/support/source.ts`.
+- Steering: the `src/codec-view` entry in `.kiro/steering/structure.md`, and **changed hole** added to `.kiro/steering/weaving-glossary.md`.
+- P9 was deliberately not written: it belongs to Phase 2.
+
+**The checkpoint audit (R12.1, R12.5).** Every one of the five exports has at least one property and at least one example-based test, and P1 to P8 and P10 all exist; `groupBits`, `lineKey` and `alignLines` are covered too. Two honest findings, neither patched over:
+- `patternToLines` has no property of its own that asserts R1.5 and R1.6 over generated input. Its property cover is P10 (totality) plus every property that builds a Line_Set, since `patternToLines` is the only way to make one; its R1.5, R1.6, R1.9 and R1.10 behaviour is asserted by seven example tests. R12.1 is met; a dedicated `patternToLines` property would be stronger.
+- The P10 counterexample is kept as its own example test (`diffText.test.ts`, `R1.8 writes the Diff_Text of the counterexample P10 reported, where it used to throw`) rather than through the `examples` option of P10 as R12.10 words it. The reason is that P10's input is a whole record of eight generated fields, of which the counterexample constrains one. Reported, not changed.
+
+**The one bug a property found: P10 in `diffToText`.** P10 at seed 11820 shrank to a Diff that is no refusal whose `entries` field holds text rather than a list of Diff_Entries; `diffToText` threw on it instead of returning a value, breaking R1.8. The fix reads every field of the given value through a guard — `ok`, `refusal` and the values its reason names, `entries`, each entry, `counts` — and returns one line of the shape R6.15 fixes for a refusal, `! not-a-diff <field>`, naming the field that is not a Diff's. A partial Diff_Text was rejected as the fix because a dropped entry or a missing count would read as a true report of the comparison. `not-a-diff` is none of the three refusal reasons, so the line cannot be mistaken for one. The counterexample is kept as the regression test named above. (I did not re-run the pre-fix code at this checkpoint; the failure and the seed are as the task 1.20 test records them.)
+
+**The correction to `tests/structure/glossaryTerms.test.ts`.** The word scan flags `hole` unless it is part of a glossary term. Code view needed "changed hole", and the first move was to widen the test's allowance list. That is a weakened check, so it was replaced: **changed hole** is now a term in `.kiro/steering/weaving-glossary.md`, and the test's allowance for `['changed', 'hole']` carries the glossary term as its reason, exactly as `punched hole`, `peg hole` and `lacing hole` do. The scan is at full strength; the bare word `hole` still fails.
+
+**Existing tests that changed, and why.** Four files, none of them weakened; no assertion was dropped.
+- `tests/structure/modules.test.ts`: its private `specifiers()` helper was deleted and it now imports `importSpecifiers` from `tests/support/source.ts`. Same three regexes, same behaviour; `tests/codec-view/boundaries.test.ts` needed the same scan (task 1.3).
+- `tests/support/source.ts`: gained `importSpecifiers` and its `lineOf` helper.
+- `tests/support/patterns.ts`: `patternArbitrary(profile)` gained an optional `PickCountRange`, defaulting to the present 1 to 40 picks, so the exporter tests that call it are untouched and the Code view properties can ask for 0 and 1 picks (R12.3).
+- `tests/structure/glossaryTerms.test.ts`: the `changed hole` allowance and its reason, as above.
+
+**The 2,000 × 2,000 diff (task 1.21).** `tests/codec-view/benchmark.test.ts` builds both sides from the exported `DIFF_PICK_LIMIT` — never the literal 2,000 — on the widest of twenty generated Card_Profiles (10 × 10 hook positions, 100 ends per pick), the second side being the first with one card deleted, one appended and one punched hole flipped every 100 picks, so the alignment carries a long common subsequence, an insertion, a deletion and unmatched picks. The measured time is written straight to stdout, so it is in the output of `npm run test:run` with or without a terminal attached.
+
+| Picks per side | Measured |
+|---|---|
+| 250 × 250 | 3.15 to 3.51 ms (first measurement of the run, cold) |
+| 500 × 500 | 2.01 to 2.08 ms |
+| 1000 × 1000 | 7.27 to 8.33 ms |
+| **2000 × 2000** | **25.59, 26.61, 27.01, 27.36 ms over four standalone runs; 49.61 ms inside the full suite** |
+
+Growth from 500 to 1,000 to 2,000 picks is roughly fourfold per doubling, as a quadratic dynamic program should be, and the figure matches the 20 to 30 ms the design assumed for `DIFF_PICK_LIMIT`. **The ceiling the test asserts is 1,000 ms**, about 37 times the standalone measurement and 20 times the measurement under a loaded parallel test run. It is set that high on purpose: it is a guard against a change of order — a cubic alignment, or per-cell work on 100-character Bit_Lines instead of interned ids — and must not fail on a loaded machine or a cold JIT. A smaller regression does not fail the test; it shows in the printed number, which is why the number is printed.
+
+**The runs, as they came out.**
+
+`npm run test:run` — exit 0:
+```
+> naqsha@0.0.0 test:run
+> vitest run
+ RUN  v5.1.0 /Users/ishantripathi/dev/Naqsha
+benchmark: codec-view diffPatterns, 10 x 10 hook positions (100 ends per pick), 2000 x 2000 picks: 49.61 ms, ceiling 1000 ms; smaller sizes 250 x 250: 9.70 ms, 500 x 500: 2.08 ms, 1000 x 1000: 6.99 ms
+ Test Files  104 passed (104)
+      Tests  920 passed (920)
+   Start at  18:36:57
+   Duration  36.03s (tests 93%, import 5%, transform 1%, worker 1%)
+```
+
+`npm run typecheck` — exit 0, no diagnostic output:
+```
+> naqsha@0.0.0 typecheck
+> tsc --noEmit
+```
+
+`npm run check:all` — exit 0:
+```
+> naqsha@0.0.0 check:all
+> node scripts/check_all.ts
+PASS    typecheck: npm run typecheck
+PASS    test suite: npm run test:run
+PASS    build: npm run build
+PASS    bundle check: npm run check-bundle
+SKIPPED spec format validators: no spec format validator command in the repo
+PASS    hygiene: LICENSE: LICENSE present
+PASS    hygiene: .kiro not ignored: .kiro is not git-ignored
+PASS    hygiene: .kiro directories: .kiro/specs, .kiro/hooks, .kiro/settings exist
+PASS    hygiene: no secrets: no secrets found in 288 tracked text files
+PASS    hygiene: README has no "coming": README.md has no "coming"
+INFO    hygiene: git working tree: git working tree has 14 changed or untracked path(s)
+PASS 9, FAIL 0, SKIPPED 1, INFO 1
+```
+`check:all` runs typecheck, the test suite, the build, the bundle check, the spec format validators and the hygiene checks, and **no browser and no network step** — those live in `npm run check:browser`, `check:deployed` and `check:everything`, which Phase 1 did not run and which task 4.4 owns. The one SKIPPED step is the spec format validator, skipped because the repo has no such command, exactly as on previous runs. The INFO step reports the 14 uncommitted paths of this Phase 1 work; it is not a failure.
+
+**The entry chunk is unchanged.** `npm run build` then `npm run check-bundle`, both exit 0:
+```
+entry chunk: ./assets/index-BxQUVtbs.js, 94191 bytes gzipped (limit 204800)
+scan chunk: assets/ScanScreen-usaqXbWI.js, 9116 bytes gzipped
+precache: 13 entries in cache naqsha-v1-be994549d044
+icon: ./icons/icon-192.png, 192x192
+icon: ./icons/icon-512.png, 512x512
+bundle check passed
+```
+Identical to the **before** row of the task 1.1 entry, down to the content hash in the file name: `./assets/index-BxQUVtbs.js`, 94191 bytes gzipped, limit 204800. `vite build` transformed the same 94 modules as before. That is what Phase 1 should produce: `src/ui` imports nothing from `src/codec-view`, so no module of it reaches any chunk. Checked twice over: the file name hash is unchanged, and no chunk in `dist/assets` holds any of the module's distinctive strings (`too-many-picks`, `profile-mismatch`, `lines-mismatch`). The **after** and **Code view chunk** rows of the task 1.1 table stay empty; task 4.4 fills them.
+
+**Not verified:** no browser run, no deployed run and no manual check at this checkpoint — Code view has no screen yet, so there is nothing to click. The timings are from this laptop (Node v24.5.0, darwin arm64) and are not a figure for a mid-range phone. The pre-fix `diffToText` throw is recorded from the task 1.20 test, not re-observed here. `git status` also lists three untracked `tasks.meta.json` files of older specs; they are Kiro session state, not Phase 1 work, and were left out of the commit.
+
+**Kiro features used:** spec (requirements, design, tasks for `cards-as-code`), steering (`structure.md`, `weaving-glossary.md`), property tests with fast-check.
+
+**Evidence saved:** None beyond the quoted output; `dist/` is not committed.
+
+**Commit:** one commit for Phase 1, on `auto/build`, not pushed: the 25 files above, including the three `cards-as-code` spec documents and the two steering files.
+
+---

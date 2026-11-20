@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { stripComments } from '../support/source.ts';
+import { importSpecifiers, stripComments } from '../support/source.ts';
 
 const SRC = path.resolve(import.meta.dirname, '../../src');
 const CODEC = path.join(SRC, 'codec');
@@ -53,24 +53,10 @@ function findAll(files: SourceFile[], pattern: RegExp, pick: (f: SourceFile) => 
   return hits;
 }
 
-/** Module specifiers of `import ... from '...'`, `export ... from '...'`, side-effect imports and `import('...')`. */
-function specifiers(code: string): { specifier: string; line: number }[] {
-  const found: { specifier: string; line: number }[] = [];
-  const patterns = [
-    /\b(?:import|export)\b[^;'"`]*?\bfrom\s*(['"])([^'"]+)\1/g,
-    /\bimport\s*(['"])([^'"]+)\1/g,
-    /\bimport\s*\(\s*(['"])([^'"]+)\1\s*\)/g,
-  ];
-  for (const pattern of patterns) {
-    for (const m of code.matchAll(pattern)) found.push({ specifier: m[2], line: lineOf(code, m.index) });
-  }
-  return found;
-}
-
 function importViolations(files: SourceFile[], allowedDirs: string[]): string[] {
   const violations: string[] = [];
   for (const f of files) {
-    for (const { specifier, line } of specifiers(f.code)) {
+    for (const { specifier, line } of importSpecifiers(f.code)) {
       const where = `${f.relative}:${line}: '${specifier}'`;
       if (!specifier.startsWith('.')) {
         violations.push(`${where} (bare or absolute import)`);

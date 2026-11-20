@@ -44,3 +44,27 @@ export function stripComments(text: string, blankStrings: boolean): string {
   }
   return out;
 }
+
+function lineOf(text: string, index: number): number {
+  return text.slice(0, index).split('\n').length;
+}
+
+/**
+ * The module specifiers of `import ... from '...'`, `export ... from '...'`, a bare
+ * `import '...'` and a dynamic `import('...')`, each with the 1-based line it sits on.
+ * Pass code that has been through `stripComments`, so a specifier inside a comment is not a hit.
+ * Limit: the three patterns read the text, not a parse tree, so a specifier built at run time
+ * (`import(base + name)`) is not found.
+ */
+export function importSpecifiers(code: string): { specifier: string; line: number }[] {
+  const found: { specifier: string; line: number }[] = [];
+  const patterns = [
+    /\b(?:import|export)\b[^;'"`]*?\bfrom\s*(['"])([^'"]+)\1/g,
+    /\bimport\s*(['"])([^'"]+)\1/g,
+    /\bimport\s*\(\s*(['"])([^'"]+)\1\s*\)/g,
+  ];
+  for (const pattern of patterns) {
+    for (const m of code.matchAll(pattern)) found.push({ specifier: m[2], line: lineOf(code, m.index) });
+  }
+  return found;
+}
