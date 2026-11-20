@@ -10,7 +10,7 @@ The planning files named in that entry (`PLAN.md`, `KIRO_PROMPTS.md`, `RESEARCH.
 
 ## 1. Specs
 
-Six specs exist in `.kiro/specs/` (the first four are in the table; `cards-as-code`, `version-history` and `repair-suggestions` are described in BUILD_LOG). Each has `requirements.md`, `design.md` and `tasks.md`. Each also has a `tasks.meta.json` (execution records written by Kiro; only the `app` one is tracked in git, the other three are untracked).
+Seven specs exist in `.kiro/specs/` (the first four are in the table; `cards-as-code`, `version-history`, `repair-suggestions` and `loom-mcp` are described in BUILD_LOG). Each has `requirements.md`, `design.md` and `tasks.md`. Each also has a `tasks.meta.json` (execution records written by Kiro; only the `app` one is tracked in git, the other three are untracked).
 
 | Spec | Requirements | Design properties | Extra files |
 |---|---|---|---|
@@ -101,7 +101,9 @@ Tests for the log format and the report are in `tests/scripts/hooksLog.test.ts` 
 
 ## 4. MCP
 
-`.kiro/settings/mcp.json` configures one server, `context7` (`npx -y @upstash/context7-mcp`, key read from `CONTEXT7_API_KEY`, `autoApprove` for `resolve-library-id` and `query-docs`). Added in `a3dee72`.
+`.kiro/settings/mcp.json` configures two servers. The first is `context7` (`npx -y @upstash/context7-mcp`, key read from `CONTEXT7_API_KEY`, `autoApprove` for `resolve-library-id` and `query-docs`). Added in `a3dee72`.
+
+**Second server, written for this project: `loom-mcp`** (`tools/loom-mcp`, registered in `.kiro/settings/mcp.json`). Five tools over stdio: `validate_profile`, `read_card_photo`, `render_cloth`, `diff_designs`, `export_bmp`, built on the app's own modules. It has its own package and lockfile (SDK 1.32.2, zod 4.6.7), 96 tests of its own that run a real stdio exchange for every tool, a manual steering file and a README. Its use from Kiro is recorded in BUILD_LOG, entry "two jobs: the repaired-picks note, and loom-mcp": three tool calls from the Kiro chat (one valid profile, one refused path with its reason code, one real photo read), with the output quoted. What was not seen from Kiro is listed there.
 
 **Use:** BUILD_LOG 2026-11-18 says "MCP (Context7, queried once to check browser API use)". That is the only record of use. The query text, the library, and what the answer changed are not recorded, and no commit message mentions Context7. `README.md` lists the server as "Configured". So: one use is recorded in the log, with no detail, and nothing else is known. Later entries (simulator, exporter, app) do not list MCP among features used.
 

@@ -1,7 +1,7 @@
 import { crc32, inflateSync } from 'node:zlib';
 import { LIMITS } from './limits.ts';
 import { ToolError } from './result.ts';
-/** RGBA, rows top to bottom: the reader's own pixel type. */
+/** RGBA, the top line of pixels first: the reader's own pixel type. */
 export type DecodedPng = { width: number; height: number; data: Uint8ClampedArray };
 const SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
 /** Samples per pixel for each colour type this decoder reads (all at 8 bits). */

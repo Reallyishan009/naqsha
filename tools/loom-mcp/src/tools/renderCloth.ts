@@ -7,9 +7,9 @@ import { ToolError, guarded, succeed } from '../result.ts';
 import { encodePngRgba } from '../../../../scripts/png_rgba.ts';
 import { READ_ONLY, patternArguments, profileArguments } from './shared.ts';
 const COLOUR = /^#[0-9a-fA-F]{6}$/;
-/** The woven picks stack above a shed that is six threads tall, and the view is at least 18 threads tall. */
-const SHED_THREADS = 6;
-const MIN_THREADS_HIGH = 18;
+/** The woven picks stack above a shed that is 6 sizes tall, and the view is at least 18 sizes tall (a size is threadSizePx pixels). */
+const SHED_SIZES = 6;
+const MIN_SIZES_HIGH = 18;
 function checkOption(name: string, value: number, low: number, high: number): void {
   if (!Number.isInteger(value) || value < low || value > high) {
     throw new ToolError('invalid_option', `The option ${name} must be a whole number from ${low} to ${high}.`, `Change ${name} to a value in that range.`);
@@ -58,7 +58,7 @@ export function registerRenderCloth(server: McpServer): void {
         const cloth = prepareCloth(profile, pattern);
         if (!cloth.ok) throw new ToolError('invalid_pattern', `The design could not be prepared (${cloth.failure.reason}).`, 'Check the card profile and the design.');
         const width = cloth.value.baseEnds * repeat * size;
-        const height = Math.max(pattern.length + SHED_THREADS, MIN_THREADS_HIGH) * size;
+        const height = Math.max(pattern.length + SHED_SIZES, MIN_SIZES_HIGH) * size;
         if (width > LIMITS.imageSidePx || height > LIMITS.imageSidePx) {
           throw new ToolError(
             'too_large',
