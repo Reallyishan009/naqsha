@@ -9,3 +9,6 @@ media/check/
 
 # hooks evidence log (written by .kiro/hooks commands via scripts/log_hook.ts)
 logs/
+
+# loom-mcp export output
+tools/loom-mcp/out/
