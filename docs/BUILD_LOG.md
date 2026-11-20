@@ -694,3 +694,40 @@ The only console errors of that run are the step's own never-cached probes. The 
 **Verification:** `npm run test:run` 94 files, 765 tests passed; `npm run typecheck` passes; `npm run build` passes (`precache: 13 entries in cache naqsha-v1-2e798d210557`); `npm run check-bundle` passes (94016 bytes gzipped, limit 204800); `npm run check:browser` 13 passed, 0 failed, step 10 as quoted above.
 **What I changed by hand:** No files edited by hand.
 **Kiro features used:** spec, steering, property tests (fast-check).
+
+## 2026-11-23 (app phase 8, task 8.3: the Weave pick counter flicker)
+**Goal today:** On arriving at Weave the pick counter must never read a position that does not belong to the design on screen. The fault seen in task 7.1: for one render the counter read `Pick 1 of 36` before the mount effect seeked the player.
+**The failing test, written and run before the fix** (`tests/ui/screens/weave.test.tsx`, `R2.10 R14.9 the first render on arriving with a design shows that design, so the counter never reads a position from the previous render`). It renders `WeaveScreen` with a loaded design, the way the other screen tests do (`renderToStaticMarkup`, no DOM library), and asks for the counter of that very first render. Real output against the unfixed code:
+```
+ FAIL  tests/ui/screens/weave.test.tsx > weave screen > R2.10 R14.9 the first render on arriving with a design shows that design, so the counter never reads a position from the previous render
+AssertionError: expected [ 'Pick 0 of 0' ] to deeply equal [ 'Pick 36 of 36' ]
+- Expected
++ Received
+  [
+-   "Pick 36 of 36",
++   "Pick 0 of 0",
+  ]
+ ❯ tests/ui/screens/weave.test.tsx:133:32
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+```
+`Pick 0 of 0` is the first of the two stale renders: the screen built its cloth in an effect, so the first commit paired the 36-pick design with the "no design" counter, and the second commit paired the new cloth with the previous position (`Pick 1 of 36`) until the effect's seek reported the real one.
+**Cause, and it is the one the task states, with one addition.** The counter read `playback`, which the player's `onFrame` sets, while `pickCount` came from the cloth that had just been built. Those are two different commits, so the counter and the player disagreed for one render each time. The addition: there were **two** such renders per arrival, not one, because the cloth itself was also built in an effect (`Pick 0 of 0`, then `Pick 1 of 36`, then `Pick 36 of 36`).
+**The fix (no timeout, no hidden element).** `src/ui/screens/weave/WeaveScreen.tsx`:
+- The cloth is built in the render that first shows it (`useMemo` over profile, Pattern, choices and viewport) and fed to the existing `clothReducer` by adjusting state during that same render, which React finishes before it commits. So no commit shows a new design beside the old counter, and the failure announcement moved to its own effect.
+- The position shown is one derived value, `displayedPlayback`: while the cloth on screen is the one the stored state describes, that state is shown; a cloth the player has not reported on yet is shown in its **entry state**, and the effect then enters the player at exactly that state (`play(entry.pick, …)` when it is playing, else `seek(entry.pick)`). The counter, the canvas alternative text, the scrubber, the step controls and the rise level all read that one value, so the counter and the seek cannot disagree.
+- `src/ui/state/playback.ts` holds the rule: `EntryMode`, `entryModeFor` (the design loaded on arrival is shown finished, a design just chosen autoplays, a rebuild of the same design keeps its pick), `entryPlayback` (the entry state, which is also the position its seek moves to) and `displayedPlayback` (the derivation above). `WeaveScreen.tsx` has no position logic of its own left.
+**Behaviour kept:** R3.6 a colour, zari, repeat or size change keeps the current pick (`entryPlayback('keep', …)`, clamped to the new cloth); R14.9 reduced motion shows the finished cloth and starts no rise; the counter text and the canvas alternative text are unchanged; the gap list, play, pause, step, scrub and speed are unchanged. New tests cover the gap list, the scrubber range, the enabled controls and the absent skip control on that first render, and a design with one card that does not fit the profile still lists the pick with a gap.
+**One behaviour did change, on purpose.** When a rebuild fails and the previous cloth stays on screen (R2.12), the counter now keeps the position of the cloth that is on screen. Before, a new Pattern reset the counter to the first pick while the old cloth stayed, which was the same disagreement in another place.
+**Property** (`tests/ui/state/playback.test.ts`, seed 80301, 200 runs): for any new pick count, any previous pick count, any previous playback state and any entry, the position shown is an integer in 0..pickCount of the cloth now on screen, it equals the entry the player is given, a rebuild keeps the previous pick clamped to the new cloth, and for a design the screen has not shown before the result does not depend on the previous state at all. A second property (seed 80301, 100 runs) checks `entryModeFor` over four designs. Nothing was weakened: no arbitrary narrowed, no `fc.pre`, no `.filter`, no lower `numRuns`, no skipped test.
+**Before and after in a real browser.** A one-off observer (`/tmp/naqsha-flicker/observe.ts`, not committed, the same `MutationObserver` reading as the task 7.1 note) chooses Diamond, then leaves and re-enters Weave 11 times and records every counter value each arrival commits:
+```
+unfixed build: arrival 1..11: ["Pick 1 of 36","Pick 36 of 36"]   -> arrivals with more than one counter value: 11 of 11
+fixed build:   arrival 1..11: ["Pick 36 of 36"]                  -> arrivals with more than one counter value: 0 of 11
+```
+Task 7.1 saw the two-value arrival 6 times in 11; this observer starts recording from a clean state and saw it on every arrival of the unfixed build, and on none of the fixed build. What it observes is DOM commits, not paints: a commit the browser never painted would still be listed, so this is the stronger reading of the two.
+**`npm run check:browser` (once, after the fix): 13 passed, 0 failed.** The three steps that read the counter are unchanged in what they report: step 3 `diamond [hash 6a4aaebd]: counter 1 -> 36 of 36 (36 values)`, `border [hash 2f2571bd]`, `floral [hash 9273d4ad]`, each `868x521 canvas, 452228 opaque pixels, 7+ colours`; step 6 `Weave shows pick 36 of 36; canvas hash 9273d4ad equals the Floral cloth`; step 11 `batch stays at 1; Weave stays "Pick 36 of 36 / 6a4aaebd"`. These steps poll the counter, so they could not see the one-render value before the fix and cannot show the change; the observation above is where the change is visible. Step 3 still begins at pick 1 because a chosen sample autoplays from the first pick, which is that design's own position.
+**Left alone, and not a counter fault.** The cloth canvas keeps the pixels of the previous design until the player's first paint, so for one frame a new design can show the old cloth beside its own (correct) counter. That is unchanged by this task and is in the canvas, not in the counter.
+**Verification:** `npm run test:run` 96 files, 799 tests passed; `npm run typecheck` passes; `npm run build` passes (`precache: 13 entries in cache naqsha-v1-be994549d044`); `npm run check-bundle` passes (94191 bytes gzipped, limit 204800, up from 94016 before this task); `npm run check:browser` 13 passed, 0 failed.
+**What I changed by hand:** No files edited by hand.
+**Kiro features used:** spec, steering, property tests (fast-check).

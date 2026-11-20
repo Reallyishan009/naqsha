@@ -1,8 +1,10 @@
 import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
+import type { Pattern } from '../../../src/codec/index.ts';
 import { DICTIONARIES, translator } from '../../../src/ui/i18n/messages.ts';
-import { canvasAltText, focusAfterSkip, focusTargetAfterSkip, pickLabel, pickPositionText, riseFraction, riseLevel, riseReducer, scrubTo, SPEEDS, stepBack, stepForward } from '../../../src/ui/state/playback.ts';
-import type { Language } from '../../../src/ui/types.ts';
+import { canvasAltText, displayedPlayback, entryModeFor, entryPlayback, focusAfterSkip, focusTargetAfterSkip, pickLabel, pickPositionText, riseFraction, riseLevel, riseReducer, scrubTo, SPEEDS, stepBack, stepForward } from '../../../src/ui/state/playback.ts';
+import type { EntryMode } from '../../../src/ui/state/playback.ts';
+import type { Language, PlaybackState } from '../../../src/ui/types.ts';
 
 const SEED = 20240701;
 const NUM_RUNS = 100;
@@ -155,6 +157,91 @@ describe('focus after the skip control', () => {
         expect(focusAfterSkip(status, { pause: null, play: null })).toBeNull();
       }),
       { seed: SEED, numRuns: NUM_RUNS },
+    );
+  });
+});
+
+describe('the position shown for a newly shown cloth', () => {
+  // Task 8.3: the Weave pick counter used to read the position of the design shown before, for one render,
+  // until the mount effect seeked the player. The position shown is now the entry state itself.
+  const ENTRY_SEED = 80301;
+  const MODES: EntryMode[] = ['show-finished', 'autoplay', 'keep'];
+  const stateArbitrary: fc.Arbitrary<PlaybackState> = fc.record({
+    status: fc.constantFrom<PlaybackState['status']>('idle', 'playing', 'paused', 'finished'),
+    pick: fc.integer({ min: 0, max: 600 }),
+  });
+  /** A stand-in for a prepared cloth: the position rule only ever compares cloths by identity. */
+  const cloth = (picks: number) => ({ picks });
+
+  it('R2.8 R3.6 R14.9 each entry gets its own position: the finished cloth on arrival, the first pick for a chosen design, the current pick for a rebuild', () => {
+    const previous = { status: 'paused', pick: 4 } satisfies PlaybackState;
+    expect(entryPlayback('show-finished', previous, 9, true)).toEqual({ status: 'finished', pick: 9 });
+    expect(entryPlayback('autoplay', previous, 9, true)).toEqual({ status: 'playing', pick: 0 });
+    // Reduced motion: a chosen design is shown finished instead of woven (R14.9).
+    expect(entryPlayback('autoplay', previous, 9, false)).toEqual({ status: 'finished', pick: 9 });
+    expect(entryPlayback('keep', previous, 9, true)).toEqual({ status: 'paused', pick: 4 });
+    // A kept position beyond the new cloth becomes its last pick, which is the finished cloth.
+    expect(entryPlayback('keep', { status: 'idle', pick: 40 }, 9, true)).toEqual({ status: 'finished', pick: 9 });
+    expect(entryPlayback('show-finished', previous, 0, true)).toEqual({ status: 'idle', pick: 0 });
+  });
+
+  it('R2.4 the entry is the arrival for the design already loaded, an autoplay for a design just chosen and a keep for a rebuild', () => {
+    const arrived: Pattern = [[[true]]];
+    const chosen: Pattern = [[[false]]];
+    expect(entryModeFor(arrived, null, arrived)).toBe('show-finished');
+    expect(entryModeFor(chosen, null, arrived)).toBe('autoplay');
+    expect(entryModeFor(chosen, arrived, arrived)).toBe('autoplay');
+    expect(entryModeFor(arrived, arrived, arrived)).toBe('keep');
+  });
+
+  it('R2.10 the player’s own report is shown while it is about the cloth on screen', () => {
+    const shown = cloth(9);
+    const reported = { status: 'playing', pick: 3 } satisfies PlaybackState;
+    expect(displayedPlayback(shown, { cloth: shown, state: reported }, 'keep', 9, true)).toBe(reported);
+    expect(displayedPlayback(null, { cloth: null, state: reported }, 'keep', 0, true)).toBe(reported);
+  });
+
+  it('R2.10 R3.6 the position shown for a cloth is one of that cloth’s own positions and carries nothing of the design shown before', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1, max: 600 }),
+        fc.integer({ min: 1, max: 600 }),
+        stateArbitrary,
+        stateArbitrary,
+        fc.constantFrom(...MODES),
+        fc.boolean(),
+        (pickCount, previousCount, previous, otherPrevious, mode, autoplays) => {
+          const shown = cloth(pickCount);
+          const before = { cloth: cloth(previousCount), state: previous };
+          const displayed = displayedPlayback(shown, before, mode, pickCount, autoplays);
+          // A position of the cloth now on screen, whatever the design before it was showing.
+          expect(Number.isInteger(displayed.pick)).toBe(true);
+          expect(displayed.pick).toBeGreaterThanOrEqual(0);
+          expect(displayed.pick).toBeLessThanOrEqual(pickCount);
+          // The player is entered at this very position, so the counter and the player cannot disagree.
+          expect(displayed).toEqual(entryPlayback(mode, previous, pickCount, autoplays));
+          if (mode === 'keep') {
+            // A rebuild of the same design keeps the pick, clamped to the new cloth (R3.6).
+            expect(displayed.pick).toBe(Math.min(previous.pick, pickCount));
+          } else {
+            // A design the screen has not shown before takes nothing from the previous position.
+            expect(displayed).toEqual(displayedPlayback(shown, { cloth: before.cloth, state: otherPrevious }, mode, pickCount, autoplays));
+          }
+        },
+      ),
+      { seed: ENTRY_SEED, numRuns: 200 },
+    );
+  });
+
+  it('R2.4 every entry of a design the screen has not entered yet is an autoplay, and every rebuild of the entered one a keep', () => {
+    fc.assert(
+      fc.property(fc.nat({ max: 3 }), fc.nat({ max: 3 }), fc.nat({ max: 3 }), (a, b, c) => {
+        const designs: Pattern[] = [[[[true]]], [[[false]]], [[[true], [false]]], [[[false], [true]]]];
+        const [pattern, entered, mounted] = [designs[a]!, designs[b]!, designs[c]!];
+        expect(entryModeFor(pattern, null, mounted)).toBe(pattern === mounted ? 'show-finished' : 'autoplay');
+        expect(entryModeFor(pattern, entered, mounted)).toBe(pattern === entered ? 'keep' : 'autoplay');
+      }),
+      { seed: ENTRY_SEED, numRuns: NUM_RUNS },
     );
   });
 });

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { Dispatch } from 'react';
 import type { CardProfile, Pattern } from '../../../codec/index.ts';
 import { paintToCanvas, browserScheduler, parseRenderSettings, prepareCloth } from '../../../simulator/index.ts';
@@ -17,6 +17,8 @@ import {
 } from '../../state/cloth.ts';
 import {
   canvasAltText,
+  displayedPlayback,
+  entryModeFor,
   pickPositionText,
   riseFraction,
   riseLevel,
@@ -27,9 +29,9 @@ import {
   stepBack,
   stepForward,
 } from '../../state/playback.ts';
-import type { AppAction, AppState, ClothChoices, ClothView, PlaybackState, ReadyCloth } from '../../types.ts';
+import type { PlaybackAt } from '../../state/playback.ts';
+import type { AppAction, AppState, ClothChoices, ClothView, ReadyCloth } from '../../types.ts';
 import { ClothCanvas, createClothPlayer } from './ClothCanvas.tsx';
-import type { FrameReport } from './ClothCanvas.tsx';
 import { TryIt } from './TryIt.tsx';
 import styles from './WeaveScreen.module.css';
 
@@ -74,8 +76,6 @@ function shownCloth(view: ClothView): ReadyCloth | null {
   }
 }
 
-type EntryMode = 'show-finished' | 'autoplay' | 'keep';
-
 /** The skip control of the rise from darkness. Not shown unless the effect is running (R20.2, R20.4). */
 export function RiseSkipControl({ running, t, onSkip }: { running: boolean; t: Translate; onSkip: () => void }) {
   if (!running) return null;
@@ -101,7 +101,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
   const [choices, setChoices] = useState<ClothChoices>(DEFAULT_CHOICES);
   const [speedIndex, setSpeedIndex] = useState(DEFAULT_SPEED_INDEX);
   const [view, dispatchCloth] = useReducer(clothReducer, { status: 'empty' } satisfies ClothView);
-  const [playback, setPlayback] = useState<PlaybackState>({ status: 'idle', pick: 0 });
+  const [playback, setPlayback] = useState<PlaybackAt<ReadyCloth>>({ cloth: null, state: { status: 'idle', pick: 0 } });
   const [rise, dispatchRise] = useReducer(riseReducer, 'off');
   const [availableWidth, setAvailableWidth] = useState(FALLBACK_WIDTH);
 
@@ -110,12 +110,13 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
   const playButtonRef = useRef<HTMLButtonElement | null>(null);
   const pauseButtonRef = useRef<HTMLButtonElement | null>(null);
   const playerRef = useRef<Player | null>(null);
-  const playbackRef = useRef(playback);
-  playbackRef.current = playback;
   const speedRef = useRef(SPEEDS[speedIndex] ?? SPEEDS[1]);
   speedRef.current = SPEEDS[speedIndex] ?? SPEEDS[1];
-  const entryRef = useRef<EntryMode>('show-finished');
-  const lastPatternRef = useRef<Pattern>(pattern);
+  /** The design that was already loaded when the screen arrived, and the one the player was last entered with. */
+  const mountPatternRef = useRef<Pattern>(pattern);
+  const enteredPatternRef = useRef<Pattern | null>(null);
+  const patternRef = useRef<Pattern>(pattern);
+  patternRef.current = pattern;
   const reducedMotionRef = useRef(state.prefersReducedMotion);
   reducedMotionRef.current = state.prefersReducedMotion;
 
@@ -137,39 +138,43 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
   const availableHeight = Math.round(availableWidth * HEIGHT_RATIO);
   const viewport = viewportFor(availableWidth, availableHeight);
 
-  // Rebuild the cloth when the pattern, the choices or the size change. A failed rebuild keeps the previous cloth.
+  // The cloth is built in the render that first shows it, not in an effect, so no commit ever pairs a new cloth
+  // with the pick counter of the one before it (R2.10).
+  const result = useMemo<SimResult<ReadyCloth> | null>(
+    () =>
+      profile === null || pattern.length === 0
+        ? null
+        : buildReadyCloth(profile, pattern, choices, viewport.width, viewport.height),
+    [profile, pattern, choices, viewport.width, viewport.height],
+  );
+
+  // Adjusting state during the render that has the new cloth: React renders again before it commits, so `view`
+  // below is the new cloth already. A failed build keeps the previous cloth (R2.12).
+  const [shownResult, setShownResult] = useState<SimResult<ReadyCloth> | null>(null);
+  if (shownResult !== result) {
+    setShownResult(result);
+    dispatchCloth(result === null ? { type: 'cloth-cleared' } : { type: 'cloth-updated', result });
+  }
+
+  // A failed build is announced once, after the render that shows the failure.
   useEffect(() => {
-    if (pattern !== lastPatternRef.current) {
-      lastPatternRef.current = pattern;
-      entryRef.current = 'autoplay';
-      setPlayback({ status: 'idle', pick: 0 });
-    }
-    if (profile === null || pattern.length === 0) {
-      dispatchCloth({ type: 'cloth-cleared' });
-      return;
-    }
-    const result = buildReadyCloth(profile, pattern, choices, viewport.width, viewport.height);
-    dispatchCloth({ type: 'cloth-updated', result });
-    if (!result.ok) {
+    if (result !== null && !result.ok) {
       dispatch({ type: 'announce', kind: 'error', messageKey: simFailureKey(result.failure) });
     }
-  }, [profile, pattern, choices, viewport.width, viewport.height, dispatch]);
+  }, [result, dispatch]);
 
   const shown = shownCloth(view);
   const pickCount = shown === null ? 0 : shown.cloth.picks.length;
+  const mode = entryModeFor(pattern, enteredPatternRef.current, mountPatternRef.current);
+  // The position shown: the player's own last word while it is about the cloth on screen, and otherwise the entry
+  // state that the effect below puts the player in. One value, so the counter and the player cannot disagree.
+  const current = displayedPlayback(shown, playback, mode, pickCount, autoplay(state.prefersReducedMotion));
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const currentRef = useRef(current);
+  currentRef.current = current;
 
-  const handleFrame = useCallback((report: FrameReport): void => {
-    if (report.atEnd) {
-      dispatchRise({ type: 'finished' });
-      setPlayback({ status: 'finished', pick: report.frame.pick });
-    } else if (report.kind === 'tick') {
-      setPlayback({ status: 'playing', pick: report.frame.pick });
-    } else {
-      setPlayback({ status: 'idle', pick: report.frame.pick });
-    }
-  }, []);
-
-  // One player per cloth. A new cloth keeps the current pick (R3.6) unless it came from a new pattern.
+  // One player per cloth, entered at the position the screen is already showing.
   useEffect(() => {
     if (shown === null) {
       playerRef.current = null;
@@ -181,41 +186,41 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
       dispatch({ type: 'announce', kind: 'error', messageKey: 'error.generic' });
       return;
     }
+    const cloth = shown;
     const player = createClothPlayer({
-      ready: shown,
+      ready: cloth,
       paint: paintToCanvas(context),
       scheduler,
-      onFrame: handleFrame,
+      onFrame: (report) => {
+        if (report.atEnd) {
+          dispatchRise({ type: 'finished' });
+          setPlayback({ cloth, state: { status: 'finished', pick: report.frame.pick } });
+        } else if (report.kind === 'tick') {
+          setPlayback({ cloth, state: { status: 'playing', pick: report.frame.pick } });
+        } else {
+          setPlayback({ cloth, state: { status: 'idle', pick: report.frame.pick } });
+        }
+      },
     });
     playerRef.current = player;
-    const count = shown.cloth.picks.length;
-    const mode = entryRef.current;
-    entryRef.current = 'keep';
-    const before = playbackRef.current;
-    if (mode === 'autoplay') {
+    const count = cloth.cloth.picks.length;
+    const entryMode = modeRef.current;
+    enteredPatternRef.current = patternRef.current;
+    if (entryMode === 'autoplay') {
       dispatchRise({ type: 'design-loaded', reducedMotion: reducedMotionRef.current });
-    } else if (mode === 'show-finished') {
+    } else if (entryMode === 'show-finished') {
       dispatchRise({ type: 'cleared' });
     }
-    if (mode === 'autoplay' && autoplay(reducedMotionRef.current)) {
-      player.play(0, count, speedRef.current ?? 4);
-      setPlayback({ status: 'playing', pick: 0 });
-    } else if (mode === 'keep' && before.status === 'playing') {
-      player.play(Math.min(before.pick, count), count, speedRef.current ?? 4);
-    } else if (mode === 'keep' && before.status === 'paused') {
-      player.seek(before.pick);
-      setPlayback({ status: 'paused', pick: before.pick });
-    } else if (mode === 'keep') {
-      player.seek(before.pick);
-    } else {
-      // Mounted with a pattern, or reduced motion: show the finished cloth at once (R14.9).
-      player.seek(count);
-    }
+    const entry = currentRef.current;
+    if (entry.status === 'playing') player.play(entry.pick, count, speedRef.current ?? 4);
+    else player.seek(entry.pick);
+    // Last, so that the state the screen shows survives what the seek above reported.
+    setPlayback({ cloth, state: entry });
     return () => {
       player.pause();
       if (playerRef.current === player) playerRef.current = null;
     };
-  }, [shown, scheduler, handleFrame, dispatch]);
+  }, [shown, scheduler, dispatch]);
 
   const empty = shown === null;
   const disabled = empty;
@@ -223,23 +228,23 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
 
   const onPlay = (): void => {
     const player = playerRef.current;
-    if (player === null) return;
-    if (playback.status === 'paused') {
+    if (player === null || shown === null) return;
+    if (current.status === 'paused') {
       player.resume();
-      setPlayback({ status: 'playing', pick: playback.pick });
+      setPlayback({ cloth: shown, state: { status: 'playing', pick: current.pick } });
       return;
     }
-    const start = playback.status === 'finished' || playback.pick >= pickCount ? 0 : playback.pick;
+    const start = current.status === 'finished' || current.pick >= pickCount ? 0 : current.pick;
     player.play(start, pickCount, rate);
-    setPlayback({ status: 'playing', pick: start });
+    setPlayback({ cloth: shown, state: { status: 'playing', pick: start } });
   };
   const onPause = (): void => {
     playerRef.current?.pause();
-    setPlayback({ status: 'paused', pick: playback.pick });
+    if (shown !== null) setPlayback({ cloth: shown, state: { status: 'paused', pick: current.pick } });
   };
   // The skip control disappears when used, so focus moves to the next control while it is still enabled.
   const onSkip = (): void => {
-    focusAfterSkip(playback.status, { pause: pauseButtonRef.current, play: playButtonRef.current });
+    focusAfterSkip(current.status, { pause: pauseButtonRef.current, play: playButtonRef.current });
     dispatchRise({ type: 'skip' });
   };
   const seekTo = (pick: number): void => {
@@ -248,16 +253,16 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
   };
   const onSpeed = (index: number): void => {
     setSpeedIndex(index);
-    if (playback.status === 'playing') {
-      playerRef.current?.play(playback.pick, pickCount, SPEEDS[index] ?? rate);
+    if (current.status === 'playing') {
+      playerRef.current?.play(current.pick, pickCount, SPEEDS[index] ?? rate);
     }
   };
 
   const gapText = shown === null ? '' : gapPickNumbers(shown.cloth.gaps).join(', ');
-  const playing = playback.status === 'playing';
-  const playLabel = playback.status === 'paused' ? t('weave.resume') : t('weave.play');
+  const playing = current.status === 'playing';
+  const playLabel = current.status === 'paused' ? t('weave.resume') : t('weave.play');
   const riseRunning = rise === 'running' && !state.prefersReducedMotion;
-  const level = riseRunning ? riseLevel(riseFraction(playback.pick, pickCount), false, false) : 1;
+  const level = riseRunning ? riseLevel(riseFraction(current.pick, pickCount), false, false) : 1;
   const canvasSize = shown?.settings.viewport ?? viewport;
   const colourOptions = COLOURS.map((colour) => (
     <option key={colour.hex} value={colour.hex}>
@@ -282,7 +287,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
             canvasRef={canvasRef}
             width={canvasSize.width}
             height={canvasSize.height}
-            altText={canvasAltText(t, playback.pick, pickCount)}
+            altText={canvasAltText(t, current.pick, pickCount)}
           />
         </div>
         {view.status === 'failed' ? (
@@ -293,7 +298,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
         {gapText === '' ? null : <p className={styles.gaps}>{t('weave.gaps', { picks: gapText })}</p>}
       </div>
 
-      <p className={styles.position}>{pickPositionText(t, playback.pick, pickCount)}</p>
+      <p className={styles.position}>{pickPositionText(t, current.pick, pickCount)}</p>
 
       <div className={styles.row}>
         <button ref={playButtonRef} type="button" className={styles.button} disabled={disabled || playing} onClick={onPlay}>
@@ -306,7 +311,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
           type="button"
           className={styles.button}
           disabled={disabled}
-          onClick={() => seekTo(stepBack(playback.pick, pickCount))}
+          onClick={() => seekTo(stepBack(current.pick, pickCount))}
         >
           {t('weave.stepBack')}
         </button>
@@ -314,7 +319,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
           type="button"
           className={styles.button}
           disabled={disabled}
-          onClick={() => seekTo(stepForward(playback.pick, pickCount))}
+          onClick={() => seekTo(stepForward(current.pick, pickCount))}
         >
           {t('weave.stepForward')}
         </button>
@@ -329,7 +334,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
           min={0}
           max={pickCount}
           step={1}
-          value={Math.min(playback.pick, pickCount)}
+          value={Math.min(current.pick, pickCount)}
           disabled={disabled}
           onChange={(event) => seekTo(scrubTo(Number(event.currentTarget.value), pickCount))}
         />
