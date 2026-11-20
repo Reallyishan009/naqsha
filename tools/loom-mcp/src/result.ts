@@ -10,7 +10,6 @@ export class ToolError extends Error {
     this.hint = hint;
   }
 }
-export type ToolFailure = { ok: false; reason: string; message: string; hint: string };
 /** A successful result: a one-line text for the reader, the structured data, and optional extra content such as an image. */
 export function succeed<T extends Record<string, unknown>>(
   structured: T,
@@ -19,10 +18,13 @@ export function succeed<T extends Record<string, unknown>>(
 ): CallToolResult {
   return { content: [{ type: 'text', text: summary }, ...extra], structuredContent: structured };
 }
-/** A Tool_Error result: isError is true and the structured content names the reason and the hint. */
+/**
+ * A Tool_Error result: isError is true, the text names the reason code, the problem and the hint, and `_meta` carries
+ * the reason and the hint as data. It has no structuredContent on purpose: an MCP client checks any structuredContent
+ * against the tool's outputSchema, and an error does not have the shape of a success.
+ */
 export function failure(reason: string, message: string, hint: string): CallToolResult {
-  const structured: ToolFailure = { ok: false, reason, message, hint };
-  return { isError: true, content: [{ type: 'text', text: `${reason}: ${message} Hint: ${hint}` }], structuredContent: structured };
+  return { isError: true, content: [{ type: 'text', text: `${reason}: ${message} Hint: ${hint}` }], _meta: { reason, hint } };
 }
 /**
  * Runs a tool body. A ToolError becomes its own result; anything else becomes `internal_error` with no stack and no
