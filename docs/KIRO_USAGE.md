@@ -10,7 +10,7 @@ The planning files named in that entry (`PLAN.md`, `KIRO_PROMPTS.md`, `RESEARCH.
 
 ## 1. Specs
 
-Five specs exist in `.kiro/specs/` (the first four are in the table; `cards-as-code` and `version-history` are described in BUILD_LOG). Each has `requirements.md`, `design.md` and `tasks.md`. Each also has a `tasks.meta.json` (execution records written by Kiro; only the `app` one is tracked in git, the other three are untracked).
+Six specs exist in `.kiro/specs/` (the first four are in the table; `cards-as-code`, `version-history` and `repair-suggestions` are described in BUILD_LOG). Each has `requirements.md`, `design.md` and `tasks.md`. Each also has a `tasks.meta.json` (execution records written by Kiro; only the `app` one is tracked in git, the other three are untracked).
 
 | Spec | Requirements | Design properties | Extra files |
 |---|---|---|---|
@@ -34,6 +34,8 @@ This chain is also the decoy peg pair bug in section 5.
 
 ### The `version-history` spec (one unattended run)
 A fifth spec, `.kiro/specs/version-history/`, was written in one run with no review stop: `requirements.md` (8 requirements, 15 criteria, the cap the user set), `design.md` (one page, one correctness property) and `tasks.md` (12 tasks in four groups, one git commit per group). The Kiro requirement-detailing step ran once per requirement and was told to keep the criteria count; it still changed R2.1 (it added a failure for a note over 200 characters), and `BUILD_LOG.md` records how that was reconciled with the three archive failure reasons. The code was then written group by group; the steering glossary and `structure.md` were updated in the last group. See the BUILD_LOG entry "version-history" for what changed, the tests that were edited on purpose, and what was not run (no browser, no `check:browser`, no `check:all`).
+### The `repair-suggestions` spec (second unattended run)
+A sixth spec, `.kiro/specs/repair-suggestions/`, was written the same way: `requirements.md` (8 requirements, 15 criteria), `design.md` (one page, exactly two correctness properties) and `tasks.md` (12 tasks, four groups, one commit per group), then built without a review stop. The detailing step again ran once per requirement. One thing it changed was reconciled by hand: it wrote "SHALL NOT rank" for conflicting suggestions, which contradicts "ordered best first", so the criterion now says the module returns both and does not merge or drop either. The design's own warning that property 1 might fail (a shorter period agreeing by chance) was tested with 5,000 runs per property and did not occur. See the BUILD_LOG entry "repair-suggestions" for the thresholds, what was not run (no browser, no `check:browser`, no `check:all`) and the entry size.
 ## 2. Steering docs
 
 Seven files in `.kiro/steering/`. Five are always loaded; `card-geometry.md` has front matter `inclusion: fileMatch` with `fileMatchPattern: "src/{codec,reader}/**"`; `prerelease-check.md` has `inclusion: manual` (see "Steering command" below).
