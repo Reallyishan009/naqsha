@@ -12,7 +12,7 @@ function render(state: AppState): string {
   return renderToStaticMarkup(<Shell state={state} dispatch={() => undefined} />);
 }
 
-const SCREENS: Screen[] = ['weave', 'keep', 'scan'];
+const SCREENS: Screen[] = ['weave', 'keep', 'scan', 'code'];
 const LANGUAGES: Language[] = ['hi', 'en'];
 
 function navLabel(language: Language, screen: Screen): string {
@@ -62,7 +62,7 @@ describe('shell', () => {
       );
       expect(scan).toContain(`>${navLabel(language, 'scan')}</h2>`);
     }
-    expect(SCREENS).toHaveLength(3);
+    expect(SCREENS).toHaveLength(4);
   });
 
   it('R1.2 the app starts on the Weave screen', () => {
@@ -72,12 +72,12 @@ describe('shell', () => {
     expect(/aria-current="page"[^>]*>Weave</.test(html)).toBe(true);
   });
 
-  it('R1.3 three visible navigation controls on every screen, in both languages', () => {
+  it('R1.3 four visible navigation controls on every screen, in both languages', () => {
     for (const screen of SCREENS) {
       for (const language of LANGUAGES) {
         const html = render({ ...initialAppState, screen, language });
         const nav = /<nav[^>]*>(.*?)<\/nav>/.exec(html)?.[1] ?? '';
-        expect(nav.match(/<button/g)?.length, `${screen} ${language}`).toBe(3);
+        expect(nav.match(/<button/g)?.length, `${screen} ${language}`).toBe(4);
         for (const target of SCREENS) expect(nav).toContain(`>${navLabel(language, target)}<`);
       }
     }
@@ -108,7 +108,7 @@ describe('shell', () => {
     });
     expect(html).toContain(EN['error.profile.banner'] as string);
     expect(html).toContain(EN['error.profile.not-json'] as string);
-    expect((/<nav[^>]*>(.*?)<\/nav>/.exec(html)?.[1] ?? '').match(/<button/g)?.length).toBe(3);
+    expect((/<nav[^>]*>(.*?)<\/nav>/.exec(html)?.[1] ?? '').match(/<button/g)?.length).toBe(4);
   });
 
   it('R24.5 a waiting new version is announced with a control that loads it, and nothing is shown otherwise', () => {
@@ -122,7 +122,7 @@ describe('shell', () => {
       expect(html).toContain(t('update.ready'));
       expect(html).toContain(`>${t('update.load')}</button>`);
       // The navigation is still there, so the notice never blocks the app.
-      expect((/<nav[^>]*>(.*?)<\/nav>/.exec(html)?.[1] ?? '').match(/<button/g)?.length).toBe(3);
+      expect((/<nav[^>]*>(.*?)<\/nav>/.exec(html)?.[1] ?? '').match(/<button/g)?.length).toBe(4);
     }
   });
 

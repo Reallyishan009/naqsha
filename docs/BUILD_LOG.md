@@ -1039,3 +1039,88 @@ Identical to the **before** row of the task 1.1 entry, down to the content hash 
 **Commit:** one commit for Phase 1, on `auto/build`, not pushed: the 25 files above, including the three `cards-as-code` spec documents and the two steering files.
 
 ---
+
+## 2026-11-20 (cards-as-code phases 2 and 3: shared state, the Code view screen and its checkpoint)
+
+**What was built.**
+Phase 2 (committed and pushed earlier as `fa04deb`): `AppState.selectedPick` and `breakpoints` with the `select-pick`, `toggle-breakpoint` and `set-cloth-choices` actions, so the Weave and Code view screens share one Selected_Pick (2.1); `buildReadyCloth` moved to `src/ui/state/cloth.ts` (2.2); 60 translation keys in English and Hindi, all Hindi marked `reviewed: false` (2.3); the pure view logic in `src/ui/state/codeView.ts`: `windowFor`, `pickNumberWidth`, `toggleBreakpoint`, `nextBreakpoint`, `parseJump`, `lineAccessibleName`, `diffEntryAccessibleName` (2.4 to 2.6).
+Phase 3 (this commit): the lazy fourth screen and its `Code` navigation entry (3.1); the virtualised listing and one Line each (3.2); step, jump and run-to-next-breakpoint with one live-region announcement per deliberate move (3.3); the cloth beside the current card, reusing `ClothCanvas` (3.4); the diff panel with choosers, counts and entries (3.5); copy and download of the Diff_Text (3.6); refusals, empty, missing and failing inputs (3.7); keyboard, focus, colour and motion rules and the `focusTargetAfterWindowMove` helper (3.8). Files: `src/ui/screens/code/` (`CodeViewScreen.tsx`, `Listing.tsx`, `LineRow.tsx`, `DiffPanel.tsx`, `diffText.ts` and four `.module.css`), `src/ui/state/codeView.ts`, `src/ui/App.tsx`, `tests/ui/screens/code.test.tsx`.
+
+**The checkpoint found what the sub-agents had been told not to look for.** During Phase 3 no sub-agent ran `npm run typecheck` or the full suite, so this is the first time they ran together. Three things failed and were fixed in code or test scaffolding; no assertion was removed or loosened and no `any`, `as any`, `@ts-ignore` or `@ts-expect-error` was added.
+
+1. `npm run typecheck`, first run, exit 1:
+```
+tests/ui/screens/code.test.tsx(1076,15): error TS1294: This syntax is not allowed when 'erasableSyntaxOnly' is enabled.
+tests/ui/screens/code.test.tsx(1908,30): error TS2345: Argument of type '{ kind: "damaged"; pick: number; }' is not assignable to parameter of type 'Line'.
+  Property 'violations' is missing in type '{ kind: "damaged"; pick: number; }' but required in type 'DamagedLine'.
+```
+Fix: `FakeDiffTextDeps` used a constructor parameter property (`constructor(private readonly copyResult …)`), now a declared field assigned in the constructor; the Hindi-name test's damaged Line literal gained `violations: []`. Both are in the test scaffolding. The assertions around them are unchanged. Typecheck then exit 0, no output beyond the two header lines.
+2. `npm run test:run`, first run, exit 1, `Test Files 1 failed | 105 passed (106)`, `Tests 1 failed | 1073 passed (1074)`. The failing test was `tests/structure/glossaryTerms.test.ts` ("R15.4, R10.2 and R12.3 the code and comments of src and scripts use the glossary term, not a synonym"): **67 uses of `row`, `column` and `cell` in the new Code view files** that the glossary does not allow. Fix, in the code and not in the test's allowance list: `rowHeight` to `lineHeight` (it already matched the CSS property `--code-line-height`), `LineRow` component and its props to `LineItem`, `EntryRow*` to `EntryItem*`, `endColumn` to `endTextIndex`, `markerRow` to `markerLine`, `cells` to `characters`, `cellWidth` to `characterWidth`, `diffTextRows` to `diffTextLineCount`, CSS classes `.row`, `.listingColumn`, `.clothColumn` to `.controls`, `.listingPane`, `.clothPane`, the attribute `data-marker-row` to `data-marker-line`, and the message placeholders `firstRows`, `firstColumns`, `secondRows`, `secondColumns` to `firstHookRows`, `firstHookColumns`, `secondHookRows`, `secondHookColumns` (the glossary term "hook row" and "hook column"). The `<textarea rows=…>` HTML attribute cannot be renamed, so the Diff_Text box is now sized with `style={{ height: calc(N * 1lh + var(--diff-text-frame)) }}` and a `--diff-text-frame` custom property in `DiffPanel.module.css`. **That is a visual change nobody has seen in a browser.** The component files keep the names `LineRow.tsx` and `LineRow.module.css`, because `design.md`, `tasks.md` and the tests name them; the file name is not scanned by the glossary test, so the file and the exported component `LineItem` no longer share a name.
+3. `npm run test:run`, second run, exit 1, same counts (1 failed, 1073 passed): `tests/ui/i18n/reviewList.test.ts` ("R12.12 the checked-in docs/HINDI_REVIEW.md equals the generated …") failed because the placeholder rename in `hi.json` changed the generated review list. Fix: `npm run review-list`; `docs/HINDI_REVIEW.md` changed by exactly one line (the `codeview.refusal.dimension-mismatch` row).
+
+**The final runs**, after those fixes.
+`npm run typecheck` — exit 0:
+```
+> naqsha@0.0.0 typecheck
+> tsc --noEmit
+```
+`npm run test:run` — exit 0:
+```
+ Test Files  106 passed (106)
+      Tests  1074 passed (1074)
+   Start at  20:09:37
+   Duration  34.59s (tests 93%, import 5%, transform 2%, worker 1%)
+```
+(Phase 1 ended on 104 files and 920 tests; Phase 2 on 105 files and 991 tests.)
+
+**The boundary test (task 1.3) on the real Code view files.** `tests/codec-view/boundaries.test.ts` passes, 23 of 23 tests. Its screen set is every `.ts` and `.tsx` under `src/ui/screens/code/` plus `src/ui/state/codeView.ts`, which on disk is six files: `CodeViewScreen.tsx`, `DiffPanel.tsx`, `LineRow.tsx`, `Listing.tsx`, `diffText.ts` and `src/ui/state/codeView.ts`. Every `.ts` and `.tsx` file in those places is in the set; no file was missed. The four `.module.css` files are not in the set, by design (the test reads imports and API names). **Gap:** the test never prints the set and never asserts that it is non-empty (its sanity check is `screenFiles.every(isUnder UI)`, which is true of an empty set), so the claim above comes from applying the test's own file rule to the directory, not from the test's output. The test's header comment still says the screen set "is empty until Phase 3"; I did not edit the test.
+
+**Existing tests that changed in Phase 3** (`git diff HEAD`):
+- `tests/ui/screens/shell.test.tsx`: `SCREENS` gained `'code'` (3 to 4 screens); `expect(SCREENS).toHaveLength(3)` to `(4)`; the navigation button counts `toBe(3)` to `toBe(4)` in three places (R1.3 on every screen, the profile banner test, the update-notice test); the R1.3 title says "four" instead of "three". The meaning of each assertion is the same (the navigation lists every screen); only the number of screens changed.
+- `tests/ui/accessibility.test.tsx`: the R14.4 test now also renders the Code view page and its title names Code view. **One helper, `unnamed()`, was widened:** a control whose `id` is the `for` of a `<label>` with text is now accepted as named. Before, such a control was reported unless it had its own `aria-label`. This applies to every page that test checks, not only Code view; no existing page needed it, so no existing result changed, but a future control named only through `label[for]` now passes where it did not. A new `describe('Code view styles')` block (motion, focus ring, Touch_Target, widths) was added; it does not alter an existing test.
+- `tests/ui/i18n/messages.test.ts`: the expected placeholder names for `codeview.refusal.dimension-mismatch` follow the rename above (`firstRows` to `firstHookRows` and the other three). The assertion is the same: the message carries these four values.
+- `tests/ui/state/codeView.test.ts`: no change in Phase 3 (last changed in Phase 2).
+No existing assertion changed meaning.
+
+**Bundle.** `npm run build` — exit 0 (`tsc --noEmit && vite build && node scripts/build_precache.ts`; 110 modules transformed, 15 precache entries). `npm run check-bundle` — exit 0:
+```
+entry chunk: ./assets/index-C1uNIch0.js, 97686 bytes gzipped (limit 204800)
+scan chunk: assets/ScanScreen-DsnKdTJL.js, 9123 bytes gzipped
+precache: 15 entries in cache naqsha-v1-08d01333424e
+icon: ./icons/icon-192.png, 192x192
+icon: ./icons/icon-512.png, 512x512
+bundle check passed
+```
+- Entry chunk: 97686 bytes, against the pre-feature baseline of 94191 bytes (`./assets/index-BxQUVtbs.js`): **+3495 bytes**, still 107114 bytes under the 204800 limit. The growth is the lazy `import()` call, the fourth navigation entry, the new `AppState` fields, the Code view translation keys in both dictionaries (60 keys) and the shared state code; the screen itself is not in it.
+- A separate Code view chunk exists: `dist/assets/CodeViewScreen-DT2AHiJ2.js`, 29.00 kB, **9414 bytes** gzipped (`gzip -9`; Vite prints 9.41 kB), and `CodeViewScreen-BhArghES.css`, 5.30 kB, 1.37 kB gzipped. `check-bundle` does not print or check it; that is Phase 4 work (parameterising `check_bundle.ts`).
+- No leak: `grep -l naqsha-code-view-listing dist/assets/*.js` finds only `CodeViewScreen-DT2AHiJ2.js`. The entry chunk does not contain the marker.
+- `dist/sw.js` lists both `CodeViewScreen` files in its precache. No test checks that yet (Phase 4).
+
+**Skipped on purpose, by the credit-saving rule** (each is marked cuttable and is not written; all are cuts to report, R12.7 and R12.11): 2.7 `focusTargetAfterWindowMove` as a task of its own (the helper was written in Phase 3 for 3.8, in `src/ui/state/codeView.ts`, used by `Listing.tsx` and covered by example tests in `tests/ui/screens/code.test.tsx`; no property is written for it); 2.8 P9 (the Window holds at most Window_Size Lines and always holds the Selected_Pick); 2.9 the reducer property (R3.1); the fast-check property inside 2.6 (the R11.3 name property); 3.9 R4.7 (both screens derive one image from one `renderFrame` call); 3.10 the listing timing test at 10,000 picks (R2.6, R2.10). Properties P1 to P8 and P10 still pass.
+
+**Known gaps and limits reported by the task sub-agents.**
+- Everything ran in Node with server rendering only. No click, focus move, scroll, keypress, clipboard, canvas, `ResizeObserver` or layout was exercised.
+- 3.2: `listingWindow` departs from the design: when the viewport and the Selected_Pick cannot both fit in the 80-line Window, the viewport wins, so the Window may not hold the Selected_Pick until the user scrolls back. That is a literal departure from R2.4; a deliberate move still scrolls to it. User decision pending.
+- 3.2 and 3.3: `Listing` re-rendered forever when given zero Lines for a non-empty pattern; worked around by rendering it only when there are Lines.
+- 3.3: the no-further-breakpoint case announces `codeview.announce.noBreakpoint` and not the pick, because the App holds one announcement at a time.
+- 3.5: a 2,000-entry diff puts about 14,000 elements in the DOM (`content-visibility: auto` skips layout and paint, not DOM creation).
+- 3.5 and 3.7: saved designs are read with the current Card_Profile's geometry but carry their own recorded profile name, so a design from another profile is refused with `profile-mismatch`, and cards that cannot be read become damaged and block the comparison (R7.3).
+- 3.7: no retry control after `storage-unavailable`; the choosers re-enable when the Current_Pattern changes.
+- 3.8: the Code view CSS has no transitions or smooth scrolling at all, stricter than the spec, because the existing R14.11 test only allows `reduce` queries.
+- 2.1: a Weave screen re-entered after the cloth finished now arrives paused at the last pick and not finished (the reducer clamps), so the cloth shows one pick fewer woven; `select-pick` clamps to `pickCount - 1` in `entryPlayback('show-selected')`.
+- 2.3: `codeview.pickCount` reads "1 picks" for a count of 1 (the same flaw as the existing `keep.list.picks`); no key exists for a failed download, so it falls back to `error.generic`; Hindi uses डिज़ाइन for "design", as the rest of `hi.json` does.
+- The 2,000 x 2,000 diff benchmark read 520 ms in the Phase 2 full run and 27 ms standalone, against a 1,000 ms ceiling.
+
+**Not verified.**
+- **No browser has ever run any of this.** Nothing in Phases 2 and 3 was opened, clicked, scrolled or focused in Chrome, Firefox or Safari, on a phone or on a desktop. Do not read "Code view works" from this entry; read "Code view renders to the markup the tests expect, in Node".
+- The widths 320, 390 and 1280 px, the focus ring's contrast and clipping, the tab order, the focus restore after a Window move, the live-region announcements, the clipboard and the file download are unchecked. The new `1lh` sizing of the Diff_Text box is unchecked.
+- The lazy chunk's failure path (`error.codeview.load`) is tested only through `screenErrorKey`, not by a real failed `import()`.
+- The service worker and offline use of the Code view chunk are unchecked (the chunk is in the precache list; no test and no offline run covers it).
+- The Hindi text is machine-written and `reviewed: false`; nobody has read it.
+- `check:all` (beyond the pieces named above), `check:browser`, `check:deployed` and `check:everything` were not run at this checkpoint. Phase 4 owns them.
+- Timings are from this laptop (Node, darwin arm64), not a mid-range phone.
+
+**Kiro features used:** spec (requirements, design, tasks for `cards-as-code`), steering (`structure.md`, `weaving-glossary.md`, `testing.md`), property tests with fast-check, sub-agent task execution.
+**Evidence saved:** the quoted output above; `dist/` is not committed.
+**Commit:** one commit for top-level task 3 on `auto/build`: the Phase 3 files, the glossary and review-list fixes (including the regenerated `docs/HINDI_REVIEW.md`), this entry, and the spec's `tasks.md` and `tasks.meta.json`.
+---

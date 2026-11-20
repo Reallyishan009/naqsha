@@ -501,6 +501,11 @@
         "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
         "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
         "timestamp": 1795182285660
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795182414205
       }
     ],
     "3.1 The lazy fourth Screen, its navigation entry and the marker": [
@@ -508,6 +513,16 @@
         "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
         "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
         "timestamp": 1795160929210
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795182427517
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795182599430
       }
     ],
     "3.2 The listing and one Line": [
@@ -515,6 +530,16 @@
         "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
         "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
         "timestamp": 1795160929249
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795182604777
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795182984592
       }
     ],
     "3.3 Step, jump and run-to-next-breakpoint, and the live region": [
@@ -522,6 +547,16 @@
         "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
         "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
         "timestamp": 1795160929281
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795182984821
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795183201207
       }
     ],
     "3.4 The cloth beside the current card": [
@@ -529,6 +564,16 @@
         "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
         "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
         "timestamp": 1795160929312
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795183201491
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795183437970
       }
     ],
     "3.5 The diff panel: choosers, counts and entries": [
@@ -536,6 +581,16 @@
         "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
         "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
         "timestamp": 1795160929345
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795183438508
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795184004368
       }
     ],
     "3.6 The Diff_Text: copy and download": [
@@ -543,6 +598,16 @@
         "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
         "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
         "timestamp": 1795160929378
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795184004580
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795184226813
       }
     ],
     "3.7 Refusals, empty, missing and failing inputs": [
@@ -550,6 +615,16 @@
         "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
         "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
         "timestamp": 1795160929412
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795184227544
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795184651675
       }
     ],
     "3.8 Keyboard, focus, colour and motion": [
@@ -557,6 +632,16 @@
         "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
         "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
         "timestamp": 1795160929447
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795184652400
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795185199555
       }
     ],
     "3.9 R4.7: both screens derive one image from one `renderFrame` call": [
@@ -578,6 +663,11 @@
         "executionId": "88c1ec49-14ec-47b6-8b5b-4eaf817e2fa2",
         "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
         "timestamp": 1795160929545
+      },
+      {
+        "executionId": "8042abac-9172-4612-a4ef-f8f4d194869d",
+        "chatSessionId": "sess_d2b5d40b-5f1f-4d42-be13-be62dba749bb",
+        "timestamp": 1795185199767
       }
     ],
     "4.1 Parameterise `check_bundle` over chunk markers": [

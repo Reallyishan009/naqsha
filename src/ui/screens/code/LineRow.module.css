@@ -1,0 +1,66 @@
+/* One Line is exactly one row tall, so the Window offset and the scroll position are plain multiplication.
+   The separator is a shadow, not a border, so the whole row height is left for the controls (R11.10). */
+.line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  height: var(--code-line-height);
+  min-width: 0;
+  padding-right: 6px;
+  box-shadow: inset 0 -1px 0 var(--line);
+}
+
+.line[aria-current='true'] {
+  background: var(--surface);
+  font-weight: 700;
+}
+
+.breakpoint {
+  flex: none;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: 0;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+/* The global focus ring sits outside the control. Here the edge of the listing would cut it off, so it is drawn
+   inside (R11.2). The colour and width are the global ones. */
+.breakpoint:focus-visible,
+.bits:focus-visible {
+  outline-offset: -3px;
+}
+
+.marks,
+.pickNumber {
+  flex: none;
+  white-space: pre;
+}
+
+/* Only this region scrolls sideways; it never widens the row, so the page never scrolls at 320 px (R11.8).
+   It is as tall as the row, so it is as large a target as the breakpoint control (R11.10). */
+.bits {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  align-self: stretch;
+  min-width: 0;
+  min-height: var(--touch-target);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.bitsText {
+  flex: none;
+  white-space: pre;
+}
+
+.damaged {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}

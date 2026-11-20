@@ -257,7 +257,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - **Validates: Requirements R3.1, R3.2, R3.4, R3.6, R3.10, R4.6**
     - _Requirements: R3.1, R3.2, R3.4, R3.6, R3.10, R4.6, R12.2, R12.4_
 
-  - [-] 2.10 Checkpoint - state and view logic
+  - [x] 2.10 Checkpoint - state and view logic
     - Ensure all tests pass, ask the user if questions arise.
     - The whole existing suite must pass after the `selectedPick` refactor, not only the new tests. Report every existing test that changed and what changed in it.
     - _Requirements: R4.2, R12.9_
@@ -265,7 +265,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
 - [ ] 3. The Code_View_Screen
   - _Requirements: R2.1, R2.2, R2.3, R2.6, R2.8, R2.9, R2.10, R2.11, R3.3, R3.7, R3.11, R3.12, R3.13, R4.1, R4.3, R4.4, R4.5, R4.7, R6.6, R6.7, R6.8, R6.12, R6.13, R6.16, R7.1, R7.2, R7.3, R7.4, R7.5, R7.6, R7.7, R7.8, R8.4, R9.1, R9.9, R9.10, R10.8, R11.1, R11.2, R11.5, R11.6, R11.7, R11.8, R11.9, R11.10, R11.11, R12.8_
 
-  - [~] 3.1 The lazy fourth Screen, its navigation entry and the marker
+  - [x] 3.1 The lazy fourth Screen, its navigation entry and the marker
     - **[demo-essential]**
     - Files: `src/ui/App.tsx`, `src/ui/screens/code/CodeViewScreen.tsx`, `src/ui/screens/code/CodeViewScreen.module.css`, `tests/ui/screens/code.test.tsx`.
     - `SCREENS` becomes `['weave', 'keep', 'scan', 'code']`, so a fourth navigation control sits beside Weave, Keep and Scan and activating it shows the Code_View_Screen (R2.1). `const CodeViewScreen = lazy(() => import('./screens/code/CodeViewScreen.tsx'))`, inside the same `<Suspense>` shape the Scan screen uses, so the chunk is requested only on the first open of Code view in a page session (R9.1). `ScreenBoundary` takes `t('error.codeview.load')` while the screen is `'code'`, so a failed import leaves the navigation and the other Screens usable and the Current_Pattern untouched (R9.10).
@@ -275,7 +275,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - Example tests: the fourth navigation control is present on every screen; activating it renders the screen; a rejecting lazy import shows `error.codeview.load` with the navigation still operable.
     - _Requirements: R2.1, R8.4, R9.1, R9.9, R9.10_
 
-  - [~] 3.2 The listing and one Line
+  - [x] 3.2 The listing and one Line
     - **[demo-essential]**
     - Files: `src/ui/screens/code/Listing.tsx`, `src/ui/screens/code/Listing.module.css`, `src/ui/screens/code/LineRow.tsx`, `src/ui/screens/code/LineRow.module.css`, `src/ui/screens/code/CodeViewScreen.tsx`, `tests/ui/screens/code.test.tsx`.
     - `Listing` is the scroller: a spacer of `pickCount × rowHeight`, the Window `<ol id={CODE_VIEW_MARKER}>` offset by `transform: translateY(from × rowHeight)`, `firstVisiblePick = floor(scrollTop / rowHeight)` from the one CSS custom property, and `windowFor` deciding the Window — so at most `WINDOW_SIZE` Line elements are in the document whatever the length of the Current_Pattern, the Window moves when the Selected_Pick leaves it, and every Line inside the viewport is in the document while scrolling (R2.4, R2.7, R2.11).
@@ -285,7 +285,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - Example tests: the rendered row and its Group_Separators; padded pick numbers at 9, 10 and 10,000 picks; a damaged Line; the pick count and profile name; `Home`/`End` scrolling of a Bit_Line region; a Breakpoint surviving a Window move.
     - _Requirements: R2.2, R2.3, R2.4, R2.7, R2.8, R2.9, R2.11, R3.7, R3.11, R3.13, R11.8, R11.11_
 
-  - [~] 3.3 Step, jump and run-to-next-breakpoint, and the live region
+  - [x] 3.3 Step, jump and run-to-next-breakpoint, and the live region
     - **[demo-essential]**
     - Files: `src/ui/screens/code/CodeViewScreen.tsx`, `src/ui/screens/code/CodeViewScreen.module.css`, `tests/ui/screens/code.test.tsx`.
     - Step forward and step back dispatch `select-pick` with one more and one less, leaving the Current_Pattern and the Breakpoints unchanged (R3.1, R3.2). Step forward is disabled on the last pick index and step back on pick 0, and activating a disabled control changes nothing and shows no error message (R3.3, R3.12). The jump control takes a pick number from 0 to the last pick index through `parseJump`; a blank, non-whole or out-of-range value leaves the Selected_Pick and the Breakpoints alone and shows `codeview.jump.range` naming 0 and the last pick index, which goes away on the next valid application (R3.4, R3.5). The per-Line breakpoint control dispatches `toggle-breakpoint` (R3.6). "Run to next breakpoint" dispatches one `select-pick` straight to `nextBreakpoint`, with no intervening pick becoming the Selected_Pick; with none above it stops at the last pick index, shows the no-further-breakpoint message and announces it in the App's live region (R3.8, R3.9).
@@ -293,7 +293,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - Example tests: step and jump disabled at the ends; the invalid-jump message appearing and going; run-to-next-breakpoint with and without a Breakpoint above; the live region counting one announcement per deliberate move and none on a Window move.
     - _Requirements: R3.1, R3.2, R3.3, R3.4, R3.5, R3.6, R3.8, R3.9, R3.12, R11.6_
 
-  - [~] 3.4 The cloth beside the current card
+  - [x] 3.4 The cloth beside the current card
     - **[demo-essential]**
     - Files: `src/ui/screens/code/CodeViewScreen.tsx`, `src/ui/screens/code/CodeViewScreen.module.css`, `tests/ui/screens/code.test.tsx`.
     - One `ClothCanvas` and one `createClothPlayer`, built from `buildReadyCloth(profile, pattern, state.clothChoices, viewport.width, viewport.height)` — the Weave_Screen's own simulator calls and the user's own cloth choices, with only the viewport from this screen's layout. No pixel-drawing code and no canvas drawing call of its own (R4.1). Only `player.seek(state.selectedPick)` is ever called, never `play`, so the still rest frame of the new Selected_Pick is painted within 100 ms of the change and no playback starts (R4.3).
@@ -301,7 +301,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - Example tests: the three Sim_Failure messages with the controls still operable; a seek on every Selected_Pick change and no `play` call, with a `FakeScheduler` and a fake paint.
     - _Requirements: R4.1, R4.3, R4.4, R4.5_
 
-  - [~] 3.5 The diff panel: choosers, counts and entries
+  - [x] 3.5 The diff panel: choosers, counts and entries
     - **[demo-essential]**
     - Files: `src/ui/screens/code/DiffPanel.tsx`, `src/ui/screens/code/DiffPanel.module.css`, `src/ui/screens/code/CodeViewScreen.tsx`, `tests/ui/screens/code.test.tsx`.
     - `listDesigns(archiveDeps)` once on mount. The user compares the Current_Pattern against one Saved_Design, or two Saved_Designs against each other, from the list the Archive returns; the design chosen first is the first Line_Set and the Current_Pattern or the design chosen second is the second, so `added` always means present only in the second (R6.6). `getDesign` is called once per chosen Saved_Design when the compare control is applied; each fetched Pattern goes straight through `patternToLines` and only the Line_Set is kept. The Current_Pattern's Line_Set is `useMemo(() => patternToLines(profile, pattern), [profile, pattern])`.
@@ -310,14 +310,14 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - Example tests: one entry of each of the four kinds with its marker, kind word and `^` row; the counts; an empty archive disabling the compare controls.
     - _Requirements: R6.6, R6.7, R6.16, R11.5, R11.7_
 
-  - [~] 3.6 The Diff_Text: copy and download
+  - [x] 3.6 The Diff_Text: copy and download
     - **[demo-essential]**
     - Files: `src/ui/screens/code/DiffPanel.tsx`, `tests/ui/screens/code.test.tsx`.
     - Offer `diffToText(diff)` both as text the user can select and copy and as a file to download, the downloaded bytes holding the same characters as the text shown with no line added, removed or reordered (R6.8). The download goes through injected dependencies, as the exporter's already does, so a test uses a fake and not a mock. Every label, heading and message around the Diff_Text comes from the Translation_File; the Diff_Text itself comes from the module and is the same in both languages (R10.7).
     - Example tests: the copy text equal to the downloaded bytes, character for character; one download call with the right file name.
     - _Requirements: R6.8, R10.7_
 
-  - [~] 3.7 Refusals, empty, missing and failing inputs
+  - [x] 3.7 Refusals, empty, missing and failing inputs
     - **[demo-essential]**
     - Files: `src/ui/screens/code/CodeViewScreen.tsx`, `src/ui/screens/code/DiffPanel.tsx`, `tests/ui/screens/code.test.tsx`.
     - Each of the three refusal reasons has its own plain-language message naming the values the refusal carries and one action the user can take next; both chosen designs stay listed and selectable, no Diff_Entries and no Diff_Counts are shown, and no Diff_Text is offered to copy or download (R6.12, R6.13).
@@ -325,7 +325,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - Add the six example-based tests R12.8 names, one per criterion — R7.1, R7.2, R7.3, R7.4, R7.5 and R7.8 — each with a fake `ArchiveStore`, not a mock.
     - _Requirements: R6.12, R6.13, R7.1, R7.2, R7.3, R7.4, R7.5, R7.6, R7.7, R7.8, R12.8_
 
-  - [~] 3.8 Keyboard, focus, colour and motion
+  - [x] 3.8 Keyboard, focus, colour and motion
     - **[demo-essential]**
     - Files: `src/ui/screens/code/CodeViewScreen.module.css`, `Listing.module.css`, `LineRow.module.css`, `DiffPanel.module.css`, `src/ui/screens/code/CodeViewScreen.tsx`, `tests/ui/screens/code.test.tsx`, `tests/ui/accessibility.test.tsx`.
     - Every step, jump, breakpoint and diff control is a `button`, reachable and operable with the keyboard alone, in a tab order that follows the visual order — screen controls, then each Line's breakpoint control and Bit_Line region, then the diff panel — with no control reachable only by pointer, and focus able to leave the listing and reach the App navigation without a pointer (R11.1). The focus indicator has a contrast ratio of at least 3:1 against its neighbours and the focused control is brought into view so no part of the indicator is hidden by the edge of a Bit_Line region or of the listing (R11.2). Every control, including the per-Line breakpoint control, meets the App's Touch_Target at every viewport width from 320 to 1920 CSS pixels; the row height is `--touch-target`, so the Line controls already do (R11.10). The page never scrolls horizontally at 320, 390 and 1280 CSS pixels: only the Bit_Line region scrolls sideways, and it never widens its row (R11.8).
@@ -348,7 +348,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - One test renders a 10,000-pick listing and asserts the Lines of the Window are in the document, with at most `WINDOW_SIZE` `li.line` elements, inside a generous ceiling; one moves the Selected_Pick and asserts the moved Window is in the document inside a generous ceiling (R2.6, R2.10). Record the measured numbers and say in the test that jsdom timing is not phone timing: the number that matters is in `check:browser`.
     - _Requirements: R2.6, R2.10_
 
-  - [~] 3.11 Checkpoint - the screen
+  - [-] 3.11 Checkpoint - the screen
     - Ensure all tests pass, ask the user if questions arise.
     - The boundary test of task 1.3 now has a non-empty `src/ui` file set; confirm it passes and reports on the real Code view files.
     - _Requirements: R8.4, R12.9_

@@ -944,7 +944,7 @@
     "reviewed": false
   },
   "codeview.refusal.dimension-mismatch": {
-    "text": "इन दोनों डिज़ाइनों की तुलना नहीं हो सकती, क्योंकि इनके कार्ड की बनावट अलग है: पहले में हुक की {firstRows} पंक्ति और {firstColumns} स्तंभ हैं, दूसरे में {secondRows} पंक्ति और {secondColumns} स्तंभ। एक ही कार्ड प्रोफ़ाइल के लिए बने दो डिज़ाइन चुनें।",
+    "text": "इन दोनों डिज़ाइनों की तुलना नहीं हो सकती, क्योंकि इनके कार्ड की बनावट अलग है: पहले में हुक की {firstHookRows} पंक्ति और {firstHookColumns} स्तंभ हैं, दूसरे में {secondHookRows} पंक्ति और {secondHookColumns} स्तंभ। एक ही कार्ड प्रोफ़ाइल के लिए बने दो डिज़ाइन चुनें।",
     "reviewed": false
   },
   "codeview.refusal.profile-mismatch": {

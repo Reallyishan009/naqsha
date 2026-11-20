@@ -117,7 +117,7 @@ const ACCESSIBLE_NAME_KEYS: readonly string[] = [
 
 /** The values each refusal carries, as the placeholder names of its message (R6.12). */
 const REFUSAL_PLACEHOLDERS: Readonly<Record<string, readonly string[]>> = {
-  'codeview.refusal.dimension-mismatch': ['firstRows', 'firstColumns', 'secondRows', 'secondColumns'],
+  'codeview.refusal.dimension-mismatch': ['firstHookRows', 'firstHookColumns', 'secondHookRows', 'secondHookColumns'],
   'codeview.refusal.profile-mismatch': ['firstProfileName', 'secondProfileName'],
   'codeview.refusal.too-many-picks': ['limit', 'firstPicks', 'secondPicks'],
 };

@@ -21,14 +21,14 @@ import { appReducer, initialAppState } from './state/appState.ts';
 import './theme/tokens.css';
 import type { AppAction, AppState, Language, Screen } from './types.ts';
 
-const SCREENS: ReadonlyArray<Screen> = ['weave', 'keep', 'scan'];
+const SCREENS: ReadonlyArray<Screen> = ['weave', 'keep', 'scan', 'code'];
 const LANGUAGES: ReadonlyArray<Language> = ['hi', 'en'];
 
 type BoundaryProps = { message: string; children: ReactNode };
 type BoundaryState = { failed: boolean };
 
 /** Keeps a failing screen from taking down the shell. The shell passes a new `key` per screen, so navigating resets it. */
-class ScreenBoundary extends Component<BoundaryProps, BoundaryState> {
+export class ScreenBoundary extends Component<BoundaryProps, BoundaryState> {
   override state: BoundaryState = { failed: false };
 
   static getDerivedStateFromError(): BoundaryState {
@@ -47,6 +47,14 @@ class ScreenBoundary extends Component<BoundaryProps, BoundaryState> {
 
 /** The Scan screen is its own chunk, so the camera-free entry stays small (R16.10). */
 const ScanScreen = lazy(() => import('./screens/scan/ScanScreen.tsx'));
+
+/** The Code view screen is its own chunk, requested on the first open of Code view in a page session (R9.1). */
+const CodeViewScreen = lazy(() => import('./screens/code/CodeViewScreen.tsx'));
+
+/** The message key a failed screen shows: Code view names itself, because its chunk can fail to load (R9.10). */
+export function screenErrorKey(screen: Screen): string {
+  return screen === 'code' ? 'error.codeview.load' : 'error.generic';
+}
 
 export type ShellProps = {
   state: AppState;
@@ -115,14 +123,18 @@ export function Shell({ state, dispatch, onLanguageChosen, updateReady = false, 
       ) : null}
       {profile.status === 'loading' ? <p className={styles.loading}>{t('status.loading')}</p> : null}
       <main className={styles.main}>
-        <ScreenBoundary key={state.screen} message={t('error.generic')}>
+        <ScreenBoundary key={state.screen} message={t(screenErrorKey(state.screen))}>
           {state.screen === 'weave' ? (
             <WeaveScreen state={state} dispatch={dispatch} t={t} />
           ) : state.screen === 'keep' ? (
             <KeepScreen state={state} dispatch={dispatch} t={t} />
-          ) : (
+          ) : state.screen === 'scan' ? (
             <Suspense fallback={<p className={styles.loading}>{t('status.loading')}</p>}>
               <ScanScreen state={state} dispatch={dispatch} t={t} />
+            </Suspense>
+          ) : (
+            <Suspense fallback={<p className={styles.loading}>{t('status.loading')}</p>}>
+              <CodeViewScreen state={state} dispatch={dispatch} t={t} />
             </Suspense>
           )}
         </ScreenBoundary>

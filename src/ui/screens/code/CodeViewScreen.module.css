@@ -1,0 +1,120 @@
+.screen {
+  /* One Line is as tall as a touch target, so its breakpoint button fits (R3.11). */
+  --code-line-height: var(--touch-target);
+  max-width: 60rem;
+}
+
+.screenTitle {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+.summary {
+  margin: 0 0 12px;
+  /* Long profile names wrap instead of widening the page at 320 px. */
+  overflow-wrap: anywhere;
+}
+
+.controls {
+  margin: 0 0 12px;
+}
+
+.selected {
+  margin: 0 0 8px;
+  font-family: var(--font-data);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.label {
+  /* The label wraps above a narrow row instead of widening the page at 320 px. */
+  flex: 1 1 100%;
+}
+
+.button {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: 0 16px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+/* Disabled shows as dimmed with a not-allowed cursor, besides the native disabled state. */
+.button:disabled,
+.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.input {
+  flex: 1 1 8rem;
+  min-width: 0;
+  min-height: var(--touch-target);
+  padding: 8px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  font: inherit;
+}
+
+.failure {
+  margin: 8px 0;
+  padding: 12px 16px;
+  border: 2px solid var(--madder);
+  border-radius: var(--radius-panel);
+}
+
+.notice {
+  margin: 8px 0;
+  padding: 12px 16px;
+  border: 2px dashed var(--line);
+  border-radius: var(--radius-panel);
+}
+
+.empty {
+  padding: 16px;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-panel);
+}
+
+/* The listing and the cloth sit side by side on a wide viewport and stack, cloth below, on a narrow one (R4). */
+.body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.listingPane {
+  flex: 1 1 24rem;
+  min-width: 0;
+}
+
+.clothPane {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+.clothArea {
+  width: 100%;
+  min-width: 0;
+}

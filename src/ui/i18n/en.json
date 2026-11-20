@@ -235,7 +235,7 @@
   "codeview.diff.copyFailed": "The text could not be copied. Select it and copy it yourself.",
   "codeview.diff.download": "Download as a text file",
   "codeview.diff.downloaded": "The text file was downloaded.",
-  "codeview.refusal.dimension-mismatch": "These two designs cannot be compared because their cards are laid out differently: the first has {firstRows} hook rows and {firstColumns} hook columns, the second has {secondRows} hook rows and {secondColumns} hook columns. Choose two designs made for the same card profile.",
+  "codeview.refusal.dimension-mismatch": "These two designs cannot be compared because their cards are laid out differently: the first has {firstHookRows} hook rows and {firstHookColumns} hook columns, the second has {secondHookRows} hook rows and {secondHookColumns} hook columns. Choose two designs made for the same card profile.",
   "codeview.refusal.profile-mismatch": "These two designs were made for different card profiles: {firstProfileName} and {secondProfileName}. Choose two designs that use the same card profile.",
   "codeview.refusal.too-many-picks": "These designs are too long to compare. At most {limit} picks can be compared, and these have {firstPicks} and {secondPicks}. Choose shorter designs.",
   "error.codeview.load": "Code view could not be loaded. The other screens still work."

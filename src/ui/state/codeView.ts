@@ -1,5 +1,6 @@
 import type { DiffEntry, Line } from '../../codec-view/index.ts';
 import type { Translate } from '../i18n/messages.ts';
+import type { AppAction } from '../types.ts';
 
 /** The most Lines the listing keeps in the document at once; fixed, whatever the pattern or viewport (R2.5). */
 export const WINDOW_SIZE = 80;
@@ -143,6 +144,77 @@ export function parseJump(text: string, lastPick: number): JumpParse {
   return { ok: true, pick };
 }
 
+/** The controls of the Code_View_Screen that move the Selected_Pick on purpose (R3.1, R3.2, R3.4, R3.8). */
+export type PickControl = 'step-back' | 'step-forward' | 'jump' | 'run-to-next-breakpoint';
+
+export type PickControlInput = {
+  control: PickControl;
+  selectedPick: number;
+  pickCount: number;
+  breakpoints: Breakpoints;
+  /** What the jump control holds; read only when `control` is `'jump'`. */
+  jumpText?: string;
+};
+
+export type PickControlOutcome = {
+  /** What the screen dispatches, in order: nothing, or one `select-pick` and at most one `announce`. */
+  actions: ReadonlyArray<AppAction>;
+  /** True when the jump control was applied with a value outside 0 to the last pick index (R3.5). */
+  jumpRejected: boolean;
+  /** True when "run to next breakpoint" found no Breakpoint above the Selected_Pick (R3.9). */
+  noFurtherBreakpoint: boolean;
+};
+
+const NO_ACTIONS: ReadonlyArray<AppAction> = [];
+
+function movedTo(pick: number, selectedPick: number): ReadonlyArray<AppAction> {
+  const select: AppAction = { type: 'select-pick', pick };
+  // The pick is announced once per deliberate move, and only when the Selected_Pick changes (R11.6).
+  return pick === selectedPick
+    ? [select]
+    : [select, { type: 'announce', kind: 'confirmation', messageKey: 'codeview.announce.pick', params: { pick } }];
+}
+
+/**
+ * What activating a Code view control does, as the actions to dispatch (R3.1 to R3.5, R3.8, R3.9, R3.12, R11.6).
+ * Pure and total. A step beyond the first or the last pick index, and any control on a Current_Pattern with no
+ * picks, gives no action and no error, so activating a disabled control changes nothing. The Breakpoints are never
+ * an output: no control but the Line's own breakpoint control changes them.
+ *
+ * "Run to next breakpoint" is one `select-pick` straight to `nextBreakpoint`. When none lies above, it stops at the
+ * last pick index and announces `codeview.announce.noBreakpoint` instead of the pick, because the live region holds
+ * one message and the second would replace the first.
+ */
+export function pickControlOutcome(input: PickControlInput): PickControlOutcome {
+  const { control, selectedPick, pickCount, breakpoints } = input;
+  const idle: PickControlOutcome = { actions: NO_ACTIONS, jumpRejected: false, noFurtherBreakpoint: false };
+  if (!Number.isInteger(pickCount) || pickCount <= 0) return idle;
+  const lastPick = pickCount - 1;
+
+  switch (control) {
+    case 'step-forward':
+      return selectedPick >= lastPick ? idle : { ...idle, actions: movedTo(selectedPick + 1, selectedPick) };
+    case 'step-back':
+      return selectedPick <= 0 ? idle : { ...idle, actions: movedTo(selectedPick - 1, selectedPick) };
+    case 'jump': {
+      const jump = parseJump(input.jumpText ?? '', lastPick);
+      return jump.ok ? { ...idle, actions: movedTo(jump.pick, selectedPick) } : { ...idle, jumpRejected: true };
+    }
+    case 'run-to-next-breakpoint': {
+      const next = nextBreakpoint(breakpoints, selectedPick, lastPick);
+      if (next.found) return { ...idle, actions: movedTo(next.pick, selectedPick) };
+      return {
+        ...idle,
+        noFurtherBreakpoint: true,
+        actions: [
+          { type: 'select-pick', pick: next.pick },
+          { type: 'announce', kind: 'confirmation', messageKey: 'codeview.announce.noBreakpoint' },
+        ],
+      };
+    }
+  }
+}
+
 /** The end indices written as a list: ascending as given, a comma and a space between, nothing else (R11.3). */
 function endList(ends: ReadonlyArray<number>): string {
   return ends.join(', ');
@@ -189,4 +261,34 @@ export function diffEntryAccessibleName(t: Translate, entry: DiffEntry): string 
     case 'removed':
       return t('codeview.diff.name.removed', { firstPick: entry.first.pick });
   }
+}
+
+/** The two kinds of control a Line carries: its breakpoint control and its Bit_Line region (R11.13). */
+export type LineControlKind = 'breakpoint' | 'bit-line';
+
+/** The control of a Line that had keyboard focus: its kind and the pick index of its Line. */
+export type FocusedLineControl = { kind: LineControlKind; pick: number };
+
+/** Where focus goes after a Window move: a control of a Line, or the step forward control. */
+export type FocusTarget = FocusedLineControl | 'step-forward';
+
+/**
+ * Where keyboard focus goes when the Window moved (R11.13). `focused` is the control that had focus before the move.
+ * It gives null while the Line of that control is still in the Window, because focus did not leave the document.
+ * Otherwise it gives the same kind of control on the Line of the Selected_Pick, or `'step-forward'` where that Line
+ * has none: the Selected_Pick's Line is not in the Window, or it is a `damaged` Line, which has a breakpoint control
+ * and no Bit_Line region. `selectedLineKind` is the kind of the Selected_Pick's Line, or null when there is none.
+ * Pure and total.
+ */
+export function focusTargetAfterWindowMove(
+  focused: FocusedLineControl,
+  pickWindow: PickWindow,
+  selectedPick: number,
+  selectedLineKind: Line['kind'] | null,
+): FocusTarget | null {
+  const inWindow = (pick: number): boolean => pick >= pickWindow.from && pick < pickWindow.from + pickWindow.count;
+  if (inWindow(focused.pick)) return null;
+  if (!inWindow(selectedPick) || selectedLineKind === null) return 'step-forward';
+  if (focused.kind === 'bit-line' && selectedLineKind !== 'bits') return 'step-forward';
+  return { kind: focused.kind, pick: selectedPick };
 }
