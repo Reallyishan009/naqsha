@@ -64,3 +64,11 @@
   margin: 0;
   overflow-wrap: anywhere;
 }
+/* A card that is a guess: the words say so, and the dashed edge is a second cue that is not colour. */
+.repaired {
+  flex: none;
+  padding: 0 6px;
+  font-style: italic;
+  white-space: nowrap;
+  border: 1px dashed var(--ink);
+}

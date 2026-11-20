@@ -34,6 +34,7 @@ import {
 import type { PlaybackAt } from '../../state/playback.ts';
 import type { AppAction, AppState, ClothChoices, ClothView, ReadyCloth } from '../../types.ts';
 import { ClothCanvas, createClothPlayer } from './ClothCanvas.tsx';
+import { RepairNotice } from './RepairNotice.tsx';
 import { TryIt } from './TryIt.tsx';
 import styles from './WeaveScreen.module.css';
 
@@ -293,6 +294,15 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
         {gapText === '' ? null : <p className={styles.gaps}>{t('weave.gaps', { picks: gapText })}</p>}
       </div>
 
+      <RepairNotice
+        gapCount={shown === null ? 0 : shown.cloth.gaps.length}
+        repairedPicks={state.repairs.picks}
+        canUndo={state.repairs.history.length > 0}
+        profile={profile}
+        pattern={state.current.pattern}
+        t={t}
+        dispatch={dispatch}
+      />
       <p className={styles.position}>{pickPositionText(t, pick, pickCount)}</p>
 
       <div className={styles.row}>

@@ -69,10 +69,12 @@ export type LineItemProps = {
   t: Translate;
   /** Called with the pick index of this Line; the screen toggles its Breakpoint. */
   onToggleBreakpoint: (pick: number) => void;
+  /** True when the card of this pick came from an accepted suggestion, so it is a guess and not a read card. */
+  repaired?: boolean;
 };
 
 /** One Line of the listing (R2.2, R2.3, R2.9, R3.7, R3.11, R11.11). Memoised: up to Window_Size are rendered. */
-function LineItemView({ line, selected, breakpoint, pickWidth, hookColumns, t, onToggleBreakpoint }: LineItemProps) {
+function LineItemView({ line, selected, breakpoint, pickWidth, hookColumns, t, onToggleBreakpoint, repaired = false }: LineItemProps) {
   const pick = line.pick;
   const bitsText = line.kind === 'bits' ? groupBits(line.bits, hookColumns) : '';
 
@@ -89,7 +91,7 @@ function LineItemView({ line, selected, breakpoint, pickWidth, hookColumns, t, o
     <li
       className={styles.line}
       role="group"
-      aria-label={lineAccessibleName(t, line)}
+      aria-label={repaired ? `${lineAccessibleName(t, line)}, ${t('repair.mark')}` : lineAccessibleName(t, line)}
       aria-current={selected ? 'true' : undefined}
       data-pick={pick}
     >
@@ -109,6 +111,7 @@ function LineItemView({ line, selected, breakpoint, pickWidth, hookColumns, t, o
       <span className={styles.pickNumber} aria-hidden="true">
         {paddedPickNumber(pick, pickWidth)}
       </span>
+      {repaired ? <span className={styles.repaired}>{t('repair.mark')}</span> : null}
       {line.kind === 'damaged' ? (
         <p className={styles.damaged}>{t('codeview.line.damagedLabel')}</p>
       ) : (

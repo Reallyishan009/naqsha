@@ -97,6 +97,7 @@ function focusInView(element: HTMLElement): void {
   element.scrollIntoView({ block: 'nearest', behavior: 'auto' });
 }
 
+const NO_PICKS: ReadonlyArray<number> = [];
 export type ListingProps = {
   /** One Line for each pick of the Current_Pattern, in pick order; empty when the Current_Pattern has no Lines. */
   lines: ReadonlyArray<Line>;
@@ -109,6 +110,8 @@ export type ListingProps = {
   dispatch: Dispatch<AppAction>;
   /** The step forward control: where focus goes when the Selected_Pick's Line has no control of the focused kind (R11.13). */
   stepForwardRef: RefObject<HTMLButtonElement | null>;
+  /** Pick indices whose card is an accepted suggestion; their Lines say so. */
+  repairedPicks?: ReadonlyArray<number>;
 };
 
 /**
@@ -124,6 +127,7 @@ export function Listing({
   t,
   dispatch,
   stepForwardRef,
+  repairedPicks = NO_PICKS,
 }: ListingProps) {
   const pickCount = lines.length;
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -206,6 +210,7 @@ export function Listing({
 
   const onToggleBreakpoint = useCallback((pick: number) => dispatch({ type: 'toggle-breakpoint', pick }), [dispatch]);
   const breakpointSet = useMemo(() => new Set(breakpoints), [breakpoints]);
+  const repairedSet = useMemo(() => new Set(repairedPicks), [repairedPicks]);
   const pickWidth = pickNumberWidth(pickCount);
   const windowLines = lines.slice(shown.from, shown.from + shown.count);
 
@@ -224,6 +229,7 @@ export function Listing({
               line={line}
               selected={line.pick === selectedPick}
               breakpoint={breakpointSet.has(line.pick)}
+              repaired={repairedSet.has(line.pick)}
               pickWidth={pickWidth}
               hookColumns={hookColumns}
               t={t}

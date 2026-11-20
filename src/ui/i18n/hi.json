@@ -555,6 +555,226 @@
     "text": "वापस लाया गया। अगला सहेजना नया संस्करण बनेगा। कुछ मिटाया नहीं गया।",
     "reviewed": false
   },
+  "weave.repair.notice.one": {
+    "text": "1 कार्ड पढ़ा नहीं जा सका",
+    "reviewed": false
+  },
+  "weave.repair.notice.other": {
+    "text": "{count} कार्ड पढ़े नहीं जा सके",
+    "reviewed": false
+  },
+  "weave.repair.suggest": {
+    "text": "सुधार सुझाएँ",
+    "reviewed": false
+  },
+  "weave.repair.hide": {
+    "text": "सुझाव छिपाएँ",
+    "reviewed": false
+  },
+  "weave.repair.loading": {
+    "text": "सुझाव आ रहे हैं…",
+    "reviewed": false
+  },
+  "weave.repair.loadFailed": {
+    "text": "सुझाव नहीं आ सके। अपना कनेक्शन देखें और फिर से सुधार सुझाएँ दबाएँ।",
+    "reviewed": false
+  },
+  "weave.repair.repaired": {
+    "text": "सुधारे गए (अंदाज़ा): पिक {picks}",
+    "reviewed": false
+  },
+  "weave.repair.undo": {
+    "text": "आख़िरी मंज़ूर सुधार वापस लें",
+    "reviewed": false
+  },
+  "repair.heading": {
+    "text": "सुझाए गए सुधार",
+    "reviewed": false
+  },
+  "repair.guesses": {
+    "text": "ये नक्शे के आधार पर अंदाज़े हैं। हो सके तो असली कार्ड से मिलाकर देखें।",
+    "reviewed": false
+  },
+  "repair.legend": {
+    "text": "● छेद किया हुआ   ○ छेद नहीं",
+    "reviewed": false
+  },
+  "repair.noGaps": {
+    "text": "अब कोई खोया कार्ड नहीं बचा।",
+    "reviewed": false
+  },
+  "repair.gap": {
+    "text": "पिक {pick}: {state}",
+    "reviewed": false
+  },
+  "repair.gap.short": {
+    "text": "पिक {pick}",
+    "reviewed": false
+  },
+  "repair.gap.missing": {
+    "text": "यहाँ कार्ड नहीं है",
+    "reviewed": false
+  },
+  "repair.gap.damaged": {
+    "text": "कार्ड पढ़ा नहीं जा सका",
+    "reviewed": false
+  },
+  "repair.kind.repeat": {
+    "text": "डिज़ाइन दोहराता है",
+    "reviewed": false
+  },
+  "repair.kind.mirror": {
+    "text": "डिज़ाइन आईने जैसा उलटा है",
+    "reviewed": false
+  },
+  "repair.kind.neighbours": {
+    "text": "दोनों तरफ़ के कार्ड एक जैसे हैं",
+    "reviewed": false
+  },
+  "repair.confidence.high": {
+    "text": "भरोसा: ज़्यादा",
+    "reviewed": false
+  },
+  "repair.confidence.medium": {
+    "text": "भरोसा: बीच का",
+    "reviewed": false
+  },
+  "repair.confidence.low": {
+    "text": "भरोसा: कम",
+    "reviewed": false
+  },
+  "repair.evidence.repeat": {
+    "text": "कार्ड हर {period} पिक पर दोहराते हैं ({compared} में से {agreeing} जोड़े मिलते हैं)। पिक {picks} से लिया गया।",
+    "reviewed": false
+  },
+  "repair.evidence.mirror": {
+    "text": "डिज़ाइन उलटा पढ़ने पर भी वैसा ही है ({compared} में से {agreeing} जोड़े मिलते हैं)। पिक {partner} से नक़ल किया गया।",
+    "reviewed": false
+  },
+  "repair.evidence.neighbours": {
+    "text": "दोनों तरफ़ के पिक {before} और {after} एक ही कार्ड हैं।",
+    "reviewed": false
+  },
+  "repair.conflict": {
+    "text": "ये सुझाव आपस में नहीं मिलते। दोनों देखें, फिर एक मंज़ूर करें या छोड़ दें।",
+    "reviewed": false
+  },
+  "repair.draw": {
+    "text": "सुझाया कार्ड: {total} में से {punched} हुक की जगह छेद किए हुए",
+    "reviewed": false
+  },
+  "repair.accept": {
+    "text": "यह अंदाज़ा मंज़ूर करें",
+    "reviewed": false
+  },
+  "repair.skip": {
+    "text": "छोड़ें",
+    "reviewed": false
+  },
+  "repair.skipped": {
+    "text": "छोड़ दिया। कुछ नहीं बदला।",
+    "reviewed": false
+  },
+  "repair.showAgain": {
+    "text": "फिर दिखाएँ",
+    "reviewed": false
+  },
+  "repair.acceptAll": {
+    "text": "सारे ज़्यादा भरोसे वाले सुझाव मंज़ूर करें",
+    "reviewed": false
+  },
+  "repair.accepted": {
+    "text": "अंदाज़े के तौर पर मंज़ूर किया: {picks}।",
+    "reviewed": false
+  },
+  "repair.undone": {
+    "text": "आख़िरी मंज़ूर सुधार वापस ले लिया गया।",
+    "reviewed": false
+  },
+  "repair.mark": {
+    "text": "सुधारा गया (अंदाज़ा)",
+    "reviewed": false
+  },
+  "repair.why": {
+    "text": "बाक़ी तरीक़े क्यों नहीं?",
+    "reviewed": false
+  },
+  "repair.none.no-readable-cards": {
+    "text": "कोई कार्ड पढ़ा नहीं जा सका, इसलिए अंदाज़े का आधार नहीं है। कोई सुझाव नहीं।",
+    "reviewed": false
+  },
+  "repair.none.too-short": {
+    "text": "कार्ड की लड़ी अंदाज़े के लिए बहुत छोटी है। कोई सुझाव नहीं।",
+    "reviewed": false
+  },
+  "repair.none.no-evidence": {
+    "text": "अंदाज़े के लिए कोई दोहराव, उलटा रूप या मिलते पड़ोसी कार्ड नहीं हैं। कोई सुझाव नहीं।",
+    "reviewed": false
+  },
+  "repair.notApplied.too-few-readable-cards": {
+    "text": "इसे ढूँढने के लिए बहुत कम कार्ड पढ़े जा सके।",
+    "reviewed": false
+  },
+  "repair.notApplied.no-period": {
+    "text": "कोई दोहराव नहीं मिला।",
+    "reviewed": false
+  },
+  "repair.notApplied.no-supporter": {
+    "text": "सही दूरी पर कोई पढ़ा हुआ कार्ड नहीं है।",
+    "reviewed": false
+  },
+  "repair.notApplied.supporters-tie": {
+    "text": "सही दूरी के कार्ड बराबर बँटे हुए हैं।",
+    "reviewed": false
+  },
+  "repair.notApplied.no-mirror": {
+    "text": "कोई उलटा रूप नहीं मिला।",
+    "reviewed": false
+  },
+  "repair.notApplied.centre-pick": {
+    "text": "यह बीच का पिक है, इसलिए इसका कोई जोड़ीदार नहीं है।",
+    "reviewed": false
+  },
+  "repair.notApplied.partner-out-of-chain": {
+    "text": "जोड़ीदार कार्ड लड़ी से बाहर पड़ता है।",
+    "reviewed": false
+  },
+  "repair.notApplied.partner-unreadable": {
+    "text": "जोड़ीदार कार्ड भी पढ़ा नहीं जा सका।",
+    "reviewed": false
+  },
+  "repair.notApplied.at-chain-edge": {
+    "text": "यह पहला या आख़िरी पिक है, इसलिए इसका एक ही पड़ोसी है।",
+    "reviewed": false
+  },
+  "repair.notApplied.neighbour-unreadable": {
+    "text": "पड़ोसी कार्ड पढ़ा नहीं जा सका।",
+    "reviewed": false
+  },
+  "repair.notApplied.neighbours-differ": {
+    "text": "दोनों तरफ़ के कार्ड अलग-अलग हैं।",
+    "reviewed": false
+  },
+  "repair.failure.invalid-profile": {
+    "text": "कार्ड प्रोफ़ाइल सही नहीं है, इसलिए सुझाव नहीं बन सकते। सही कार्ड प्रोफ़ाइल लगाएँ और फिर कोशिश करें।",
+    "reviewed": false
+  },
+  "repair.failure.not-a-pattern": {
+    "text": "डिज़ाइन पढ़ा नहीं जा सका, इसलिए सुझाव नहीं बन सकते। डिज़ाइन फिर से खोलें।",
+    "reviewed": false
+  },
+  "keep.export.guesses": {
+    "text": "कुछ पिक सुझाए गए अंदाज़े हैं, कार्ड से पढ़े नहीं गए।",
+    "reviewed": false
+  },
+  "tryit.lost": {
+    "text": "खोए कार्ड वाला डिज़ाइन आज़माएँ",
+    "reviewed": false
+  },
+  "tryit.lost.hint": {
+    "text": "तीन कार्ड खोए हैं। बुनाई पर सुधार सुझाएँ दबाएँ।",
+    "reviewed": false
+  },
   "colour.madder": {
     "text": "मजीठ लाल",
     "reviewed": false

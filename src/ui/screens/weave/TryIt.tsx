@@ -3,7 +3,7 @@ import type { Dispatch } from 'react';
 import type { CardProfile, Pattern } from '../../../codec/index.ts';
 import { printFailureKey } from '../../i18n/messages.ts';
 import type { Translate } from '../../i18n/messages.ts';
-import { generateSample } from '../../samples/sampleDesigns.ts';
+import { generateSample, sampleWithLostCards } from '../../samples/sampleDesigns.ts';
 import type { AppAction, Confirm, SampleDesign } from '../../types.ts';
 import styles from './WeaveScreen.module.css';
 
@@ -139,6 +139,20 @@ export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModu
           </button>
         ))}
       </div>
+      <div className={styles.row}>
+        <button
+          type="button"
+          className={styles.button}
+          disabled={profile === null}
+          onClick={() => {
+            if (profile === null) return;
+            dispatch({ type: 'request-sample', design: 'diamond', pattern: sampleWithLostCards(profile) });
+          }}
+        >
+          {t('tryit.lost')}
+        </button>
+      </div>
+      <p>{t('tryit.lost.hint')}</p>
       {profile === null || samples === null
         ? null
         : samples.map(({ design, pattern }) => (

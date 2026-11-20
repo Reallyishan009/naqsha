@@ -282,6 +282,7 @@ export function CodeViewScreen({
                   t={t}
                   dispatch={dispatch}
                   stepForwardRef={stepForwardRef}
+                  repairedPicks={state.repairs.picks}
                 />
               )}
             </div>

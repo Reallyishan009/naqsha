@@ -120,6 +120,8 @@ export type KeepViewProps = {
   onToggleVersions?: (designId: string) => void;
   onRestore?: (id: string) => void;
   onCompare?: (first: CompareChoice, second: CompareChoice) => void;
+  /** How many picks of the Current_Pattern are accepted suggestions; any makes the export say so. */
+  repairedCount?: number;
 };
 
 /** What Keep draws. No state of its own, so tests can render every case (R5, R7, R22). */
@@ -173,6 +175,7 @@ export function KeepView(props: KeepViewProps) {
         <button type="button" className={styles.button} disabled={!exportEnabled} onClick={props.onExport}>
           {t('keep.export.button')}
         </button>
+        {(props.repairedCount ?? 0) > 0 ? <p>{t('keep.export.guesses')}</p> : null}
         {exportDone ? <p className={styles.done}>{t('keep.export.done')}</p> : null}
       </section>
 
@@ -432,6 +435,7 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
       onOpen={onOpen}
       language={state.language}
       origin={state.current.origin}
+      repairedCount={state.repairs.picks.length}
       expandedDesignId={expandedDesignId}
       onToggleVersions={(designId) => setExpandedDesignId((current) => (current === designId ? null : designId))}
       onRestore={onRestore}
