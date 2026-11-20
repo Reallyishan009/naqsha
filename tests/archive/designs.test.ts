@@ -51,9 +51,18 @@ describe('archive example tests', () => {
 
   it('R6.1 index.ts exports the four functions and the SavedDesign type; each function returns a promise of a result object and none throws', async () => {
     expect([saveDesign, getDesign, listDesigns, deleteDesign].map((fn) => typeof fn)).toEqual(Array(4).fill('function'));
-    // A SavedDesign has exactly these fields.
-    const design: SavedDesign = { id: 'a', profileName: 'demo', metadata: emptyMetadata, createdAt: 1, pattern: tinyPattern };
-    expect(Object.keys(design).sort()).toEqual(['createdAt', 'id', 'metadata', 'pattern', 'profileName']);
+    // A SavedDesign has exactly these fields. Changed on purpose by version-history: designId and note are
+    // two new optional fields, so a version carries seven; a design's first version still carries five.
+    const version: SavedDesign = {
+      id: 'a',
+      profileName: 'demo',
+      metadata: emptyMetadata,
+      createdAt: 1,
+      pattern: tinyPattern,
+      designId: 'root',
+      note: 'wider border',
+    };
+    expect(Object.keys(version).sort()).toEqual(['createdAt', 'designId', 'id', 'metadata', 'note', 'pattern', 'profileName']);
     // Every function reports a failed store as a value, not as a throw.
     const { deps, store } = makeDeps();
     store.failOn('open');

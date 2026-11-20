@@ -16,7 +16,13 @@ export type SavedDesign = {
   /** Milliseconds since the epoch, from the injected clock. */
   createdAt: number;
   pattern: Pattern;
+  /** The design this version continues. Absent on the first version of a design: its own id is the design id. */
+  designId?: string;
+  /** A short note on what changed in this version, at most NOTE_MAX characters. Absent when there is none. */
+  note?: string;
 };
+/** The longest note a version may carry. */
+export const NOTE_MAX = 200;
 
 export type DesignSummary = {
   id: string;
@@ -24,6 +30,8 @@ export type DesignSummary = {
   metadata: Metadata;
   createdAt: number;
   pickCount: number;
+  designId?: string;
+  note?: string;
 };
 
 export type ArchiveFailure =

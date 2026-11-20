@@ -14,6 +14,11 @@ export type FakeIdbOptions = {
   openError?: Error;
   /** A put or delete request on this store for this key fails, which aborts its transaction. */
   failWrite?: (storeName: string, key: string) => boolean;
+  /**
+   * Start from a database that an older build of the app left behind: version 1, the `designs` and `summaries`
+   * stores holding these rows, and the createdAt index only. Opening it at a higher version runs the upgrade.
+   */
+  legacy?: { designs: Row[]; summaries: Row[] };
 };
 
 export type FakeIdb = {
@@ -260,12 +265,21 @@ export function createFakeIndexedDb(options: FakeIdbOptions = {}): FakeIdb {
         let db = databases.get(name);
         if (db === undefined) {
           db = new FakeDatabase(transactions, options);
+          if (options.legacy !== undefined) seedLegacy(db, options.legacy);
           databases.set(name, db);
         }
         request.result = db;
         if (db.version < (version ?? 1)) {
+          const oldVersion = db.version;
           db.upgrading = true;
-          request.onupgradeneeded?.({});
+          request.transaction = {
+            objectStore: (storeName: string) => {
+              const data = db.stores.get(storeName);
+              if (data === undefined) throw domError('NotFoundError', `no store ${storeName}`);
+              return { createIndex: (indexName: string) => void data.indexes.add(indexName) };
+            },
+          };
+          request.onupgradeneeded?.({ oldVersion });
           db.upgrading = false;
           db.version = version ?? 1;
         }
@@ -278,8 +292,19 @@ export function createFakeIndexedDb(options: FakeIdbOptions = {}): FakeIdb {
   return fake;
 }
 
+function seedLegacy(db: FakeDatabase, legacy: NonNullable<FakeIdbOptions['legacy']>): void {
+  const fill = (rows: Row[], indexes: string[]): StoreData => ({
+    keyPath: 'id',
+    indexes: new Set(indexes),
+    rows: new Map(rows.map((row) => [String(row['id']), structuredClone(row)])),
+  });
+  db.stores.set('designs', fill(legacy.designs, []));
+  db.stores.set('summaries', fill(legacy.summaries, ['createdAt']));
+  db.version = 1;
+}
 class FakeOpenRequest {
   result: FakeDatabase | undefined = undefined;
+  transaction: { objectStore(name: string): { createIndex(name: string): void } } | null = null;
   error: Error | null = null;
   onsuccess: Handler = null;
   onerror: Handler = null;
