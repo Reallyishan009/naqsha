@@ -7,6 +7,7 @@ Naqsha/
 ├── src/
 │   ├── codec/       # Punch card encoding and decoding
 │   ├── codec-view/  # Bit lines, diff and diff text for Code view
+│   ├── repair/      # Guesses for lost cards (repeat, mirror, neighbours)
 │   ├── reader/      # Camera capture and image pre-processing
 │   ├── simulator/   # Weave simulation and cloth rendering
 │   ├── exporter/    # Bitmap generation and file export
@@ -31,6 +32,11 @@ Key exports: validateCardProfile, parseCardProfile, validateCardGrid, endsPerPic
 Turns codec data into text for reading and comparing: a card into a Bit_Line, a Pattern into a Line_Set, two Line_Sets into a Diff, a Diff back into a Line_Set, and a Diff into plain text. Pure data transformation; no React, no DOM, no browser API, no I/O. Imports only from src/codec, and takes the hook-position-to-end mapping only from encodeCardGrid.
 
 Key exports: cardToBits, patternToLines, diffPatterns, applyDiff, diffToText; also groupBits, lineKey, alignLines, GROUP_SEPARATOR, DIFF_MARKERS, DIFF_PICK_LIMIT; types BitLine, BitsLine, DamagedLine, Line, LineSet, LineSetHeader, Diff, DiffEntry, DiffCounts, DiffRefusal, BitsResult, LinesFailure, LinesResult, ApplyFailure, ApplyResult, Alignment
+
+### src/repair
+Suggests what a lost card (a gap: a pick that is missing or damaged) probably looked like, and the evidence for each guess. Three kinds only: repeat (cards equal at a period), mirror (the chain is symmetric about a centre) and neighbours (the picks on both sides are the same card). Pure data transformation; no React, no DOM, no I/O. Imports only from src/codec and src/codec-view, and compares cards only with codec-view's cardToBits. Never changes its input and never throws; a suggestion is a guess and carries its confidence (high, medium, low) and its evidence as plain data.
+
+Key exports: suggestRepairs, MIN_COMPARISONS, AGREEMENT_FLOOR, HIGH_MIN_COMPARISONS; types SuggestionKind, Confidence, Evidence, Suggestion, NotAppliedReason, NoSuggestionReason, GapRepair, RepairFailure, RepairResult
 
 ### src/reader
 Handles everything between the physical card and the codec: loading an image into pixel data, greyscale, thresholding, dark region detection, peg hole selection (pegHoles.ts, selectPegHoles.ts), layout check (layout.ts), orientation, pose, and sampling the hook positions into a card grid. Isolates all browser image API calls so the rest of the app does not depend on them. No perspective correction. Camera stream acquisition is not built yet.
@@ -71,11 +77,12 @@ Mirrors src/ one-for-one. Each module has a corresponding test file, so the Code
 Dependencies flow in one direction only:
 
 ```
-ui → simulator, exporter, archive, reader, codec-view
+ui → simulator, exporter, archive, reader, codec-view, repair
 reader → codec
 simulator → codec
 exporter → codec
 codec-view → codec
+repair → codec, codec-view
 archive → (IndexedDB only, no other src/ modules)
 codec → (no src/ dependencies)
 ```
