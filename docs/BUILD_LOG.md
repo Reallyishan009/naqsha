@@ -808,3 +808,95 @@ The old command shape loses the line, shown the same way for comparison: `perl -
 **What I changed by hand:** No files edited by hand.
 **Kiro features used:** spec, steering, hooks, property tests (fast-check).
 ---
+
+## 2026-11-23 (app phase 8, task 8.5: Phase 8 overall, the real runs, documentation and push)
+
+**Goal today:** Close the one gap task 8.4 left open (the fixtures hook), run every check for real, write Phase 8 down as a whole, and push.
+
+### The fixtures hook, the gap task 8.4 left open
+
+**`sh .kiro/hooks/bin/check-fixtures.sh` timed for real.** Seven sequential runs on an idle machine, `/usr/bin/time -p`, each a full `node scripts/make_fixtures.ts --all` over the 12 files of `tests/fixtures/` plus two `shasum` passes:
+
+```
+for i in 1 2 3 4 5 6 7; do /usr/bin/time -p sh .kiro/hooks/bin/check-fixtures.sh; done
+0.77, 0.42, 0.42, 0.42, 0.42, 0.48, 0.42   (seconds, in order)
+```
+
+**Min 0.42 s, median 0.42 s, max 0.77 s.** Every run printed `fixtures regenerated; all PNG and JSON bytes unchanged` and exited 0, and `git status tests/fixtures` was empty afterwards, so the generator is byte-stable. The first run is the slowest, the same cold-cache effect as in task 8.4.
+
+**The 60 s timeout stays.** The measured maximum is 0.77 s, about 78 times inside it, so there was nothing to raise. (For comparison, the related-tests hook needed 120 s because its slowest measured run was 35.96 s.)
+
+**The same wrapper, with a 50 s deadline.** `.kiro/hooks/fixtures-on-profile-change.json` no longer uses the `sh -c '...; node scripts/log_hook.ts ...'` shape, which writes nothing when the runner kills the process. New command:
+
+```
+sh .kiro/hooks/bin/run-logged.sh "Regenerate fixtures on profile or generator change" 50 sh .kiro/hooks/bin/check-fixtures.sh
+```
+
+50 s sits 10 s below the hook's 60 s timeout (the same margin as 110 s under 120 s for the other hook), so the wrapper, not the runner, ends an overrunning run and has time to write its line; and it is about 65 times the measured maximum, so a real run can never be cut short by the deadline and no false timeout line can appear. Both hooks now use one wrapper, so there is nothing left with the old shape.
+
+**Verified by simulation, into a temporary log.** `NAQSHA_HOOKS_LOG` pointed at `/tmp/naqsha-sim.kKKelp/sim-hooks.log` and the hook name set to `Fixtures hook timeout SIMULATION, not a hook run`, so `logs/hooks.log` still holds only lines written by hooks the IDE fired. **The three lines below are from a simulation.** No log line in this repository was written by hand.
+
+```
+# (a) the exact hook command, real deadline 50 s
+sh .kiro/hooks/bin/run-logged.sh "$HOOK" 50 sh .kiro/hooks/bin/check-fixtures.sh < /dev/null
+   fixtures regenerated; all PNG and JSON bytes unchanged      -> wrapper exit 0
+# (b) the exact hook command, TERM to the wrapper 150 ms in (a runner-style kill)
+sh .kiro/hooks/bin/run-logged.sh "$HOOK" 50 sh .kiro/hooks/bin/check-fixtures.sh < /dev/null &
+  sleep 0.15; kill -TERM $!                                    -> wrapper exit 124
+# (c) the same command made slow on purpose (sleep 3 first), deadline 1 s, so the deadline wins
+sh .kiro/hooks/bin/run-logged.sh "$HOOK" 1 sh -c 'sleep 3; sh .kiro/hooks/bin/check-fixtures.sh'
+                                                               -> wrapper exit 124
+```
+
+The lines those three runs wrote, read back from the temporary log (tabs between the fields):
+
+```
+2026-11-20T04:28:43.302Z	Fixtures hook timeout SIMULATION, not a hook run	exit 0
+2026-11-20T04:28:43.534Z	Fixtures hook timeout SIMULATION, not a hook run	timed out (terminated by the hook runner)
+2026-11-20T04:28:44.663Z	Fixtures hook timeout SIMULATION, not a hook run	timed out (deadline 1s)
+```
+
+Case (c) had to be given a deliberately slowed stand-in: the real command finishes in under a second and the wrapper's deadline is a whole number of seconds, so no deadline value can cut the real command short. That is the point of the 50 s choice, and it is why (b) uses the real command. `logs/hooks.log` was 68 lines before and after.
+
+### Phase 8 as a whole
+
+**Service worker and installability (8.1).** `public/sw.js`, hand-written, no new dependency; `dependencies` are still `react` and `react-dom`. Precache: 13 entries (the start page, `index.html`, the six `assets/` chunks and style sheets including the lazy `ScanScreen-*.js` and its CSS, `profiles/demo-12x16.json`, `favicon.svg`, the manifest, both icons), generated after the build by `scripts/build_precache.ts` so hashed names are never written by hand. Cache name of this build: `naqsha-v1-be994549d044` (format version plus a SHA-256 over every precached path and its bytes, so a changed file gives a new cache and new worker bytes). Update path chosen: **tell the visitor with a control** ("A newer Naqsha is ready on this device." / "Use the newer Naqsha"), which posts `naqsha:skip-waiting` and reloads once on `controllerchange`; nothing reloads unasked. Installable through `public/manifest.webmanifest` with icons generated by `scripts/make_icons.ts` from `public/favicon.svg`.
+
+Two findings that only real runs produced, and neither could have come from a fake: `vite preview` answers with `Vary: Origin` while the page requests its own chunks with `crossorigin`, so `cache.match` missed every chunk until the lookup passed `{ignoreVary: true}`; and Chrome's `Network.emulateNetworkConditions {offline:true}` does not reach the worker's own requests, so the first "offline" run was quietly answered by the still-running preview server. Step 13 now stops the preview server, and shows that a response put only in the cache, at an address the server never served, comes back through `fetch`. What the fakes cannot test is listed in the 8.1 entry: the browser's own install, activate and update lifecycle, `skipWaiting`, `clients.claim`, and whether a host's headers let a cached response match a real request.
+
+**Review fixes, and the checks that would have caught them (8.2).** Part 1: one reclassification (`src/ui/samples/sampleDesigns.ts:15,31,32`, "cells" for a motif tile, false positive -> acceptable, because a motif tile is part of the naksha); all 7 category A findings fixed (`hole`/`cell` naming a punched hole value); all 7 category B findings fixed (every card number now derived from the Card_Profile); the `endOrder` finding in `check:browser` step 10 fixed, and the review's first reading of it corrected (the formula indexed document order, not ends, so the step was right for the row-major demo profile while checking no end at all); and the missing `downloadBmp` property written (seed 80211, 100 runs).
+
+Part 2 added the three checks, and **the new glossary check found nine further real findings in older code that the review never read**, because the review covered only the lines the app spec added: `cell`/`cellLocation`/`firstCell` for an end index and `cellRange`/`firstRow`/`lastRow` for a hook range in `src/codec/validateCardProfile.ts`; `cell` indexing ends and four "cell" comments in `src/simulator/render.ts`; `weftByRow`, `shedRow`, `weftRow`, `warpMaskRow` and `row` for a pick in the same file; `row` for a `PickRow` in `src/simulator/floats.ts` and two comments there; five comment terms in `src/simulator/style.ts`; the `PegHole` and sampling comments in `src/codec/types.ts` and `src/reader/sampling.ts`; and four comments in `src/ui/printable/layout.ts`, `src/ui/samples/sampleDesigns.ts`, `src/ui/screens/keep/KeepScreen.tsx` and `scripts/checks/summary.ts`. Every edit is a local name or a comment, so no behaviour changed and the tests passed unchanged. The check reported 105 uses in all; 16 allowances, each carrying a reason, explain the rest, and a test fails if an allowance covers nothing. The card-number check reports four literals, all explained by three line-scoped allowances (`DEFAULT_PIXELS_PER_MM = 12`, the kept demo pin, `ICON_SIZES = [192, 512]`). The strengthened property-name check (the name must stand inside the same `it(...)` as the property runner, or in a helper that test names) emptied `EXCLUDED_FROM_COVERAGE` down to `loadPixelData` alone, and **reported `decidePunched` (`src/reader/sampling.ts`) as having no property, so one was written** rather than excluded: `R11.1 a hook position is punched exactly when more than half of its sampling pixels are dark`, seed 80219, 300 runs. Both new checks state what they cannot find (a synonym outside the word list, an inflected form, anything inside a string literal, the `tests/` tree; a card number written in another form).
+
+**The Weave pick counter flicker (8.3).** The failing test was written first and its real output is in the 8.3 entry (`expected [ 'Pick 0 of 0' ] to deeply equal [ 'Pick 36 of 36' ]`, which also showed the arrival had **two** stale renders, not one). The fix builds the cloth in the render that first shows it and derives the position from one value, `displayedPlayback`, which is also the state the seek enters, so the counter and the player cannot disagree. A one-off `MutationObserver` observing DOM commits over 11 arrivals: **the unfixed build showed two counter values on 11 of 11 arrivals, the fixed build on 0 of 11.** Property at seed 80301, 200 runs.
+
+**Hook timeout (8.4, with the fixtures hook above).** Measured, in seconds: related tests and typecheck 0.55 min / 0.57 median / 0.92 max for a file with no related test, 33.49 / 34.46 / 35.96 for a codec file whose related set is 54 of 96 test files (20 runs over four saved files), against a 10 s timeout, so every save of a codec file was being killed and left no line. Now 120 s with a 110 s wrapper deadline. The fixtures hook: 0.42 / 0.42 / 0.77 over seven runs, timeout left at 60 s with a 50 s deadline. `npm run check:hooks` reports `Related tests and typecheck on save: fired 68 times, last at 2026-11-20T04:19:50.376Z` and `Regenerate fixtures on profile or generator change: never fired (no log line)`.
+
+### The real runs of this task
+
+Nothing failed, so nothing was fixed and no check was touched.
+
+- `npm run test:run`: **97 test files, 804 tests, all passed**, 33.53 s.
+- `npm run typecheck`: passes, no output.
+- `npm run build`: passes, ends with `precache: 13 entries in cache naqsha-v1-be994549d044`.
+- `npm run check-bundle`: passes. **Entry chunk `./assets/index-BxQUVtbs.js`, 94191 bytes gzipped against the 204800 byte budget (46%), R16.1 holds.** Scan chunk 9116 bytes gzipped; both icons and the generated precache block checked.
+- `npm run check:all`: **9 PASS, 0 FAIL, 1 SKIPPED, 1 INFO.** Skipped: no spec format validator command in the repo. Info: the working tree had 6 changed or untracked paths while the check ran.
+- `npm run check:browser`: **13 passed, 0 failed.** Step 13 passes in both groups (offline with no reload, and offline then reload), including the first Scan open and a BMP export offline. The only console errors are the step's own never-cached probes.
+- `npm run check:deployed`: **4 passed, 0 failed** against https://naqsha-ashen.vercel.app/ (HTTP 200, title, assets, and `profiles/demo-12x16.json` accepted by `parseCardProfile`).
+
+**What the deployed site actually is, stated plainly.** It is whatever Vercel last built, which is an older commit: it serves `assets/index-DIpFeFC9.js` and `assets/index-1dD1MI1L.css`, while this local build produces `assets/index-BxQUVtbs.js` and `assets/index-BDdimImO.css`. **The asset hashes do not match the local build.** `GET /sw.js`, `/manifest.webmanifest` and `/icons/icon-192.png` all answer **404** there. So the service worker, offline support, installability, the flicker fix and every other piece of Phase 8 are live only after the next deploy; `check:deployed` passing says the old site still loads, nothing more. The offline evidence in this log and in the 8.1 entry is from the local built site under `vite preview`, in a real Chrome.
+
+### Still open after Phase 8
+
+- **Nothing in Phase 8 is deployed** (above). A deploy of `main` is the one outstanding action, and whether Vercel serves `sw.js` and the manifest from `dist/` is unverified until then.
+- **No maskable icon and no rounded corner** in the generated icons; installing the app was never tried on a real phone and no browser install prompt was seen. Only the manifest fields, the icon sizes and the relative paths are tested.
+- **The offline sub-check of `check_browser.ts` step 13 still compares `expected.flat()` by document index**, so it carries the row-major assumption that step 10 was fixed to drop. Recorded in `docs/WEAVE_REVIEW.md`; it computes no end.
+- **The cloth canvas, not the counter:** a new design can show the previous design's pixels for one frame until the player's first paint. Unchanged by 8.3 and in the canvas.
+- **What the structure checks cannot find:** a glossary synonym outside the word list, an inflected form, text inside a string literal (which is why one of the seven category A findings, a test title, is invisible to the check) and the whole `tests/` tree for check A; a card number written in another form (`6 * 32`) for check B; and whether a property says anything worth saying for check C.
+- **Still unverified from earlier phases**, unchanged by Phase 8: real IndexedDB in a browser, the live camera on a phone, printing at 100% scale, a photograph of a real card, any loom controller, on-device timings, the real card dimensions, the Hindi wording, and that the custom agent and the `prerelease-check` steering command work in the IDE.
+- **Task 5.18** (the four parked `readCard` image properties of task 5.14) is untouched and still open.
+
+**Verification:** the seven runs above, as quoted.
+**What I changed by hand:** No files edited by hand.
+**Kiro features used:** spec, steering, hooks, property tests (fast-check).
+---

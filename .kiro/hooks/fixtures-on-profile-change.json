@@ -3,10 +3,10 @@
   "hooks": [
     {
       "name": "Regenerate fixtures on profile or generator change",
-      "description": "When a card profile in public/profiles/ or scripts/make_fixtures.ts is saved, regenerate tests/fixtures/ and fail loudly if any PNG changed. Shell command only, no agent prompt.",
+      "description": "When a card profile in public/profiles/ or scripts/make_fixtures.ts is saved, regenerate tests/fixtures/ and fail loudly if any PNG changed. Shell command only, no agent prompt. run-logged.sh passes the exit status through and writes one evidence line, also when the run is cut short; its 50 s deadline sits below the 60 s timeout here and far above the slowest measured run (0.77 s, docs/BUILD_LOG.md).",
       "trigger": "PostFileSave",
       "matcher": "(^|/)(public/profiles/[^/]+\\.json|scripts/make_fixtures\\.ts)$",
-      "action": { "type": "command", "command": "sh -c 'sh .kiro/hooks/bin/check-fixtures.sh; s=$?; node scripts/log_hook.ts \"Regenerate fixtures on profile or generator change\" \"exit $s\"; exit $s'" },
+      "action": { "type": "command", "command": "sh .kiro/hooks/bin/run-logged.sh \"Regenerate fixtures on profile or generator change\" 50 sh .kiro/hooks/bin/check-fixtures.sh" },
       "timeout": 60
     }
   ]

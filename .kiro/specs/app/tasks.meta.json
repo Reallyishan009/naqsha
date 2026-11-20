@@ -8,6 +8,10 @@
     "3.3 Correction and marker logic": {
       "status": "passed",
       "lastRunTimestamp": 1795025449735
+    },
+    "8.1 Service worker, offline reload and installability": {
+      "status": "passed",
+      "lastRunTimestamp": 1795124178526
     }
   },
   "executionHistory": {
@@ -663,6 +667,61 @@
         "executionId": "ad4cbd61-b7c0-4999-aa35-ff20f095f5f0",
         "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
         "timestamp": 1795120978307
+      }
+    ],
+    "8.1 Service worker, offline reload and installability": [
+      {
+        "executionId": "92abf9e6-7b5f-43f5-881f-0806b99e6ed7",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795121475236
+      },
+      {
+        "executionId": "92abf9e6-7b5f-43f5-881f-0806b99e6ed7",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795124290767
+      }
+    ],
+    "8.2 Review fixes, and checks that would have caught them": [
+      {
+        "executionId": "92abf9e6-7b5f-43f5-881f-0806b99e6ed7",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795124295327
+      },
+      {
+        "executionId": "92abf9e6-7b5f-43f5-881f-0806b99e6ed7",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795145602226
+      }
+    ],
+    "8.3 Weave pick counter flicker": [
+      {
+        "executionId": "92abf9e6-7b5f-43f5-881f-0806b99e6ed7",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795145607720
+      },
+      {
+        "executionId": "92abf9e6-7b5f-43f5-881f-0806b99e6ed7",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795147325652
+      }
+    ],
+    "8.4 Related-tests hook timeout and its log line": [
+      {
+        "executionId": "92abf9e6-7b5f-43f5-881f-0806b99e6ed7",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795147330488
+      },
+      {
+        "executionId": "92abf9e6-7b5f-43f5-881f-0806b99e6ed7",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795148628507
+      }
+    ],
+    "8.5 Phase 8 checks, documentation, commit and push": [
+      {
+        "executionId": "92abf9e6-7b5f-43f5-881f-0806b99e6ed7",
+        "chatSessionId": "sess_b6171160-44c5-42ab-addc-43bc2531ff29",
+        "timestamp": 1795148632904
       }
     ]
   }
