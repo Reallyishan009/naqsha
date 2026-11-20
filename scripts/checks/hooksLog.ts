@@ -8,8 +8,16 @@ export const HOOKS_LOG_PATH = 'logs/hooks.log';
 
 export type HookLogEntry = { at: string; hook: string; result: string };
 export type ParsedLine = { ok: true; entry: HookLogEntry } | { ok: false; line: string };
-export type HookSummary = { hook: string; count: number; lastAt: string | null };
+export type HookSummary = { hook: string; count: number; timedOut: number; lastAt: string | null };
 export type HookListResult = { ok: true; names: string[] } | { ok: false; message: string };
+
+/** Start of the result written by .kiro/hooks/bin/run-logged.sh when a hook run was cut short. */
+export const TIMEOUT_RESULT_PREFIX = 'timed out';
+
+/** True for a result the wrapper writes on a timeout, for example `timed out (deadline 110s)`. */
+export function isTimeoutResult(result: string): boolean {
+  return result.startsWith(TIMEOUT_RESULT_PREFIX);
+}
 
 const clean = (text: string): string => text.replace(/[\t\r\n]/g, ' ');
 
@@ -43,9 +51,12 @@ export function lastLines(text: string, count: number): string[] {
   return lines.slice(-Math.floor(count));
 }
 
-/** Per hook: how many well-formed log lines carry its name, and the latest timestamp among them. */
+/**
+ * Per hook: how many well-formed log lines carry its name, how many of those report a timeout,
+ * and the latest timestamp among them.
+ */
 export function summarizeHooks(logText: string, hookNames: string[]): { hooks: HookSummary[]; malformed: string[] } {
-  const counts = new Map<string, { count: number; lastMs: number; lastAt: string }>();
+  const counts = new Map<string, { count: number; timedOut: number; lastMs: number; lastAt: string }>();
   const malformed: string[] = [];
   for (const line of splitLogLines(logText)) {
     const parsed = parseHookLogLine(line);
@@ -53,12 +64,14 @@ export function summarizeHooks(logText: string, hookNames: string[]): { hooks: H
       malformed.push(line);
       continue;
     }
-    const { at, hook } = parsed.entry;
+    const { at, hook, result } = parsed.entry;
     const ms = Date.parse(at);
+    const timedOut = isTimeoutResult(result) ? 1 : 0;
     const seen = counts.get(hook);
-    if (seen === undefined) counts.set(hook, { count: 1, lastMs: ms, lastAt: at });
+    if (seen === undefined) counts.set(hook, { count: 1, timedOut, lastMs: ms, lastAt: at });
     else {
       seen.count += 1;
+      seen.timedOut += timedOut;
       if (ms > seen.lastMs) {
         seen.lastMs = ms;
         seen.lastAt = at;
@@ -67,15 +80,15 @@ export function summarizeHooks(logText: string, hookNames: string[]): { hooks: H
   }
   const hooks = hookNames.map((hook) => {
     const seen = counts.get(hook);
-    return { hook, count: seen?.count ?? 0, lastAt: seen?.lastAt ?? null };
+    return { hook, count: seen?.count ?? 0, timedOut: seen?.timedOut ?? 0, lastAt: seen?.lastAt ?? null };
   });
   return { hooks, malformed };
 }
 
 export function describeSummary(summary: HookSummary): string {
-  return summary.count === 0 || summary.lastAt === null
-    ? `${summary.hook}: never fired (no log line)`
-    : `${summary.hook}: fired ${summary.count} times, last at ${summary.lastAt}`;
+  if (summary.count === 0 || summary.lastAt === null) return `${summary.hook}: never fired (no log line)`;
+  const timeouts = summary.timedOut === 0 ? '' : `, ${summary.timedOut} of them timed out`;
+  return `${summary.hook}: fired ${summary.count} times, last at ${summary.lastAt}${timeouts}`;
 }
 
 /** Reads the hook names from the text of one `.kiro/hooks/*.json` file (schema v1: `hooks[].name`). */

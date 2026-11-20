@@ -1,8 +1,10 @@
 import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
+  TIMEOUT_RESULT_PREFIX,
   describeSummary,
   formatHookLogLine,
+  isTimeoutResult,
   lastLines,
   parseHookLogLine,
   readHookNames,
@@ -29,8 +31,8 @@ describe('hooks log', () => {
     const result = summarizeHooks(`${good}\nnot a line\n2026-13-99\tA\texit 0\n`, ['A', 'B']);
     expect(result.malformed).toEqual(['not a line', '2026-13-99\tA\texit 0']);
     expect(result.hooks).toEqual([
-      { hook: 'A', count: 1, lastAt: '2026-11-22T10:00:00.000Z' },
-      { hook: 'B', count: 0, lastAt: null },
+      { hook: 'A', count: 1, timedOut: 0, lastAt: '2026-11-22T10:00:00.000Z' },
+      { hook: 'B', count: 0, timedOut: 0, lastAt: null },
     ]);
   });
 
@@ -40,7 +42,25 @@ describe('hooks log', () => {
   });
 
   it('describes a fired hook with its count and last time', () => {
-    expect(describeSummary({ hook: 'A', count: 2, lastAt: 'T' })).toBe('A: fired 2 times, last at T');
+    expect(describeSummary({ hook: 'A', count: 2, timedOut: 0, lastAt: 'T' })).toBe('A: fired 2 times, last at T');
+  });
+
+  it('counts and describes the timeout lines that run-logged.sh writes', () => {
+    // The two results .kiro/hooks/bin/run-logged.sh writes when a run is cut short.
+    expect(isTimeoutResult('timed out (deadline 110s)')).toBe(true);
+    expect(isTimeoutResult('timed out (terminated by the hook runner)')).toBe(true);
+    expect(isTimeoutResult('exit 0')).toBe(false);
+    expect(isTimeoutResult('exit 124')).toBe(false);
+
+    const log = [
+      '2026-11-22T10:00:00.000Z\tA\texit 0',
+      '2026-11-22T10:02:00.000Z\tA\ttimed out (deadline 110s)',
+      '2026-11-22T10:04:00.000Z\tA\ttimed out (terminated by the hook runner)',
+    ].join('\n');
+    const { hooks, malformed } = summarizeHooks(log, ['A']);
+    expect(malformed).toEqual([]);
+    expect(hooks[0]).toEqual({ hook: 'A', count: 3, timedOut: 2, lastAt: '2026-11-22T10:04:00.000Z' });
+    expect(describeSummary(hooks[0]!)).toBe('A: fired 3 times, last at 2026-11-22T10:04:00.000Z, 2 of them timed out');
   });
 
   it('last lines: the last N in file order, blank lines skipped', () => {
@@ -58,6 +78,21 @@ describe('hooks log', () => {
     fc.assert(
       fc.property(entry, (e) => {
         expect(parseHookLogLine(formatHookLogLine(e))).toEqual({ ok: true, entry: e });
+      }),
+      { seed: SEED, numRuns: NUM_RUNS },
+    );
+  });
+
+  it('R16.7 a formatted timeout line parses back to the same hook name and result, and counts as a timeout', () => {
+    const timeoutResult = text.map((detail) => `${TIMEOUT_RESULT_PREFIX} (${detail})`);
+    fc.assert(
+      fc.property(isoAt, text, timeoutResult, (at, hook, result) => {
+        const parsed = parseHookLogLine(formatHookLogLine({ at, hook, result }));
+        expect(parsed).toEqual({ ok: true, entry: { at, hook, result } });
+        expect(isTimeoutResult(result)).toBe(true);
+        const { hooks, malformed } = summarizeHooks(formatHookLogLine({ at, hook, result }), [hook]);
+        expect(malformed).toEqual([]);
+        expect(hooks[0]).toEqual({ hook, count: 1, timedOut: 1, lastAt: at });
       }),
       { seed: SEED, numRuns: NUM_RUNS },
     );

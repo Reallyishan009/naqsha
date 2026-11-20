@@ -3,11 +3,11 @@
   "hooks": [
     {
       "name": "Related tests and typecheck on save",
-      "description": "When a TypeScript file under src/ or scripts/ is saved, run the Vitest files related to it and tsc --noEmit. Shell command only, no agent prompt.",
+      "description": "When a TypeScript file under src/ or scripts/ is saved, run the Vitest files related to it and tsc --noEmit. Shell command only, no agent prompt. run-logged.sh passes the exit status through and writes one evidence line, also when the run is cut short; its 110 s deadline sits below the 120 s timeout here, which is about three times the slowest measured run (36.0 s, docs/BUILD_LOG.md).",
       "trigger": "PostFileSave",
       "matcher": "(^|/)(src|scripts)/.+\\.(ts|tsx)$",
-      "action": { "type": "command", "command": "sh -c 'node .kiro/hooks/bin/related-tests.mjs; s=$?; node scripts/log_hook.ts \"Related tests and typecheck on save\" \"exit $s\"; exit $s'" },
-      "timeout": 10
+      "action": { "type": "command", "command": "sh .kiro/hooks/bin/run-logged.sh \"Related tests and typecheck on save\" 110 node .kiro/hooks/bin/related-tests.mjs" },
+      "timeout": 120
     }
   ]
 }

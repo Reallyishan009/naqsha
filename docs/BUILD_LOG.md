@@ -731,3 +731,80 @@ Task 7.1 saw the two-value arrival 6 times in 11; this observer starts recording
 **Verification:** `npm run test:run` 96 files, 799 tests passed; `npm run typecheck` passes; `npm run build` passes (`precache: 13 entries in cache naqsha-v1-be994549d044`); `npm run check-bundle` passes (94191 bytes gzipped, limit 204800, up from 94016 before this task); `npm run check:browser` 13 passed, 0 failed.
 **What I changed by hand:** No files edited by hand.
 **Kiro features used:** spec, steering, property tests (fast-check).
+
+## 2026-11-23 (app phase 8, task 8.4: the related-tests hook timeout and its log line)
+
+**The unit is seconds, so `"timeout": 10` really was 10 s.** Checked before changing anything, because at milliseconds the value would have meant 10 ms and the whole reading would change. Two Kiro pages say seconds: the hook schema table on [Hooks](https://kiro.dev/docs/hooks/) gives `hooks[].timeout` as "Timeout in seconds for command actions (default: 60). 0 disables the timeout. Ignored for agent actions", and [Hook actions](https://kiro.dev/docs/hooks/actions/) repeats that a command action's timeout defaults to 60 seconds and 0 disables it. (Both pages read 2026-11-23; wording paraphrased, content rephrased for compliance with licensing restrictions.) Context7 was not needed. **Not documented, and therefore not verified:** which signal the runner sends at the timeout and whether it kills the whole process group. The fix below does not depend on the answer.
+
+**Measured cost of the hook command.** `node .kiro/hooks/bin/related-tests.mjs` (Vitest `related --run` plus `tsc --noEmit`), five real runs per saved file, sequential, on an otherwise idle machine, timed with `/usr/bin/time -p`, the saved path fed on STDIN the way the hook feeds it:
+
+```
+for i in 1 2 3 4 5; do printf '{"filePath":"%s/<file>"}' "$PWD" |
+  /usr/bin/time -p node .kiro/hooks/bin/related-tests.mjs > out 2> err; done
+```
+
+| Saved file | Related test files | Runs (s, in order) | Min | Median | Max |
+|---|---|---|---|---|---|
+| `scripts/log_hook.ts` (few) | 0 of 96 ("No affected test files found") | 0.92, 0.57, 0.55, 0.62, 0.56 | **0.55** | **0.57** | **0.92** |
+| `src/ui/state/playback.ts` | 6 of 96 | 1.39, 1.06, 0.99, 0.97, 1.00 | **0.97** | **1.00** | **1.39** |
+| `src/codec/validateCardProfile.ts` (widely imported) | 54 of 96 | 33.86, 35.07, 34.38, 35.04, 34.10 | **33.86** | **34.38** | **35.07** |
+| `src/codec/types.ts` (widely imported) | 54 of 96 | 33.49, 33.95, 34.46, 35.96, 34.93 | **33.49** | **34.46** | **35.96** |
+
+All 20 runs exited 0. The slowest run of all four cases is **35.96 s**, which is about 3.6 times the old 10 s timeout, so a save of any codec file was being killed. `tsc --noEmit` is a small part of it (TypeScript 7 typechecks this repo in well under a second); the cost is the 54 related test files, and `npm run test:run` for all 96 takes 35.4 s, so the related set is already most of the suite. The first run of each case is the slowest (0.92 vs 0.55, 1.39 vs 0.97), which is the cold cache.
+
+**New timeout: 120 s in the hook, with a 110 s deadline inside the wrapper.** The margin over the measured 35.96 s is about 3.3 times, for three reasons, each visible in the numbers above: the runs were measured on an idle machine while the hook fires during editing (34 s wall at 77 s user time means it already uses more than two cores, so a busy machine is slower); a cold cache adds to the first run after a restart; and the related set grows with the suite, whose present ceiling is the whole 35.4 s run. 120 s leaves room for roughly a tripling before a save is killed again. The 10 s gap between the wrapper's own deadline (110 s) and the hook timeout (120 s) is there so the wrapper, not the runner, ends a run that overruns, and has time to write its line.
+
+**The log line is now written when a run is cut short.** Before, the command was `sh -c 'node .kiro/hooks/bin/related-tests.mjs; s=$?; node scripts/log_hook.ts … "exit $s"; exit $s'`: the line came after the work, so a kill at the timeout left no line, and a hook that timed out was indistinguishable from a hook that never fired. New command:
+
+```
+sh .kiro/hooks/bin/run-logged.sh "Related tests and typecheck on save" 110 node .kiro/hooks/bin/related-tests.mjs
+```
+
+`.kiro/hooks/bin/run-logged.sh` (POSIX sh) writes exactly one line through `scripts/log_hook.ts` in each of three cases: the command finishes (`exit <status>`, and the wrapper exits with that same status, so the result the runner sees is unchanged); its own 110 s deadline passes (the command is sent TERM, line `timed out (deadline 110s)`, exit 124); or the wrapper is killed from outside, which is what the runner's timeout does (a `trap` on TERM and INT writes `timed out (terminated by the hook runner)` before exiting 124). A `trap` on EXIT is the net for any path that wrote no line. Only SIGKILL can still leave no line, because it cannot be trapped. STDIN (the runner's JSON, which `related-tests.mjs` reads to find the saved file) is copied to a temporary file and handed to the command, because a POSIX shell gives a background command `/dev/null` as its standard input; the run below shows the payload arriving.
+
+**The simulation, run for real.** `NAQSHA_HOOKS_LOG` (new, for verification only) sends the line elsewhere, and the hook name is `timeout simulation`, so `logs/hooks.log` keeps lines from real hook runs only. **These lines are from a simulation, not from a hook the IDE fired.** No log line in this repository was written by hand.
+
+```
+export NAQSHA_HOOKS_LOG=/tmp/naqsha-hooktime/sim.log
+# 1. command succeeds, STDIN passed through
+printf '{"filePath":"…/src/codec/types.ts"}' | sh .kiro/hooks/bin/run-logged.sh "timeout simulation" 5 \
+  sh -c 'cat > /tmp/naqsha-hooktime/seen-stdin.txt; exit 0'   -> wrapper exit=0
+   stdin reached the command: {"filePath":"…/src/codec/types.ts"}
+# 2. command fails, status passed through
+sh .kiro/hooks/bin/run-logged.sh "timeout simulation" 5 sh -c 'exit 3'   -> wrapper exit=3
+# 3. the wrapper's own deadline: deadline 2 s, command sleeps 8 s
+/usr/bin/time -p sh .kiro/hooks/bin/run-logged.sh "timeout simulation" 2 sleep 8
+   real 2.13   -> wrapper exit=124
+# 4a. TERM to the wrapper while it runs (runner-style kill, single process)
+sh .kiro/hooks/bin/run-logged.sh "timeout simulation" 60 sleep 30 & sleep 2; kill -TERM $!   -> wrapper exit=124
+# 4b. TERM to the whole process group
+perl -e 'setpgrp(0,0); exec @ARGV' sh .kiro/hooks/bin/run-logged.sh "timeout simulation" 60 sleep 30 &
+  sleep 2; kill -TERM -$!   -> wrapper exit=124
+```
+
+The lines those five runs wrote, read back from `/tmp/naqsha-hooktime/sim.log` (tabs between the fields):
+
+```
+2026-11-20T04:14:33.348Z	timeout simulation	exit 0
+2026-11-20T04:14:33.432Z	timeout simulation	exit 3
+2026-11-20T04:14:35.567Z	timeout simulation	timed out (deadline 2s)
+2026-11-20T04:14:59.210Z	timeout simulation	timed out (terminated by the hook runner)
+2026-11-20T04:15:01.324Z	timeout simulation	timed out (terminated by the hook runner)
+```
+
+The old command shape loses the line, shown the same way for comparison: `perl -e 'setpgrp(0,0); exec @ARGV' sh -c 'sleep 30; s=$?; node scripts/log_hook.ts "old style simulation" "exit $s"; exit $s'`, process group sent TERM after 2 s, exited 143 and **wrote no file at all** (`log lines written: no file`).
+
+**The real command through the wrapper**, once, with the temp log and the name `wrapper check, not a hook run`: `real 34.38` s, wrapper exit 0, `on-save checks passed`, line `2026-11-20T04:15:57.059Z  wrapper check, not a hook run  exit 0`. So the wrapper's overhead is inside the run-to-run spread of the 34 s case.
+
+**Log parsing extended, no property weakened.** `scripts/checks/hooksLog.ts`: `TIMEOUT_RESULT_PREFIX`, `isTimeoutResult`, and `HookSummary.timedOut`, so `npm run check:hooks` says, for example, `fired 3 times, last at …, 2 of them timed out` instead of counting a timeout as a plain firing. `tests/scripts/hooksLog.test.ts` gains one example (the two wrapper results are recognised, counted and described) and one property (seed 72002, 200 runs): a formatted timeout line parses back to the same timestamp, hook name and result, and is counted as one firing and one timeout. The existing properties are untouched, including "malformed lines never throw, are reported and never counted as fired"; the two example expectations that compare a whole `HookSummary` gained the new field and lost nothing.
+
+**The wrapper itself is tested, by running it.** `tests/scripts/runLogged.test.ts` spawns `.kiro/hooks/bin/run-logged.sh` with `NAQSHA_HOOKS_LOG` pointed at a temporary file (so the suite never writes to `logs/hooks.log`) and checks the three results against the real log file it writes: a command that exits 0 and one that exits 3 pass their status through and are logged as `exit 0` and `exit 3`, with the STDIN payload arriving at the command byte for byte; a 1 s deadline against `sleep 30` gives status 124 and the line `timed out (deadline 1s)`; a `SIGTERM` sent to the wrapper after 300 ms gives status 124 and the line `timed out (terminated by the hook runner)`. Each case also asserts that exactly one line was added and that it parses. No mocks; the tests skip on Windows, where there is no POSIX shell.
+
+**Real firings, from `logs/hooks.log` only.** `npm run check:hooks` reports `Related tests and typecheck on save: fired 68 times, last at 2026-11-20T04:19:50.376Z` and `Regenerate fixtures on profile or generator change: never fired (no log line)`. The 68 lines are `exit 0` and `exit 1` only; no timeout line exists yet, because the wrapper was installed in this task. The last line was written after `test-on-save.json` was changed, so the IDE fired the hook once with the new command and it passed; **unverified:** `exit 0` reads the same from either command shape, so that line alone does not prove which one ran. **Also unverified:** how many saves were killed at the old 10 s timeout and left no line at all. Saves of files whose related set is small (the 0.55 s to 1.4 s cases) fitted in 10 s, so the lines that exist are consistent with those; a save of a codec file at 34 s could not have fitted.
+
+**Left alone, on purpose:** `.kiro/hooks/fixtures-on-profile-change.json` still uses the old command shape, so it too writes no line if it is killed at its 60 s timeout. `sh .kiro/hooks/bin/check-fixtures.sh` was not timed in this task, and a deadline below its real cost would produce false timeout lines, so it is recorded as open rather than changed blind.
+
+**Verification:** `npm run test:run` 97 files, 804 tests passed; `npm run typecheck` passes; `npm run build` passes (`precache: 13 entries in cache naqsha-v1-be994549d044`); `npm run check-bundle` passes (94191 bytes gzipped, limit 204800); `npm run check:hooks` exits 0 with no malformed line.
+**What I changed by hand:** No files edited by hand.
+**Kiro features used:** spec, steering, hooks, property tests (fast-check).
+---
