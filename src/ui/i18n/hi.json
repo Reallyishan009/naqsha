@@ -19,6 +19,10 @@
     "text": "स्कैन",
     "reviewed": false
   },
+  "nav.code": {
+    "text": "कोड",
+    "reviewed": false
+  },
   "language.label": {
     "text": "भाषा",
     "reviewed": false
@@ -717,6 +721,242 @@
   },
   "scan.done.cancel": {
     "text": "रद्द करें",
+    "reviewed": false
+  },
+  "codeview.title": {
+    "text": "कोड दृश्य",
+    "reviewed": false
+  },
+  "codeview.listing.name": {
+    "text": "कार्ड, बिट की लाइनों में",
+    "reviewed": false
+  },
+  "codeview.line.name": {
+    "text": "पिक {pick}: एंड {ends} पर छेद",
+    "reviewed": false
+  },
+  "codeview.line.nameEmpty": {
+    "text": "पिक {pick}: किसी एंड पर छेद नहीं",
+    "reviewed": false
+  },
+  "codeview.line.nameDamaged": {
+    "text": "पिक {pick}: कार्ड खराब है",
+    "reviewed": false
+  },
+  "codeview.line.damagedLabel": {
+    "text": "खराब कार्ड",
+    "reviewed": false
+  },
+  "codeview.bitline.name": {
+    "text": "पिक {pick} के बिट",
+    "reviewed": false
+  },
+  "codeview.breakpoint.name": {
+    "text": "पिक {pick} पर रुकने का निशान",
+    "reviewed": false
+  },
+  "codeview.pickCount": {
+    "text": "{count} पिक",
+    "reviewed": false
+  },
+  "codeview.profile": {
+    "text": "कार्ड प्रोफ़ाइल: {name}",
+    "reviewed": false
+  },
+  "codeview.selected": {
+    "text": "चुनी हुई पिक: {pick}",
+    "reviewed": false
+  },
+  "codeview.announce.pick": {
+    "text": "पिक {pick}",
+    "reviewed": false
+  },
+  "codeview.announce.noBreakpoint": {
+    "text": "आगे कोई रुकने का निशान नहीं है। आख़िरी पिक पर रुक गए।",
+    "reviewed": false
+  },
+  "codeview.controls.name": {
+    "text": "पिक को एक के बाद एक देखें",
+    "reviewed": false
+  },
+  "codeview.step.back": {
+    "text": "पिछली पिक",
+    "reviewed": false
+  },
+  "codeview.step.forward": {
+    "text": "अगली पिक",
+    "reviewed": false
+  },
+  "codeview.jump.label": {
+    "text": "इस पिक नंबर पर जाएँ",
+    "reviewed": false
+  },
+  "codeview.jump.button": {
+    "text": "जाएँ",
+    "reviewed": false
+  },
+  "codeview.jump.range": {
+    "text": "पिक का नंबर {first} से {last} के बीच चुनें।",
+    "reviewed": false
+  },
+  "codeview.run.next": {
+    "text": "अगले रुकने के निशान तक चलें",
+    "reviewed": false
+  },
+  "codeview.cloth.heading": {
+    "text": "चुनी हुई पिक पर कपड़ा",
+    "reviewed": false
+  },
+  "codeview.cloth.alt": {
+    "text": "पिक {pick} पर बुना हुआ कपड़ा",
+    "reviewed": false
+  },
+  "codeview.empty": {
+    "text": "अभी कोई डिज़ाइन नहीं है। स्कैन स्क्रीन पर कार्ड पढ़ें, या बुनाई स्क्रीन पर कोई नमूना डिज़ाइन चुनें।",
+    "reviewed": false
+  },
+  "codeview.damaged.design": {
+    "text": "{name} की तुलना नहीं हो सकती: पिक {pick} का कार्ड खराब है। उस कार्ड को फिर स्कैन करें या दूसरा डिज़ाइन चुनें।",
+    "reviewed": false
+  },
+  "codeview.diff.heading": {
+    "text": "दो डिज़ाइनों की तुलना करें",
+    "reviewed": false
+  },
+  "codeview.diff.hint": {
+    "text": "जोड़ा हुआ यानी कार्ड सिर्फ़ बाद वाले डिज़ाइन में है। हटाया हुआ यानी कार्ड सिर्फ़ पहले वाले डिज़ाइन में है।",
+    "reviewed": false
+  },
+  "codeview.diff.first.label": {
+    "text": "पहले वाला डिज़ाइन",
+    "reviewed": false
+  },
+  "codeview.diff.second.label": {
+    "text": "बाद वाला डिज़ाइन",
+    "reviewed": false
+  },
+  "codeview.diff.choose": {
+    "text": "डिज़ाइन चुनें",
+    "reviewed": false
+  },
+  "codeview.diff.current": {
+    "text": "अभी खुला डिज़ाइन",
+    "reviewed": false
+  },
+  "codeview.diff.option": {
+    "text": "{name} ({count} पिक)",
+    "reviewed": false
+  },
+  "codeview.diff.loading": {
+    "text": "सहेजे हुए डिज़ाइन लोड हो रहे हैं…",
+    "reviewed": false
+  },
+  "codeview.diff.noSaved": {
+    "text": "तुलना के लिए कोई सहेजा हुआ डिज़ाइन नहीं है। पहले सहेजें स्क्रीन पर कोई डिज़ाइन सहेजें।",
+    "reviewed": false
+  },
+  "codeview.diff.compare": {
+    "text": "तुलना करें",
+    "reviewed": false
+  },
+  "codeview.diff.comparing": {
+    "text": "तुलना हो रही है…",
+    "reviewed": false
+  },
+  "codeview.diff.same": {
+    "text": "दोनों डिज़ाइन एक जैसे हैं।",
+    "reviewed": false
+  },
+  "codeview.diff.counts.changedHoles": {
+    "text": "बदले हुए छेद: {count}",
+    "reviewed": false
+  },
+  "codeview.diff.counts.addedCards": {
+    "text": "जोड़े गए कार्ड: {count}",
+    "reviewed": false
+  },
+  "codeview.diff.counts.removedCards": {
+    "text": "हटाए गए कार्ड: {count}",
+    "reviewed": false
+  },
+  "codeview.diff.entries.name": {
+    "text": "अंतर, हर कार्ड की एक लाइन",
+    "reviewed": false
+  },
+  "codeview.diff.kind.unchanged": {
+    "text": "वैसा ही",
+    "reviewed": false
+  },
+  "codeview.diff.kind.changed": {
+    "text": "बदला हुआ",
+    "reviewed": false
+  },
+  "codeview.diff.kind.added": {
+    "text": "जोड़ा हुआ",
+    "reviewed": false
+  },
+  "codeview.diff.kind.removed": {
+    "text": "हटाया हुआ",
+    "reviewed": false
+  },
+  "codeview.diff.name.unchanged": {
+    "text": "वैसा ही: पिक {firstPick} और पिक {secondPick}",
+    "reviewed": false
+  },
+  "codeview.diff.name.changed": {
+    "text": "बदला हुआ: पिक {firstPick} और पिक {secondPick}, एंड {ends}",
+    "reviewed": false
+  },
+  "codeview.diff.name.added": {
+    "text": "जोड़ा हुआ: पिक {secondPick}",
+    "reviewed": false
+  },
+  "codeview.diff.name.removed": {
+    "text": "हटाया हुआ: पिक {firstPick}",
+    "reviewed": false
+  },
+  "codeview.diff.text.heading": {
+    "text": "अंतर सादे पाठ में",
+    "reviewed": false
+  },
+  "codeview.diff.text.name": {
+    "text": "अंतर का सादा पाठ, हर कार्ड की एक लाइन",
+    "reviewed": false
+  },
+  "codeview.diff.copy": {
+    "text": "पाठ कॉपी करें",
+    "reviewed": false
+  },
+  "codeview.diff.copied": {
+    "text": "पाठ कॉपी हो गया।",
+    "reviewed": false
+  },
+  "codeview.diff.copyFailed": {
+    "text": "पाठ कॉपी नहीं हो सका। उसे चुनकर खुद कॉपी करें।",
+    "reviewed": false
+  },
+  "codeview.diff.download": {
+    "text": "पाठ फ़ाइल के रूप में डाउनलोड करें",
+    "reviewed": false
+  },
+  "codeview.diff.downloaded": {
+    "text": "पाठ फ़ाइल डाउनलोड हो गई।",
+    "reviewed": false
+  },
+  "codeview.refusal.dimension-mismatch": {
+    "text": "इन दोनों डिज़ाइनों की तुलना नहीं हो सकती, क्योंकि इनके कार्ड की बनावट अलग है: पहले में हुक की {firstRows} पंक्ति और {firstColumns} स्तंभ हैं, दूसरे में {secondRows} पंक्ति और {secondColumns} स्तंभ। एक ही कार्ड प्रोफ़ाइल के लिए बने दो डिज़ाइन चुनें।",
+    "reviewed": false
+  },
+  "codeview.refusal.profile-mismatch": {
+    "text": "ये दोनों डिज़ाइन अलग कार्ड प्रोफ़ाइल के लिए बने हैं: {firstProfileName} और {secondProfileName}। एक ही कार्ड प्रोफ़ाइल वाले दो डिज़ाइन चुनें।",
+    "reviewed": false
+  },
+  "codeview.refusal.too-many-picks": {
+    "text": "ये डिज़ाइन तुलना के लिए बहुत लंबे हैं। ज़्यादा से ज़्यादा {limit} पिक की तुलना हो सकती है, और इनमें {firstPicks} और {secondPicks} पिक हैं। छोटे डिज़ाइन चुनें।",
+    "reviewed": false
+  },
+  "error.codeview.load": {
+    "text": "कोड दृश्य लोड नहीं हो सका। बाकी स्क्रीन चल रही हैं।",
     "reviewed": false
   }
 }

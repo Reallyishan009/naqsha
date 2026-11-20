@@ -187,7 +187,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
 - [ ] 2. The shared Selected_Pick and the pure view logic
   - _Requirements: R2.3, R2.4, R2.5, R2.7, R2.11, R3.1, R3.2, R3.4, R3.5, R3.6, R3.8, R3.9, R3.10, R4.1, R4.2, R4.6, R10.1, R10.2, R10.3, R10.4, R10.5, R10.6, R10.7, R10.8, R11.3, R11.4, R11.5, R11.12, R11.13_
 
-  - [~] 2.1 `AppState.selectedPick`, `select-pick`, breakpoints and cloth choices
+  - [x] 2.1 `AppState.selectedPick`, `select-pick`, breakpoints and cloth choices
     - **[demo-essential]**
     - **Existing tests change in this task. Nobody should be surprised: four test files are edited.**
     - Files: `src/ui/types.ts`, `src/ui/state/appState.ts`, `src/ui/state/playback.ts`, `src/ui/screens/weave/WeaveScreen.tsx`, `src/ui/screens/weave/ClothCanvas.tsx`, `tests/ui/state/appState.test.ts`, `tests/ui/state/playback.test.ts`, `tests/ui/screens/weave.test.tsx`, `tests/ui/screens/weaveWiring.test.ts`.
@@ -196,13 +196,13 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - The four existing test files are updated to the new state shape. Keep every assertion they make about Weave behaviour, including that a settings change keeps the current pick and that the pick counter never shows a value from a previous render; do not weaken a test to fit the refactor. Report any test whose assertion genuinely has to change, and why.
     - _Requirements: R3.1, R3.2, R3.10, R4.2, R4.6_
 
-  - [~] 2.2 `buildReadyCloth` moved into `src/ui/state/cloth.ts`
+  - [x] 2.2 `buildReadyCloth` moved into `src/ui/state/cloth.ts`
     - **[demo-essential]**
     - Files: `src/ui/state/cloth.ts`, `src/ui/screens/weave/WeaveScreen.tsx`, `tests/ui/state/cloth.test.ts`.
     - Move `buildReadyCloth` from `WeaveScreen.tsx` into `src/ui/state/cloth.ts` unchanged and re-export it from `WeaveScreen.tsx`, so the existing Weave tests keep their import. It takes the profile, the Pattern, the `ClothChoices` now in `AppState` and the viewport, which stays each screen's own. This is what lets Code view paint with the user's Weave choices and add no second renderer (R4.1).
     - _Requirements: R4.1_
 
-  - [~] 2.3 Translation keys, English and Hindi
+  - [x] 2.3 Translation keys, English and Hindi
     - **[demo-essential]**
     - Files: `src/ui/i18n/en.json`, `src/ui/i18n/hi.json`, `docs/HINDI_REVIEW.md`, `tests/ui/i18n/messages.test.ts`.
     - Add every key of the design's table to both files: `nav.code`, `codeview.listing.name`, `codeview.line.name`, `codeview.line.nameEmpty`, `codeview.line.nameDamaged`, `codeview.line.damagedLabel`, `codeview.bitline.name`, `codeview.breakpoint.name`, `codeview.pickCount`, `codeview.announce.pick`, `codeview.announce.noBreakpoint`, `codeview.jump.range`, the four `codeview.diff.kind.*`, the four `codeview.diff.name.*`, the three `codeview.refusal.*` (each naming the values the refusal carries and one action the user can take next), `error.codeview.load`, and the labels and messages the screen needs for the step, jump, breakpoint and diff controls, the empty-design message naming Scan and the Weave samples, the Archive failure messages, the "the two designs are the same" message and the "no saved design to compare against" message.
@@ -211,7 +211,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - Assert in `tests/ui/i18n/messages.test.ts` that the two files hold the same key set with the same placeholders, that every new `hi` entry is unreviewed, and that `codeview.line.name` and `codeview.line.nameEmpty` read exactly `Pick {pick}: punched at ends {ends}` and `Pick {pick}: no end punched` in `en` (R11.3, R11.4).
     - _Requirements: R10.1, R10.2, R10.3, R10.4, R10.5, R10.6, R10.7_
 
-  - [~] 2.4 `windowFor` and `pickNumberWidth`
+  - [x] 2.4 `windowFor` and `pickNumberWidth`
     - **[demo-essential]**
     - Files: `src/ui/state/codeView.ts`, `tests/ui/state/codeView.test.ts`.
     - `WINDOW_SIZE = 80` and `WINDOW_MARGIN = 10`, at the values the design chose: 48 px rows mean a 1920 px viewport shows 40 rows, so 80 is twice the most that can be visible and leaves 20 rows of headroom at each edge, inside R2.5's 40 to 200, and varying with nothing (R2.5).
@@ -220,14 +220,14 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - Example tests: the invariants at 0, 1 and 10,000 picks; a scroll inside the margin returning the same Window object; a Selected_Pick outside the Window moving it.
     - _Requirements: R2.3, R2.4, R2.5, R2.7, R2.11_
 
-  - [~] 2.5 Breakpoints and the jump parse
+  - [x] 2.5 Breakpoints and the jump parse
     - **[demo-essential]**
     - Files: `src/ui/state/codeView.ts`, `tests/ui/state/codeView.test.ts`.
     - `toggleBreakpoint(breakpoints, pick)`: sets a Breakpoint where the pick index has none and removes it where it has one, at most one per pick index, kept ascending without repeats (R3.6). `nextBreakpoint(breakpoints, pick, lastPick)`: the lowest Breakpoint above `pick` with `found` true, or `lastPick` with `found` false, so the screen can jump straight there without making the intervening pick indices the Selected_Pick on the way (R3.8, R3.9). `parseJump(text, lastPick)`: a whole number from 0 to `lastPick` succeeds, and a blank value, a non-whole number or a value outside the range fails so the screen can name 0 and the last pick index as the allowed range (R3.4, R3.5).
     - Example tests: a double toggle restores the set; `nextBreakpoint` with no Breakpoint above; `parseJump` on blank, `'3.5'`, `'-1'`, `lastPick + 1` and `'0'`.
     - _Requirements: R3.4, R3.5, R3.6, R3.8, R3.9_
 
-  - [~] 2.6 Accessible-name builders, and the property on them
+  - [x] 2.6 Accessible-name builders, and the property on them
     - **[demo-essential]** — the design's folded-in R11.3 property.
     - Files: `src/ui/state/codeView.ts`, `tests/ui/state/codeView.test.ts`.
     - `lineAccessibleName(t, line)` builds the R11.3, R11.4 and R11.12 names from one Line and the `Translate` function: the pick number, then the end indices of the punched holes in ascending order separated by a comma and a space with no Group_Separator; the no-end-punched text where the Line has none; the damaged-card text, listing no end index, for a `damaged` Line. `diffEntryAccessibleName(t, entry)` builds the R11.5 name: the kind word in the current language, the pick number or both pick numbers, and for a `changed` entry the differing end indices in ascending order — so the marker character is never the only statement of the kind.
@@ -257,7 +257,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - **Validates: Requirements R3.1, R3.2, R3.4, R3.6, R3.10, R4.6**
     - _Requirements: R3.1, R3.2, R3.4, R3.6, R3.10, R4.6, R12.2, R12.4_
 
-  - [~] 2.10 Checkpoint - state and view logic
+  - [-] 2.10 Checkpoint - state and view logic
     - Ensure all tests pass, ask the user if questions arise.
     - The whole existing suite must pass after the `selectedPick` refactor, not only the new tests. Report every existing test that changed and what changed in it.
     - _Requirements: R4.2, R12.9_

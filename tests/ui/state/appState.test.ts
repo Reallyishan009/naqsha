@@ -119,6 +119,84 @@ describe('appReducer examples', () => {
     expect(appended.screen).toBe('weave');
   });
 
+  describe('the Selected_Pick, the breakpoints and the cloth choices', () => {
+    const profile = demoProfile();
+    const card = Array.from({ length: profile.hookRows }, () => Array<boolean>(profile.hookColumns).fill(false));
+    const threePicks: Pattern = [card, card, card];
+    const onThreePicks: AppState = { ...initialAppState, current: { pattern: threePicks, origin: { kind: 'sample', design: 'border' } } };
+
+    it('R4.2 the app starts at pick 0 with no breakpoints', () => {
+      expect(initialAppState.selectedPick).toBe(0);
+      expect(initialAppState.breakpoints).toEqual([]);
+    });
+
+    it('R4.2 select-pick sets the pick and clamps it to 0 .. the last pick index', () => {
+      expect(appReducer(onThreePicks, { type: 'select-pick', pick: 2 }).selectedPick).toBe(2);
+      expect(appReducer(onThreePicks, { type: 'select-pick', pick: 3 }).selectedPick).toBe(2);
+      expect(appReducer(onThreePicks, { type: 'select-pick', pick: -4 }).selectedPick).toBe(0);
+      expect(appReducer(onThreePicks, { type: 'select-pick', pick: Number.NaN }).selectedPick).toBe(0);
+      // A design with no picks has only pick 0.
+      expect(appReducer(initialAppState, { type: 'select-pick', pick: 5 }).selectedPick).toBe(0);
+    });
+
+    it('R3.1 R3.2 select-pick leaves the Current_Pattern and the breakpoints unchanged', () => {
+      const marked = appReducer(onThreePicks, { type: 'toggle-breakpoint', pick: 1 });
+      const moved = appReducer(marked, { type: 'select-pick', pick: 2 });
+      expect(moved.current).toBe(marked.current);
+      expect(moved.breakpoints).toEqual([1]);
+    });
+
+    it('R3.10 toggle-breakpoint adds and removes a pick index, keeping the list ascending without repeats', () => {
+      let state = onThreePicks;
+      for (const pick of [2, 0, 1, 2]) state = appReducer(state, { type: 'toggle-breakpoint', pick });
+      expect(state.breakpoints).toEqual([0, 1]);
+      expect(appReducer(state, { type: 'toggle-breakpoint', pick: 0 }).breakpoints).toEqual([1]);
+      // An index with no card in the design cannot hold a breakpoint.
+      expect(appReducer(state, { type: 'toggle-breakpoint', pick: 3 })).toBe(state);
+      expect(appReducer(state, { type: 'toggle-breakpoint', pick: -1 })).toBe(state);
+      expect(appReducer(state, { type: 'toggle-breakpoint', pick: 0.5 })).toBe(state);
+    });
+
+    it('R3.10 the breakpoints and the pick survive navigating away and back', () => {
+      const marked = appReducer(appReducer(onThreePicks, { type: 'toggle-breakpoint', pick: 1 }), { type: 'select-pick', pick: 2 });
+      const back = appReducer(appReducer(marked, { type: 'navigate', screen: 'code' }), { type: 'navigate', screen: 'weave' });
+      expect(back.breakpoints).toEqual([1]);
+      expect(back.selectedPick).toBe(2);
+    });
+
+    it('R3.10 R4.6 every action that replaces the Current_Pattern sets pick 0 and discards the breakpoints', () => {
+      const marked: AppState = {
+        ...onThreePicks,
+        selectedPick: 2,
+        breakpoints: [0, 2],
+        batch: [card],
+        screen: 'scan',
+      };
+      const replaced: AppState[] = [
+        appReducer(marked, { type: 'request-sample', design: 'floral', pattern: [card] }),
+        appReducer(appReducer({ ...marked, current: { pattern: threePicks, origin: { kind: 'scanned', saved: false } } }, { type: 'request-sample', design: 'floral', pattern: [card] }), { type: 'confirm-accepted' }),
+        appReducer(marked, { type: 'open-saved', id: 'a', pattern: [card] }),
+        appReducer(marked, { type: 'batch-commit', mode: 'replace' }),
+        appReducer(marked, { type: 'batch-commit', mode: 'append' }),
+      ];
+      for (const next of replaced) {
+        expect(next.selectedPick).toBe(0);
+        expect(next.breakpoints).toEqual([]);
+      }
+      // A sample waiting for confirmation has not replaced anything yet.
+      const waiting = appReducer({ ...marked, current: { pattern: threePicks, origin: { kind: 'scanned', saved: false } } }, { type: 'request-sample', design: 'floral', pattern: [card] });
+      expect(waiting.selectedPick).toBe(2);
+      expect(waiting.breakpoints).toEqual([0, 2]);
+    });
+
+    it('R4.1 set-cloth-choices replaces the choices and keeps the pick', () => {
+      const choices = { ...initialAppState.clothChoices, repeat: 3, zari: { on: true, tone: 'gold' } } as const;
+      const state = appReducer({ ...onThreePicks, selectedPick: 2 }, { type: 'set-cloth-choices', choices });
+      expect(state.clothChoices).toEqual(choices);
+      expect(state.selectedPick).toBe(2);
+    });
+  });
+
   it('R14.10 each announcement gets a new id', () => {
     const first = appReducer(initialAppState, { type: 'announce', kind: 'error', messageKey: 'a' });
     const second = appReducer(first, { type: 'announce', kind: 'confirmation', messageKey: 'b' });

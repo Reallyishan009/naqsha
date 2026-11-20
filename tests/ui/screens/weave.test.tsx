@@ -177,6 +177,12 @@ describe('weave screen', () => {
     expect(counterTexts(html)).toEqual([t('weave.pickPosition', { pick: pattern.length, total: pattern.length })]);
   });
 
+  it('R4.1 the cloth choices shown are the ones held in the app state', () => {
+    const html = render(arrivedWith('diamond', { clothChoices: { ...initialAppState.clothChoices, zari: { on: true, tone: 'gold' }, repeat: 3 } }));
+    expect(html).toMatch(/<option value="gold" selected=""/);
+    expect(html).toMatch(/<option value="3" selected=""/);
+  });
+
   it('R2.12 a failed profile leaves Try it disabled and the screen usable', () => {
     const html = render({
       ...initialAppState,

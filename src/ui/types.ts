@@ -2,7 +2,7 @@ import type { CardGrid, CardProfile, Pattern, Violation } from '../codec/index.t
 import type { PixelData, Pose, ReadFailure as CardReadFailure } from '../reader/index.ts';
 import type { PreparedCloth, RenderSettings, SimFailure } from '../simulator/index.ts';
 
-export type Screen = 'weave' | 'keep' | 'scan';
+export type Screen = 'weave' | 'keep' | 'scan' | 'code';
 export type Language = 'hi' | 'en';
 
 export type ProfileFailure =
@@ -55,6 +55,12 @@ export type AppState = {
   confirm: Confirm | null;
   announcement: Announcement | null;
   prefersReducedMotion: boolean;
+  /** The pick both the Weave and the Code view screens show; 0 .. max(0, current.pattern.length - 1) (R4.2). */
+  selectedPick: number;
+  /** Pick indices with a breakpoint: ascending, no repeat. Screen state only; never saved or exported (R3.10). */
+  breakpoints: ReadonlyArray<number>;
+  /** The cloth choices made on Weave, shared with Code view (R4.1). */
+  clothChoices: ClothChoices;
 };
 
 export type AppAction =
@@ -72,7 +78,10 @@ export type AppAction =
   | { type: 'batch-replace'; index: number; grid: CardGrid }
   | { type: 'batch-commit'; mode: 'replace' | 'append' }
   | { type: 'read-failed'; failure: CardReadFailure } // no change to the batch (R9.1)
-  | { type: 'announce'; kind: Announcement['kind']; messageKey: string; params?: AnnouncementParams };
+  | { type: 'announce'; kind: Announcement['kind']; messageKey: string; params?: AnnouncementParams }
+  | { type: 'select-pick'; pick: number }
+  | { type: 'toggle-breakpoint'; pick: number }
+  | { type: 'set-cloth-choices'; choices: ClothChoices };
 
 export type ClothChoices = {
   warpColour: string;
@@ -88,11 +97,8 @@ export type ClothView =
   | { status: 'ready'; ready: ReadyCloth }
   | { status: 'failed'; failure: SimFailure; previous: ReadyCloth | null }; // R2.12
 
-export type PlaybackState =
-  | { status: 'idle'; pick: number }
-  | { status: 'playing'; pick: number }
-  | { status: 'paused'; pick: number }
-  | { status: 'finished'; pick: number };
+/** Only the status: the pick the screen shows is `AppState.selectedPick` (R4.2). */
+export type PlaybackState = { status: 'idle' | 'playing' | 'paused' | 'finished' };
 
 export type HookPosition = { hookRow: number; hookColumn: number };
 

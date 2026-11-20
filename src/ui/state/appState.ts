@@ -1,5 +1,15 @@
-import type { AppAction, AppState } from '../types.ts';
+import type { AppAction, AppState, ClothChoices, CurrentPattern } from '../types.ts';
 import { appendCard, commitBatch, moveCard, removeCard, replaceCard } from './batch.ts';
+import { COLOURS } from './cloth.ts';
+import { toggleBreakpoint } from './codeView.ts';
+
+/** The cloth choices the app starts with: the second colour for the warp, the fourth for the weft, no zari. */
+export const DEFAULT_CLOTH_CHOICES: ClothChoices = {
+  warpColour: COLOURS[1]?.hex ?? '#2b3a67',
+  weftColour: COLOURS[3]?.hex ?? '#f1ead8',
+  zari: { on: false },
+  repeat: 1,
+};
 
 export const initialAppState: AppState = {
   screen: 'weave',
@@ -10,7 +20,22 @@ export const initialAppState: AppState = {
   confirm: null,
   announcement: null,
   prefersReducedMotion: false,
+  selectedPick: 0,
+  breakpoints: [],
+  clothChoices: DEFAULT_CLOTH_CHOICES,
 };
+
+/**
+ * Every action that replaces the Current_Pattern goes through here, so the Selected_Pick returns to pick 0 and the
+ * breakpoints are discarded together with the design they were set on (R3.10, R4.6).
+ */
+function withNewPattern(state: AppState, current: CurrentPattern): AppState {
+  return { ...state, current, selectedPick: 0, breakpoints: [] };
+}
+
+function lastPickIndex(state: AppState): number {
+  return Math.max(0, state.current.pattern.length - 1);
+}
 
 /** Pure reducer. */
 export function appReducer(state: AppState, action: AppAction): AppState {
@@ -33,8 +58,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         };
       }
       return {
-        ...state,
-        current: { pattern: action.pattern, origin: { kind: 'sample', design: action.design } },
+        ...withNewPattern(state, { pattern: action.pattern, origin: { kind: 'sample', design: action.design } }),
         confirm: null,
       };
     }
@@ -43,8 +67,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       if (confirm === null) return state;
       if (confirm.kind === 'replace-with-sample') {
         return {
-          ...state,
-          current: { pattern: confirm.pattern, origin: { kind: 'sample', design: confirm.design } },
+          ...withNewPattern(state, { pattern: confirm.pattern, origin: { kind: 'sample', design: confirm.design } }),
           confirm: null,
         };
       }
@@ -53,9 +76,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     }
     case 'open-saved':
       return {
-        ...state,
+        ...withNewPattern(state, { pattern: action.pattern, origin: { kind: 'archive', id: action.id } }),
         screen: 'weave',
-        current: { pattern: action.pattern, origin: { kind: 'archive', id: action.id } },
       };
     case 'mark-saved': {
       const { origin } = state.current;
@@ -86,16 +108,29 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       // "Done" is disabled while the batch is empty (R11.7).
       if (state.batch.length === 0) return state;
       return {
-        ...state,
-        screen: 'weave',
-        current: {
+        ...withNewPattern(state, {
           pattern: commitBatch(state.batch, state.current.pattern, action.mode),
           origin: { kind: 'scanned', saved: false },
-        },
+        }),
+        screen: 'weave',
         batch: [],
         confirm: null,
       };
     }
+    case 'select-pick': {
+      // No Selected_Pick outside the design can exist (R4.2).
+      const wanted = Number.isNaN(action.pick) ? 0 : Math.round(action.pick);
+      const pick = Math.min(lastPickIndex(state), Math.max(0, wanted));
+      return pick === state.selectedPick ? state : { ...state, selectedPick: pick };
+    }
+    case 'toggle-breakpoint': {
+      // A breakpoint belongs to a pick of the design; any other index has no card to stop on.
+      const { pick } = action;
+      if (!Number.isInteger(pick) || pick < 0 || pick >= state.current.pattern.length) return state;
+      return { ...state, breakpoints: toggleBreakpoint(state.breakpoints, pick) };
+    }
+    case 'set-cloth-choices':
+      return { ...state, clothChoices: action.choices };
     case 'read-failed':
       // The batch stays as it is (R9.1, R11.10). Task 3.2 adds readFailureKey with these same keys.
       return appReducer(state, { type: 'announce', kind: 'error', messageKey: `error.read.${action.failure.reason}` });

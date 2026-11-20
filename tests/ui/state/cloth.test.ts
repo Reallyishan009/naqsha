@@ -4,6 +4,7 @@ import type { CardProfile } from '../../../src/codec/index.ts';
 import { parseColour, parseRenderSettings, prepareCloth } from '../../../src/simulator/index.ts';
 import type { SimFailure } from '../../../src/simulator/index.ts';
 import {
+  buildReadyCloth,
   clothReducer,
   COLOURS,
   gapPickNumbers,
@@ -63,6 +64,17 @@ describe('cloth examples', () => {
   });
   it('R2.11 gap picks are one-based', () => {
     expect(gapPickNumbers([{ pick: 0, kind: 'missing', violations: [] }, { pick: 4, kind: 'damaged', violations: [] }])).toEqual([1, 5]);
+  });
+  it('R4.1 buildReadyCloth builds the cloth with the given choices and viewport', () => {
+    const built = buildReadyCloth(demoProfile(), [], CHOICES_FOR_VIEWPORT, 320, 192);
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    expect(built.value.settings.warpColour).toBe(CHOICES_FOR_VIEWPORT.warpColour);
+    expect(built.value.settings.viewport).toEqual({ width: 320, height: 192 });
+  });
+  it('R4.1 buildReadyCloth returns a failure as a value for an invalid profile', () => {
+    const built = buildReadyCloth({ ...demoProfile(), hookRows: 0 }, [], CHOICES_FOR_VIEWPORT, 320, 192);
+    expect(built.ok).toBe(false);
   });
   it('R2.12 an update before any cloth fails with no previous cloth', () => {
     const view = clothReducer({ status: 'empty' }, { type: 'cloth-updated', result: { ok: false, failure: { reason: 'invalid-profile', violations: [] } } });

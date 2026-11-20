@@ -89,39 +89,59 @@ export function riseLevel(fraction: number, skipped: boolean, reducedMotion: boo
  * How a cloth that the screen has not shown before is entered:
  * - `show-finished`: the design was already loaded when the screen arrived, so the finished cloth is shown at once;
  *   this is also what reduced motion gets for a new design (R14.9).
+ * - `show-selected`: the design was already loaded and the other screen left `AppState.selectedPick` past pick 0, so
+ *   the screen shows that pick, paused, with no replay from pick 0 (R4.2).
  * - `autoplay`: a design the visitor has just chosen, so the weave runs from the first pick (R14.8).
  * - `keep`: the same design rebuilt after a colour, zari, repeat or size change, so the current pick stays (R3.6).
  */
-export type EntryMode = 'show-finished' | 'autoplay' | 'keep';
+export type EntryMode = 'show-finished' | 'show-selected' | 'autoplay' | 'keep';
 
 /**
  * Which entry a cloth gets. `entered` is the design the player was last entered with, null before the first one,
- * and `mounted` is the design that was already loaded when the screen arrived.
+ * and `mounted` is the design that was already loaded when the screen arrived, with `mountedPick` the
+ * `AppState.selectedPick` at that moment. At pick 0 the arrival shows the finished cloth; past it, that pick (R4.2).
  * Designs are told apart by identity, as the application state replaces the whole Pattern for a new design.
  */
-export function entryModeFor(pattern: Pattern, entered: Pattern | null, mounted: Pattern): EntryMode {
-  if (entered === null) return pattern === mounted ? 'show-finished' : 'autoplay';
+export function entryModeFor(pattern: Pattern, entered: Pattern | null, mounted: Pattern, mountedPick = 0): EntryMode {
+  if (entered === null) {
+    if (pattern !== mounted) return 'autoplay';
+    return mountedPick > 0 ? 'show-selected' : 'show-finished';
+  }
   return pattern === entered ? 'keep' : 'autoplay';
 }
 
+/** A playback status together with the pick its entry moves the player to. */
+export type PlaybackEntry = PlaybackState & { pick: number };
+
 /**
- * The playback state a newly shown cloth starts in, which is also the position its entry moves the player to.
- * A cloth with no pick has no position but 0.
+ * The pick the screen shows. A finished cloth is shown as its last pick woven, which is one past the last pick index;
+ * `AppState.selectedPick` never goes that far, so the finished status says it (R4.2).
+ */
+export function shownPick(status: PlaybackState['status'], selectedPick: number, pickCount: number): number {
+  return status === 'finished' ? pickCount : selectedPick;
+}
+
+/**
+ * The status a newly shown cloth starts in, and the pick its entry moves the player to. The pick is dispatched as
+ * `select-pick` once, when the cloth is entered. A cloth with no pick has no position but 0.
  */
 export function entryPlayback(
   mode: EntryMode,
   previous: PlaybackState,
+  selectedPick: number,
   pickCount: number,
   autoplays: boolean,
-): PlaybackState {
+): PlaybackEntry {
   const count = Number.isInteger(pickCount) && pickCount > 0 ? pickCount : 0;
   if (count === 0) return { status: 'idle', pick: 0 };
   if (mode === 'autoplay') return autoplays ? { status: 'playing', pick: 0 } : { status: 'finished', pick: count };
   if (mode === 'show-finished') return { status: 'finished', pick: count };
-  const pick = clampPick(previous.pick, count);
+  // Paused on the pick the other screen left, clamped to the last pick index; no autoplay and no replay (R4.2).
+  if (mode === 'show-selected') return { status: 'paused', pick: Math.min(clampPick(selectedPick, count), count - 1) };
+  const pick = clampPick(selectedPick, count);
   if (previous.status === 'playing') return { status: 'playing', pick };
   if (previous.status === 'paused') return { status: 'paused', pick };
-  return { status: pick >= count ? 'finished' : 'idle', pick };
+  return { status: pick >= count || previous.status === 'finished' ? 'finished' : 'idle', pick };
 }
 
 /** A playback state together with the cloth it describes; `cloth` is null before any cloth has been shown. */
@@ -137,11 +157,12 @@ export function displayedPlayback<Cloth>(
   shown: Cloth | null,
   at: PlaybackAt<Cloth>,
   mode: EntryMode,
+  selectedPick: number,
   pickCount: number,
   autoplays: boolean,
 ): PlaybackState {
   if (at.cloth === shown) return at.state;
-  return entryPlayback(mode, at.state, pickCount, autoplays);
+  return entryPlayback(mode, at.state, selectedPick, pickCount, autoplays);
 }
 
 /** The alternative text of the cloth canvas; it names the pick and the total. */

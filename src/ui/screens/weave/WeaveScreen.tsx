@@ -1,30 +1,32 @@
 import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { Dispatch } from 'react';
 import type { CardProfile, Pattern } from '../../../codec/index.ts';
-import { paintToCanvas, browserScheduler, parseRenderSettings, prepareCloth } from '../../../simulator/index.ts';
+import { paintToCanvas, browserScheduler } from '../../../simulator/index.ts';
 import type { Player, Scheduler, SimResult } from '../../../simulator/index.ts';
 import { simFailureKey } from '../../i18n/messages.ts';
 import type { Translate } from '../../i18n/messages.ts';
 import { autoplay } from '../../platform/browser.ts';
 import {
+  buildReadyCloth,
   clothReducer,
   COLOURS,
   gapPickNumbers,
   MAX_REPEAT,
   MIN_REPEAT,
-  settingsFromChoices,
   viewportFor,
 } from '../../state/cloth.ts';
 import {
   canvasAltText,
   displayedPlayback,
   entryModeFor,
+  entryPlayback,
   pickPositionText,
   riseFraction,
   riseLevel,
   riseReducer,
   focusAfterSkip,
   scrubTo,
+  shownPick,
   SPEEDS,
   stepBack,
   stepForward,
@@ -35,31 +37,13 @@ import { ClothCanvas, createClothPlayer } from './ClothCanvas.tsx';
 import { TryIt } from './TryIt.tsx';
 import styles from './WeaveScreen.module.css';
 
-const DEFAULT_CHOICES: ClothChoices = {
-  warpColour: COLOURS[1]?.hex ?? '#2b3a67',
-  weftColour: COLOURS[3]?.hex ?? '#f1ead8',
-  zari: { on: false },
-  repeat: 1,
-};
 const DEFAULT_SPEED_INDEX = 1;
 const FALLBACK_WIDTH = 320;
 /** Cloth height as a fraction of its width. */
 const HEIGHT_RATIO = 0.6;
 
-/** Prepares the cloth and checks the settings. Never throws; either failure comes back as a value (R2.12). */
-export function buildReadyCloth(
-  profile: CardProfile,
-  pattern: Pattern,
-  choices: ClothChoices,
-  availableWidth: number,
-  availableHeight: number,
-): SimResult<ReadyCloth> {
-  const prepared = prepareCloth(profile, pattern);
-  if (!prepared.ok) return prepared;
-  const settings = parseRenderSettings(settingsFromChoices(choices, availableWidth, availableHeight));
-  if (!settings.ok) return settings;
-  return { ok: true, value: { cloth: prepared.value, settings: settings.value } };
-}
+// buildReadyCloth lives in state/cloth.ts so Code view builds its cloth the same way; re-exported for the Weave tests.
+export { buildReadyCloth };
 
 function shownCloth(view: ClothView): ReadyCloth | null {
   switch (view.status) {
@@ -98,10 +82,11 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
   const profile: CardProfile | null = state.profile.status === 'ready' ? state.profile.profile : null;
   const pattern = state.current.pattern;
 
-  const [choices, setChoices] = useState<ClothChoices>(DEFAULT_CHOICES);
+  const choices = state.clothChoices;
+  const setChoices = (next: ClothChoices): void => dispatch({ type: 'set-cloth-choices', choices: next });
   const [speedIndex, setSpeedIndex] = useState(DEFAULT_SPEED_INDEX);
   const [view, dispatchCloth] = useReducer(clothReducer, { status: 'empty' } satisfies ClothView);
-  const [playback, setPlayback] = useState<PlaybackAt<ReadyCloth>>({ cloth: null, state: { status: 'idle', pick: 0 } });
+  const [playback, setPlayback] = useState<PlaybackAt<ReadyCloth>>({ cloth: null, state: { status: 'idle' } });
   const [rise, dispatchRise] = useReducer(riseReducer, 'off');
   const [availableWidth, setAvailableWidth] = useState(FALLBACK_WIDTH);
 
@@ -114,6 +99,8 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
   speedRef.current = SPEEDS[speedIndex] ?? SPEEDS[1];
   /** The design that was already loaded when the screen arrived, and the one the player was last entered with. */
   const mountPatternRef = useRef<Pattern>(pattern);
+  /** The pick the other screen left in `AppState.selectedPick` when this screen arrived (R4.2). */
+  const mountPickRef = useRef<number>(state.selectedPick);
   const enteredPatternRef = useRef<Pattern | null>(null);
   const patternRef = useRef<Pattern>(pattern);
   patternRef.current = pattern;
@@ -165,14 +152,17 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
 
   const shown = shownCloth(view);
   const pickCount = shown === null ? 0 : shown.cloth.picks.length;
-  const mode = entryModeFor(pattern, enteredPatternRef.current, mountPatternRef.current);
-  // The position shown: the player's own last word while it is about the cloth on screen, and otherwise the entry
-  // state that the effect below puts the player in. One value, so the counter and the player cannot disagree.
-  const current = displayedPlayback(shown, playback, mode, pickCount, autoplay(state.prefersReducedMotion));
+  const mode = entryModeFor(pattern, enteredPatternRef.current, mountPatternRef.current, mountPickRef.current);
+  const autoplays = autoplay(state.prefersReducedMotion);
+  // The status shown: the player's own last word while it is about the cloth on screen, and otherwise the entry
+  // status that the effect below puts the player in. The pick shown is `state.selectedPick`, or the last pick woven
+  // once finished. One source for each, so the counter and the player cannot disagree.
+  const { status } = displayedPlayback(shown, playback, mode, state.selectedPick, pickCount, autoplays);
+  const pick = shownPick(status, state.selectedPick, pickCount);
   const modeRef = useRef(mode);
   modeRef.current = mode;
-  const currentRef = useRef(current);
-  currentRef.current = current;
+  const entryRef = useRef(entryPlayback(mode, playback.state, state.selectedPick, pickCount, autoplays));
+  entryRef.current = entryPlayback(mode, playback.state, state.selectedPick, pickCount, autoplays);
 
   // One player per cloth, entered at the position the screen is already showing.
   useEffect(() => {
@@ -192,13 +182,15 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
       paint: paintToCanvas(context),
       scheduler,
       onFrame: (report) => {
+        // Every frame shown is one `select-pick`; the reducer clamps the finished frame to the last pick index.
+        dispatch({ type: 'select-pick', pick: report.frame.pick });
         if (report.atEnd) {
           dispatchRise({ type: 'finished' });
-          setPlayback({ cloth, state: { status: 'finished', pick: report.frame.pick } });
+          setPlayback({ cloth, state: { status: 'finished' } });
         } else if (report.kind === 'tick') {
-          setPlayback({ cloth, state: { status: 'playing', pick: report.frame.pick } });
+          setPlayback({ cloth, state: { status: 'playing' } });
         } else {
-          setPlayback({ cloth, state: { status: 'idle', pick: report.frame.pick } });
+          setPlayback({ cloth, state: { status: 'idle' } });
         }
       },
     });
@@ -208,14 +200,16 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
     enteredPatternRef.current = patternRef.current;
     if (entryMode === 'autoplay') {
       dispatchRise({ type: 'design-loaded', reducedMotion: reducedMotionRef.current });
-    } else if (entryMode === 'show-finished') {
+    } else if (entryMode === 'show-finished' || entryMode === 'show-selected') {
       dispatchRise({ type: 'cleared' });
     }
-    const entry = currentRef.current;
+    const entry = entryRef.current;
+    // The entry pick is dispatched once; a finished cloth is entered one past the last pick index.
+    dispatch({ type: 'select-pick', pick: entry.pick });
     if (entry.status === 'playing') player.play(entry.pick, count, speedRef.current ?? 4);
-    else player.seek(entry.pick);
-    // Last, so that the state the screen shows survives what the seek above reported.
-    setPlayback({ cloth, state: entry });
+    else player.seek(shownPick(entry.status, entry.pick, count));
+    // Last, so that the status the screen shows survives what the seek above reported.
+    setPlayback({ cloth, state: { status: entry.status } });
     return () => {
       player.pause();
       if (playerRef.current === player) playerRef.current = null;
@@ -229,22 +223,23 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
   const onPlay = (): void => {
     const player = playerRef.current;
     if (player === null || shown === null) return;
-    if (current.status === 'paused') {
+    if (status === 'paused') {
       player.resume();
-      setPlayback({ cloth: shown, state: { status: 'playing', pick: current.pick } });
+      setPlayback({ cloth: shown, state: { status: 'playing' } });
       return;
     }
-    const start = current.status === 'finished' || current.pick >= pickCount ? 0 : current.pick;
+    const start = pick >= pickCount ? 0 : pick;
+    dispatch({ type: 'select-pick', pick: start });
     player.play(start, pickCount, rate);
-    setPlayback({ cloth: shown, state: { status: 'playing', pick: start } });
+    setPlayback({ cloth: shown, state: { status: 'playing' } });
   };
   const onPause = (): void => {
     playerRef.current?.pause();
-    if (shown !== null) setPlayback({ cloth: shown, state: { status: 'paused', pick: current.pick } });
+    if (shown !== null) setPlayback({ cloth: shown, state: { status: 'paused' } });
   };
   // The skip control disappears when used, so focus moves to the next control while it is still enabled.
   const onSkip = (): void => {
-    focusAfterSkip(current.status, { pause: pauseButtonRef.current, play: playButtonRef.current });
+    focusAfterSkip(status, { pause: pauseButtonRef.current, play: playButtonRef.current });
     dispatchRise({ type: 'skip' });
   };
   const seekTo = (pick: number): void => {
@@ -253,16 +248,16 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
   };
   const onSpeed = (index: number): void => {
     setSpeedIndex(index);
-    if (current.status === 'playing') {
-      playerRef.current?.play(current.pick, pickCount, SPEEDS[index] ?? rate);
+    if (status === 'playing') {
+      playerRef.current?.play(pick, pickCount, SPEEDS[index] ?? rate);
     }
   };
 
   const gapText = shown === null ? '' : gapPickNumbers(shown.cloth.gaps).join(', ');
-  const playing = current.status === 'playing';
-  const playLabel = current.status === 'paused' ? t('weave.resume') : t('weave.play');
+  const playing = status === 'playing';
+  const playLabel = status === 'paused' ? t('weave.resume') : t('weave.play');
   const riseRunning = rise === 'running' && !state.prefersReducedMotion;
-  const level = riseRunning ? riseLevel(riseFraction(current.pick, pickCount), false, false) : 1;
+  const level = riseRunning ? riseLevel(riseFraction(pick, pickCount), false, false) : 1;
   const canvasSize = shown?.settings.viewport ?? viewport;
   const colourOptions = COLOURS.map((colour) => (
     <option key={colour.hex} value={colour.hex}>
@@ -287,7 +282,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
             canvasRef={canvasRef}
             width={canvasSize.width}
             height={canvasSize.height}
-            altText={canvasAltText(t, current.pick, pickCount)}
+            altText={canvasAltText(t, pick, pickCount)}
           />
         </div>
         {view.status === 'failed' ? (
@@ -298,7 +293,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
         {gapText === '' ? null : <p className={styles.gaps}>{t('weave.gaps', { picks: gapText })}</p>}
       </div>
 
-      <p className={styles.position}>{pickPositionText(t, current.pick, pickCount)}</p>
+      <p className={styles.position}>{pickPositionText(t, pick, pickCount)}</p>
 
       <div className={styles.row}>
         <button ref={playButtonRef} type="button" className={styles.button} disabled={disabled || playing} onClick={onPlay}>
@@ -311,7 +306,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
           type="button"
           className={styles.button}
           disabled={disabled}
-          onClick={() => seekTo(stepBack(current.pick, pickCount))}
+          onClick={() => seekTo(stepBack(pick, pickCount))}
         >
           {t('weave.stepBack')}
         </button>
@@ -319,7 +314,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
           type="button"
           className={styles.button}
           disabled={disabled}
-          onClick={() => seekTo(stepForward(current.pick, pickCount))}
+          onClick={() => seekTo(stepForward(pick, pickCount))}
         >
           {t('weave.stepForward')}
         </button>
@@ -334,7 +329,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
           min={0}
           max={pickCount}
           step={1}
-          value={Math.min(current.pick, pickCount)}
+          value={Math.min(pick, pickCount)}
           disabled={disabled}
           onChange={(event) => seekTo(scrubTo(Number(event.currentTarget.value), pickCount))}
         />
