@@ -40,6 +40,8 @@ export type BundleReport = {
   gzippedBytes: number;
   /** Other .js chunks in dist/assets that contain SCAN_ONLY_MARKER, with their gzipped size. */
   scanChunks: Array<{ file: string; gzippedBytes: number }>;
+  /** Every .js file in dist/assets, sorted by name, with its gzipped size. */
+  chunks: Array<{ file: string; gzippedBytes: number }>;
   absoluteUrls: string[];
   /** The cache name and number of entries of the generated precache list, when dist/sw.js has one. */
   precache: { cacheName: string; entries: number } | null;
@@ -67,6 +69,11 @@ export function findEntryChunk(html: string): string | null {
 
 export function gzippedSize(bytes: Uint8Array): number {
   return gzipSync(bytes, { level: 9 }).length;
+}
+
+/** One output line for a JavaScript file of dist/assets: its file name and gzipped size in bytes (R15.1). */
+export function formatChunkLine(file: string, gzippedBytes: number): string {
+  return `chunk: assets/${file}, ${gzippedBytes} bytes gzipped`;
 }
 
 /** Every file of dist/, as a path relative to it with `/` separators. */
@@ -125,6 +132,10 @@ export function checkBundle(distDir: string): BundleReport {
   const scanChunks: BundleReport['scanChunks'] = [];
   const assetsDir = path.join(distDir, 'assets');
   const entryName = entryChunk === null ? '' : path.basename(entryChunk);
+  const chunks: BundleReport['chunks'] = readdirSync(assetsDir)
+    .filter((name) => name.endsWith('.js'))
+    .sort()
+    .map((file) => ({ file, gzippedBytes: gzippedSize(readFileSync(path.join(assetsDir, file))) }));
   if (entryChunk !== null) {
     if (readFileSync(path.join(distDir, entryChunk), 'utf8').includes(SCAN_ONLY_MARKER)) {
       problems.push(`entry chunk ${entryChunk} contains the Scan-only marker "${SCAN_ONLY_MARKER}"`);
@@ -187,13 +198,14 @@ export function checkBundle(distDir: string): BundleReport {
       problems.push(...precacheProblems(block.entries, distFiles));
     }
   }
-  return { entryChunk: entryChunk ?? '', gzippedBytes, scanChunks, absoluteUrls, precache, icons, problems };
+  return { entryChunk: entryChunk ?? '', gzippedBytes, scanChunks, chunks, absoluteUrls, precache, icons, problems };
 }
 
 if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === import.meta.filename) {
   const distDir = path.resolve(import.meta.dirname, '../dist');
   const report = checkBundle(distDir);
   console.log(`entry chunk: ${report.entryChunk}, ${report.gzippedBytes} bytes gzipped (limit ${ENTRY_CHUNK_LIMIT_BYTES})`);
+  for (const chunk of report.chunks) console.log(formatChunkLine(chunk.file, chunk.gzippedBytes));
   for (const chunk of report.scanChunks) {
     console.log(`scan chunk: assets/${chunk.file}, ${chunk.gzippedBytes} bytes gzipped`);
   }

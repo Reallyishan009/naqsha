@@ -1,0 +1,476 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Move the Check_Browser plumbing into `scripts/checks/session.ts`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213179
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229226959
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229321030
+      }
+    ],
+    "1.2 Add the pure screenshot helpers in `scripts/checks/screenshots.ts`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213219
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229227046
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229321743
+      }
+    ],
+    "1.3 Add the `npm run screenshots` command in `scripts/screenshots.ts`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213282
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229327061
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230380598
+      }
+    ],
+    "1.4 Make `scripts/check_bundle.ts` print every JavaScript chunk": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213314
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229227551
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229322210
+      }
+    ],
+    "1.5 Record the baseline numbers in `.kiro/specs/design-and-ux-pass/measurements.md`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213353
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229327138
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230381133
+      }
+    ],
+    "1.6 Take the 24 \"before\" screenshots": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213391
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230385462
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230429757
+      }
+    ],
+    "1.7 Stage 0 gate and commit": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213439
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230434312
+      }
+    ],
+    "2.1 Write the font tooling under `scripts/fonts/`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213483
+      }
+    ],
+    "2.2 Subset the fonts, check the licences and record the report": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213537
+      }
+    ],
+    "2.3 Check the fonts in the Precache and in the files": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213604
+      }
+    ],
+    "2.4 Write the complete tokens in `src/ui/theme/tokens.css`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213645
+      }
+    ],
+    "2.5 Extend the Contrast_Table in `src/ui/theme/contrast.ts`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213716
+      }
+    ],
+    "2.6 Apply the theme before the first paint": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213757
+      }
+    ],
+    "2.7 Build Button, ButtonLink, Panel, Field, Tabs and Notice": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213853
+      }
+    ],
+    "2.8 Build WeftProgress and the delayed-progress helper": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213913
+      }
+    ],
+    "2.9 Build ThemeSwitch and Selvedge, and wire them into the Shell": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214499
+      }
+    ],
+    "2.10 Move the four Screens onto the shared components": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214609
+      }
+    ],
+    "2.11 Add the style and primary-Button example tests": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214675
+      }
+    ],
+    "2.12 Extend `scripts/check_browser.ts` with the Stage A steps": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214742
+      }
+    ],
+    "2.13 Stage A gate and commit": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214794
+      }
+    ],
+    "3.1 Build Disclosure, ScreenIntro, EmptyState, StateMessage and LoadingState": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214843
+      }
+    ],
+    "3.2 Add the navigation icons and the \"Advanced\" word": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214894
+      }
+    ],
+    "3.3 Split the Weave screen and build the Landing": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214943
+      }
+    ],
+    "3.4 Structure the Weave player with an intro and a Settings Disclosure": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215023
+      }
+    ],
+    "3.5 Structure the Keep screen": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215079
+      }
+    ],
+    "3.6 Structure the Scan screen": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215124
+      }
+    ],
+    "3.7 Structure the Code view": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215163
+      }
+    ],
+    "3.8 Move the Shell and App states onto StateMessage and LoadingState": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215211
+      }
+    ],
+    "3.9 Wire the delayed Thread_Progress": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215257
+      }
+    ],
+    "3.10 Check state messages, intro lines and Hindi keys with an example test": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215306
+      }
+    ],
+    "3.11 Update `scripts/check_browser.ts` for the Disclosures and the Landing": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215347
+      }
+    ],
+    "3.12 Stage B gate and commit": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215409
+      }
+    ],
+    "4.1 Add `cardGeometry` in `src/ui/illustrations/cardGeometry.ts`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215454
+      }
+    ],
+    "4.2 Add `heroLayout` and `heroPose`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215495
+      }
+    ],
+    "4.3 Build CardDrawing, CardFace and the CardThumb wrapper": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215542
+      }
+    ],
+    "4.4 Replace every earlier card picture with CardDrawing": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215580
+      }
+    ],
+    "4.5 Build the HeroLoom and add it to the Landing": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215625
+      }
+    ],
+    "4.6 Build Step_Icons and Spot_Illustrations and wire them in": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215674
+      }
+    ],
+    "4.7 Measure the bundle after Stage C": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215717
+      }
+    ],
+    "4.8 Take the 24 \"after\" screenshots": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215762
+      }
+    ],
+    "4.9 Inspect the 24 \"after\" files and fix every defect": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215810
+      }
+    ],
+    "4.10 Stage C gate and commit": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215855
+      }
+    ],
+    "5.1 Build the Version_Labels and use them in the Version_Chooser": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215896
+      }
+    ],
+    "5.2 Choose singular and plural pick texts": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215943
+      }
+    ],
+    "5.3 Fix the finished cloth on return to Weave": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215988
+      }
+    ],
+    "5.4 Record the benchmark times before the change": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216033
+      }
+    ],
+    "5.5 Make the benchmark steady": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216078
+      }
+    ],
+    "5.6 Correct the Tool_Error entry in `.kiro/specs/loom-mcp/design.md`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216125
+      }
+    ],
+    "5.7 Handle the loom-mcp screenshots in `media/kiro/`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216173
+      }
+    ],
+    "5.8 Stage D gate and commit": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216223
+      }
+    ],
+    "6.1 Write the one Build_Log entry in `docs/BUILD_LOG.md`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216273
+      }
+    ],
+    "6.2 Update `docs/KIRO_USAGE.md`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216311
+      }
+    ],
+    "6.3 Add the font credits to `README.md` and the new directories to the structure steering": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216360
+      }
+    ],
+    "6.4 Run `npm run check:browser` once": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216409
+      }
+    ],
+    "6.5 Run `npm run check:all` once": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216453
+      }
+    ],
+    "6.6 Fold the documents into the Stage D commit": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216517
+      }
+    ],
+    "6.7 Push `auto/build`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216589
+      }
+    ],
+    "6.8 Write the final report and stop": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216634
+      }
+    ]
+  }
+}
