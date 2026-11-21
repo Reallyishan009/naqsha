@@ -356,7 +356,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
 - [ ] 4. Bundle, precache, browser checks and docs
   - _Requirements: R8.6, R8.10, R9.2, R9.3, R9.4, R9.5, R9.6, R9.7, R9.8, R9.9, R11.8, R12.5, R12.6, R12.7, R12.9, R12.10, R12.11_
 
-  - [~] 4.1 Parameterise `check_bundle` over chunk markers
+  - [x] 4.1 Parameterise `check_bundle` over chunk markers
     - **[demo-essential]**
     - Files: `scripts/check_bundle.ts`, `tests/ui/deploy.test.ts`.
     - Replace the single `SCAN_ONLY_MARKER` with `CHUNK_MARKERS = [{ name: 'Scan', marker: 'width and height must be positive integers' }, { name: 'Code view', marker: 'naqsha-code-view-listing' }]`, keeping `SCAN_ONLY_MARKER = CHUNK_MARKERS[0].marker` so nothing that imports it breaks. `BundleReport.scanChunks` becomes `markerChunks: Array<{ name: string; file: string; gzippedBytes: number }>`, and the entry-chunk and other-chunk checks loop over `CHUNK_MARKERS`: a marker found in the entry chunk is a problem naming that marker, and a marker found in no other `.js` chunk of `dist/assets` is a problem naming that marker (R9.3). The check prints the file name and gzipped size of every chunk holding a marker (R9.9), and the gzipped entry chunk must stay below 204,800 bytes with this feature built (R9.2).
@@ -364,7 +364,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - Run `npm run build` then `npm run check-bundle` and report the real numbers.
     - _Requirements: R9.2, R9.3, R9.9_
 
-  - [~] 4.2 The precache test for the Code view chunk
+  - [x] 4.2 The precache test for the Code view chunk
     - **[demo-essential]**
     - Files: `tests/scripts/precache.test.ts`.
     - Identify the Code view chunk as the `.js` file of `dist/assets` containing `naqsha-code-view-listing`, and assert that an entry of the generated precache list in `dist/sw.js` names that file; fail naming the chunk it looked for (R9.6). `scripts/build_precache.ts` needs no change, because it lists every file of `dist/` — confirm that in the test and that the list omits no file of the Built_Site and names no file that is not one (R9.5).

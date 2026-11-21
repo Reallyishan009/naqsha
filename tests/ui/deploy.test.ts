@@ -6,7 +6,7 @@ import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseCardProfile } from '../../src/codec/index.ts';
 import { buildPrecache } from '../../scripts/build_precache.ts';
-import { checkBundle, findAbsoluteUrls, findEntryChunk } from '../../scripts/check_bundle.ts';
+import { CHUNK_MARKERS, SCAN_ONLY_MARKER, checkBundle, findAbsoluteUrls, findEntryChunk } from '../../scripts/check_bundle.ts';
 import viteConfig from '../../vite.config.ts';
 import { stripComments } from '../support/source.ts';
 
@@ -148,6 +148,21 @@ describe('built site', () => {
     const report = checkBundle(outDir);
     expect(report.problems).toEqual([]);
     expect(report.gzippedBytes).toBeGreaterThan(0);
+  });
+
+  it('cards-as-code R9.3 R9.9 the Scan and Code view markers are each in exactly one chunk, and not the entry chunk', () => {
+    expect(CHUNK_MARKERS.map((entry) => entry.name)).toEqual(['Scan', 'Code view']);
+    expect(SCAN_ONLY_MARKER).toBe(CHUNK_MARKERS[0]!.marker);
+    expect(CHUNK_MARKERS.map((entry) => entry.marker)).toContain('naqsha-code-view-listing');
+    const report = checkBundle(outDir);
+    const entryText = readFileSync(path.join(outDir, report.entryChunk), 'utf8');
+    for (const { name, marker } of CHUNK_MARKERS) {
+      expect(entryText.includes(marker), `${name} marker in the entry chunk`).toBe(false);
+      const holding = report.markerChunks.filter((chunk) => chunk.name === name);
+      expect(holding, `${name} marker chunks`).toHaveLength(1);
+      expect(holding[0]!.file).not.toBe(path.basename(report.entryChunk));
+      expect(holding[0]!.gzippedBytes).toBeGreaterThan(0);
+    }
   });
 
   it('R13.4 the entry chunk requests the Card_Profile at a path that exists inside the Built_Site', () => {

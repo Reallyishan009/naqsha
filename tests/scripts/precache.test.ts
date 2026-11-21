@@ -1,5 +1,5 @@
 import fc from 'fast-check';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -175,5 +175,84 @@ describe('precache list built from dist/', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+/** The Code_View_Marker: a string literal only the Code view chunk holds (R9.9). */
+const CODE_VIEW_MARKER = 'naqsha-code-view-listing';
+
+/** Every file under a directory, as a path relative to it with `/` separators. Own walk, not the script's. */
+function filesUnder(directory: string): string[] {
+  return readdirSync(directory, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => path.relative(directory, path.join(entry.parentPath, entry.name)).split(path.sep).join('/'))
+    .sort();
+}
+
+/** One line for each expected file (relative to dist) that no precache entry names. Each line names the file. */
+function missingFromPrecache(expectedFiles: readonly string[], entries: readonly string[], what: string): string[] {
+  const listed = new Set(entries);
+  return expectedFiles.filter((file) => !listed.has(`./${file}`)).map((file) => `${what} ${file} is not named by any entry of the precache list in dist/sw.js`);
+}
+
+/** The built manifest's icon files, each `src` resolved against dist and given relative to it. */
+function manifestIconFiles(distDir: string): string[] {
+  const manifest = JSON.parse(readFileSync(path.join(distDir, 'manifest.webmanifest'), 'utf8')) as { icons?: Array<{ src: string }> };
+  return (manifest.icons ?? []).map((icon) => path.relative(distDir, path.resolve(distDir, icon.src)).split(path.sep).join('/'));
+}
+
+describe('precache list of the built site in dist/sw.js', () => {
+  const distDir = path.join(ROOT, 'dist');
+  let entries: string[] = [];
+  let files: string[] = [];
+
+  beforeAll(() => {
+    // These tests read the real build, so run `npm run build` first.
+    if (!existsSync(path.join(distDir, 'sw.js'))) throw new Error('dist/sw.js does not exist: run `npm run build` before this test');
+    const block = readPrecacheBlock(readFileSync(path.join(distDir, 'sw.js'), 'utf8'));
+    if (block === null) throw new Error('dist/sw.js has no generated precache block: run `npm run build` before this test');
+    entries = block.entries;
+    files = filesUnder(distDir);
+  });
+
+  it('R9.6 an entry of the precache list names the Code view chunk, the .js file of dist/assets holding the Code_View_Marker', () => {
+    const chunks = filesUnder(path.join(distDir, 'assets')).filter(
+      (file) => file.endsWith('.js') && readFileSync(path.join(distDir, 'assets', file), 'utf8').includes(CODE_VIEW_MARKER),
+    );
+    expect(chunks.length, `no .js file of dist/assets contains the Code_View_Marker "${CODE_VIEW_MARKER}", so there is no Code view chunk`).toBeGreaterThan(0);
+    for (const chunk of chunks) {
+      expect(entries, `no entry of the precache list in dist/sw.js names the Code view chunk ./assets/${chunk}`).toContain(`./assets/${chunk}`);
+    }
+  });
+
+  it('R9.5 the precache list omits no file of the built site and names no file that is not one', () => {
+    // The worker serves itself and is never an entry; the start page entry "./" is the scope root.
+    const expectedFiles = files.filter((file) => file !== 'sw.js');
+    expect(missingFromPrecache(expectedFiles, entries, 'built file')).toEqual([]);
+    const known = new Set(expectedFiles.map((file) => `./${file}`));
+    const extra = entries.filter((entry) => entry !== './' && !known.has(entry));
+    expect(extra, `precache entries that are not a file of dist/: ${extra.join(', ')}`).toEqual([]);
+    expect(new Set(entries).size, 'the precache list names an entry twice').toBe(entries.length);
+  });
+
+  it('every font file of dist/fonts is named by an entry of the precache list', () => {
+    const fonts = files.filter((file) => file.startsWith('fonts/'));
+    expect(fonts.filter((file) => file.endsWith('.woff2')).length, 'dist/fonts holds no .woff2 file').toBeGreaterThan(0);
+    expect(missingFromPrecache(fonts, entries, 'font file')).toEqual([]);
+  });
+
+  it('the manifest and every icon it names, resolved against dist, are files of dist named by the precache list', () => {
+    const icons = manifestIconFiles(distDir);
+    expect(icons.length, 'dist/manifest.webmanifest names no icon').toBeGreaterThan(0);
+    for (const icon of icons) expect(files, `icon ${icon} named by the manifest is not a file of dist/`).toContain(icon);
+    expect(missingFromPrecache(['manifest.webmanifest', ...icons], entries, 'manifest file')).toEqual([]);
+  });
+
+  it('a missing file is named in the failure message', () => {
+    const fake = ['./', './index.html', './fonts/a.woff2'];
+    expect(missingFromPrecache(['index.html', 'fonts/a.woff2', 'fonts/b.woff2'], fake, 'font file')).toEqual([
+      'font file fonts/b.woff2 is not named by any entry of the precache list in dist/sw.js',
+    ]);
+    expect(missingFromPrecache([], fake, 'font file')).toEqual([]);
   });
 });

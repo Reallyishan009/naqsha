@@ -2,7 +2,7 @@
  * Checks the built site in dist/ (run after `npm run build`):
  * - the gzipped entry chunk is under 200 KB (R16.1),
  * - dist/index.html has no URL that starts with `/` or `http` (R23.3, R13).
- * - a Scan-only marker string is absent from the entry chunk and present in another chunk (R16.10).
+ * - each marker string of CHUNK_MARKERS (Scan, Code view) is absent from the entry chunk and present in another chunk (R16.10, cards-as-code R9.3).
  * - the web app manifest and its icons are there, relative and the size they declare (R24.7).
  * - the inline theme script comes before the module script and the stylesheet link (R4.12).
  * - dist/sw.js carries a generated precache list that covers the built site with a versioned cache name (R24.2, R24.6).
@@ -18,12 +18,21 @@ import type { DistFile } from './checks/precache.ts';
 
 export const ENTRY_CHUNK_LIMIT_BYTES = 200 * 1024;
 
+export type ChunkMarker = { name: string; marker: string };
+
 /**
- * A string literal that only the reader (Scan chunk) contains: the invalid-image detail in
- * src/reader/readCard.ts. Strings survive minification; identifiers do not. If that message
- * changes, update this marker.
+ * One string literal per lazy screen chunk, found in that chunk and absent from the entry chunk.
+ * Strings survive minification; identifiers do not.
+ * - Scan: the invalid-image detail in src/reader/readCard.ts. If that message changes, update this marker.
+ * - Code view: CODE_VIEW_MARKER, the id of the listing element in src/ui/screens/code/CodeViewScreen.tsx.
  */
-export const SCAN_ONLY_MARKER = 'width and height must be positive integers';
+export const CHUNK_MARKERS: readonly ChunkMarker[] = [
+  { name: 'Scan', marker: 'width and height must be positive integers' },
+  { name: 'Code view', marker: 'naqsha-code-view-listing' },
+];
+
+/** The marker of the Scan chunk, kept for the code that imports it. */
+export const SCAN_ONLY_MARKER = CHUNK_MARKERS[0]!.marker;
 
 export const MANIFEST_FILE = 'manifest.webmanifest';
 
@@ -41,8 +50,8 @@ export type WebManifest = {
 export type BundleReport = {
   entryChunk: string;
   gzippedBytes: number;
-  /** Other .js chunks in dist/assets that contain SCAN_ONLY_MARKER, with their gzipped size. */
-  scanChunks: Array<{ file: string; gzippedBytes: number }>;
+  /** Other .js chunks in dist/assets that contain a marker of CHUNK_MARKERS, with the marker's name and the gzipped size. */
+  markerChunks: Array<{ name: string; file: string; gzippedBytes: number }>;
   /** Every .js file in dist/assets, sorted by name, with its gzipped size. */
   chunks: Array<{ file: string; gzippedBytes: number }>;
   absoluteUrls: string[];
@@ -159,7 +168,7 @@ export function checkBundle(distDir: string): BundleReport {
     }
   }
 
-  const scanChunks: BundleReport['scanChunks'] = [];
+  const markerChunks: BundleReport['markerChunks'] = [];
   const assetsDir = path.join(distDir, 'assets');
   const entryName = entryChunk === null ? '' : path.basename(entryChunk);
   const chunks: BundleReport['chunks'] = readdirSync(assetsDir)
@@ -167,15 +176,20 @@ export function checkBundle(distDir: string): BundleReport {
     .sort()
     .map((file) => ({ file, gzippedBytes: gzippedSize(readFileSync(path.join(assetsDir, file))) }));
   if (entryChunk !== null) {
-    if (readFileSync(path.join(distDir, entryChunk), 'utf8').includes(SCAN_ONLY_MARKER)) {
-      problems.push(`entry chunk ${entryChunk} contains the Scan-only marker "${SCAN_ONLY_MARKER}"`);
-    }
-    for (const file of readdirSync(assetsDir).filter((name) => name.endsWith('.js') && name !== entryName).sort()) {
-      const bytes = readFileSync(path.join(assetsDir, file));
-      if (bytes.toString('utf8').includes(SCAN_ONLY_MARKER)) scanChunks.push({ file, gzippedBytes: gzippedSize(bytes) });
-    }
-    if (scanChunks.length === 0) {
-      problems.push(`no separate chunk in dist/assets contains the Scan-only marker "${SCAN_ONLY_MARKER}"`);
+    const entryText = readFileSync(path.join(distDir, entryChunk), 'utf8');
+    const otherChunks = readdirSync(assetsDir)
+      .filter((name) => name.endsWith('.js') && name !== entryName)
+      .sort()
+      .map((file) => ({ file, bytes: readFileSync(path.join(assetsDir, file)) }));
+    for (const { name, marker } of CHUNK_MARKERS) {
+      if (entryText.includes(marker)) {
+        problems.push(`entry chunk ${entryChunk} contains the ${name} marker "${marker}"`);
+      }
+      const holding = otherChunks.filter((chunk) => chunk.bytes.toString('utf8').includes(marker));
+      for (const chunk of holding) markerChunks.push({ name, file: chunk.file, gzippedBytes: gzippedSize(chunk.bytes) });
+      if (holding.length === 0) {
+        problems.push(`no separate chunk in dist/assets contains the ${name} marker "${marker}"`);
+      }
     }
   }
 
@@ -229,7 +243,7 @@ export function checkBundle(distDir: string): BundleReport {
       problems.push(...fontPrecacheProblems(block.entries));
     }
   }
-  return { entryChunk: entryChunk ?? '', gzippedBytes, scanChunks, chunks, absoluteUrls, precache, icons, problems };
+  return { entryChunk: entryChunk ?? '', gzippedBytes, markerChunks, chunks, absoluteUrls, precache, icons, problems };
 }
 
 if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === import.meta.filename) {
@@ -237,8 +251,8 @@ if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === import.me
   const report = checkBundle(distDir);
   console.log(`entry chunk: ${report.entryChunk}, ${report.gzippedBytes} bytes gzipped (limit ${ENTRY_CHUNK_LIMIT_BYTES})`);
   for (const chunk of report.chunks) console.log(formatChunkLine(chunk.file, chunk.gzippedBytes));
-  for (const chunk of report.scanChunks) {
-    console.log(`scan chunk: assets/${chunk.file}, ${chunk.gzippedBytes} bytes gzipped`);
+  for (const chunk of report.markerChunks) {
+    console.log(`${chunk.name} chunk: assets/${chunk.file}, ${chunk.gzippedBytes} bytes gzipped`);
   }
   if (report.precache !== null) {
     console.log(`precache: ${report.precache.entries} entries in cache ${report.precache.cacheName}`);
