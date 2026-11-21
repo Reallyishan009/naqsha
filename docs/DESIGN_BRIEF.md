@@ -1,10 +1,87 @@
 # Naqsha: Design Brief
 
-This is the look and feel for Naqsha. Give it to Kiro with prompt 40 in KIRO_PROMPTS.md. Kiro turns it into a steering doc and writes the CSS.
+This is the look and feel for Naqsha. It was drafted with Claude. It contains design decisions, not code. Every colour pair must be checked for WCAG AA and listed in `src/ui/theme/contrast.ts`.
 
-This brief was drafted with Claude. It contains design decisions, not code. Check every colour pair for contrast once Kiro implements it. The values below have not been tested on a screen.
+**Second design pass (2026-11-21).** The section "The look (second pass)" below replaces the first-pass rules where they conflict. Replaced rules stay in the file, marked **Replaced**, so the earlier decisions can be read. Run 1 of the pass covers the design system and the Landing. Weave, Keep, Scan and Code get the new tokens, colours and fonts through the shared components, and their own layout follows in run 2.
 
-## Idea
+## The look (second pass)
+
+Calm, premium, editorial, with real pictures.
+
+### Palette
+
+- Day: warm cream ground, deep forest-green ink and primary buttons, warm tan accent.
+- Night: near-black green ground, amber accent.
+- Madder stays for punched holes and errors in both themes.
+- Every pair meets WCAG AA. Large display text (24 px and up) may use 3:1. Small eyebrow labels and body text need 4.5:1, so eyebrows use a darker tan or the green.
+- Every pair is listed in `src/ui/theme/contrast.ts` for both themes. `tokens.css` holds the same values; a test compares them.
+
+### Header
+
+- A floating pill: centred, rounded, sticky, frosted (`backdrop-filter` blur on a surface that is at least 85 percent opaque, so contrast holds over any photo).
+- Left: mark and name. Centre: Weave, Keep, Scan, Code (Code keeps its Advanced marker). Right: theme toggle, language switch, one dark primary pill "Scan a card".
+- At 320 px it collapses to the mark plus a menu Disclosure. The Disclosure has an accessible name from an i18n key, and the nav controls stay reachable inside it.
+
+### Headings and type
+
+- Latin headings use one refined SIL OFL serif with roman and italic (Newsreader, Fraunces or Crimson Pro; the choice and file sizes are recorded in `.kiro/specs/second-pass-run1/measurements.md`).
+- Each major heading has one italic accent word in the tan accent. Hindi headings use colour only, with no italic, and keep Rozha One for Devanagari.
+- Body text is Hind. Bits and numbers are IBM Plex Mono.
+- All fonts are self-hosted, subset woff2, precached. New font files total at most 80,000 bytes. Licence texts are in `public/fonts/` and credited in the README.
+- **Replaced:** Display = Rozha One for all headings, Latin and Devanagari. Rozha One now applies to Devanagari headings only.
+- Unchanged: base size 18 px on phones, scale 14, 16, 18, 22, 28, 36, Hindi line height 1.7, English 1.5, tabular figures in tables.
+
+### Section header
+
+A letterspaced eyebrow with a hairline on each side, a big two-line serif heading with one italic accent word, and a centred one-line subtitle. Section headers may be centred. Running text stays left-aligned.
+
+### Cards and buttons
+
+- Cards: 24 px radius, soft shadow, a picture on top, serif title, short text, small chips.
+- Buttons are pills. The primary is dark green. The secondary is white with a hairline. On hover they lift 2 px, with no lift under reduced motion. The focus ring is always visible.
+- **Replaced:** corner radius 4 px on controls and 8 px on panels. Punch cards keep square corners.
+
+### Spacing, radius and shadow tokens
+
+- Spacing scale: 4, 8, 12, 16, 24, 32, 48 (kept).
+- Radius scale as tokens: card 24 px, pill fully rounded, plus the smaller steps the controls need.
+- One soft shadow set as tokens.
+- **Replaced:** "Borders: 1 px `--line`. Avoid drop shadows, except a soft one under the punch card." Soft shadows are now allowed on cards, the header pill and media frames. Borders stay 1 px `--line` for hairlines.
+
+### Pictures
+
+- Licensed photographs (six AVIF files in `public/photos/`) with a visible credit on the page: author, title, licence name linked to the licence, link to the source page, and the change made ("resized, converted"). The credits list is generated from `docs/IMAGE_CREDITS.md`.
+- Pictures made by the app itself with the real code (`scripts/make_art.ts` into `public/art/`): the demo card as a physical card, the pattern grid, the cloth, and a chain of eight laced cards.
+- ProcessLoop, a live canvas running the real pipeline, with zero image bytes and a still frame under reduced motion.
+- Total image bytes of photos and art: at most 600,000.
+- Nothing is copied from a third party: no text, photos, logos or branding. No invented ratings, guest counts, prices or testimonials.
+
+### Effects
+
+Allowed:
+
+- soft shadows
+- rounded corners
+- frosted panels (`backdrop-filter`)
+- subtle two-stop tonal gradients inside illustrations
+- tinted photo overlays
+- an inline-SVG curved or wavy divider
+
+Forbidden:
+
+- emoji
+- gradient text
+- rainbow gradients
+- bouncing motion
+- purple-to-blue gradients
+
+**Replaced:** the first-pass line "Do not use purple-to-blue gradients, glass effects, or emoji as icons." Glass (frosted) panels and the effects above are now allowed. Purple-to-blue gradients and emoji stay forbidden.
+
+## First-pass brief
+
+The rest of this file is the first-pass brief. Where it conflicts with the section above, the section above wins.
+
+### Idea
 
 The interface looks like the weaver's own materials: manila card stock, graph paper for the naksha, silk, and gold zari thread. It should feel like a workbench, not a dashboard.
 
@@ -13,7 +90,9 @@ Two themes:
 - **Day loom** (default): ivory silk background, for use in a bright workshop.
 - **Night loom**: deep indigo, for the Halloween theme and the demo video.
 
-## Colour tokens
+**Replaced by the second pass:** the palette below (ivory and indigo become cream with forest green, and near-black green with amber). The first-pass values are kept here for reference until `tokens.css` and `contrast.ts` change in task 3.2.
+
+### Colour tokens (first pass)
 
 | Token | Day loom | Night loom | Use |
 |---|---|---|---|
@@ -29,85 +108,81 @@ Two themes:
 | `--indigo` | `#27306B` | `#8FA3FF` | Links, unpunched overlay |
 | `--leaf` | `#2F6B4F` | `#6FCF9B` | Confirmed, success |
 
-Rules:
+Rules (still apply):
 
 - Status colours always come with an icon or a word. Colour is never the only signal.
-- Text on `--zari` buttons uses `--ink` in day loom and `--hole` in night loom.
-- Kiro must report any pair below WCAG AA and propose a darker or lighter value.
+- Text on the accent button uses a token that passes AA in both themes.
+- Report any pair below WCAG AA and propose a darker or lighter value.
 
-## Type
+### Type (first pass)
 
 | Role | Family | Fallback | Use |
 |---|---|---|---|
-| Display | Rozha One | Georgia, serif | Screen titles, Hindi and English |
+| Display | Rozha One | Georgia, serif | Screen titles, Hindi and English (**Replaced**: Latin headings now use the serif chosen in task 3.1) |
 | Body | Hind | system-ui, sans-serif | All running text and controls |
 | Data | IBM Plex Mono | ui-monospace, monospace | Card bits, numbers, the cards-as-code view |
 
-- Load from Google Fonts, and include the Devanagari subsets.
-- Base size 18px on phones, because many users read at arm's length in a workshop.
-- Scale: 14, 16, 18, 22, 28, 36.
-- Hindi line height 1.7. English line height 1.5.
-- Numbers in tables use tabular figures.
+Fonts are self-hosted, not loaded from Google Fonts at run time.
 
-## Spacing and shape
+### Spacing and shape (first pass)
 
-- Spacing scale: 4, 8, 12, 16, 24, 32, 48.
-- Corner radius: 4px on controls, 8px on panels. Punch cards have square corners.
-- Touch targets: at least 48px.
-- Borders: 1px `--line`. Avoid drop shadows, except a soft one under the punch card to lift it off the page.
+- Touch targets: at least 48 px (kept).
+- Punch cards have square corners (kept).
+- **Replaced:** 4 px control radius, 8 px panel radius, and the "avoid drop shadows" rule (see Cards and buttons, and Spacing, radius and shadow tokens above).
 
-## Signature details
+### Signature details
 
 - **Graph-paper ground.** The page background carries a faint grid in `--line` at 8px, like naksha paper. It fades out behind text panels.
 - **The punch card.** A card is always drawn as manila stock with round holes, peg holes at the ends, and lacing holes. It looks like the real object in every screen where a card appears.
-- **Selvedge edge.** The top bar has a thin woven border in `--zari` and `--madder`, like the edge of a sari.
+- **Selvedge edge.** The top bar has a thin woven border in `--zari` and `--madder`, like the edge of a sari. (Second pass: the top bar is now the floating pill header; the selvedge stays as a detail where the Selvedge component is used.)
 - **Thread progress.** Progress bars are a thread being drawn across, not a filling rectangle.
 
-## Screens
+### Screens (layout stays until run 2)
 
-### Scan
+#### Scan
 - The camera fills the screen. A card-shaped guide frame sits in the centre, with corner brackets in `--zari`.
 - One line of instruction under the frame, in Hindi first.
 - After capture: detected punched holes in `--leaf`, unpunched in `--indigo` outline, low-confidence holes pulsing in `--zari`.
 - One large button at the bottom: "Next card". A smaller one: "Done".
 
-### Weave
+#### Weave
 - Cloth on the left or top, taking two thirds of the space. The current card on the right or bottom.
 - Playback controls in one row: back, play, forward, speed. A scrubber spans the full width.
 - Damaged or missing cards appear as a hatched gap in `--madder`.
 
-### Keep
+#### Keep
 - A form with large fields: name, designer, weaver, place, date. All optional.
 - A voice-note button with a clear recording state.
 - Three export buttons with plain labels: "For electronic loom (BMP)", "Printable cards", "Design file".
 - A one-line note: "This is a record of the design. It is not legal protection."
 
-### Cards as code
+#### Cards as code
 - Dark panel in both themes. Each card is a row of bits in the data font.
 - Changed cards in a diff are marked with a `+` or `-` and a colour.
 
-## Motion
+### Motion
 
 - Holes appear with a short pop when detected, staggered across the card, under 400ms in total.
 - Cloth forms one pick at a time. The speed follows the playback control.
 - The first weave of a scanned design rises out of darkness. It plays once and can be skipped.
 - With reduced motion turned on: no stagger, no rise, instant state changes.
+- Second pass additions: scroll reveal of Landing sections is a fade and a 12 px rise, once, under 400 ms, and none under reduced motion. Content is visible without JavaScript observers firing. Nothing bounces.
 
-## Halloween, with restraint
+### Halloween, with restraint
 
-- Night loom theme, candle-warm `--zari`, and the idea of a design returning from decayed cards.
+- Night loom theme, candle-warm accent, and the idea of a design returning from decayed cards.
 - No skulls, blood, or jump scares. The subject is living craftspeople and their heritage.
 
-## Language and words
+### Language and words
 
 - Hindi first, English second. Every control has both available.
-- Use the weaver's words: card, design, loom. Avoid "bitmap", "matrix", and "decode" outside the cards-as-code view.
+- Use the weaver's words: card, design, loom. Avoid "bitmap", "matrix", and "decode" outside the cards-as-code view (the Landing may say "BMP" where the export card truthfully names the file).
 - Buttons say what happens: "Read this card", "Save design".
 - Errors say what went wrong and what to do: "The card is not fully in the frame. Move the phone back."
 
-## Do not
+### Do not
 
-- Do not use purple-to-blue gradients, glass effects, or emoji as icons.
-- Do not centre everything. Left-align text.
+- Do not use emoji as icons. Do not use gradient text, rainbow gradients or purple-to-blue gradients.
+- Do not centre running text. Left-align it. Section headers may be centred.
 - Do not hide the main action in a menu.
 - Do not use religious imagery as decoration.

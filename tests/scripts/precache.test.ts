@@ -241,6 +241,20 @@ describe('precache list of the built site in dist/sw.js', () => {
     expect(missingFromPrecache(fonts, entries, 'font file')).toEqual([]);
   });
 
+  it('every file of public/photos and public/art is built into dist and named by an entry of the precache list', () => {
+    for (const folder of ['photos', 'art']) {
+      const sources = filesUnder(path.join(ROOT, 'public', folder)).map((file) => `${folder}/${file}`);
+      expect(sources.length, `public/${folder} holds no file`).toBeGreaterThan(0);
+      for (const source of sources) expect(files, `public/${source} is not a file of dist/`).toContain(source);
+      expect(missingFromPrecache(sources, entries, `picture file`)).toEqual([]);
+    }
+  });
+
+  it('the build output holds no photos-source folder, so the original photographs are not shipped', () => {
+    expect(files.filter((file) => file.includes('photos-source')), 'dist/ holds files of photos-source').toEqual([]);
+    expect(entries.filter((entry) => entry.includes('photos-source')), 'the precache list names photos-source').toEqual([]);
+  });
+
   it('the manifest and every icon it names, resolved against dist, are files of dist named by the precache list', () => {
     const icons = manifestIconFiles(distDir);
     expect(icons.length, 'dist/manifest.webmanifest names no icon').toBeGreaterThan(0);
@@ -254,5 +268,8 @@ describe('precache list of the built site in dist/sw.js', () => {
       'font file fonts/b.woff2 is not named by any entry of the precache list in dist/sw.js',
     ]);
     expect(missingFromPrecache([], fake, 'font file')).toEqual([]);
+    expect(missingFromPrecache(['photos/x.avif', 'art/y.avif'], [...fake, './art/y.avif'], 'picture file')).toEqual([
+      'picture file photos/x.avif is not named by any entry of the precache list in dist/sw.js',
+    ]);
   });
 });

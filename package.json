@@ -29,6 +29,7 @@
     "sample-bmp": "node scripts/export_sample.ts",
     "review-list": "node scripts/review_list.ts",
     "icons": "node scripts/make_icons.ts",
+    "make-art": "node scripts/make_art.ts",
     "screenshots": "node scripts/screenshots.ts"
   },
   "dependencies": {

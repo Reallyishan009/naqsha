@@ -1,0 +1,43 @@
+/*
+ * The Process_Loop: a live canvas picture in a framed card. The canvas takes its colours from the tokens in
+ * processPaint.ts; this sheet only lays it out. The parent may tilt or size the figure through className.
+ */
+.loop {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-card);
+}
+.canvas {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  /* A solid colour shows until the first picture is drawn. */
+  background: var(--surface);
+}
+/* The pause button sits in a bar under the picture, so it never covers a card. */
+.bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-2);
+  border-top: 1px solid var(--line);
+}
+/* Text for assistive technology only. */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
