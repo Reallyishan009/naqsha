@@ -79,9 +79,37 @@ async function ensureEnglish(page: Page): Promise<void> {
   await page.waitFor(`document.documentElement.lang==='en'`, 'the page language to be en');
 }
 
+/** Clicks the navigation item whose text starts with the label: the Code view item also carries the word "Advanced". */
+async function clickNavItem(page: Page, label: string): Promise<void> {
+  await page.click(
+    `[...document.querySelectorAll('nav button')].find(b=>b.textContent.trim().startsWith(${JSON.stringify(label)}))`,
+    `nav button "${label}"`,
+  );
+}
+/**
+ * Opens the Disclosure whose accessible name is `name` when it is closed, and leaves it open when it is open already.
+ * A Disclosure is a `button[aria-expanded][aria-controls]`; its accessible name is its `aria-label` or its text.
+ * When no such button is on the page the step fails with a message that names the Disclosure.
+ */
+async function openDisclosure(page: Page, name: string): Promise<void> {
+  const control = `[...document.querySelectorAll('button[aria-expanded][aria-controls]')].find(b=>(b.getAttribute('aria-label')||b.textContent).trim()===${JSON.stringify(name)})`;
+  try {
+    await page.waitFor(`!!(${control})`, `the Disclosure "${name}"`);
+  } catch {
+    throw new Error(`the Disclosure "${name}" was not found`);
+  }
+  if ((await page.ev<string>(`(${control}).getAttribute('aria-expanded')`)) === 'false') {
+    await page.click(control, `the Disclosure "${name}"`);
+  }
+  await page.waitFor(`(${control}).getAttribute('aria-expanded')==='true'`, `the Disclosure "${name}" to open`);
+}
+/** Opens the Keep "More" Disclosure when it is closed; the export choices and the details other than the name are inside it. */
+async function openMore(page: Page): Promise<void> {
+  await openDisclosure(page, EN['disclosure.more']!);
+}
 async function goTo(page: Page, screen: Screen): Promise<void> {
   await ensureEnglish(page);
-  await page.clickText('nav button', EN[`nav.${screen}`]!);
+  await clickNavItem(page, EN[`nav.${screen}`]!);
   await page.waitFor(`document.querySelector('#screen-title')?.textContent.trim()===${JSON.stringify(EN[`nav.${screen}`])}`, `the ${screen} screen`);
 }
 
@@ -107,7 +135,7 @@ async function ensureLanguage(page: Page, language: Language): Promise<void> {
 /** Opens one Screen through the navigation, in the given language. */
 async function showScreen(page: Page, screen: AnyScreen, language: Language): Promise<void> {
   await ensureLanguage(page, language);
-  await page.clickText('nav button', WORDS[language][`nav.${screen}`]!);
+  await clickNavItem(page, WORDS[language][`nav.${screen}`]!);
   await page.waitFor(
     `document.querySelector('#screen-title')?.textContent.trim()===${JSON.stringify(WORDS[language][HEADING_KEY[screen]])}`,
     `the ${screen} screen in ${language}`,
@@ -228,7 +256,8 @@ async function playToEnd(page: Page, total: number, timeoutMs = 150_000): Promis
 
 async function chooseSample(page: Page, design: Design): Promise<number> {
   await goTo(page, 'weave');
-  await page.clickText('button', EN[`tryit.${design}`]!);
+  // The Landing tile and the Try it button of the player both carry data-sample; the tile's text also holds "Try it".
+  await page.click(`document.querySelector('[data-sample="${design}"]')`, `the ${design} sample control`);
   if (await page.ev<boolean>(`!!${byText('button', EN['tryit.confirmYes']!)}`)) await page.clickText('button', EN['tryit.confirmYes']!);
   return generateSample(await profileOf(), design).length;
 }
@@ -290,6 +319,125 @@ function clearDownloads(dir: string): void {
   for (const name of readdirSync(dir)) rmSync(path.join(dir, name), { force: true });
 }
 
+// ---------------------------------------------------------------- Landing, Disclosure and navigation checks (Stage B)
+
+/** The size of the phone the Landing, the Disclosures and the primary Button are measured at (R8.10, R10.7, R23.7). */
+const PHONE = { width: 390, height: 844 } as const;
+/** The Landing's headline, Step_Strip and first Sample_Tile end within this many CSS pixels from the top (R8.10). */
+const LANDING_LIMIT_PX = 700;
+
+type KeyName = 'Enter' | 'Space' | 'Tab' | 'Escape';
+const KEYS: Record<KeyName, { key: string; code: string; windowsVirtualKeyCode: number; text?: string }> = {
+  Enter: { key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' },
+  Space: { key: ' ', code: 'Space', windowsVirtualKeyCode: 32, text: ' ' },
+  Tab: { key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 },
+  Escape: { key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 },
+};
+/** A real key press (down and up) on the focused element, so the browser's own default action runs (a button's click, the Tab move). */
+async function pressKey(page: Page, name: KeyName): Promise<void> {
+  const { text, ...key } = KEYS[name];
+  await page.cdp.call('Input.dispatchKeyEvent', { type: text === undefined ? 'rawKeyDown' : 'keyDown', ...key, ...(text === undefined ? {} : { text }) });
+  await page.cdp.call('Input.dispatchKeyEvent', { type: 'keyUp', ...key });
+}
+/** Focuses the element the expression returns without scrolling, and says whether it holds focus. */
+async function focusElement(page: Page, elementExpression: string, what: string): Promise<void> {
+  const focused = await page.ev<boolean>(`(()=>{const e=${elementExpression};if(!e)return false;e.focus({preventScroll:true});return document.activeElement===e})()`);
+  expect(focused, `${what} could not take keyboard focus`);
+}
+/** Waits until the web fonts are ready and the layout has settled, so a measurement does not read a font that is still arriving. */
+async function settleLayout(page: Page): Promise<void> {
+  await page.ev<boolean>(`document.fonts.ready.then(()=>true)`);
+  await sleep(400);
+}
+
+/** Every Disclosure control of the shown Screen. */
+const DISCLOSURES = `[...document.querySelectorAll('main button[aria-expanded][aria-controls]')]`;
+const panelOf = (control: string): string => `document.getElementById((${control}).getAttribute('aria-controls'))`;
+const tabbablesOf = (panel: string): string =>
+  `[...(${panel}).querySelectorAll('a[href],button,input,select,textarea,[tabindex]')].filter(e=>!e.disabled&&e.tabIndex>=0)`;
+
+type Box = { top: number; bottom: number; left: number; right: number; width: number; height: number };
+const BOX = `(e=>{if(!e)return null;const r=e.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width,height:r.height}})`;
+
+/** The element that is the one primary Button of a Screen: the file chooser of Scan (while no card is read), otherwise the first element styled primary. */
+const primaryOf = (screen: AnyScreen): string =>
+  screen === 'scan'
+    ? `document.querySelector('main label[data-emphasis="primary"] input[type="file"]')`
+    : `document.querySelector('main [class*="_primary_"]')`;
+
+/** Checks one Disclosure of a Screen: collapsed on arrival, toggled by Enter and Space, out of the Tab order while collapsed, Escape returns focus. */
+async function checkDisclosure(page: Page, screen: AnyScreen, index: number): Promise<string> {
+  const control = `${DISCLOSURES}[${index}]`;
+  const panel = panelOf(control);
+  const name = await page.ev<string>(`(${control}).textContent.trim()`);
+  const where = `${screen} Disclosure "${name}"`;
+  const expanded = (): Promise<string> => page.ev<string>(`(${control}).getAttribute('aria-expanded')`);
+  const insidePanel = (): Promise<boolean> => page.ev<boolean>(`(${panel}).contains(document.activeElement)`);
+  const toggle = async (key: KeyName, to: 'true' | 'false'): Promise<void> => {
+    await focusElement(page, control, `the ${where} control`);
+    await pressKey(page, key);
+    await page.waitFor(`(${control}).getAttribute('aria-expanded')===${JSON.stringify(to)}`, `the ${where} to have aria-expanded ${to} after ${key}`, 3_000).catch(() => {
+      throw new Error(`${where}: after ${key} aria-expanded is not ${to}`);
+    });
+  };
+
+  // Collapsed on arrival, with its controls out of the Tab order and not drawn.
+  expect((await expanded()) === 'false', `${where}: aria-expanded is "${await expanded()}" on arrival, expected "false"`);
+  const closed = await page.ev<{ hidden: boolean; tabbable: number; drawn: number }>(
+    `(()=>{const p=${panel};const t=${tabbablesOf(panel)};return {hidden:p.hidden,tabbable:t.length,drawn:t.filter(e=>e.getClientRects().length>0).length}})()`,
+  );
+  expect(closed.hidden && closed.drawn === 0, `${where}: collapsed, the panel is ${closed.hidden ? 'hidden' : 'not hidden'} and ${closed.drawn} of its ${closed.tabbable} controls are drawn`);
+  await focusElement(page, control, `the ${where} control`);
+  await pressKey(page, 'Tab');
+  expect(!(await insidePanel()), `${where}: Tab from the collapsed control moved focus into its panel`);
+
+  // Opening it leaves the primary Button in view, at the scroll position it had.
+  await page.ev(`window.scrollTo(0,0)`);
+  const primary = primaryOf(screen);
+  const inView = async (): Promise<string | null> => {
+    const seen = await page.ev<{ box: Box | null; scrollY: number; height: number }>(`({box:${BOX}(${primary}),scrollY:window.scrollY,height:window.innerHeight})`);
+    if (seen.box === null) return 'there is no primary Button';
+    if (seen.box.height <= 0) return 'the primary Button is not drawn';
+    if (seen.box.top < 0 || seen.box.bottom > seen.height) return `the primary Button spans ${Math.round(seen.box.top)} to ${Math.round(seen.box.bottom)} of a ${seen.height} px viewport`;
+    return null;
+  };
+  const before = await inView();
+  expect(before === null, `${where}: before it opens, ${before}`);
+  const scrollBefore = await page.ev<number>(`window.scrollY`);
+  await toggle('Enter', 'true');
+  const opened = await page.ev<{ hidden: boolean; scrollY: number; enabled: number }>(
+    `(()=>{const p=${panel};return {hidden:p.hidden,scrollY:window.scrollY,enabled:${tabbablesOf(panel)}.filter(e=>e.getClientRects().length>0).length}})()`,
+  );
+  expect(!opened.hidden, `${where}: Enter opened it but its panel is still hidden`);
+  expect(opened.scrollY === scrollBefore, `${where}: opening it moved the scroll position from ${scrollBefore} to ${opened.scrollY}`);
+  const after = await inView();
+  expect(after === null, `${where}: after it opens, ${after}`);
+  // The panel's controls come directly after the Disclosure's own control in the Tab order (R10.9).
+  if (opened.enabled > 0) {
+    await focusElement(page, control, `the ${where} control`);
+    await pressKey(page, 'Tab');
+    expect(await insidePanel(), `${where}: Tab from the open control did not move focus to the first control of its panel`);
+  }
+  // Enter and Space both toggle it, each way.
+  await toggle('Enter', 'false');
+  await toggle('Space', 'true');
+  await toggle('Space', 'false');
+  // A collapse with focus on an inner control returns focus to the Disclosure's own control (R10.12).
+  let focusReturn = 'its panel holds no control that can take focus';
+  if (opened.enabled > 0) {
+    await toggle('Enter', 'true');
+    await focusElement(page, `${tabbablesOf(panel)}.find(e=>e.getClientRects().length>0)`, `the first control inside the ${where}`);
+    await pressKey(page, 'Escape');
+    await page.waitFor(`(${control}).getAttribute('aria-expanded')==='false'`, `the ${where} to collapse on Escape`, 3_000).catch(() => {
+      throw new Error(`${where}: Escape inside its panel did not collapse it`);
+    });
+    const onControl = await page.ev<boolean>(`document.activeElement===(${control})`);
+    expect(onControl, `${where}: after it collapsed with focus inside, focus is not on the Disclosure's own control`);
+    focusReturn = 'focus returns to its control when it collapses from inside';
+  }
+  return `${where}: collapsed on arrival, ${closed.tabbable} controls out of the Tab order, Enter and Space toggle aria-expanded, the primary Button stays in view when it opens; ${focusReturn}`;
+}
+
 const KEEP_LIST_TEXT = `(()=>{const h=document.getElementById('keep-list-title');const s=h?h.closest('section'):null;return s?s.innerText:null})()`;
 
 function buildSteps(ctx: Context): BrowserStep[] {
@@ -306,12 +454,19 @@ function buildSteps(ctx: Context): BrowserStep[] {
         );
         expect(heading === EN['nav.weave'] || heading === HI['nav.weave'], `the first screen heading is "${heading}", expected the Weave screen`);
         await page.waitFor(
-          `[...document.querySelectorAll('button')].some(b=>(b.textContent.trim()===${JSON.stringify(EN['tryit.diamond'])}||b.textContent.trim()===${JSON.stringify(HI['tryit.diamond'])})&&!b.disabled)`,
+          `[...document.querySelectorAll('[data-sample="diamond"]')].some(b=>!b.disabled)`,
           'the card profile to load (Try it buttons enabled)',
         );
         await sleep(500);
         expect(page.consoleErrors.length === 0, `console errors on load:\n${page.consoleErrors.join('\n')}`);
-        return `title "${title}", "${heading}" visible, Try it enabled, no console errors`;
+        // The first install of the service worker is not an update: once it controls the page, no "newer Naqsha" notice shows.
+        await page.waitFor(`navigator.serviceWorker.controller!==null`, 'the first service worker to take control of the page');
+        await sleep(300);
+        const notice = await page.ev<boolean>(
+          `(()=>{const text=document.body.innerText;return ${JSON.stringify([EN['update.ready'], HI['update.ready']])}.some(m=>m&&text.includes(m))})()`,
+        );
+        expect(!notice, 'the "newer Naqsha is ready" notice is shown on a first visit');
+        return `title "${title}", "${heading}" visible, Try it enabled, no console errors, no update notice on the first visit`;
       },
     },
     {
@@ -374,6 +529,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
         await playToEnd(page, picks);
         await goTo(page, 'keep');
         await page.fillField(EN['keep.field.name']!, name);
+        await openMore(page);
         await page.fillField(EN['keep.field.place']!, place);
         await page.clickText('button', EN['keep.save.button']!);
         const saved = await page.waitFor<string>(`document.getElementById('keep-saved')?.textContent.trim()`, 'the "Saved" message');
@@ -444,6 +600,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
         const lines: string[] = [];
         const failures: string[] = [];
         await goTo(page, 'keep');
+        await openMore(page);
         for (const bitDepth of [1, 8] as const) {
           try {
             clearDownloads(ctx.downloadDir);
@@ -523,7 +680,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
         await page.waitFor(`!!document.querySelector('#scan-file')`, 'the file input');
         await page.setFile('#scan-file', cardPng);
         const outcome = await page.waitFor<string>(
-          `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[role="alert"] > div')?.textContent.trim()||null)`,
+          `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[data-variant="error"] > div')?.textContent.trim()||null)`,
           'the read to finish',
           30_000,
         );
@@ -596,7 +753,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
         await goTo(page, 'scan');
         const batchBefore = await page.ev<number>(`document.querySelectorAll('#scan-batch-title ~ ol > li').length`);
         await page.setFile('#scan-file', blank);
-        const message = await page.waitFor<string>(`document.querySelector('[role="alert"] > div')?.textContent.trim()`, 'the failure message', 30_000);
+        const message = await page.waitFor<string>(`document.querySelector('[data-variant="error"] > div')?.textContent.trim()`, 'the failure message', 30_000);
         expect(message === EN['error.read.peg-holes-not-found'], `the message is "${message}", expected "${EN['error.read.peg-holes-not-found']}"`);
         const markers = await page.ev<number>(`document.querySelectorAll('button[data-shape]').length`);
         expect(markers === 0, `${markers} hook markers are shown after a blank image`);
@@ -756,6 +913,171 @@ function buildSteps(ctx: Context): BrowserStep[] {
       },
     },
     {
+      name: 'Landing: headline, steps and first tile within 700 px at 390 by 844, one primary Button, a tile starts a sample',
+      async run() {
+        const lines: string[] = [];
+        try {
+          // A reload empties the Current_Pattern, so the Weave screen shows the Landing.
+          await page.hardReload();
+          await page.waitFor(`!!document.querySelector('#screen-title')`, 'the app after the reload');
+          await page.setViewport(PHONE.width, PHONE.height);
+          for (const language of LANGUAGES) {
+            await showScreen(page, 'weave', language);
+            await page.waitFor(`!!document.querySelector('[data-hero-slot]')&&document.querySelectorAll('main [data-sample]').length===3`, `the Landing with its three Sample_Tiles in ${language}`);
+            await settleLayout(page);
+            const words = WORDS[language];
+            const seen = await page.ev<{ scrollY: number; headline: Box | null; strip: Box | null; tile: Box | null; primaries: string[]; secondaries: number; firstIsPrimary: boolean }>(
+              `(()=>{window.scrollTo(0,0);const box=${BOX};const m=document.querySelector('main');const heading=[...m.querySelectorAll('h1,h2,h3')].find(e=>e.textContent.trim()===${JSON.stringify(words['landing.headline'])});const strip=m.querySelector('ol[aria-label='+${JSON.stringify(JSON.stringify(words['landing.steps.name']))}+']');const tiles=[...m.querySelectorAll('[data-sample]')];const primaries=[...m.querySelectorAll('[class*="_primary_"]')];return {scrollY:window.scrollY,headline:box(heading),strip:box(strip),tile:box(tiles[0]),primaries:primaries.map(e=>e.tagName.toLowerCase()+(e.dataset.sample?'[data-sample='+e.dataset.sample+']':'')),secondaries:tiles.slice(1).filter(e=>/_secondary_/.test(e.className)).length,firstIsPrimary:primaries.length===1&&primaries[0]===tiles[0]}})()`,
+            );
+            for (const [label, box] of [['headline', seen.headline], ['Step_Strip', seen.strip], ['first Sample_Tile', seen.tile]] as const) {
+              expect(box !== null && box.height > 0, `${language}: the Landing ${label} is not on the page`);
+              expect(box.top >= 0 && box.bottom <= LANDING_LIMIT_PX, `${language}: the Landing ${label} spans ${Math.round(box.top)} to ${Math.round(box.bottom)} px, expected to end within ${LANDING_LIMIT_PX} px at ${PHONE.width} by ${PHONE.height}`);
+            }
+            expect(seen.primaries.length === 1, `${language}: the Landing has ${seen.primaries.length} primary Buttons (${seen.primaries.join(', ') || 'none'}), expected exactly 1`);
+            expect(seen.firstIsPrimary, `${language}: the one primary Button of the Landing is ${seen.primaries[0]}, expected the first Sample_Tile`);
+            expect(seen.secondaries === 2, `${language}: ${seen.secondaries} of the other two Sample_Tiles are styled secondary, expected 2`);
+            lines.push(
+              `${language}: headline ends at ${Math.round(seen.headline!.bottom)}, Step_Strip at ${Math.round(seen.strip!.bottom)}, first tile at ${Math.round(seen.tile!.bottom)} px (limit ${LANDING_LIMIT_PX}); one primary Button, the first tile`,
+            );
+          }
+          // A tile starts its sample: the Landing goes and the first pick plays.
+          await ensureLanguage(page, 'en');
+          const design = await page.ev<string>(`document.querySelector('main [data-sample]').dataset.sample`);
+          expect((DESIGNS as readonly string[]).includes(design), `the first Sample_Tile is "${design}", not a Sample_Design`);
+          const total = generateSample(ctx.profile, design as Design).length;
+          const started = Date.now();
+          await page.click(`document.querySelector('main [data-sample]')`, 'the first Sample_Tile');
+          await page.waitFor(`!!(${PICK_TEXT})`, 'the pick counter after choosing a tile', 5_000);
+          const shownAfter = Date.now() - started;
+          const landingGone = await page.ev<boolean>(`!document.querySelector('[data-hero-slot]')`);
+          expect(landingGone, 'the Landing is still shown after a Sample_Tile was chosen');
+          const seen = await playToEnd(page, total);
+          expect(seen.length >= 3 && seen.every((value, index) => index === 0 || value > seen[index - 1]!), `the pick counter did not advance after a tile was chosen (values seen: ${seen.join(', ')})`);
+          lines.push(`the first tile (${design}) replaced the Landing with the player ${shownAfter} ms after the click; the counter went ${seen[0]} -> ${total} of ${total}`);
+        } finally {
+          await page.setViewport(900, 1000);
+          await ensureLanguage(page, 'en');
+        }
+        return lines.join('\n');
+      },
+    },
+    {
+      name: 'Disclosures: collapsed on arrival, Enter and Space toggle, out of the Tab order, focus returns, primary Button stays in view',
+      async run() {
+        const lines: string[] = [];
+        const failures: string[] = [];
+        try {
+          await page.setViewport(PHONE.width, PHONE.height);
+          for (const screen of ['weave', 'keep', 'scan'] as const) {
+            // Leave and come back, so the Screen mounts again and its Disclosures are collapsed (R10.6).
+            await showScreen(page, 'code', 'en');
+            await showScreen(page, screen, 'en');
+            await page.waitFor(`${DISCLOSURES}.length>0`, `a Disclosure on the ${screen} screen`);
+            await settleLayout(page);
+            const count = await page.ev<number>(`${DISCLOSURES}.length`);
+            for (let index = 0; index < count; index++) {
+              try {
+                lines.push(await checkDisclosure(page, screen, index));
+              } catch (error) {
+                failures.push(error instanceof Error ? error.message : String(error));
+              }
+              // The next Disclosure is checked on a Screen that has just arrived.
+              await showScreen(page, 'code', 'en');
+              await showScreen(page, screen, 'en');
+              await page.waitFor(`${DISCLOSURES}.length===${count}`, `the ${count} Disclosures of the ${screen} screen`);
+              await settleLayout(page);
+            }
+          }
+        } finally {
+          await page.setViewport(900, 1000);
+        }
+        if (failures.length > 0) throw new Error([...failures.map((line) => `FAIL ${line}`), ...lines].join('\n'));
+        return lines.join('\n');
+      },
+    },
+    {
+      name: 'navigation: aria-current on the current item, and no clipped label at 320 px in English and Hindi',
+      async run() {
+        const lines: string[] = [];
+        const failures: string[] = [];
+        const startTheme = (await readTheme(page)).dataTheme === 'night' ? 'night' : 'day';
+        try {
+          await page.setViewport(900, 1000);
+          for (const screen of ALL_SCREENS) {
+            await showScreen(page, screen, 'en');
+            // Every item that carries aria-current at all, with its value: only the current one may, and the value is "page".
+            const marked = await page.ev<{ current: string[]; items: number }>(
+              `(()=>{const items=[...document.querySelectorAll('nav button')];return {current:items.filter(b=>b.hasAttribute('aria-current')).map(b=>b.textContent.trim()+'='+b.getAttribute('aria-current')),items:items.length}})()`,
+            );
+            const label = WORDS.en[`nav.${screen}`]!;
+            if (marked.current.length !== 1 || !marked.current[0]!.startsWith(label) || !marked.current[0]!.endsWith('=page') || marked.items !== 4) {
+              failures.push(`on the ${screen} screen aria-current is on [${marked.current.join(', ')}] of ${marked.items} items, expected only the "${label}" item, with the value "page", of 4`);
+            } else lines.push(`${screen}: only the "${label}" item has aria-current="page"`);
+          }
+          await page.setViewport(320, 700);
+          for (const theme of THEMES) {
+            await chooseTheme(page, theme);
+            for (const language of LANGUAGES) {
+              await showScreen(page, 'weave', language);
+              await settleLayout(page);
+              const result = await page.ev<{ count: number; problems: string[] }>(
+                `(()=>{const controls=[...document.querySelectorAll('header nav button,header [role="group"] button,header [role="switch"]')];const vw=window.innerWidth;const problems=[];const rects=controls.map(c=>c.getBoundingClientRect());controls.forEach((c,i)=>{const name=(c.getAttribute('aria-label')||c.textContent).trim();const r=rects[i];if(c.scrollWidth>c.clientWidth+1||c.scrollHeight>c.clientHeight+1)problems.push('"'+name+'" scrolls '+c.scrollWidth+'x'+c.scrollHeight+' in '+c.clientWidth+'x'+c.clientHeight);const walker=document.createTreeWalker(c,NodeFilter.SHOW_TEXT);for(let n=walker.nextNode();n;n=walker.nextNode()){if(!n.textContent.trim())continue;const range=document.createRange();range.selectNodeContents(n);for(const t of range.getClientRects()){if(t.left<r.left-1||t.right>r.right+1||t.top<r.top-1||t.bottom>r.bottom+1||t.left<-0.5||t.right>vw+0.5){problems.push('the text "'+n.textContent.trim()+'" of "'+name+'" is outside its control');break}}}});for(let i=0;i<controls.length;i++)for(let j=i+1;j<controls.length;j++){const a=rects[i],b=rects[j];if(a.left<b.right-0.5&&b.left<a.right-0.5&&a.top<b.bottom-0.5&&b.top<a.bottom-0.5)problems.push('"'+(controls[i].getAttribute('aria-label')||controls[i].textContent).trim()+'" overlaps "'+(controls[j].getAttribute('aria-label')||controls[j].textContent).trim()+'"')}return {count:controls.length,problems}})()`,
+              );
+              const verdict = `at 320 (${language}, ${theme}): ${result.count} header controls`;
+              if (result.count !== 7) failures.push(`${verdict}, expected 7 (4 navigation items, 2 languages, the Theme_Switch)`);
+              else if (result.problems.length > 0) failures.push(`${verdict}: ${result.problems.join('; ')}`);
+              else lines.push(`${verdict}: every label inside its control, no overlap`);
+            }
+          }
+        } finally {
+          await page.setViewport(900, 1000);
+          try {
+            await ensureLanguage(page, 'en');
+            await chooseTheme(page, startTheme);
+          } catch (error) {
+            failures.push(`could not put the page back in English and the ${startTheme} theme: ${error instanceof Error ? error.message : String(error)}`);
+          }
+        }
+        if (failures.length > 0) throw new Error([...failures.map((line) => `FAIL ${line}`), ...lines].join('\n'));
+        return lines.join('\n');
+      },
+    },
+    {
+      name: 'the primary Button of each Screen is within the first 844 px at 390 by 844',
+      async run() {
+        const lines: string[] = [];
+        const failures: string[] = [];
+        try {
+          await page.setViewport(PHONE.width, PHONE.height);
+          for (const language of LANGUAGES) {
+            for (const screen of ALL_SCREENS) {
+              await showScreen(page, screen, language);
+              try {
+                await page.waitFor(`!!(${primaryOf(screen)})`, `the primary Button of the ${screen} screen`);
+              } catch (error) {
+                failures.push(`${screen} (${language}): ${error instanceof Error ? error.message : String(error)}`);
+                continue;
+              }
+              await settleLayout(page);
+              const seen = await page.ev<{ box: Box; scrollY: number; hidden: boolean; name: string }>(
+                `(()=>{window.scrollTo(0,0);const e=${primaryOf(screen)};const r=e.getBoundingClientRect();return {box:{top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width,height:r.height},scrollY:window.scrollY,hidden:!!e.closest('[hidden]'),name:(e.getAttribute('aria-label')||e.textContent||e.id).trim()}})()`,
+              );
+              const verdict = `${screen} (${language}): the primary Button "${seen.name}"`;
+              if (seen.hidden || seen.box.height <= 0) failures.push(`${verdict} is hidden or in a collapsed Disclosure`);
+              else if (seen.box.top < 0 || seen.box.bottom + seen.scrollY > PHONE.height) {
+                failures.push(`${verdict} spans ${Math.round(seen.box.top)} to ${Math.round(seen.box.bottom)} px, expected to end within the first ${PHONE.height} px`);
+              } else lines.push(`${verdict} ends at ${Math.round(seen.box.bottom)} px`);
+            }
+          }
+        } finally {
+          await page.setViewport(900, 1000);
+          await ensureLanguage(page, 'en');
+        }
+        if (failures.length > 0) throw new Error([...failures.map((line) => `FAIL ${line}`), ...lines].join('\n'));
+        return lines.join('\n');
+      },
+    },
+    {
       name: 'works with the network off',
       async run() {
         const { cdp } = page;
@@ -842,7 +1164,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
           await page.waitFor(`!!document.querySelector('#scan-file')`, 'the Scan screen chunk to arrive from the cache', 20_000);
           await page.setFile('#scan-file', cardPng);
           const outcome = await page.waitFor<string>(
-            `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[role="alert"] > div')?.textContent.trim()||null)`,
+            `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[data-variant="error"] > div')?.textContent.trim()||null)`,
             'the read to finish',
             30_000,
           );
@@ -858,6 +1180,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
           const ends = ctx.profile.hookRows * ctx.profile.hookColumns;
           clearDownloads(ctx.downloadDir);
           await goTo(page, 'keep');
+          await openMore(page);
           await page.clickText('label span', EN['keep.export.bitDepth.1']!);
           await page.clickText('button', EN['keep.export.button']!);
           const file = await takeDownload(ctx.downloadDir);
@@ -884,7 +1207,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
           // the cache.
           await page.navigate(ctx.baseUrl);
           await page.waitFor(
-            `[...document.querySelectorAll('button')].some(b=>(b.textContent.trim()===${JSON.stringify(EN['tryit.diamond'])}||b.textContent.trim()===${JSON.stringify(HI['tryit.diamond'])})&&!b.disabled)`,
+            `[...document.querySelectorAll('[data-sample="diamond"]')].some(b=>!b.disabled)`,
             'the app to load online (Try it enabled)',
             20_000,
           );

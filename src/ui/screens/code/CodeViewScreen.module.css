@@ -50,13 +50,8 @@
   align-items: flex-end;
 }
 
-.emptyText,
 .noticeText {
   margin: 0;
-}
-
-.emptyText {
-  color: var(--ink-soft);
 }
 
 /* The listing and the cloth sit side by side on a wide viewport and stack, cloth below, on a narrow one (R4). */

@@ -91,9 +91,11 @@ describe('shell', () => {
   });
 
   it('R14.10 there is exactly one live region and it shows the announcement', () => {
+    // The card profile is ready: while it loads, the Landing shows a LoadingState, which is a transient `role="status"` of its own.
     const html = render({
       ...initialAppState,
       language: 'en',
+      profile: { status: 'ready', profile: demoProfile() },
       announcement: { kind: 'error', messageKey: 'error.generic', id: 1 },
     });
     expect(html.match(/role="status"/g)?.length).toBe(1);

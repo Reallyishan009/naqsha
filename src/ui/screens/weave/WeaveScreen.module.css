@@ -48,7 +48,7 @@
   font-family: var(--font-data);
 }
 
-.row {
+.strip {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;

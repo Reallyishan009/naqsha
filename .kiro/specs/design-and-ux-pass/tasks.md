@@ -50,7 +50,7 @@ Rules that apply to every task:
     - Commit on `auto/build` with the message `Stage 0: screenshot tooling and before screenshots`, adding by name: `scripts/checks/session.ts`, `scripts/checks/screenshots.ts`, `scripts/screenshots.ts`, `scripts/check_browser.ts`, `scripts/check_bundle.ts`, `package.json`, the new files under `tests/scripts/`, `media/design/before/`, and `.kiro/specs/design-and-ux-pass/` (the three spec files and `measurements.md`).
     - _Requirements: 22.6, 22.7, 22.8, 24.1, 24.10, 25.2_
 
-- [ ] 2. Stage A: foundation (fonts, tokens, theme switch, contrast, base components, signature details)
+- [x] 2. Stage A: foundation (fonts, tokens, theme switch, contrast, base components, signature details)
   - [x] 2.1 Write the font tooling under `scripts/fonts/`
     - Add `codepoints.ts` (reads every string value of `en.json` and `hi.json` and the three Sample_Design names; writes the Latin-and-symbols list and the Devanagari list; adds U+0900 to U+097F, U+200C, U+200D and U+25CC for Rozha One and Hind only), `woff2Cmap.ts` (parses the woff2 table directory, inflates the Brotli stream with `node:zlib`, reads the `cmap` table formats 4 and 12 and returns the covered code points), `report.ts` (bytes before and after for each file, the sum, and the code points each source font lacks, written to `missing-glyphs.json`), `subset.sh` and `README.md`.
     - `subset.sh` downloads the four `.ttf` files and three `OFL.txt` files from `raw.githubusercontent.com/google/fonts/<ref>/ofl/{rozhaone,hind,ibmplexmono}/` into `scripts/fonts/source/` with a pinned commit SHA, then runs `pyftsubset` with `--flavor=woff2 --layout-features='*' --no-hinting` into `public/fonts/`. `README.md` gives the one-time `python3 -m venv /tmp/naqsha-fonts` and `pip install fonttools brotli` setup. Add `scripts/fonts/source/` to `.gitignore`. Nothing here is part of `npm run build`.
@@ -114,24 +114,24 @@ Rules that apply to every task:
     - Add steps, all additive: switch the theme through the Theme_Switch, reload, and check `data-theme` and the `localStorage` text; record every request origin through `Network.requestWillBeSent` while the four Screens load in both languages and both themes, and expect only the page's own origin and no image request except the favicon and manifest icons; in the offline step read `document.fonts` and expect `loaded` for every family and weight the shown Screens use; extend the no-horizontal-scroll step to the Code view, to Hindi and to the Night_Loom.
     - Remove, skip or loosen no existing assertion.
     - _Requirements: 1.4, 1.10, 4.3, 4.5, 7.7, 14.10, 22.3, 23.2_
-  - [-] 2.13 Stage A gate and commit
+  - [x] 2.13 Stage A gate and commit
     - Run `npm run review-list`, then `npm run typecheck`, `npm run test:run`, `npm run build`, `npm run check-bundle` and `npm run check:browser`; all must exit 0 with no test newly skipped. Run `npm run build && node scripts/contrast_report.ts` and write the table under "Contrast table" in `measurements.md`.
     - Commit with the message `Stage A: fonts, tokens, theme switch and base components`, adding the changed files by name (`src/ui`, `public/fonts`, `index.html`, `scripts`, `tests`, `docs/HINDI_REVIEW.md`, `.gitignore`, `measurements.md`).
     - _Requirements: 22.6, 22.7, 22.8, 25.1, 25.2_
 
 - [ ] 3. Stage B: understanding (Landing, navigation, disclosure, states, translations)
-  - [~] 3.1 Build Disclosure, ScreenIntro, EmptyState, StateMessage and LoadingState
+  - [x] 3.1 Build Disclosure, ScreenIntro, EmptyState, StateMessage and LoadingState
     - Add `components/Disclosure.tsx`: a `<button aria-expanded aria-controls>` followed by `<div id hidden={!expanded}>`; collapsed on mount unless `expanded` is given; controlled use through `expanded` and `onToggle`; the content stays mounted so entered values are kept; Escape inside the panel collapses it and focuses the button.
     - Add `ScreenIntro({ purpose, next })` (two `<p>` lines), `EmptyState` (a Panel with an optional decorative illustration, a message and a next-step sentence), `StateMessage` (a Notice or an EmptyState, with an optional retry that is a secondary Button of at least 48 px) and `LoadingState` (`<div role="status">` with text and a WeftProgress, mounted only while loading).
     - Add keys `disclosure.more`, `disclosure.settings`, `state.retry`, `status.screen`, `keep.list.empty.next` and `scan.batch.empty.next` to both Translation_Files.
     - Add example tests to `tests/ui/components/` for: Disclosure collapsed by default with `aria-expanded="false"` and `hidden` content still present; expanded when given; the retry Button markup; LoadingState has `role="status"`.
     - _Requirements: 6.1, 10.1, 10.6, 10.9, 10.10, 10.11, 10.12, 11.4, 11.9, 11.10_
-  - [~] 3.2 Add the navigation icons and the "Advanced" word
+  - [x] 3.2 Add the navigation icons and the "Advanced" word
     - Add `src/ui/illustrations/NavIcons.tsx` with four different `aria-hidden` icons. In the Shell each nav button renders the label first, then the icon (moved in front by CSS `order: -1`), and for Code view only a `<span>` with the new key `nav.advanced` (added to both files; `nav.code` unchanged).
     - The current item has `aria-current="page"` and no other item has `aria-current`; it differs by bold text, a 3px underline and a filled `--zari` background with `--on-zari` text. Every item is at least 48 by 48 px, always in the DOM, never inside a menu.
     - Add `tests/ui/screens/navigation.test.tsx`: four items, one `aria-current`, icons `aria-hidden`, `nav.advanced` on Code view only, the label is the first text of each button, and `tests/ui/screens/shell.test.tsx` still passes unchanged.
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.6, 9.7, 9.8, 9.9, 9.10, 9.11_
-  - [~] 3.3 Split the Weave screen and build the Landing
+  - [x] 3.3 Split the Weave screen and build the Landing
     - Split `WeaveScreen.tsx`: the outer `WeaveScreen` chooses between `Landing` (no pick in the Current_Pattern) and a new `WeavePlayer.tsx` that holds today's body unchanged. The player's cloth-measuring effect stays in `WeavePlayer`.
     - Add `Landing.tsx` (and its module) in DOM order: `<h2 id="screen-title">` with `nav.weave`; the headline `landing.headline` in `--font-display`; `ScreenIntro` with `weave.purpose` and `weave.empty`; a slot for the Hero_Loom (empty until Stage C); the Step_Strip as an `<ol>` of three labelled steps (icons are added in Stage C); the Sample_Tiles; the `ButtonLink` to Scan after the last tile. While the profile is loading show `LoadingState`; when it failed show an error `StateMessage` with retry in place of the tiles.
     - A Sample_Tile is one `<button type="button" data-sample="diamond">` (the name, a `ClothPreview`, and a "Try it" span from `landing.tile.try`). The first tile uses the primary Button classes, the other two the secondary ones. Activation dispatches `{ type: 'request-sample', design, pattern: generateSample(profile, design) }`. Add `data-sample` to the sample buttons in `TryIt.tsx`.
@@ -140,42 +140,42 @@ Rules that apply to every task:
     - Re-aim the four existing assertions in `tests/ui/screens/weave.test.tsx` (R2.8, R3.8: render `arrivedWith('diamond')`; R4.1, R2.12: check the sample buttons on `<TryIt>` rendered alone) at the same strength, and log them under "Changed selectors".
     - Add `tests/ui/screens/landing.test.tsx`: headline, three steps in order, three tiles with `data-sample`, one primary and two secondary, the scan link last, no forbidden word ("bitmap", "matrix", "decode", "threshold", "grid detection", "Canvas", and the Hindi equivalents in `hi.json`) in text or accessible names in both languages, the loading and failed-profile states, a tile dispatches `request-sample` with the sample's own Pattern, and a failing preview keeps the tile.
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8, 8.9, 8.11, 8.12, 8.13, 8.14, 22.1, 22.2_
-  - [~] 3.4 Structure the Weave player with an intro and a Settings Disclosure
+  - [x] 3.4 Structure the Weave player with an intro and a Settings Disclosure
     - In `WeavePlayer.tsx` add `ScreenIntro` (`weave.purpose`, `weave.nextStep`). Keep the cloth, the current card slot, the pick counter, the playback controls, the scrubber and the speed control outside a Disclosure. Put the repeat count, warp colour, weft colour and zari inside one Disclosure labelled `disclosure.settings`. Play (or Resume) is the one primary Button.
     - Add the two keys to both Translation_Files. Keep the pick counter markup with `data-tabular`.
     - _Requirements: 6.5, 10.1, 10.2, 10.6, 10.9_
-  - [~] 3.5 Structure the Keep screen
+  - [x] 3.5 Structure the Keep screen
     - In `KeepScreen.tsx` add `ScreenIntro` (`keep.purpose`, `keep.nextStep`). Keep the name field, Save and the export panel with its primary export button outside a Disclosure. Put the export options (bit depth, lift colour, order of picks, order of ends) and the other metadata fields in one Disclosure labelled "More".
     - Show the empty list as an `EmptyState` (`keep.list.empty` and `keep.list.empty.next`), without an illustration until Stage C. Show an Archive failure as an error `StateMessage` with a 48 px retry that repeats the same handler (list refresh, or Save with the form as it is) and leaves every saved design unchanged.
     - Add `keep.purpose` and `keep.nextStep` to both Translation_Files.
     - _Requirements: 6.5, 10.1, 10.3, 10.6, 11.1, 11.10_
-  - [~] 3.6 Structure the Scan screen
+  - [x] 3.6 Structure the Scan screen
     - In `ScanScreen.tsx` add `ScreenIntro` (`scan.purpose`, `scan.nextStep`). Put choose-a-photo first in reading order and outside a Disclosure; put zoom, undo, accept, discard, the batch controls and the camera in one controlled `Disclosure` that starts collapsed and is opened by the screen when a read completes. Choose-a-photo is the primary Button while no card is read; Accept is the primary Button after a read, and choose-a-photo is then secondary.
     - Show the empty batch as an `EmptyState` (`scan.batch.empty`, `scan.batch.empty.next`). Show a card that cannot be read as an error `StateMessage` for that card only: the other cards in the batch and the Current_Pattern are unchanged and choose-a-photo stays usable. Where the code already dispatches `announce` for the failure, render the message with no role; otherwise use `role="alert"`. Never move focus to the message.
     - Add `scan.purpose` and `scan.nextStep` to both files.
     - _Requirements: 6.5, 10.1, 10.5, 10.6, 11.1, 11.11, 11.12_
-  - [~] 3.7 Structure the Code view
+  - [x] 3.7 Structure the Code view
     - In `CodeViewScreen.tsx` add `ScreenIntro` (`codeview.purpose`, `codeview.nextStep`), place the compare panel directly under the intro and above the pick controls, and make Compare the one primary Button. Show nothing-to-compare as an `EmptyState` (`codeview.empty`). Show an Archive failure as an error `StateMessage` with a 48 px retry. Add `codeview.purpose` and `codeview.nextStep` to both files.
     - _Requirements: 6.5, 10.1, 11.1, 11.10, 23.7_
-  - [~] 3.8 Move the Shell and App states onto StateMessage and LoadingState
+  - [x] 3.8 Move the Shell and App states onto StateMessage and LoadingState
     - In `src/ui/ProfileNotice.tsx` keep the Card_Profile name and the UNVERIFIED status notice outside a Disclosure and put the Card_Profile details inside one.
     - In `App.tsx` replace the failed-profile banner by an error `StateMessage` and the loading text by `LoadingState`. Add `profileAttempt` in `useState` as a dependency of the effect that calls `loadProfile`; the retry dispatches `{ type: 'profile-loaded', state: { status: 'loading' } }` and increments it. Replace the two `lazy()` calls by `useLazyScreen(importer, attempt)` (a new `lazy` component per attempt through `useMemo`), give `ScreenBoundary` an `onRetry` that increments the attempt and remounts the Screen, and use `LoadingState` (`status.screen`) as the `Suspense` fallback. A retry changes none of the Shell navigation, the Current_Pattern, the Scan_Batch or any saved design. Keep exactly one persistent Shell `role="status"` region.
     - Add example tests in `tests/ui/screens/` that render the failed-profile, loading and screen-failed states and check the retry control and the navigation.
     - _Requirements: 8.11, 8.13, 10.4, 11.1, 11.9, 11.10, 11.12, 23.6_
-  - [~] 3.9 Wire the delayed Thread_Progress
+  - [x] 3.9 Wire the delayed Thread_Progress
     - Use `useAfterDelay(active, 300)` in the Scan read, the export and the save so a `WeftProgress` with `progress.reading`, `progress.exporting` or `progress.saving` shows only after the operation has run for 300 ms.
     - Add example tests with a fake clock: nothing shows before 300 ms, the text shows after, and it is gone when the operation ends.
     - _Requirements: 7.4, 7.5_
-  - [~] 3.10 Check state messages, intro lines and Hindi keys with an example test
+  - [x] 3.10 Check state messages, intro lines and Hindi keys with an example test
     - Add `tests/ui/state/stateMessages.test.ts` with a named list `STATE_MESSAGE_KEYS` (every state-message key in the design table): each English text is at most 160 characters, has one to three sentences, and contains none of "bitmap", "matrix", "decode", "decoded" or "decoding" (any letter case) outside the Code view; each key is in both files; each `hi.json` key added by this pass has `"reviewed": false`; both files have the same keys. Shorten any message over the limit with its meaning kept.
     - In the same file check each of the eight intro keys (`weave`, `keep`, `scan`, `codeview` purpose and next step) is one sentence of at most 100 characters in both languages.
     - _Requirements: 10.1, 11.1, 11.2, 11.3, 11.6, 11.7, 11.8_
-  - [~] 3.11 Update `scripts/check_browser.ts` for the Disclosures and the Landing
+  - [x] 3.11 Update `scripts/check_browser.ts` for the Disclosures and the Landing
     - Add `openDisclosure(page, name)`: find the button by its accessible name, click it when `aria-expanded` is `false`, and otherwise throw `the Disclosure "<name>" was not found`. Make `chooseSample` click `[data-sample="<design>"]`. Open "More" before the Keep steps that fill the place field or choose export options, and open "Settings" before the Weave steps that change the colours or the repeat.
     - Add one step that reads `getBoundingClientRect().bottom` of the headline, the Step_Strip and the first tile at 390 by 844 in English and in Hindi and expects them within 700 px, and that starts a sample from a tile; add a step that checks the primary Button of each Screen is within the first 844 px at 390 by 844.
     - List each changed step under "Disclosure check changes" in `measurements.md` with the old selector, the new selector and the reason. No existing assertion is removed or loosened.
     - _Requirements: 8.10, 10.7, 10.8, 22.2, 22.3, 23.7_
-  - [~] 3.12 Stage B gate and commit
+  - [-] 3.12 Stage B gate and commit
     - Run `npm run review-list`, `npm run typecheck`, `npm run test:run`, `npm run build`, `npm run check-bundle` and `npm run check:browser`; all must exit 0 with no test newly skipped.
     - Commit with the message `Stage B: landing, navigation, disclosure and states`, adding the changed files by name.
     - _Requirements: 22.6, 22.7, 22.8, 25.1, 25.2_

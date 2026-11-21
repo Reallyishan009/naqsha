@@ -1298,5 +1298,93 @@
   "theme.off": {
     "text": "बंद",
     "reviewed": false
+  },
+  "disclosure.more": {
+    "text": "और",
+    "reviewed": false
+  },
+  "disclosure.settings": {
+    "text": "सेटिंग",
+    "reviewed": false
+  },
+  "state.retry": {
+    "text": "फिर कोशिश करें",
+    "reviewed": false
+  },
+  "status.screen": {
+    "text": "स्क्रीन खुल रही है…",
+    "reviewed": false
+  },
+  "keep.list.empty.next": {
+    "text": "अपना पहला डिज़ाइन रखने के लिए उसे नाम दें और सहेजें दबाएँ।",
+    "reviewed": false
+  },
+  "scan.batch.empty.next": {
+    "text": "शुरू करने के लिए एक कार्ड की फ़ोटो चुनें।",
+    "reviewed": false
+  },
+  "nav.advanced": {
+    "text": "उन्नत",
+    "reviewed": false
+  },
+  "landing.headline": {
+    "text": "करघे के पंच कार्ड पढ़ें। डिज़ाइन फिर से बुनें।",
+    "reviewed": false
+  },
+  "landing.step.scan": {
+    "text": "कार्ड स्कैन करें",
+    "reviewed": false
+  },
+  "landing.step.weave": {
+    "text": "बुनते हुए देखें",
+    "reviewed": false
+  },
+  "landing.step.keep": {
+    "text": "डिज़ाइन सहेजें",
+    "reviewed": false
+  },
+  "landing.steps.name": {
+    "text": "यह कैसे काम करता है",
+    "reviewed": false
+  },
+  "landing.tile.try": {
+    "text": "आज़माएँ",
+    "reviewed": false
+  },
+  "landing.scanLink": {
+    "text": "अपना कार्ड स्कैन करें",
+    "reviewed": false
+  },
+  "weave.purpose": {
+    "text": "करघे में धागा डालने से पहले देखें कि डिज़ाइन पिक-दर-पिक कैसे बुना जाएगा।",
+    "reviewed": false
+  },
+  "weave.nextStep": {
+    "text": "डिज़ाइन बुनने के लिए चलाएँ दबाएँ, या रंग बदलने के लिए सेटिंग खोलें।",
+    "reviewed": false
+  },
+  "keep.purpose": {
+    "text": "इस डिज़ाइन को अपने ब्राउज़र में रखें, या इलेक्ट्रॉनिक करघे के लिए फ़ाइल बनाएँ।",
+    "reviewed": false
+  },
+  "keep.nextStep": {
+    "text": "डिज़ाइन को नाम दें और सहेजें दबाएँ, या करघे के लिए फ़ाइल डाउनलोड करें।",
+    "reviewed": false
+  },
+  "scan.purpose": {
+    "text": "फ़ोटो से कार्ड पढ़ें और हर कार्ड को एक पिक के रूप में अपने डिज़ाइन में जोड़ें।",
+    "reviewed": false
+  },
+  "scan.nextStep": {
+    "text": "एक कार्ड की फ़ोटो चुनें, निशान जाँचें, फिर कार्ड स्वीकार करें।",
+    "reviewed": false
+  },
+  "codeview.purpose": {
+    "text": "डिज़ाइन के हर कार्ड को बिट की एक पंक्ति के रूप में देखें, और दो डिज़ाइनों की तुलना करें।",
+    "reviewed": false
+  },
+  "codeview.nextStep": {
+    "text": "कोई डिज़ाइन खोलें, फिर उसकी दूसरे से तुलना करें, या उसकी पिकें एक-एक करके देखें।",
+    "reviewed": false
   }
 }

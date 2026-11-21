@@ -22,6 +22,7 @@ import { Button } from '../../components/Button.tsx';
 import { Field } from '../../components/Field.tsx';
 import { Notice } from '../../components/Notice.tsx';
 import { Panel } from '../../components/Panel.tsx';
+import { StateMessage } from '../../components/StateMessage.tsx';
 import styles from './DiffPanel.module.css';
 
 /** Shown under each differing end of a `changed` entry (R6.7, R11.7). A text marker, so colour is never the only signal. */
@@ -435,6 +436,7 @@ function DiffResult({ first, second, diff, t, diffTextDeps }: DiffResultProps) {
   return (
     <div className={styles.result}>
       <Counts diff={diff} t={t} />
+      <p className={styles.hint}>{t('codeview.diff.hint')}</p>
       {isSameDesign(diff) ? (
         <Notice variant="information" word={t('notice.information')} role="status">
           {t('codeview.diff.same')}
@@ -450,14 +452,21 @@ function DiffResult({ first, second, diff, t, diffTextDeps }: DiffResultProps) {
  * Shown when a design could not be fetched or read: the Archive failure's message, or the damaged design's name and
  * lowest failing pick index. It shows no entries, no counts and no Diff_Text (R7.2, R7.3, R7.4).
  */
-function BlockedMessage({ blocked, t }: { blocked: Blocked; t: Translate }) {
-  const text =
-    blocked.kind === 'archive'
-      ? t(archiveFailureKey(blocked.failure))
-      : t('codeview.damaged.design', { name: blocked.designName, pick: blocked.pick });
+function BlockedMessage({ blocked, t, onRetry }: { blocked: Blocked; t: Translate; onRetry: () => void }) {
+  if (blocked.kind === 'archive') {
+    return (
+      <StateMessage
+        variant="error"
+        message={t(archiveFailureKey(blocked.failure))}
+        t={t}
+        // A design the Archive no longer holds is gone from the choices, so repeating the comparison cannot succeed.
+        retry={blocked.failure.reason === 'not-found' ? undefined : { label: t('state.retry'), onRetry }}
+      />
+    );
+  }
   return (
     <Notice variant="error" word={t('notice.error')}>
-      {text}
+      {t('codeview.damaged.design', { name: blocked.designName, pick: blocked.pick })}
     </Notice>
   );
 }
@@ -506,6 +515,8 @@ export type DiffPanelViewProps = {
   onFirstChange: (choice: SideChoice | null) => void;
   onSecondChange: (choice: SideChoice | null) => void;
   onCompare: () => void;
+  /** Lists the Saved_Designs again after an Archive failure; the retry of the failed list. */
+  onRetrySummaries?: () => void;
   /** Injected so tests use fakes for the clipboard and the download; the browser's are the default. */
   diffTextDeps?: DiffTextDeps;
 };
@@ -525,23 +536,6 @@ export function DiffPanelView(props: DiffPanelViewProps) {
       <h3 id={headingId} className={styles.title}>
         {t('codeview.diff.heading')}
       </h3>
-      <p className={styles.hint}>{t('codeview.diff.hint')}</p>
-
-      {summaries.status === 'loading' ? (
-        <Notice variant="information" word={t('notice.information')}>
-          {t('codeview.diff.loading')}
-        </Notice>
-      ) : null}
-      {summaries.status === 'ready' && list.length === 0 ? (
-        <Notice variant="information" word={t('notice.information')}>
-          {t('codeview.diff.noSaved')}
-        </Notice>
-      ) : null}
-      {summaries.status === 'failed' ? (
-        <Notice variant="error" word={t('notice.error')}>
-          {t(archiveFailureKey(summaries.failure))}
-        </Notice>
-      ) : null}
 
       <div className={styles.choosers}>
         <ChoiceSelect
@@ -567,7 +561,26 @@ export function DiffPanelView(props: DiffPanelViewProps) {
         </Button>
       </div>
 
-      {comparison.status === 'blocked' ? <BlockedMessage blocked={comparison.blocked} t={t} /> : null}
+      {summaries.status === 'loading' ? (
+        <Notice variant="information" word={t('notice.information')}>
+          {t('codeview.diff.loading')}
+        </Notice>
+      ) : null}
+      {summaries.status === 'ready' && list.length === 0 ? (
+        <Notice variant="information" word={t('notice.information')}>
+          {t('codeview.diff.noSaved')}
+        </Notice>
+      ) : null}
+      {summaries.status === 'failed' ? (
+        <StateMessage
+          variant="error"
+          message={t(archiveFailureKey(summaries.failure))}
+          t={t}
+          retry={props.onRetrySummaries === undefined ? undefined : { label: t('state.retry'), onRetry: props.onRetrySummaries }}
+        />
+      ) : null}
+
+      {comparison.status === 'blocked' ? <BlockedMessage blocked={comparison.blocked} t={t} onRetry={props.onCompare} /> : null}
       {comparison.status === 'ready' ? (
         <DiffResult
           first={comparison.first}
@@ -604,7 +617,10 @@ export function DiffPanel({ profile, currentLineSet, t, archiveDeps, diffTextDep
   // Only the latest compare may set the result: an older one that finishes late is dropped.
   const latestRequest = useRef(0);
 
-  // The Archive is listed once, when the panel mounts.
+  // Each press of the retry after a failed listing asks for the list again.
+  const [listAttempt, setListAttempt] = useState(0);
+
+  // The Archive is listed once, when the panel mounts, and again for each retry.
   useEffect(() => {
     let current = true;
     void loadSummaries(archiveDeps).then((next) => {
@@ -613,7 +629,7 @@ export function DiffPanel({ profile, currentLineSet, t, archiveDeps, diffTextDep
     return () => {
       current = false;
     };
-  }, [archiveDeps]);
+  }, [archiveDeps, listAttempt]);
 
   // A result that compared against the Current_Pattern is out of date once the Current_Pattern is another design.
   useEffect(() => {
@@ -648,6 +664,10 @@ export function DiffPanel({ profile, currentLineSet, t, archiveDeps, diffTextDep
     if (first === null || second === null) return;
     startComparison(first, second);
   };
+  const onRetrySummaries = (): void => {
+    setSummaries({ status: 'loading' });
+    setListAttempt((attempt) => attempt + 1);
+  };
   // A request from Keep chooses both sides and compares them once, as if the weaver had pressed Compare.
   const handledRequest = useRef<CompareRequest | null>(null);
   useEffect(() => {
@@ -672,6 +692,7 @@ export function DiffPanel({ profile, currentLineSet, t, archiveDeps, diffTextDep
       onFirstChange={setFirst}
       onSecondChange={setSecond}
       onCompare={onCompare}
+      onRetrySummaries={onRetrySummaries}
       diffTextDeps={diffTextDeps}
     />
   );

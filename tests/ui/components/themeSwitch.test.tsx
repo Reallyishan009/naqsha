@@ -8,6 +8,7 @@ import { Selvedge } from '../../../src/ui/components/Selvedge.tsx';
 import { ThemeSwitch } from '../../../src/ui/components/ThemeSwitch.tsx';
 import { DICTIONARIES, translator } from '../../../src/ui/i18n/messages.ts';
 import { appReducer, initialAppState } from '../../../src/ui/state/appState.ts';
+import { demoProfile } from '../../support/profiles.ts';
 import type { ThemeName } from '../../../src/ui/theme/contrast.ts';
 
 const SRC = path.resolve(import.meta.dirname, '../../../src/ui');
@@ -93,7 +94,9 @@ describe('theme change and the AppState', () => {
 
   it('R4.9 the Shell renders the switch from its theme prop and keeps one nav, four nav buttons and one live region', () => {
     for (const theme of ['day', 'night'] as const) {
-      const html = renderToStaticMarkup(<Shell state={{ ...initialAppState, language: 'en' }} dispatch={noop} theme={theme} />);
+      // The card profile is ready: while it loads, the Landing shows a LoadingState, which is a transient `role="status"` of its own.
+      const state = { ...initialAppState, language: 'en' as const, profile: { status: 'ready' as const, profile: demoProfile() } };
+      const html = renderToStaticMarkup(<Shell state={state} dispatch={noop} theme={theme} />);
       expect(html).toContain(`aria-checked="${theme === 'night'}"`);
       expect(html.match(/<nav /g)).toHaveLength(1);
       expect(html.match(/<button [^>]*class="[^"]*navButton/g)).toHaveLength(4);

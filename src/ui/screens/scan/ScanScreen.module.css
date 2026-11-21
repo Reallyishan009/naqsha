@@ -10,11 +10,8 @@
 .panel {
   margin: 16px 0;
 }
-.emptyText,
-.failureText {
-  margin: 0;
-}
 .emptyText {
+  margin: 0;
   color: var(--ink-soft);
 }
 .confirm {
@@ -22,6 +19,9 @@
 }
 .busy {
   font-weight: 700;
+}
+.details {
+  margin-top: 8px;
 }
 .details code {
   font-family: var(--font-data);

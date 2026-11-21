@@ -1,0 +1,192 @@
+/*
+ * The Landing. Every part is a grid area of its own and text is left-aligned. Stacked on a phone, in reading order
+ * except for the Hero_Loom, which comes last; when the Screen is wide the Hero_Loom sits beside the text. The width
+ * is asked of the Screen itself (a container query), because no media query may change the layout's text size.
+ */
+.screen {
+  container-type: inline-size;
+}
+
+.landing {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  max-width: 60rem;
+  text-align: left;
+}
+
+.screenTitle {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+/* The display font. Hindi has a taller line, which the base rule gives it through the language. */
+.headline {
+  margin: 0;
+  font-family: var(--font-display);
+  /* Grows with the width from the lead size to the display size, with no step. */
+  font-size: clamp(var(--text-lead), calc(var(--text-lead) + 0.8vw), var(--text-display));
+  font-weight: 400;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
+
+/* The intro lines read as body text here, so the headline is the one large line on the Screen. */
+.intro p {
+  font-size: var(--text-body);
+}
+
+/* The place of the Hero_Loom: a fixed shape, so the page does not move when the drawing arrives. */
+.heroSlot {
+  order: 1;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  counter-increment: step;
+  min-width: 0;
+}
+
+/* The slot of the Step_Icon. Until the icon is drawn it holds the number of the step. */
+.stepMark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-5);
+  height: var(--space-5);
+  font-size: var(--text-meta);
+  font-weight: 700;
+  color: var(--ink);
+  border: 2px solid var(--ink-soft);
+  border-radius: 50%;
+}
+
+.stepMark::before {
+  content: counter(step);
+}
+
+.stepLabel {
+  font-size: var(--text-meta);
+  font-weight: 700;
+  overflow-wrap: break-word;
+}
+
+.tilesArea {
+  min-width: 0;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+/* The Button classes give the look; the tile only has to fill its place and hold three lines of content. */
+.tile {
+  width: 100%;
+  min-width: 0;
+}
+
+.tileBody {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+}
+
+.tileName {
+  font-size: var(--text-lead);
+}
+
+.preview {
+  display: block;
+  /* The picture takes a line of its own, below the name and the label. */
+  order: 1;
+  flex: 1 0 100%;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-control);
+}
+
+.tileTry {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.scanLink {
+  display: flex;
+  justify-content: flex-start;
+  /* The quiet Button has side padding; pull it back so the link's text lines up with the text above. */
+  margin-inline-start: calc(var(--space-4) * -1);
+}
+
+@container (min-width: 40rem) {
+  .landing {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'title hero'
+      'headline hero'
+      'intro hero'
+      'steps hero'
+      'tiles tiles'
+      'link link';
+    column-gap: var(--space-6);
+  }
+
+  .screenTitle {
+    grid-area: title;
+  }
+
+  .headline {
+    grid-area: headline;
+  }
+
+  .intro {
+    grid-area: intro;
+  }
+
+  .heroSlot {
+    grid-area: hero;
+    order: 0;
+    align-self: start;
+  }
+
+  .steps {
+    grid-area: steps;
+  }
+
+  .tilesArea {
+    grid-area: tiles;
+  }
+
+  .tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .scanLink {
+    grid-area: link;
+  }
+}

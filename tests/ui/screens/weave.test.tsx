@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { RiseSkipControl, WeaveScreen } from '../../../src/ui/screens/weave/WeaveScreen.tsx';
+import { WeavePlayer } from '../../../src/ui/screens/weave/WeavePlayer.tsx';
 import { TryIt } from '../../../src/ui/screens/weave/TryIt.tsx';
 import { EN, HI, translator, DICTIONARIES } from '../../../src/ui/i18n/messages.ts';
 import type { Pattern } from '../../../src/codec/index.ts';
@@ -14,6 +15,32 @@ import { demoProfile } from '../../support/profiles.ts';
 function render(state: AppState): string {
   const t = translator(DICTIONARIES, state.language);
   return renderToStaticMarkup(<WeaveScreen state={state} dispatch={() => undefined} t={t} />);
+}
+
+/** The weave player alone, for the states in which the Weave screen shows the Landing instead. */
+function renderPlayer(state: AppState): string {
+  const t = translator(DICTIONARIES, state.language);
+  return renderToStaticMarkup(
+    <WeavePlayer
+      state={state}
+      dispatch={() => undefined}
+      t={t}
+      arrival={{ pattern: state.current.pattern, pick: state.selectedPick }}
+    />,
+  );
+}
+
+/** The Try it section alone: the sample buttons are in it, below the player. */
+function renderTryIt(state: AppState): string {
+  const t = translator(DICTIONARIES, state.language);
+  return renderToStaticMarkup(
+    <TryIt
+      profile={state.profile.status === 'ready' ? state.profile.profile : null}
+      confirm={state.confirm}
+      dispatch={() => undefined}
+      t={t}
+    />,
+  );
 }
 
 /** The state of a visitor arriving at Weave with a design already loaded (a saved design, or a return from Scan). */
@@ -38,7 +65,7 @@ const LANGUAGES: Language[] = ['hi', 'en'];
 describe('weave screen', () => {
   it('R2.1 with no design the screen shows the empty text and the play controls are disabled', () => {
     for (const language of LANGUAGES) {
-      const html = render({ ...initialAppState, language });
+      const html = renderPlayer({ ...initialAppState, language });
       const t = translator(DICTIONARIES, language);
       expect(html).toContain(t('weave.empty').replaceAll('"', '&quot;'));
       for (const key of ['weave.play', 'weave.pause', 'weave.stepBack', 'weave.stepForward']) {
@@ -51,7 +78,7 @@ describe('weave screen', () => {
   });
 
   it('R3.8 thread size, float highlight and the other preview controls are absent', () => {
-    const html = render({ ...initialAppState, language: 'en' });
+    const html = render(arrivedWith('diamond'));
     for (const word of ['thread size', 'Thread size', 'float', 'Float', 'highlight', 'Highlight']) {
       expect(html).not.toContain(word);
     }
@@ -62,7 +89,7 @@ describe('weave screen', () => {
   it('R2.8 the speed control offers slow, normal and fast in both languages', () => {
     for (const language of LANGUAGES) {
       const t = translator(DICTIONARIES, language);
-      const html = render({ ...initialAppState, language });
+      const html = render(arrivedWith('diamond', { language }));
       const field = new RegExp(`<span>${t('weave.speed')}</span><select[^>]*>(.*?)</select>`).exec(html);
       expect(field, `${language} speed control`).not.toBeNull();
       const options = [...field![1]!.matchAll(/<option[^>]*>(.*?)<\/option>/g)].map((match) => match[1]);
@@ -74,7 +101,7 @@ describe('weave screen', () => {
   it('R3.8 the screen has only the controls of Requirements 2 and 3: no number entry, no thread size, no float highlight', () => {
     for (const language of LANGUAGES) {
       const t = translator(DICTIONARIES, language);
-      const whole = render({ ...initialAppState, language, profile: { status: 'ready', profile: demoProfile() } });
+      const whole = render(arrivedWith('diamond', { language }));
       // The Try it section has its own print controls (R21.2); R3.8 is about the cloth controls above it.
       const html = whole.slice(0, whole.indexOf('<section aria-labelledby="tryit-title"'));
       expect(html.length).toBeGreaterThan(0);
@@ -89,14 +116,14 @@ describe('weave screen', () => {
         ['weave.scrubber', 'weave.speed', 'weave.warpColour', 'weave.weftColour', 'weave.zari', 'weave.repeat'].map((key) => t(key)),
       );
     }
-    const en = render({ ...initialAppState, language: 'en' });
+    const en = render(arrivedWith('diamond'));
     expect(en).not.toMatch(/picks per second|thread size|float|highlight/i);
   });
 
   it('R4.1 Try it offers three Sample_Designs, enabled once the profile is ready', () => {
-    const loading = render({ ...initialAppState, language: 'en' });
+    const loading = renderTryIt({ ...initialAppState, language: 'en' });
     expect((loading.match(/<button[^>]*disabled[^>]*>(Diamond|Border|Floral)</g) ?? []).length).toBe(3);
-    const ready = render({
+    const ready = renderTryIt({
       ...initialAppState,
       language: 'en',
       profile: { status: 'ready', profile: demoProfile() },
@@ -184,11 +211,16 @@ describe('weave screen', () => {
   });
 
   it('R2.12 a failed profile leaves Try it disabled and the screen usable', () => {
-    const html = render({
+    const failed: AppState = {
       ...initialAppState,
       language: 'en',
       profile: { status: 'failed', failure: { reason: 'not-json' } },
-    });
+    };
+    const html = renderTryIt(failed);
+    // The Weave screen is the Landing here: it shows the failure and offers no sample tile.
+    const landing = render(failed);
+    expect(landing).toContain(translator(DICTIONARIES, 'en')('error.profile.not-json'));
+    expect(landing).not.toContain('data-sample=');
     expect((html.match(/<button[^>]*disabled[^>]*>(Diamond|Border|Floral)</g) ?? []).length).toBe(3);
   });
 });

@@ -133,7 +133,7 @@ describe('Code view screen', () => {
       expect(() => renderToStaticMarkup(<Failing />)).toThrow('chunk failed');
 
       // The boundary turns that throw into the message. Server rendering cannot run a boundary, so its failed state is set directly.
-      const boundary = new ScreenBoundary({ message, children: null });
+      const boundary = new ScreenBoundary({ message, t, onRetry: () => undefined, children: null });
       boundary.state = ScreenBoundary.getDerivedStateFromError();
       expect(renderToStaticMarkup(boundary.render())).toContain(message.replaceAll("'", '&#x27;'));
 
@@ -1044,17 +1044,20 @@ describe('Code view diff panel', () => {
     expect(await compareDesigns({ ...base, first: { kind: 'current' } }, deps)).toEqual({ status: 'idle' });
   });
 
-  it('R6.6 R6.16 the screen shows the panel below the listing with its choosers, loading until the Archive answers', () => {
+  it('R6.6 R6.16 the screen shows the panel under the intro and above the pick controls with its choosers, loading until the Archive answers', () => {
     const store = new FakeArchiveStore();
     const html = renderToStaticMarkup(
       <CodeViewScreen state={readyState(patternOf(6))} dispatch={() => undefined} t={en} archiveDeps={archiveWith(store)} />,
     );
     expect(html).toContain(`>${en('codeview.diff.heading')}</h3>`);
     expect(html).toContain(en('codeview.diff.loading'));
-    expect(html.indexOf(en('codeview.diff.heading'))).toBeGreaterThan(html.indexOf(CODE_VIEW_MARKER));
-    expect(html.indexOf(en('codeview.diff.heading'))).toBeGreaterThan(html.indexOf(en('codeview.cloth.heading')));
-    // The panel comes after every Line, so the Tab order reaches it last.
-    expect(html.indexOf(en('codeview.diff.heading'))).toBeGreaterThan(html.lastIndexOf('data-pick='));
+    const panelAt = html.indexOf(en('codeview.diff.heading'));
+    expect(panelAt).toBeGreaterThan(html.indexOf(en('codeview.nextStep')));
+    expect(panelAt).toBeLessThan(html.indexOf(en('codeview.step.back')));
+    expect(panelAt).toBeLessThan(html.indexOf(CODE_VIEW_MARKER));
+    expect(panelAt).toBeLessThan(html.indexOf(en('codeview.cloth.heading')));
+    // The panel comes before every Line, so the Tab order reaches its controls first.
+    expect(panelAt).toBeLessThan(html.indexOf('data-pick='));
     // Without a ready Card_Profile the Current_Pattern has no Line_Set, so nothing can be chosen.
     const loading = renderToStaticMarkup(
       <CodeViewScreen state={{ ...readyState(patternOf(6)), profile: { status: 'loading' } }} dispatch={() => undefined} t={en} />,
@@ -1737,7 +1740,7 @@ function tabStops(html: string): string[] {
 }
 
 describe('Code view keyboard order (R11.1)', () => {
-  it('R11.1 Tab visits the screen controls, then each Line breakpoint control and Bit_Line region, then the diff panel', () => {
+  it('R11.1 Tab visits the diff panel, then the screen controls, then each Line breakpoint control and Bit_Line region', () => {
     const html = render(readyState(patternOf(3), { selectedPick: 1 }));
     expect(tabStops(html)).toEqual([
       `button:${en('codeview.step.back')}`,
@@ -1752,8 +1755,9 @@ describe('Code view keyboard order (R11.1)', () => {
       'breakpoint',
       'bit-line',
     ]);
-    // The panel's choosers and compare control are in the markup after every Line; they are disabled until the Archive answers.
-    expect(html.indexOf('<select')).toBeGreaterThan(html.lastIndexOf('data-pick='));
+    // The panel's choosers and compare control are in the markup before the pick controls and every Line; they are disabled until the Archive answers.
+    expect(html.indexOf('<select')).toBeLessThan(html.indexOf(en('codeview.step.back')));
+    expect(html.indexOf('<select')).toBeLessThan(html.indexOf('data-pick='));
     expect(html.match(/<select[^>]*disabled=""/g)).toHaveLength(2);
   });
 

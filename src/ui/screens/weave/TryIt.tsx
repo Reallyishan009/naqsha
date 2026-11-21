@@ -94,7 +94,7 @@ function PrintControls({ design, profile, pattern, t, loadPrint }: PrintControls
           onChange={(event) => setPickNumber(clampPickNumber(event.currentTarget.valueAsNumber, pickCount))}
         />
       </Field>
-      <div className={styles.row}>
+      <div className={styles.strip}>
         <Button onClick={() => start('png')}>{t('print.png')}</Button>
         <Button onClick={() => start('svg')}>{t('print.svg')}</Button>
       </div>
@@ -122,10 +122,11 @@ export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModu
         {t('tryit.title')}
       </h3>
       <p>{t('tryit.intro')}</p>
-      <div className={styles.row}>
+      <div className={styles.strip}>
         {SAMPLE_DESIGNS.map((design) => (
           <Button
             key={design}
+            data-sample={design}
             disabled={profile === null}
             onClick={() => {
               if (profile === null) return;
@@ -136,7 +137,7 @@ export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModu
           </Button>
         ))}
       </div>
-      <div className={styles.row}>
+      <div className={styles.strip}>
         <Button
           disabled={profile === null}
           onClick={() => {
@@ -156,7 +157,7 @@ export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModu
       {asking ? (
         <Panel role="group" aria-label={t('tryit.confirmReplace')} className={styles.confirm}>
           <p>{t('tryit.confirmReplace')}</p>
-          <div className={styles.row}>
+          <div className={styles.strip}>
             <Button onClick={() => dispatch({ type: 'confirm-accepted' })}>{t('tryit.confirmYes')}</Button>
             <Button onClick={() => dispatch({ type: 'confirm-dismissed' })}>{t('tryit.confirmNo')}</Button>
           </div>

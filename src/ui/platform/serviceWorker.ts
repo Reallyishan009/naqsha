@@ -2,8 +2,8 @@
  * Registering the service worker and the update path (R24.1, R24.5). The decisions are pure functions, so a
  * fake container can drive them; `registerServiceWorker` is the thin wiring that talks to the browser.
  *
- * The chosen update path: when a new worker is installed and waiting, the app tells the visitor and offers a
- * control. Pressing it asks the waiting worker to take over and reloads the page once, so nobody stays on
+ * The chosen update path: when a new worker is installed and waiting behind a worker that already controls the
+ * page, the app tells the visitor and offers a control. The first install of a visit is never an update. Pressing it asks the waiting worker to take over and reloads the page once, so nobody stays on
  * stale files and nothing reloads under the visitor's hands.
  */
 
@@ -87,6 +87,8 @@ export type RegistrationLike = {
 
 /** The part of navigator.serviceWorker a page uses. A fake stands in for it in tests. */
 export type ContainerLike = {
+  /** The worker in control of this page, or null before any worker has taken control (a first visit). */
+  readonly controller: unknown;
   register(url: string): Promise<RegistrationLike>;
   addEventListener(type: 'controllerchange', listener: () => void): void;
 };
@@ -137,8 +139,12 @@ export function registerServiceWorker(deps: ServiceWorkerDeps): ServiceWorkerHan
         registration.addEventListener('updatefound', () => {
           const installing = registration.installing;
           if (installing === null) return;
+          // A worker that installs while no worker controls the page is the first install, not an update: it
+          // activates and claims the page by itself, so there is nothing to offer. Asked here, before the worker
+          // installs and claims, so the answer cannot be changed by its own claim.
+          const isUpdate = container.controller !== null;
           installing.addEventListener('statechange', () => {
-            if (installing.state !== 'installed') return;
+            if (installing.state !== 'installed' || !isUpdate) return;
             waiting = registration.waiting ?? installing;
             apply({ type: 'new-worker-waiting' });
           });

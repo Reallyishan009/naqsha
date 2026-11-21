@@ -21,13 +21,19 @@ import type { KeepForm, KeepFormAction } from '../../state/keep.ts';
 import { ProfileNotice } from '../../ProfileNotice.tsx';
 import { Button } from '../../components/Button.tsx';
 import { Field } from '../../components/Field.tsx';
+import { useAfterDelay } from '../../components/delay.ts';
+import { Disclosure } from '../../components/Disclosure.tsx';
 import { Notice } from '../../components/Notice.tsx';
 import { Panel } from '../../components/Panel.tsx';
+import { ScreenIntro } from '../../components/ScreenIntro.tsx';
+import { StateMessage } from '../../components/StateMessage.tsx';
+import { WeftProgress } from '../../components/WeftProgress.tsx';
 import type { AppAction, AppState, CompareChoice, Language, PatternOrigin } from '../../types.ts';
 import { DesignEntry } from './DesignEntry.tsx';
 import styles from './KeepScreen.module.css';
 
-const FIELDS: ReadonlyArray<keyof Metadata> = ['name', 'naqshband', 'weaver', 'place', 'date', 'notes'];
+/** The Metadata fields inside "More"; the name is the one field outside it. */
+const MORE_FIELDS: ReadonlyArray<keyof Metadata> = ['naqshband', 'weaver', 'place', 'date', 'notes'];
 
 type OptionGroup = {
   [K in keyof ExportOptions]: { name: K; values: ReadonlyArray<ExportOptions[K]> };
@@ -107,6 +113,12 @@ export type KeepViewProps = {
   /** The confirmation text after a save, or null. */
   savedText: string | null;
   exportDone: boolean;
+  /** True while the file is being prepared; a WeftProgress shows once it has run for 300 ms. */
+  exporting?: boolean;
+  /** True while the design is being written to the archive; a WeftProgress shows once it has run for 300 ms. */
+  saving?: boolean;
+  /** Decides when a started operation has run long enough to show progress. Tests pass one driven by a fake clock; the screen uses `useAfterDelay`. */
+  afterDelay?: (active: boolean) => boolean;
   /** Message key of the last failure shown on this screen, or null. */
   failureKey: string | null;
   t: Translate;
@@ -127,11 +139,16 @@ export type KeepViewProps = {
   onCompare?: (first: CompareChoice, second: CompareChoice) => void;
   /** How many picks of the Current_Pattern are accepted suggestions; any makes the export say so. */
   repairedCount?: number;
+  /** Repeats the operation that failed (a list refresh, or Save with the form as it is); without it the failure has no retry. */
+  onRetry?: () => void;
 };
 
 /** What Keep draws. No state of its own, so tests can render every case (R5, R7, R22). */
 export function KeepView(props: KeepViewProps) {
   const { profile, pattern, form, designs, pendingDeleteId, savedText, exportDone, failureKey, t } = props;
+  const afterDelay = props.afterDelay ?? useAfterDelay;
+  const showExporting = afterDelay(props.exporting === true);
+  const showSaving = afterDelay(props.saving === true);
   const exportEnabled = profile !== null && canExport(pattern);
   const saveEnabled = profile !== null && canSave(pattern);
   const profileName = profile === null ? '' : profile.name;
@@ -139,6 +156,10 @@ export function KeepView(props: KeepViewProps) {
   const language = props.language ?? 'en';
   const noop = (): void => undefined;
   const notice = profile === null ? null : <ProfileNotice profile={profile} t={t} />;
+  // The export panel draws the one-line notice above its primary Button and the profile details below it, so opening
+  // the details does not push the Button out of view (R10.7, R23.7).
+  const exportNotice = profile === null ? null : <ProfileNotice profile={profile} t={t} part="notice" />;
+  const exportDetails = profile === null ? null : <ProfileNotice profile={profile} t={t} part="details" />;
 
   return (
     <section aria-labelledby="screen-title" className={styles.screen}>
@@ -146,105 +167,57 @@ export function KeepView(props: KeepViewProps) {
         {t('nav.keep')}
       </h2>
 
+      <ScreenIntro purpose={t('keep.purpose')} next={t('keep.nextStep')} />
+
       {pattern.length === 0 ? (
         <Panel className={styles.block}>
           <p className={styles.emptyText}>{t('keep.empty')}</p>
         </Panel>
       ) : null}
       {failureKey === null ? null : (
-        <Notice variant="error" word={t('notice.error')}>
-          {t(failureKey)}
-        </Notice>
+        <StateMessage
+          variant="error"
+          message={t(failureKey)}
+          t={t}
+          retry={props.onRetry === undefined ? undefined : { label: t('state.retry'), onRetry: props.onRetry }}
+        />
       )}
 
       <Panel as="section" aria-labelledby="keep-export-title" className={styles.panel}>
         <h3 id="keep-export-title" className={styles.sectionTitle}>
           {t('keep.export.heading')}
         </h3>
-        {OPTION_GROUPS.map((group) => (
-          <fieldset key={group.name} className={styles.fieldset}>
-            <legend className={styles.legend}>{t(`keep.export.${group.name}`)}</legend>
-            {group.values.map((value) => (
-              <label key={String(value)} className={styles.choice}>
-                <input
-                  type="radio"
-                  name={`keep-option-${group.name}`}
-                  className={styles.radio}
-                  value={String(value)}
-                  checked={form.options[group.name] === value}
-                  onChange={() => props.onFormAction({ type: 'set-option', options: { ...form.options, [group.name]: value } })}
-                />
-                <span>{t(`keep.export.${group.name}.${value}`)}</span>
-              </label>
-            ))}
-          </fieldset>
-        ))}
         <p>{t('keep.export.untested')}</p>
-        {notice}
+        {exportNotice}
         <Button variant="primary" disabled={!exportEnabled} onClick={props.onExport}>
           {t('keep.export.button')}
         </Button>
+        {showExporting ? <WeftProgress text={t('progress.exporting')} /> : null}
         {(props.repairedCount ?? 0) > 0 ? <p>{t('keep.export.guesses')}</p> : null}
         {exportDone ? (
           <Notice variant="success" word={t('notice.success')}>
             {t('keep.export.done')}
           </Notice>
         ) : null}
+        {exportDetails}
       </Panel>
 
       <Panel as="section" aria-labelledby="keep-save-title" className={styles.panel}>
         <h3 id="keep-save-title" className={styles.sectionTitle}>
           {t('keep.save.heading')}
         </h3>
-        <div className={styles.fields}>
-          {FIELDS.map((field) => (
-            <Field key={field} label={t(`keep.field.${field}`)} className={styles.field}>
-              {field === 'notes' ? (
-                <textarea
-                  rows={3}
-                  value={form.metadata[field]}
-                  onChange={(event) => props.onFormAction({ type: 'set-field', field, value: event.currentTarget.value })}
-                />
-              ) : (
-                <input
-                  type="text"
-                  value={form.metadata[field]}
-                  onChange={(event) => props.onFormAction({ type: 'set-field', field, value: event.currentTarget.value })}
-                />
-              )}
-            </Field>
-          ))}
-        </div>
-        <Field label={t('keep.save.note')}>
+        <Field label={t('keep.field.name')} className={styles.field}>
           <input
             type="text"
-            maxLength={NOTE_MAX}
-            value={form.note}
-            onChange={(event) => props.onFormAction({ type: 'set-note', value: event.currentTarget.value })}
+            value={form.metadata.name}
+            onChange={(event) => props.onFormAction({ type: 'set-field', field: 'name', value: event.currentTarget.value })}
           />
         </Field>
-        {origin.kind !== 'archive' ? null : (
-          <fieldset className={styles.fieldset}>
-            <legend className={styles.legend}>{t('keep.save.mode.legend')}</legend>
-            {(['version', 'design'] as const).map((mode) => (
-              <label key={mode} className={styles.choice}>
-                <input
-                  type="radio"
-                  name="keep-save-mode"
-                  className={styles.radio}
-                  value={mode}
-                  checked={form.saveMode === mode}
-                  onChange={() => props.onFormAction({ type: 'set-save-mode', mode })}
-                />
-                <span>{t(`keep.save.mode.${mode}`)}</span>
-              </label>
-            ))}
-          </fieldset>
-        )}
         {notice}
         <Button disabled={!saveEnabled} onClick={props.onSave}>
           {t('keep.save.button')}
         </Button>
+        {showSaving ? <WeftProgress text={t('progress.saving')} /> : null}
         <p className={styles.legal}>{t('keep.save.legal')}</p>
         {savedText === null ? null : (
           <Notice variant="success" word={t('notice.success')}>
@@ -255,11 +228,82 @@ export function KeepView(props: KeepViewProps) {
         )}
       </Panel>
 
+      {/* The export choices and the other details of the design: collapsed on arrival, so the name, Save and export stay in view. */}
+      <div className={styles.more}>
+        <Disclosure label={t('disclosure.more')}>
+          {OPTION_GROUPS.map((group) => (
+            <fieldset key={group.name} className={styles.fieldset}>
+              <legend className={styles.legend}>{t(`keep.export.${group.name}`)}</legend>
+              {group.values.map((value) => (
+                <label key={String(value)} className={styles.choice}>
+                  <input
+                    type="radio"
+                    name={`keep-option-${group.name}`}
+                    className={styles.radio}
+                    value={String(value)}
+                    checked={form.options[group.name] === value}
+                    onChange={() => props.onFormAction({ type: 'set-option', options: { ...form.options, [group.name]: value } })}
+                  />
+                  <span>{t(`keep.export.${group.name}.${value}`)}</span>
+                </label>
+              ))}
+            </fieldset>
+          ))}
+          <div className={styles.fields}>
+            {MORE_FIELDS.map((field) => (
+              <Field key={field} label={t(`keep.field.${field}`)} className={styles.field}>
+                {field === 'notes' ? (
+                  <textarea
+                    rows={3}
+                    value={form.metadata[field]}
+                    onChange={(event) => props.onFormAction({ type: 'set-field', field, value: event.currentTarget.value })}
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={form.metadata[field]}
+                    onChange={(event) => props.onFormAction({ type: 'set-field', field, value: event.currentTarget.value })}
+                  />
+                )}
+              </Field>
+            ))}
+          </div>
+          <Field label={t('keep.save.note')}>
+            <input
+              type="text"
+              maxLength={NOTE_MAX}
+              value={form.note}
+              onChange={(event) => props.onFormAction({ type: 'set-note', value: event.currentTarget.value })}
+            />
+          </Field>
+          {origin.kind !== 'archive' ? null : (
+            <fieldset className={styles.fieldset}>
+              <legend className={styles.legend}>{t('keep.save.mode.legend')}</legend>
+              {(['version', 'design'] as const).map((mode) => (
+                <label key={mode} className={styles.choice}>
+                  <input
+                    type="radio"
+                    name="keep-save-mode"
+                    className={styles.radio}
+                    value={mode}
+                    checked={form.saveMode === mode}
+                    onChange={() => props.onFormAction({ type: 'set-save-mode', mode })}
+                  />
+                  <span>{t(`keep.save.mode.${mode}`)}</span>
+                </label>
+              ))}
+            </fieldset>
+          )}
+        </Disclosure>
+      </div>
+
       <Panel as="section" aria-labelledby="keep-list-title" className={styles.panel}>
         <h3 id="keep-list-title" tabIndex={-1} className={styles.sectionTitle}>
           {t('keep.list.heading')}
         </h3>
-        {designs !== null && designs.length === 0 ? <p>{t('keep.list.empty')}</p> : null}
+        {designs !== null && designs.length === 0 ? (
+          <StateMessage variant="empty" message={t('keep.list.empty')} next={t('keep.list.empty.next')} t={t} />
+        ) : null}
         {designs === null || designs.length === 0 ? null : (
           <ul className={styles.list}>
             {groupDesigns(designs).map((group) => (
@@ -305,24 +349,41 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [savedText, setSavedText] = useState<string | null>(null);
   const [exportDone, setExportDone] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [failureKey, setFailureKey] = useState<string | null>(null);
+  /** What a retry repeats for the failure shown: the list refresh or Save. Other failures have no retry. */
+  const [retryKind, setRetryKind] = useState<'refresh' | 'save' | null>(null);
   const [expandedDesignId, setExpandedDesignId] = useState<string | null>(null);
   const returnFocusRef = useRef<string | null>(null);
   const focusSavedRef = useRef(false);
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = useCallback(async (): Promise<boolean> => {
     const listed = await listDesigns(archiveDeps);
     if (listed.ok) {
       setDesigns(listed.value);
-    } else {
-      setDesigns(null);
-      setFailureKey(archiveFailureKey(listed.failure));
+      return true;
     }
+    setDesigns(null);
+    setFailureKey(archiveFailureKey(listed.failure));
+    setRetryKind('refresh');
+    return false;
   }, [archiveDeps]);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  // Repeats the operation that failed. A list refresh only reads; a failed Save wrote nothing, so a repeat cannot save twice.
+  const onRetry = (): void => {
+    if (retryKind === 'save') {
+      onSave();
+    } else if (retryKind === 'refresh') {
+      void refresh().then((ok) => {
+        if (ok) setFailureKey(null);
+      });
+    }
+  };
 
   // Focus follows the action: the saved text after a save, the list row's Delete button or the list heading after a confirmation closes.
   useEffect(() => {
@@ -341,27 +402,35 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
 
   const onExport = (): void => {
     setExportDone(false);
-    if (profile === null) return;
-    const outcome = runExport(profile, pattern, form.options, downloadDeps);
-    if (outcome.ok) {
-      setFailureKey(null);
-      setExportDone(true);
-      dispatch({ type: 'announce', kind: 'confirmation', messageKey: 'keep.export.done' });
-    } else {
-      const key = exportFailureKey(outcome.failure);
-      setFailureKey(key);
-      dispatch({ type: 'announce', kind: 'error', messageKey: key });
-    }
+    if (profile === null || exporting) return;
+    setExporting(true);
+    // Yield once so the browser can paint the progress before the file is built; the work itself is unchanged.
+    void new Promise<void>((resolve) => setTimeout(resolve, 0)).then(() => {
+      const outcome = runExport(profile, pattern, form.options, downloadDeps);
+      setExporting(false);
+      if (outcome.ok) {
+        setFailureKey(null);
+        setExportDone(true);
+        dispatch({ type: 'announce', kind: 'confirmation', messageKey: 'keep.export.done' });
+      } else {
+        const key = exportFailureKey(outcome.failure);
+        setFailureKey(key);
+        setRetryKind(null);
+        dispatch({ type: 'announce', kind: 'error', messageKey: key });
+      }
+    });
   };
 
   const onSave = (): void => {
-    if (profile === null) return;
+    if (profile === null || saving) return;
     setSavedText(null);
+    setSaving(true);
     const origin = state.current.origin;
     const continues = continuesId(form, origin);
     // Picks that are suggested guesses are named in the design's notes; the typed notes stay as they are in the form.
     const toSave = withGuessesLine(form, state.repairs.picks, t);
     void runSave(profile, pattern, toSave, t('keep.untitled'), archiveDeps, continues).then(async (outcome) => {
+      setSaving(false);
       if (outcome.ok) {
         setFailureKey(null);
         focusSavedRef.current = true;
@@ -379,6 +448,7 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
         // The form is not touched: what the user typed stays (R7.4).
         const { announce } = afterSaveFailure(form, outcome.failure);
         setFailureKey(announce.messageKey);
+        setRetryKind('save');
         dispatch(announce);
       }
     });
@@ -391,6 +461,7 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
       } else {
         const key = archiveFailureKey(outcome.failure);
         setFailureKey(key);
+        setRetryKind(null);
         dispatch({ type: 'announce', kind: 'error', messageKey: key });
       }
     });
@@ -408,6 +479,7 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
       } else {
         const key = archiveFailureKey(outcome.failure);
         setFailureKey(key);
+        setRetryKind(null);
         dispatch({ type: 'announce', kind: 'error', messageKey: key });
       }
     });
@@ -425,6 +497,7 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
       } else {
         const key = archiveFailureKey(failure);
         setFailureKey(key);
+        setRetryKind(null);
         dispatch({ type: 'announce', kind: 'error', messageKey: key });
       }
     });
@@ -439,7 +512,10 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
       pendingDeleteId={pendingDeleteId}
       savedText={savedText}
       exportDone={exportDone}
+      exporting={exporting}
+      saving={saving}
       failureKey={failureKey}
+      onRetry={retryKind === null ? undefined : onRetry}
       t={t}
       onFormAction={dispatchForm}
       onExport={onExport}

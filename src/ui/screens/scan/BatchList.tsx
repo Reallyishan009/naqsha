@@ -106,13 +106,8 @@ function RemoveConfirm({ number, t, onYes, onNo }: { number: number; t: Translat
 /** The Scan_Batch: numbered thumbnails with confirmed remove, earlier, later and scan again (R11.2 to R11.5). */
 export function BatchList(props: BatchListProps) {
   const { batch, pendingRemove, t } = props;
-  if (batch.length === 0) {
-    return (
-      <Panel>
-        <p className={styles.emptyText}>{t('scan.batch.empty')}</p>
-      </Panel>
-    );
-  }
+  // An empty batch has no list. The Scan screen shows its empty state (`scan.batch.empty`) in view, outside "More".
+  if (batch.length === 0) return null;
   return (
     <ol className={styles.batch}>
       {batch.map((grid, index) => {

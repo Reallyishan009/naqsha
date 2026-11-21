@@ -26,6 +26,10 @@
 
 
 
+.more {
+  margin: 16px 0;
+}
+
 .fieldset {
   margin: 0 0 12px;
   padding: 0;

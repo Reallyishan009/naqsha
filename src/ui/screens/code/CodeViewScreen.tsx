@@ -15,7 +15,8 @@ import { ClothCanvas, createClothPlayer } from '../weave/ClothCanvas.tsx';
 import { Button } from '../../components/Button.tsx';
 import { Field } from '../../components/Field.tsx';
 import { Notice } from '../../components/Notice.tsx';
-import { Panel } from '../../components/Panel.tsx';
+import { ScreenIntro } from '../../components/ScreenIntro.tsx';
+import { StateMessage } from '../../components/StateMessage.tsx';
 import styles from './CodeViewScreen.module.css';
 import { DiffPanel } from './DiffPanel.tsx';
 import type { DiffTextDeps } from './diffText.ts';
@@ -203,6 +204,18 @@ export function CodeViewScreen({
         {t('codeview.title')}
       </h2>
 
+      <ScreenIntro purpose={t('codeview.purpose')} next={t('codeview.nextStep')} />
+
+      {/* The compare panel comes first so its one primary Button is in view without scrolling (R23.7). */}
+      <DiffPanel
+        profile={profile}
+        currentLineSet={currentLineSet}
+        t={t}
+        archiveDeps={archiveDeps}
+        diffTextDeps={diffTextDeps}
+        request={state.compare}
+      />
+
       <div role="group" aria-label={t('codeview.controls.name')} className={styles.controls}>
         {pickCount === 0 ? null : (
           <p className={styles.selected}>{t('codeview.selected', { pick: selectedPick })}</p>
@@ -257,9 +270,7 @@ export function CodeViewScreen({
       ) : null}
 
       {pickCount === 0 ? (
-        <Panel>
-          <p className={styles.emptyText}>{t('codeview.empty')}</p>
-        </Panel>
+        <StateMessage variant="empty" message={t('codeview.empty')} next={t('codeview.nextStep')} t={t} />
       ) : !bodyShown ? null : (
         <>
           <p className={styles.summary}>
@@ -302,15 +313,6 @@ export function CodeViewScreen({
           </div>
         </>
       )}
-
-      <DiffPanel
-        profile={profile}
-        currentLineSet={currentLineSet}
-        t={t}
-        archiveDeps={archiveDeps}
-        diffTextDeps={diffTextDeps}
-        request={state.compare}
-      />
     </section>
   );
 }

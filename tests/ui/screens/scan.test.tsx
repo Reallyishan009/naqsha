@@ -204,7 +204,9 @@ describe('scan screen render', () => {
     }
     expect(readFileSync('src/ui/state/scan.ts', 'utf8')).not.toMatch(/\bfetch\s*\(|XMLHttpRequest|sendBeacon/);
     const app = readFileSync('src/ui/App.tsx', 'utf8');
-    expect(app).toMatch(/lazy\(\(\) => import\('\.\/screens\/scan\/ScanScreen\.tsx'\)\)/);
+    // The Scan screen is still a dynamic import, now handed to `useLazyScreen` so a retry can ask for the chunk again.
+    expect(app).toMatch(/importScanScreen = \(\) => import\('\.\/screens\/scan\/ScanScreen\.tsx'\)/);
+    expect(app).toMatch(/useLazyScreen\(importScanScreen, /);
     expect(app).not.toMatch(/^import .*screens\/scan/m);
   });
 });

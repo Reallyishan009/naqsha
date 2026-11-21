@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react';
 import type { ChangeEvent, Dispatch, ReactNode } from 'react';
 import type { CardProfile } from '../../../codec/index.ts';
 import type { PixelData, ReadFailure as CardReadFailure } from '../../../reader/index.ts';
@@ -19,9 +19,13 @@ import type { LoadPixels } from '../../state/scan.ts';
 import { cameraControl } from '../../platform/browser.ts';
 import { ProfileNotice } from '../../ProfileNotice.tsx';
 import { Button } from '../../components/Button.tsx';
+import { useAfterDelay } from '../../components/delay.ts';
+import { Disclosure } from '../../components/Disclosure.tsx';
 import { Field } from '../../components/Field.tsx';
-import { Notice } from '../../components/Notice.tsx';
 import { Panel } from '../../components/Panel.tsx';
+import { ScreenIntro } from '../../components/ScreenIntro.tsx';
+import { StateMessage } from '../../components/StateMessage.tsx';
+import { WeftProgress } from '../../components/WeftProgress.tsx';
 import type { AppAction, AppState, HookPosition, ScanBatch, ScanState } from '../../types.ts';
 import { BatchList } from './BatchList.tsx';
 import { browserCameraDevice, browserCameraEnv } from './camera.ts';
@@ -59,12 +63,21 @@ export type ScanViewProps = {
   onDoneCancel: () => void;
   /** The live camera control, drawn below photo upload. Absent when there is none. */
   cameraSlot?: ReactNode;
+  /** The "More" Disclosure is controlled by the screen, which opens it when a read completes. Absent: it keeps its own state. */
+  moreExpanded?: boolean;
+  onMoreToggle?: (expanded: boolean) => void;
+  /** Decides when a started read has run long enough to show progress. Tests pass one driven by a fake clock; the screen uses `useAfterDelay`. */
+  afterDelay?: (active: boolean) => boolean;
 };
 
+/**
+ * A card that cannot be read, for that card only. The failed read is already announced through the Shell's live
+ * region (`read-failed` dispatches `announce`), so the message has no role of its own and is read out once.
+ */
 function FailureMessage({ failure, t }: { failure: CardReadFailure; t: Translate }) {
   return (
-    <Notice variant="error" word={t('notice.error')}>
-      <p className={styles.failureText}>{t(readFailureKey(failure))}</p>
+    <>
+      <StateMessage variant="error" role={null} message={t(readFailureKey(failure))} t={t} />
       {failure.reason === 'invalid-profile' ? (
         <details open className={styles.details}>
           <summary>{t('error.read.details')}</summary>
@@ -77,7 +90,7 @@ function FailureMessage({ failure, t }: { failure: CardReadFailure; t: Translate
           </ul>
         </details>
       ) : null}
-    </Notice>
+    </>
   );
 }
 
@@ -85,6 +98,9 @@ function FailureMessage({ failure, t }: { failure: CardReadFailure; t: Translate
 export function ScanView(props: ScanViewProps) {
   const { profile, scan, batch, t } = props;
   const readState = scan.status === 'read' ? scan : null;
+  // A WeftProgress shows only once the read has run for 300 ms; the reading text above it is the live announcement.
+  const afterDelay = props.afterDelay ?? useAfterDelay;
+  const showReading = afterDelay(scan.status === 'reading');
   // Choose-a-photo is the one primary control until a card is read; Accept takes over after a read.
   const choosePrimary = readState === null;
   return (
@@ -92,13 +108,14 @@ export function ScanView(props: ScanViewProps) {
       <h2 id="screen-title" className={styles.screenTitle}>
         {t('nav.scan')}
       </h2>
+      <ScreenIntro purpose={t('scan.purpose')} next={t('scan.nextStep')} />
       {profile === null ? (
         <Panel>
           <p className={styles.emptyText}>{t('scan.needsProfile')}</p>
         </Panel>
       ) : (
         <>
-          <ProfileNotice profile={profile} t={t} />
+          {/* Choose-a-photo is the first control, outside the Disclosure. */}
           <Panel as="section" aria-labelledby="scan-choose-title" className={styles.panel}>
             <h3 id="scan-choose-title" className={styles.sectionTitle}>
               {t('scan.choose.label')}
@@ -117,54 +134,62 @@ export function ScanView(props: ScanViewProps) {
                 }}
               />
             </Field>
-            {props.cameraSlot ?? null}
-            {props.replacingIndex === null ? null : (
-              <div className={styles.row}>
-                <p>{t('scan.replacing', { number: props.replacingIndex + 1 })}</p>
-                <Button onClick={props.onCancelReplacing}>{t('scan.replacing.cancel', { number: props.replacingIndex + 1 })}</Button>
-              </div>
-            )}
+            {props.replacingIndex === null ? null : <p>{t('scan.replacing', { number: props.replacingIndex + 1 })}</p>}
             {scan.status === 'reading' ? (
               <p role="status" className={styles.busy}>
                 {t('scan.reading', { name: scan.fileName })}
               </p>
             ) : null}
+            {showReading ? <WeftProgress text={t('progress.reading')} /> : null}
             {scan.status === 'failed' ? <FailureMessage failure={scan.failure} t={t} /> : null}
           </Panel>
-          {readState === null ? null : (
-            <ReadPanel {...props} profile={profile} readState={readState} />
-          )}
+          <ProfileNotice profile={profile} t={t} />
+          {batch.length === 0 ? (
+            <StateMessage variant="empty" message={t('scan.batch.empty')} next={t('scan.batch.empty.next')} t={t} />
+          ) : null}
         </>
       )}
-      <Panel as="section" aria-labelledby="scan-batch-title" className={styles.panel}>
-        <h3 id="scan-batch-title" className={styles.sectionTitle}>
-          {t('scan.batch.heading')}
-        </h3>
-        <BatchList
-          batch={batch}
-          profile={profile}
-          pendingRemove={props.pendingRemove}
-          t={t}
-          onRemoveRequest={props.onRemoveRequest}
-          onRemoveConfirm={props.onRemoveConfirm}
-          onRemoveCancel={props.onRemoveCancel}
-          onMove={props.onMove}
-          onScanAgain={props.onScanAgain}
-        />
-        <Button disabled={batch.length === 0} onClick={props.onDone}>
-          {t('scan.done')}
-        </Button>
-        {props.confirmingDone ? (
-          <Panel role="group" aria-label={t('scan.done.question')} className={styles.confirm}>
-            <p>{t('scan.done.question')}</p>
-            <div className={styles.row}>
-              <Button onClick={() => props.onCommit('replace')}>{t('scan.done.replace')}</Button>
-              <Button onClick={() => props.onCommit('append')}>{t('scan.done.append')}</Button>
-              <Button onClick={props.onDoneCancel}>{t('scan.done.cancel')}</Button>
-            </div>
-          </Panel>
+      {/* Everything else is behind "More": it starts collapsed and the screen opens it when a read completes. */}
+      <Disclosure label={t('disclosure.more')} expanded={props.moreExpanded} onToggle={props.onMoreToggle}>
+        {props.replacingIndex === null ? null : (
+          <div className={styles.row}>
+            <Button onClick={props.onCancelReplacing}>{t('scan.replacing.cancel', { number: props.replacingIndex + 1 })}</Button>
+          </div>
+        )}
+        {props.cameraSlot ?? null}
+        {profile !== null && readState !== null ? (
+          <ReadPanel {...props} profile={profile} readState={readState} />
         ) : null}
-      </Panel>
+        <Panel as="section" aria-labelledby="scan-batch-title" className={styles.panel}>
+          <h3 id="scan-batch-title" className={styles.sectionTitle}>
+            {t('scan.batch.heading')}
+          </h3>
+          <BatchList
+            batch={batch}
+            profile={profile}
+            pendingRemove={props.pendingRemove}
+            t={t}
+            onRemoveRequest={props.onRemoveRequest}
+            onRemoveConfirm={props.onRemoveConfirm}
+            onRemoveCancel={props.onRemoveCancel}
+            onMove={props.onMove}
+            onScanAgain={props.onScanAgain}
+          />
+          <Button disabled={batch.length === 0} onClick={props.onDone}>
+            {t('scan.done')}
+          </Button>
+          {props.confirmingDone ? (
+            <Panel role="group" aria-label={t('scan.done.question')} className={styles.confirm}>
+              <p>{t('scan.done.question')}</p>
+              <div className={styles.row}>
+                <Button onClick={() => props.onCommit('replace')}>{t('scan.done.replace')}</Button>
+                <Button onClick={() => props.onCommit('append')}>{t('scan.done.append')}</Button>
+                <Button onClick={props.onDoneCancel}>{t('scan.done.cancel')}</Button>
+              </div>
+            </Panel>
+          ) : null}
+        </Panel>
+      </Disclosure>
     </section>
   );
 }
@@ -238,6 +263,7 @@ export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) 
   const [replacingIndex, setReplacingIndex] = useState<number | null>(null);
   const [confirmingDone, setConfirmingDone] = useState(false);
   const [viewWidthPx, setViewWidthPx] = useState(DEFAULT_VIEW_WIDTH_PX);
+  const [moreOpen, setMoreOpen] = useState(false);
   const counter = useRef(new RequestCounter());
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [cameraEnv] = useState(browserCameraEnv);
@@ -252,6 +278,12 @@ export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) 
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
   }, []);
+
+  // A finished read opens "More", where the marks, Accept and Discard are. Focus is not moved.
+  const hasRead = scan.status === 'read';
+  useEffect(() => {
+    if (hasRead) setMoreOpen(true);
+  }, [hasRead]);
 
   const startRead = useCallback(
     (name: string, file: Blob, load: LoadPixels | undefined): void => {
@@ -359,6 +391,8 @@ export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) 
           dispatch({ type: 'batch-commit', mode });
         }}
         onDoneCancel={() => setConfirmingDone(false)}
+        moreExpanded={moreOpen}
+        onMoreToggle={setMoreOpen}
         cameraSlot={
           profile === null ? null : (
             <LiveCamera

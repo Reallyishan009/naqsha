@@ -280,6 +280,31 @@ describe('service worker registration', () => {
     expect(reloads).toBe(1);
   });
 
+  it('R24.5 the first install of a visit is not an update: nothing is told, and a later new worker still is', async () => {
+    const container = new FakeServiceWorkerContainer();
+    const told: string[] = [];
+    registerServiceWorker({
+      container: container as unknown as ContainerLike,
+      env: { builtSite: true, supported: true },
+      onUpdateReady: () => told.push('update ready'),
+      reload: () => undefined,
+      baseUrl: './',
+    });
+    await flush();
+    // No worker controls the page yet: the worker found now is the first one. It installs, activates and claims the page.
+    const first = new FakeWorker();
+    container.registration.startUpdate(first);
+    first.setState('installing');
+    container.registration.finishInstall(first);
+    container.changeController();
+    expect(told).toEqual([]);
+    // Once a worker controls the page, a newer worker is a genuine update.
+    const next = new FakeWorker();
+    container.registration.startUpdate(next);
+    container.registration.finishInstall(next);
+    expect(told).toEqual(['update ready']);
+  });
+
   it('R24.5 a worker already waiting at registration is reported at once', async () => {
     const container = new FakeServiceWorkerContainer();
     const waiting = new FakeWorker();
