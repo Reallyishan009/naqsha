@@ -267,7 +267,7 @@ Rules that apply to every task:
     - Commit with the message `Stage D: version labels, plurals, finished cloth, benchmark and loom-mcp design`, adding by name only the fixes of this stage, `.kiro/specs/loom-mcp/design.md`, `.kiro/specs/design-and-ux-pass/measurements.md`, `docs/HINDI_REVIEW.md` and any `media/kiro/*.png` from task 5.7.
     - _Requirements: 21.3, 22.6, 22.7, 22.8, 25.1, 25.2_
 
-- [ ] 6. Final tasks: documents, last checks, push and report
+- [x] 6. Final tasks: documents, last checks, push and report
   - [x] 6.1 Write the one Build_Log entry in `docs/BUILD_LOG.md`
     - Add exactly one new entry for this pass, built from `measurements.md`: the licence record and Font_Weight_Report; the bundle sizes before Stage A and after Stage C (every chunk, with file names); the contrast table of every pair in both themes (ratios from `truncateRatio`) and any pair below its minimum with its proposed value; the benchmark decision, the three before and three after runs and the 2.0 times slowdown check; the "after" inspection; each changed selector and check (old selector, new selector, reason); each Hindi wrapping fix; the keys whose Hindi one and other texts are the same; the Disclosure check changes; the Day `--zari` `#B0800A` note; the five-commit order including Stage 0.
     - _Requirements: 2.1, 2.5, 2.6, 5.3, 5.5, 5.6, 10.8, 15.3, 17.5, 19.5, 22.2, 23.10, 24.8, 25.7_
@@ -284,13 +284,13 @@ Rules that apply to every task:
   - [x] 6.5 Run `npm run check:all` once
     - Run it once. Write its exit status and the names of any failing checks under "Notes for the final report". Do not edit a check to make it pass.
     - _Requirements: 25.5, 25.6_
-  - [-] 6.6 Fold the documents into the Stage D commit
+  - [x] 6.6 Fold the documents into the Stage D commit
     - The branch must hold five commits (Stage 0, A, B, C, D). Check with `git log` that the Stage D commit is `HEAD`, that it is not on the remote (`git status -sb` shows `ahead`), and that only `docs/BUILD_LOG.md`, `docs/KIRO_USAGE.md`, `README.md`, `.kiro/steering/structure.md` and `.kiro/specs/design-and-ux-pass/measurements.md` have changed. Stage those files by name and run `git commit --amend --no-edit`. Do not rewrite any commit that has been pushed, and do not force-push.
     - _Requirements: 25.1, 25.4_
-  - [~] 6.7 Push `auto/build`
+  - [x] 6.7 Push `auto/build`
     - Run a plain `git push` of `auto/build`. Check that the remote branch head equals `HEAD`. If the push fails, keep the local commits unchanged, do not force-push, and write the reason under "Notes for the final report".
     - _Requirements: 25.3, 25.4_
-  - [~] 6.8 Write the final report and stop
+  - [x] 6.8 Write the final report and stop
     - The report lists: the path of every screenshot file (`media/design/before/` and `media/design/after/`) and of every file added from `media/kiro/` or the statement that none was added, with the two named untracked files when `media/kiro/` is absent; the Entry_Chunk size in bytes before and after; each contrast failure with its fix; the exit status and failing check names of `check:browser` and `check:all`; the push result; any failing test with its file, name, what changed and why (and any fast-check counterexample, seed and path); anything not done; the one item to look at first; the credits used; and the note that Stage 0 made the branch hold five commits and that the documents were folded into the Stage D commit.
     - Make no further commit on `auto/build` and start no second pass.
     - _Requirements: 21.2, 21.4, 21.5, 22.4, 25.4, 25.6, 25.11, 25.12_
