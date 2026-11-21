@@ -1,6 +1,6 @@
 /**
  * `npm run check:browser`: drives a real headless Chrome over the DevTools protocol against `vite preview`
- * of the built `dist/`, and reports PASS or FAIL for thirteen steps. Needs Chrome (set CHROME_PATH to choose one)
+ * of the built `dist/`, and reports PASS or FAIL for each step (the last one, the network off, stops the server). Needs Chrome (set CHROME_PATH to choose one)
  * and a built `dist/` (it runs `npm run build` itself when `dist/` is missing).
  * Screenshots go to `media/check/` (git-ignored). Exit code is non-zero if any step failed.
  * The pure parts are in `scripts/checks/`: cdp.ts, chrome.ts, bmpHeader.ts, pngHeader.ts, report.ts.
@@ -83,6 +83,99 @@ async function goTo(page: Page, screen: Screen): Promise<void> {
   await ensureEnglish(page);
   await page.clickText('nav button', EN[`nav.${screen}`]!);
   await page.waitFor(`document.querySelector('#screen-title')?.textContent.trim()===${JSON.stringify(EN[`nav.${screen}`])}`, `the ${screen} screen`);
+}
+
+// ---------------------------------------------------------------- language, theme and font helpers (Stage A)
+
+const LANGUAGES = ['en', 'hi'] as const;
+type Language = (typeof LANGUAGES)[number];
+const THEMES = ['day', 'night'] as const;
+type ThemeChoice = (typeof THEMES)[number];
+/** The four Screens, the Code view included. */
+const ALL_SCREENS = [...SCREENS, 'code'] as const;
+type AnyScreen = (typeof ALL_SCREENS)[number];
+const WORDS: Record<Language, Record<string, string>> = { en: EN, hi: HI };
+/** The key of the text each Screen shows in its `#screen-title`. */
+const HEADING_KEY: Record<AnyScreen, string> = { weave: 'nav.weave', keep: 'nav.keep', scan: 'nav.scan', code: 'codeview.title' };
+const THEME_STORAGE_KEY = 'naqsha.theme';
+
+async function ensureLanguage(page: Page, language: Language): Promise<void> {
+  if ((await page.ev<string>('document.documentElement.lang')) !== language) await page.clickText('button', WORDS[language]['language.' + language]!);
+  await page.waitFor(`document.documentElement.lang===${JSON.stringify(language)}`, `the page language to be ${language}`);
+}
+
+/** Opens one Screen through the navigation, in the given language. */
+async function showScreen(page: Page, screen: AnyScreen, language: Language): Promise<void> {
+  await ensureLanguage(page, language);
+  await page.clickText('nav button', WORDS[language][`nav.${screen}`]!);
+  await page.waitFor(
+    `document.querySelector('#screen-title')?.textContent.trim()===${JSON.stringify(WORDS[language][HEADING_KEY[screen]])}`,
+    `the ${screen} screen in ${language}`,
+  );
+}
+
+/** The Theme_Switch: a `role="switch"` whose accessible name starts with "Night loom" (or its Hindi text). */
+const themeSwitch = (language: Language): string =>
+  `[...document.querySelectorAll('[role="switch"]')].find(e=>(e.getAttribute('aria-label')||e.textContent||'').trim().startsWith(${JSON.stringify(WORDS[language]['theme.label'])}))`;
+
+type ThemeReading = { dataTheme: string | null; stored: string | null; checked: string | null; switchFound: boolean };
+
+function readTheme(page: Page, language: Language = 'en'): Promise<ThemeReading> {
+  return page.ev<ThemeReading>(
+    `(()=>{const s=${themeSwitch(language)};let stored=null;try{stored=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)})}catch(e){}return {dataTheme:document.documentElement.getAttribute('data-theme'),stored,checked:s?s.getAttribute('aria-checked'):null,switchFound:!!s}})()`,
+  );
+}
+
+/** Puts the page in the given theme by pressing the Theme_Switch, never by setting `data-theme` directly. */
+async function chooseTheme(page: Page, theme: ThemeChoice): Promise<void> {
+  // The switch is found by its name in the language the page shows now.
+  const language: Language = (await page.ev<string>('document.documentElement.lang')) === 'hi' ? 'hi' : 'en';
+  const now = await readTheme(page, language);
+  if (now.dataTheme !== theme) await page.click(themeSwitch(language), 'the Theme_Switch');
+  await page.waitFor(`document.documentElement.getAttribute('data-theme')===${JSON.stringify(theme)}`, `data-theme to be ${theme}`);
+}
+
+type FontUse = { declared: number; used: { family: string; weight: number; status: string }[] };
+
+/**
+ * Every family and weight the visible text of the shown Screen uses, among the faces the style sheet declares,
+ * with the loading status of the face that the browser picks for that weight.
+ */
+const FONT_USE = `(()=>{const faces=[...document.fonts].map(f=>({family:f.family.replace(/["']/g,''),weight:Number(f.weight),status:f.status}));const declared={};for(const f of faces){(declared[f.family]=declared[f.family]||[]).push(f.weight)}const pick=(list,w)=>{if(list.includes(w))return w;const up=list.filter(x=>x>w).sort((a,b)=>a-b),down=list.filter(x=>x<w).sort((a,b)=>b-a);return w>500?(up[0]??down[0]):(down[0]??up[0])};const used=new Map();for(const e of document.body.querySelectorAll('*')){if(![...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()!==''))continue;if(e.getClientRects().length===0)continue;const cs=getComputedStyle(e);if(cs.visibility==='hidden')continue;const family=cs.fontFamily.split(',')[0].trim().replace(/["']/g,'');const list=declared[family];if(!list)continue;const weight=pick(list,Number(cs.fontWeight)||400);used.set(family+' '+weight,{family,weight})}return {declared:faces.length,used:[...used.values()].map(u=>{const face=faces.find(f=>f.family===u.family&&f.weight===u.weight);return {family:u.family,weight:u.weight,status:face?face.status:'missing'}})}})()`;
+
+/** Waits until every face the shown Screen uses reports `loaded`, and says which faces those are. */
+async function usedFontsLoaded(page: Page, what: string): Promise<string[]> {
+  const describe = (seen: FontUse): string[] => seen.used.map((face) => `${face.family} ${face.weight}`);
+  try {
+    const seen = await page.waitFor<FontUse>(
+      `(()=>{const r=${FONT_USE};return r.used.length>0&&r.used.every(u=>u.status==='loaded')?r:null})()`,
+      `every font the ${what} uses to report loaded`,
+      10_000,
+    );
+    return describe(seen);
+  } catch (error) {
+    const seen = await page.ev<FontUse>(FONT_USE);
+    const states = seen.used.map((face) => `${face.family} ${face.weight} is ${face.status}`);
+    throw new Error(`${what}: ${error instanceof Error ? error.message : String(error)}; ${states.length === 0 ? 'no declared font is used by the visible text' : states.join(', ')}`);
+  }
+}
+
+/** Opens each of the four Screens in both languages and checks that `document.fonts` reports `loaded` for every face the Screen uses. */
+async function fontsLoadedOnEveryScreen(page: Page): Promise<string> {
+  const faces = new Set<string>();
+  let looked = 0;
+  try {
+    for (const language of LANGUAGES) {
+      for (const screen of ALL_SCREENS) {
+        await showScreen(page, screen, language);
+        for (const face of await usedFontsLoaded(page, `${screen} screen in ${language}`)) faces.add(face);
+        looked++;
+      }
+    }
+  } finally {
+    await ensureLanguage(page, 'en');
+  }
+  return `document.fonts reports loaded for every face used on ${looked} screens (${[...faces].sort().join(', ')})`;
 }
 
 const parsePick = (text: string | null): { pick: number; total: number } | null => {
@@ -430,7 +523,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
         await page.waitFor(`!!document.querySelector('#scan-file')`, 'the file input');
         await page.setFile('#scan-file', cardPng);
         const outcome = await page.waitFor<string>(
-          `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[role="alert"]')?.textContent.trim()||null)`,
+          `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[role="alert"] > div')?.textContent.trim()||null)`,
           'the read to finish',
           30_000,
         );
@@ -503,7 +596,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
         await goTo(page, 'scan');
         const batchBefore = await page.ev<number>(`document.querySelectorAll('#scan-batch-title ~ ol > li').length`);
         await page.setFile('#scan-file', blank);
-        const message = await page.waitFor<string>(`document.querySelector('[role="alert"]')?.textContent.trim()`, 'the failure message', 30_000);
+        const message = await page.waitFor<string>(`document.querySelector('[role="alert"] > div')?.textContent.trim()`, 'the failure message', 30_000);
         expect(message === EN['error.read.peg-holes-not-found'], `the message is "${message}", expected "${EN['error.read.peg-holes-not-found']}"`);
         const markers = await page.ev<number>(`document.querySelectorAll('button[data-shape]').length`);
         expect(markers === 0, `${markers} hook markers are shown after a blank image`);
@@ -525,27 +618,141 @@ function buildSteps(ctx: Context): BrowserStep[] {
         await page.waitFor(`document.querySelectorAll('button[data-shape]').length>0`, 'the read card on Scan', 30_000);
         const lines: string[] = [];
         const failures: string[] = [];
+        // The Code view, Hindi and the Night loom are measured as well (R23.2, R7.7): 3 widths x 2 themes x 2 languages x 4 Screens.
+        const startTheme = (await readTheme(page)).dataTheme === 'night' ? 'night' : 'day';
         try {
           for (const width of [320, 390, 1280]) {
             await page.setViewport(width, 900);
-            for (const screen of SCREENS) {
-              await goTo(page, screen);
-              await sleep(400);
-              const measured = await page.ev<{ scrollWidth: number; innerWidth: number; offenders: string[] }>(
-                `(()=>{const w=window.innerWidth;const off=[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>w+0.5&&e.getBoundingClientRect().width>0).slice(0,4).map(e=>e.tagName.toLowerCase()+(e.className&&typeof e.className==='string'?'.'+e.className.split(' ')[0]:'')+' right='+Math.round(e.getBoundingClientRect().right));return {scrollWidth:document.documentElement.scrollWidth,innerWidth:w,offenders:off}})()`,
-              );
-              await page.screenshot(path.join(repoRoot, 'media', 'check', `12-width-${width}-${screen}.png`));
-              const verdict = `${screen} at ${width}: scrollWidth ${measured.scrollWidth}, innerWidth ${measured.innerWidth}`;
-              if (measured.scrollWidth > measured.innerWidth) {
-                failures.push(`${verdict} (wider: ${measured.offenders.join(', ') || 'unknown'})`);
-              } else lines.push(verdict);
+            for (const theme of THEMES) {
+              await chooseTheme(page, theme);
+              for (const language of LANGUAGES) {
+                for (const screen of ALL_SCREENS) {
+                  await showScreen(page, screen, language);
+                  await sleep(400);
+                  const measured = await page.ev<{ scrollWidth: number; innerWidth: number; offenders: string[] }>(
+                    `(()=>{const w=window.innerWidth;const off=[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>w+0.5&&e.getBoundingClientRect().width>0).slice(0,4).map(e=>e.tagName.toLowerCase()+(e.className&&typeof e.className==='string'?'.'+e.className.split(' ')[0]:'')+' right='+Math.round(e.getBoundingClientRect().right));return {scrollWidth:document.documentElement.scrollWidth,innerWidth:w,offenders:off}})()`,
+                  );
+                  const original = language === 'en' && theme === 'day' && screen !== 'code';
+                  const shotName = original ? `12-width-${width}-${screen}.png` : `12-width-${width}-${screen}-${language}-${theme}.png`;
+                  await page.screenshot(path.join(repoRoot, 'media', 'check', shotName));
+                  const verdict = `${screen} at ${width} (${language}, ${theme}): scrollWidth ${measured.scrollWidth}, innerWidth ${measured.innerWidth}`;
+                  if (measured.scrollWidth > measured.innerWidth) {
+                    failures.push(`${verdict} (wider: ${measured.offenders.join(', ') || 'unknown'})`);
+                  } else lines.push(verdict);
+                }
+              }
             }
           }
         } finally {
           await page.setViewport(900, 1000);
+          try {
+            await ensureLanguage(page, 'en');
+            await chooseTheme(page, startTheme);
+          } catch (error) {
+            failures.push(`could not put the page back in English and the ${startTheme} theme: ${error instanceof Error ? error.message : String(error)}`);
+          }
         }
         if (failures.length > 0) throw new Error([...failures.map((line) => `OVERFLOW ${line}`), ...lines].join('\n'));
         return lines.join('\n');
+      },
+    },
+    {
+      name: 'theme switch: data-theme and localStorage survive a reload',
+      async run() {
+        await ensureEnglish(page);
+        await page.waitFor(`!!${themeSwitch('en')}`, 'the Theme_Switch (a role="switch" named "Night loom")');
+        const start = await readTheme(page);
+        expect(start.dataTheme === 'day' || start.dataTheme === 'night', `data-theme is ${JSON.stringify(start.dataTheme)} at the start, expected day or night`);
+        const first: ThemeChoice = start.dataTheme === 'night' ? 'day' : 'night';
+        const lines: string[] = [`start: data-theme ${start.dataTheme}, aria-checked ${start.checked}`];
+        const headingOf = (): Promise<string> => page.ev<string>(`document.querySelector('#screen-title')?.textContent.trim()`);
+        // Press the switch to the other theme, reload, press it back, reload: each reload must show the stored choice.
+        for (const target of [first, start.dataTheme as ThemeChoice]) {
+          // A reload starts on Weave again, so the Screen is read again before each press.
+          const headingBefore = await headingOf();
+          await chooseTheme(page, target);
+          const pressed = await readTheme(page);
+          expect(pressed.dataTheme === target, `after pressing the switch data-theme is ${JSON.stringify(pressed.dataTheme)}, expected ${target}`);
+          expect(pressed.stored === target, `after pressing the switch localStorage ${THEME_STORAGE_KEY} is ${JSON.stringify(pressed.stored)}, expected the text ${target}`);
+          expect(pressed.checked === String(target === 'night'), `after pressing the switch aria-checked is ${pressed.checked}, expected ${target === 'night'}`);
+          expect((await headingOf()) === headingBefore, 'pressing the switch changed the Screen');
+          await page.hardReload();
+          await page.waitFor(`!!document.querySelector('#screen-title')`, 'the app after the reload');
+          await ensureEnglish(page);
+          const reloaded = await readTheme(page);
+          expect(reloaded.dataTheme === target, `after a reload data-theme is ${JSON.stringify(reloaded.dataTheme)}, expected ${target}`);
+          expect(reloaded.stored === target, `after a reload localStorage ${THEME_STORAGE_KEY} is ${JSON.stringify(reloaded.stored)}, expected the text ${target}`);
+          expect(reloaded.checked === String(target === 'night'), `after a reload aria-checked is ${reloaded.checked}, expected ${target === 'night'}`);
+          lines.push(`${target}: pressed, then reloaded: data-theme ${reloaded.dataTheme}, localStorage "${reloaded.stored}", aria-checked ${reloaded.checked}`);
+        }
+        return lines.join('\n');
+      },
+    },
+    {
+      name: 'network log: own origin only, and no image request but the favicon and manifest icons',
+      async run() {
+        const { cdp } = page;
+        const base = new URL(ctx.baseUrl);
+        const manifest = readJson('public/manifest.webmanifest') as { icons?: { src: string }[] };
+        const allowedImages = new Set(
+          ['./favicon.svg', ...(manifest.icons ?? []).map((icon) => icon.src)].map((file) => new URL(file, base).href),
+        );
+        const imageName = /\.(svg|png|jpe?g|gif|webp|ico)$/i;
+        const requests: { url: string; type: string }[] = [];
+        await cdp.call('Network.enable');
+        const stop = cdp.on('Network.requestWillBeSent', (params) => {
+          const request = params.request as { url?: string } | undefined;
+          requests.push({ url: request?.url ?? '', type: typeof params.type === 'string' ? params.type : '' });
+        });
+        const startTheme = (await readTheme(page)).dataTheme === 'night' ? 'night' : 'day';
+        const combinations: string[] = [];
+        try {
+          for (const theme of THEMES) {
+            for (const language of LANGUAGES) {
+              // A fresh load each time, so the fonts, the style sheet and the Screen chunks are asked for again.
+              await page.hardReload();
+              await page.waitFor(`!!document.querySelector('#screen-title')`, 'the app after the reload');
+              await chooseTheme(page, theme);
+              await ensureLanguage(page, language);
+              for (const screen of ALL_SCREENS) await showScreen(page, screen, language);
+              combinations.push(`${language}/${theme}`);
+            }
+          }
+        } finally {
+          stop();
+          try {
+            await ensureLanguage(page, 'en');
+            await chooseTheme(page, startTheme);
+          } catch {
+            // the problems below are what matters
+          }
+          await cdp.call('Network.disable').catch(() => undefined);
+        }
+        const problems: string[] = [];
+        const origins = new Set<string>();
+        let images = 0;
+        let fonts = 0;
+        for (const { url, type } of requests) {
+          let parsed: URL;
+          try {
+            parsed = new URL(url);
+          } catch {
+            problems.push(`a request for an address that is not a URL: ${url}`);
+            continue;
+          }
+          // data: and blob: addresses carry their content and make no network request.
+          if (parsed.protocol === 'data:' || parsed.protocol === 'blob:' || parsed.protocol === 'about:') continue;
+          origins.add(parsed.origin);
+          if (parsed.origin !== base.origin) problems.push(`${type || 'request'} to another origin: ${url}`);
+          if (type === 'Font') fonts++;
+          if (type === 'Image' || imageName.test(parsed.pathname)) {
+            images++;
+            if (!allowedImages.has(parsed.href)) problems.push(`an image request that is neither the favicon nor a manifest icon: ${url}`);
+          }
+        }
+        expect(requests.length > 0 && fonts > 0, `the log holds ${requests.length} requests and ${fonts} font requests, so it did not see the page load`);
+        expect(problems.length === 0, [...new Set(problems)].join('\n'));
+        return `${requests.length} requests over ${combinations.join(', ')} on all four Screens; origins: ${[...origins].join(', ')}; ${fonts} font requests; ${images} image requests, all the favicon or a manifest icon`;
       },
     },
     {
@@ -635,7 +842,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
           await page.waitFor(`!!document.querySelector('#scan-file')`, 'the Scan screen chunk to arrive from the cache', 20_000);
           await page.setFile('#scan-file', cardPng);
           const outcome = await page.waitFor<string>(
-            `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[role="alert"]')?.textContent.trim()||null)`,
+            `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[role="alert"] > div')?.textContent.trim()||null)`,
             'the read to finish',
             30_000,
           );
@@ -659,6 +866,13 @@ function buildSteps(ctx: Context): BrowserStep[] {
           const problems = bmpMismatches(parsed.header, { width: ends, height: picks, bitsPerPixel: 1 });
           expect(problems.length === 0, `${file.name}: ${problems.join('; ')}`);
           return `${file.name}: ${ends}x${picks}, 1 bit, ${file.bytes.length} bytes`;
+        };
+        /** R1.10: with the network off, `document.fonts` reports loaded for every face the shown Screens use, and no font request failed. */
+        const fontsLoaded = async (): Promise<string> => {
+          const note = await fontsLoadedOnEveryScreen(page);
+          const failedFonts = failedRequests.filter((line) => line.includes('/fonts/'));
+          expect(failedFonts.length === 0, `font requests failed: ${failedFonts.join(' | ')}`);
+          return `${note}; no font request failed`;
         };
         const groups: OfflineGroup[] = [];
         try {
@@ -715,6 +929,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
           keepChecks.push(await run('language switching works', languageSwitches));
           keepChecks.push(await run('the first Scan open works offline', firstScanOpen));
           keepChecks.push(await run('a BMP export works offline', exportOneBitBmp));
+          keepChecks.push(await run('every font the shown Screens use is loaded', fontsLoaded));
           groups.push({ title: 'A. offline, no reload', checks: keepChecks });
 
           // B: reload with no network at all; everything must come from the worker's cache.
@@ -753,6 +968,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
             'the first Scan open works offline',
             'a BMP export works offline',
             'language switching works',
+            'every font the shown Screens use is loaded',
           ] as const;
           if (loaded.status === 'pass') {
             reloadChecks.push(await run(afterReload[0], confirmOffline));
@@ -767,6 +983,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
             reloadChecks.push(await run(afterReload[3], firstScanOpen));
             reloadChecks.push(await run(afterReload[4], exportOneBitBmp));
             reloadChecks.push(await run(afterReload[5], languageSwitches));
+            reloadChecks.push(await run(afterReload[6], fontsLoaded));
           } else {
             for (const name of afterReload) reloadChecks.push(notRun(name, 'not tested: the page did not load after the reload'));
           }

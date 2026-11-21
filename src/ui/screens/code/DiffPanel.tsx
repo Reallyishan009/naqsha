@@ -18,6 +18,10 @@ import {
   downloadDiffText,
 } from './diffText.ts';
 import type { DiffTextDeps, DiffTextStatus } from './diffText.ts';
+import { Button } from '../../components/Button.tsx';
+import { Field } from '../../components/Field.tsx';
+import { Notice } from '../../components/Notice.tsx';
+import { Panel } from '../../components/Panel.tsx';
 import styles from './DiffPanel.module.css';
 
 /** Shown under each differing end of a `changed` entry (R6.7, R11.7). A text marker, so colour is never the only signal. */
@@ -354,9 +358,9 @@ export function refusalMessage(refusal: DiffRefusal, t: Translate): string {
 /** The result of a Diff that was refused: its own message, and nothing else (R6.12, R6.13). */
 function RefusedDiff({ refusal, t }: { refusal: DiffRefusal; t: Translate }) {
   return (
-    <p role="alert" className={styles.failure}>
+    <Notice variant="error" word={t('notice.error')}>
       {refusalMessage(refusal, t)}
-    </p>
+    </Notice>
   );
 }
 
@@ -406,12 +410,8 @@ export function DiffTextBlock({ diff, t, deps }: { diff: Diff; t: Translate; dep
         value={text}
       />
       <div className={styles.textActions}>
-        <button type="button" className={styles.button} onClick={onCopy}>
-          {t('codeview.diff.copy')}
-        </button>
-        <button type="button" className={styles.button} onClick={onDownload}>
-          {t('codeview.diff.download')}
-        </button>
+        <Button onClick={onCopy}>{t('codeview.diff.copy')}</Button>
+        <Button onClick={onDownload}>{t('codeview.diff.download')}</Button>
       </div>
       <p role="status" className={styles.textStatus}>
         {statusKey === null ? '' : t(statusKey)}
@@ -436,9 +436,9 @@ function DiffResult({ first, second, diff, t, diffTextDeps }: DiffResultProps) {
     <div className={styles.result}>
       <Counts diff={diff} t={t} />
       {isSameDesign(diff) ? (
-        <p role="status" className={styles.notice}>
+        <Notice variant="information" word={t('notice.information')} role="status">
           {t('codeview.diff.same')}
-        </p>
+        </Notice>
       ) : null}
       <DiffEntries entries={diff.entries} hookColumns={diff.second.hookColumns} pickWidth={pickWidth} t={t} />
       <DiffTextBlock diff={diff} t={t} deps={diffTextDeps} />
@@ -456,9 +456,9 @@ function BlockedMessage({ blocked, t }: { blocked: Blocked; t: Translate }) {
       ? t(archiveFailureKey(blocked.failure))
       : t('codeview.damaged.design', { name: blocked.designName, pick: blocked.pick });
   return (
-    <p role="alert" className={styles.failure}>
+    <Notice variant="error" word={t('notice.error')}>
       {text}
-    </p>
+    </Notice>
   );
 }
 
@@ -475,16 +475,10 @@ type ChoiceSelectProps = {
 
 /** One chooser: a labelled `<select>` of the Current_Pattern and every Saved_Design the Archive returned (R6.6). */
 function ChoiceSelect({ label, value, list, disabled, currentAvailable, t, onChange }: ChoiceSelectProps) {
-  const id = useId();
   const untitled = t('keep.untitled');
   return (
-    <div className={styles.field}>
-      <label htmlFor={id} className={styles.label}>
-        {label}
-      </label>
+    <Field label={label} className={styles.field}>
       <select
-        id={id}
-        className={styles.select}
         value={choiceValue(value)}
         disabled={disabled}
         onChange={(event: ChangeEvent<HTMLSelectElement>) => onChange(parseChoice(event.currentTarget.value))}
@@ -497,7 +491,7 @@ function ChoiceSelect({ label, value, list, disabled, currentAvailable, t, onCha
           </option>
         ))}
       </select>
-    </div>
+    </Field>
   );
 }
 
@@ -527,20 +521,26 @@ export function DiffPanelView(props: DiffPanelViewProps) {
   const comparing = comparison.status === 'loading';
 
   return (
-    <section aria-labelledby={headingId} className={styles.panel}>
+    <Panel as="section" aria-labelledby={headingId} className={styles.panel}>
       <h3 id={headingId} className={styles.title}>
         {t('codeview.diff.heading')}
       </h3>
       <p className={styles.hint}>{t('codeview.diff.hint')}</p>
 
-      {summaries.status === 'loading' ? <p className={styles.notice}>{t('codeview.diff.loading')}</p> : null}
+      {summaries.status === 'loading' ? (
+        <Notice variant="information" word={t('notice.information')}>
+          {t('codeview.diff.loading')}
+        </Notice>
+      ) : null}
       {summaries.status === 'ready' && list.length === 0 ? (
-        <p className={styles.notice}>{t('codeview.diff.noSaved')}</p>
+        <Notice variant="information" word={t('notice.information')}>
+          {t('codeview.diff.noSaved')}
+        </Notice>
       ) : null}
       {summaries.status === 'failed' ? (
-        <p role="alert" className={styles.failure}>
+        <Notice variant="error" word={t('notice.error')}>
           {t(archiveFailureKey(summaries.failure))}
-        </p>
+        </Notice>
       ) : null}
 
       <div className={styles.choosers}>
@@ -562,9 +562,9 @@ export function DiffPanelView(props: DiffPanelViewProps) {
           t={t}
           onChange={props.onSecondChange}
         />
-        <button type="button" className={styles.button} disabled={compareDisabled} onClick={props.onCompare}>
+        <Button variant="primary" disabled={compareDisabled} onClick={props.onCompare}>
           {comparing ? t('codeview.diff.comparing') : t('codeview.diff.compare')}
-        </button>
+        </Button>
       </div>
 
       {comparison.status === 'blocked' ? <BlockedMessage blocked={comparison.blocked} t={t} /> : null}
@@ -577,7 +577,7 @@ export function DiffPanelView(props: DiffPanelViewProps) {
           diffTextDeps={props.diffTextDeps}
         />
       ) : null}
-    </section>
+    </Panel>
   );
 }
 

@@ -11,6 +11,7 @@ import { generateSample } from '../../../src/ui/samples/sampleDesigns.ts';
 import { EMPTY_METADATA, initialKeepForm, withGuessesLine } from '../../../src/ui/state/keep.ts';
 import type { Language } from '../../../src/ui/types.ts';
 import { FakeArchiveStore } from '../../support/fakes.ts';
+import { alertTexts } from '../../support/notices.ts';
 import { demoProfile } from '../../support/profiles.ts';
 
 const SEED = 20240614;
@@ -133,8 +134,7 @@ describe('keep screen', () => {
           expect(text.split(/[।.]/).filter((sentence) => sentence.trim() !== '').length, `${key} (hi) has a cause and a next step`).toBeGreaterThanOrEqual(2);
         }
         const html = view(language, { failureKey: key });
-        expect(html, `${language} ${key}`).toContain(`<p role="alert" class="`);
-        expect(html).toContain(escape(text));
+        expect(alertTexts(html), `${language} ${key}`).toContain(escape(text));
       }
     }
   });
@@ -271,10 +271,12 @@ describe('keep screen', () => {
     const css = readFileSync('src/ui/screens/keep/KeepScreen.module.css', 'utf8');
     const tokens = readFileSync('src/ui/theme/tokens.css', 'utf8');
     expect(tokens).toMatch(/--touch-target:\s*48px/);
-    for (const rule of ['.button', '.input', '.choice']) {
-      const block = new RegExp(`\\${rule}\\s*{[^}]*}`).exec(css)?.[0] ?? '';
-      expect(block, rule).toContain('min-height: var(--touch-target)');
-    }
+    // The buttons and text fields are the shared Button and Field, so their height is asserted in those modules.
+    const buttonCss = readFileSync('src/ui/components/Button.module.css', 'utf8');
+    const fieldCss = readFileSync('src/ui/components/Field.module.css', 'utf8');
+    expect(/\.button\s*{[^}]*}/.exec(buttonCss)?.[0] ?? '', '.button').toContain('min-height: var(--touch-target)');
+    expect(/\.field textarea\s*{[^}]*}/.exec(fieldCss)?.[0] ?? '', '.field controls').toContain('min-height: var(--touch-target)');
+    expect(/\.choice\s*{[^}]*}/.exec(css)?.[0] ?? '', '.choice').toContain('min-height: var(--touch-target)');
   });
 });
 

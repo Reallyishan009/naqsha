@@ -7,6 +7,8 @@ import type { ScanBatch } from '../../types.ts';
 import { printableLayout } from '../../printable/layout.ts';
 import type { Disc } from '../../printable/layout.ts';
 import { HOLE_RGB, STOCK_RGB, rgbHex } from '../../printable/style.ts';
+import { Button } from '../../components/Button.tsx';
+import { Panel } from '../../components/Panel.tsx';
 import styles from './ScanScreen.module.css';
 
 /**
@@ -84,29 +86,33 @@ function RemoveConfirm({ number, t, onYes, onNo }: { number: number; t: Translat
   useEffect(() => {
     safeRef.current?.focus();
   }, []);
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
+  const onKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
     if (event.key === 'Escape') onNo();
   };
   const question = t('scan.batch.removeConfirm', { number });
   return (
-    <div role="group" aria-label={question} className={styles.confirm} onKeyDown={onKeyDown}>
+    <Panel role="group" aria-label={question} className={styles.confirm} onKeyDown={onKeyDown}>
       <p>{question}</p>
       <div className={styles.row}>
-        <button ref={safeRef} type="button" className={styles.button} onClick={onNo}>
+        <Button ref={safeRef} onClick={onNo}>
           {t('scan.batch.removeNo')}
-        </button>
-        <button type="button" className={styles.button} onClick={onYes}>
-          {t('scan.batch.removeYes')}
-        </button>
+        </Button>
+        <Button onClick={onYes}>{t('scan.batch.removeYes')}</Button>
       </div>
-    </div>
+    </Panel>
   );
 }
 
 /** The Scan_Batch: numbered thumbnails with confirmed remove, earlier, later and scan again (R11.2 to R11.5). */
 export function BatchList(props: BatchListProps) {
   const { batch, pendingRemove, t } = props;
-  if (batch.length === 0) return <p className={styles.empty}>{t('scan.batch.empty')}</p>;
+  if (batch.length === 0) {
+    return (
+      <Panel>
+        <p className={styles.emptyText}>{t('scan.batch.empty')}</p>
+      </Panel>
+    );
+  }
   return (
     <ol className={styles.batch}>
       {batch.map((grid, index) => {
@@ -117,28 +123,14 @@ export function BatchList(props: BatchListProps) {
             <p className={styles.batchNumber}>{t('scan.batch.card', { number })}</p>
             <CardThumb grid={grid} number={number} profile={props.profile} t={t} />
             <div className={styles.row}>
-              <button type="button" className={styles.button} onClick={() => props.onRemoveRequest(index)}>
-                {t('scan.batch.remove', { number })}
-              </button>
-              <button
-                type="button"
-                className={styles.button}
-                disabled={index === 0}
-                onClick={() => props.onMove(index, -1)}
-              >
+              <Button onClick={() => props.onRemoveRequest(index)}>{t('scan.batch.remove', { number })}</Button>
+              <Button disabled={index === 0} onClick={() => props.onMove(index, -1)}>
                 {t('scan.batch.earlier', { number })}
-              </button>
-              <button
-                type="button"
-                className={styles.button}
-                disabled={index === batch.length - 1}
-                onClick={() => props.onMove(index, 1)}
-              >
+              </Button>
+              <Button disabled={index === batch.length - 1} onClick={() => props.onMove(index, 1)}>
                 {t('scan.batch.later', { number })}
-              </button>
-              <button type="button" className={styles.button} onClick={() => props.onScanAgain(index)}>
-                {t('scan.batch.again', { number })}
-              </button>
+              </Button>
+              <Button onClick={() => props.onScanAgain(index)}>{t('scan.batch.again', { number })}</Button>
             </div>
             {pendingRemove === index ? (
               <RemoveConfirm number={number} t={t} onYes={props.onRemoveConfirm} onNo={props.onRemoveCancel} />

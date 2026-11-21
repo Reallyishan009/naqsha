@@ -12,6 +12,10 @@ import type { PickControl } from '../../state/codeView.ts';
 import { buildReadyCloth, viewportFor } from '../../state/cloth.ts';
 import type { AppAction, AppState, ReadyCloth } from '../../types.ts';
 import { ClothCanvas, createClothPlayer } from '../weave/ClothCanvas.tsx';
+import { Button } from '../../components/Button.tsx';
+import { Field } from '../../components/Field.tsx';
+import { Notice } from '../../components/Notice.tsx';
+import { Panel } from '../../components/Panel.tsx';
 import styles from './CodeViewScreen.module.css';
 import { DiffPanel } from './DiffPanel.tsx';
 import type { DiffTextDeps } from './diffText.ts';
@@ -59,9 +63,9 @@ export function currentLineSetOf(linesResult: LinesResult | null, pickCount: num
 /** The message for a Sim_Failure, one text for each kind (R4.4). */
 export function ClothFailure({ failure, t }: { failure: SimFailure; t: Translate }) {
   return (
-    <p role="alert" className={styles.failure}>
+    <Notice variant="error" word={t('notice.error')}>
       {t(simFailureKey(failure))}
-    </p>
+    </Notice>
   );
 }
 
@@ -204,65 +208,58 @@ export function CodeViewScreen({
           <p className={styles.selected}>{t('codeview.selected', { pick: selectedPick })}</p>
         )}
         <div className={styles.controls}>
-          <button type="button" className={styles.button} disabled={backDisabled} onClick={() => activate('step-back')}>
+          <Button disabled={backDisabled} onClick={() => activate('step-back')}>
             {t('codeview.step.back')}
-          </button>
-          <button
-            ref={stepForwardRef}
-            type="button"
-            className={styles.button}
-            disabled={forwardDisabled}
-            onClick={() => activate('step-forward')}
-          >
+          </Button>
+          <Button ref={stepForwardRef} disabled={forwardDisabled} onClick={() => activate('step-forward')}>
             {t('codeview.step.forward')}
-          </button>
-          <button
-            type="button"
-            className={styles.button}
-            disabled={controlsDisabled}
-            onClick={() => activate('run-to-next-breakpoint')}
-          >
+          </Button>
+          <Button disabled={controlsDisabled} onClick={() => activate('run-to-next-breakpoint')}>
             {t('codeview.run.next')}
-          </button>
+          </Button>
         </div>
-        <form className={styles.controls} onSubmit={onJumpSubmit} noValidate>
-          <label htmlFor={jumpFieldId} className={styles.label}>
-            {t('codeview.jump.label')}
-          </label>
-          <input
-            id={jumpFieldId}
-            type="text"
-            inputMode="numeric"
-            autoComplete="off"
-            className={styles.input}
-            value={jumpText}
-            disabled={controlsDisabled}
-            aria-invalid={jumpRejected}
-            aria-describedby={jumpRejected ? jumpErrorId : undefined}
-            onChange={(event) => setJumpText(event.target.value)}
-          />
-          <button type="submit" className={styles.button} disabled={controlsDisabled}>
+        <form className={`${styles.controls} ${styles.jumpForm}`} onSubmit={onJumpSubmit} noValidate>
+          <Field label={t('codeview.jump.label')} className={styles.jumpField}>
+            <input
+              id={jumpFieldId}
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              value={jumpText}
+              disabled={controlsDisabled}
+              aria-invalid={jumpRejected}
+              aria-describedby={jumpRejected ? jumpErrorId : undefined}
+              onChange={(event) => setJumpText(event.target.value)}
+            />
+          </Field>
+          <Button type="submit" disabled={controlsDisabled}>
             {t('codeview.jump.button')}
-          </button>
+          </Button>
         </form>
         {jumpRejected ? (
-          <p id={jumpErrorId} role="alert" className={styles.failure}>
-            {t('codeview.jump.range', { first: 0, last: lastPick })}
-          </p>
+          <Notice variant="error" word={t('notice.error')}>
+            <p id={jumpErrorId} className={styles.noticeText}>
+              {t('codeview.jump.range', { first: 0, last: lastPick })}
+            </p>
+          </Notice>
         ) : null}
         {stoppedAt !== null && stoppedAt === selectedPick ? (
-          <p className={styles.notice}>{t('codeview.announce.noBreakpoint')}</p>
+          <Notice variant="information" word={t('notice.information')}>
+            {t('codeview.announce.noBreakpoint')}
+          </Notice>
         ) : null}
       </div>
 
       {profileFailed ? (
-        <p role="alert" className={styles.failure}>
+        <Notice variant="error" word={t('notice.error')}>
           {t('error.profile.banner')}
-        </p>
+        </Notice>
       ) : null}
 
       {pickCount === 0 ? (
-        <p className={styles.empty}>{t('codeview.empty')}</p>
+        <Panel>
+          <p className={styles.emptyText}>{t('codeview.empty')}</p>
+        </Panel>
       ) : !bodyShown ? null : (
         <>
           <p className={styles.summary}>

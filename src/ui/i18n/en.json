@@ -313,5 +313,15 @@
   "codeview.refusal.dimension-mismatch": "These two designs cannot be compared because their cards are laid out differently: the first has {firstHookRows} hook rows and {firstHookColumns} hook columns, the second has {secondHookRows} hook rows and {secondHookColumns} hook columns. Choose two designs made for the same card profile.",
   "codeview.refusal.profile-mismatch": "These two designs were made for different card profiles: {firstProfileName} and {secondProfileName}. Choose two designs that use the same card profile.",
   "codeview.refusal.too-many-picks": "These designs are too long to compare. At most {limit} picks can be compared, and these have {firstPicks} and {secondPicks}. Choose shorter designs.",
-  "error.codeview.load": "Code view could not be loaded. The other screens still work."
+  "error.codeview.load": "Code view could not be loaded. The other screens still work.",
+  "notice.information": "Note",
+  "notice.success": "Done",
+  "notice.warning": "Careful",
+  "notice.error": "Problem",
+  "progress.reading": "Reading the card…",
+  "progress.exporting": "Preparing the file…",
+  "progress.saving": "Saving…",
+  "theme.label": "Night loom",
+  "theme.on": "On",
+  "theme.off": "Off"
 }

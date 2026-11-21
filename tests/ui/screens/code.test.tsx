@@ -66,6 +66,7 @@ import type { SimFailure, SimImage } from '../../../src/simulator/index.ts';
 import { appReducer, initialAppState } from '../../../src/ui/state/appState.ts';
 import { buildReadyCloth } from '../../../src/ui/state/cloth.ts';
 import { FakeArchiveStore, FakeDownloadDeps, FakeScheduler } from '../../support/fakes.ts';
+import { alertTexts, noticeTexts } from '../../support/notices.ts';
 import { demoProfile } from '../../support/profiles.ts';
 import type { AppAction, AppState, Language, Screen } from '../../../src/ui/types.ts';
 
@@ -325,7 +326,7 @@ describe('Code view listing', () => {
     const items = lineItems(render(readyState(patternOf(6), { selectedPick: 1, breakpoints: [1, 3] })));
     const marks = items.map((item) => hiddenSpans(item)[0]);
     const none = '   ';
-    expect(marks).toEqual([none, '▶ ●', none, '  ●', none, none]);
+    expect(marks).toEqual([none, '► ●', none, '  ●', none, none]);
     expect(items.map((item) => item.includes('aria-pressed="true"'))).toEqual([false, true, false, true, false, false]);
     expect(items.map((item) => item.includes('aria-current="true"'))).toEqual([false, true, false, false, false, false]);
   });
@@ -418,10 +419,8 @@ describe('Code view controls', () => {
 
   it('R3.4 R3.5 the jump control is an input with a numeric keypad inside a form, so Enter applies it', () => {
     const html = render(readyState(patternOf(5)));
-    expect(html).toMatch(/<form[^>]*>.*<label[^>]*>Go to pick number<\/label><input[^>]*inputMode="numeric"[^>]*\/><button type="submit"[^>]*>Go<\/button><\/form>/);
-    // The label names the input, and no error shows before the first application.
-    const labelFor = /<label for="([^"]+)"/.exec(html)?.[1];
-    expect(html).toContain(`id="${labelFor}"`);
+    expect(html).toMatch(/<form[^>]*>.*<label[^>]*><span>Go to pick number<\/span><input[^>]*inputMode="numeric"[^>]*\/><\/label><button type="submit"[^>]*>Go<\/button><\/form>/);
+    // The label wraps the input, so it names it, and no error shows before the first application.
     expect(html).not.toContain('role="alert"');
     expect(html).not.toContain('aria-describedby');
   });
@@ -927,8 +926,8 @@ describe('Code view diff panel', () => {
     expect(empty.match(/<select[^>]*disabled=""/g)).toHaveLength(2);
     expect(buttonTag(empty, en('codeview.diff.compare'))).toContain('disabled=""');
     // Each chooser keeps its visible label.
-    expect(empty).toMatch(/<label for="[^"]+"[^>]*>Earlier design<\/label>/);
-    expect(empty).toMatch(/<label for="[^"]+"[^>]*>Later design<\/label>/);
+    expect(empty).toMatch(/<label[^>]*><span>Earlier design<\/span><select/);
+    expect(empty).toMatch(/<label[^>]*><span>Later design<\/span><select/);
     // While the list is still loading nothing can be chosen either, and the loading text shows instead.
     const loading = panelHtml({ summaries: { status: 'loading' } });
     expect(loading).toContain(en('codeview.diff.loading'));
@@ -1335,8 +1334,8 @@ describe('Code view empty, missing and failing inputs', () => {
 
     // The diff controls are present too. Even with a Saved_Design in the Archive they are disabled, because the screen
     // hands the panel no Line_Set for an empty Current_Pattern.
-    expect(html).toContain(`>${en('codeview.diff.first.label')}</label>`);
-    expect(html).toContain(`>${en('codeview.diff.second.label')}</label>`);
+    expect(html).toContain(`<span>${en('codeview.diff.first.label')}</span><select`);
+    expect(html).toContain(`<span>${en('codeview.diff.second.label')}</span><select`);
     expect(buttonTag(html, en('codeview.diff.compare'))).toContain('disabled=""');
     const emptyLines = patternToLines(profile, []);
     expect(currentLineSetOf(emptyLines, 0)).toBeNull();
@@ -1372,7 +1371,7 @@ describe('Code view empty, missing and failing inputs', () => {
     expect(comparison).toMatchObject({ status: 'blocked', blocked: { kind: 'archive', failure: { reason: 'storage-unavailable' } } });
     const blocked = panelHtml({ summaries, ...chosen, comparison });
     expect(blocked).toContain(en('error.archive.storage-unavailable'));
-    expect(blocked).toMatch(/<p role="alert"[^>]*>Saved designs cannot be reached/);
+    expect(alertTexts(blocked).some((text) => text.startsWith('Saved designs cannot be reached'))).toBe(true);
     expect(disabledSelects(blocked)).toBe(2);
     expect(buttonTag(blocked, en('codeview.diff.compare'))).toContain('disabled=""');
     expectNothingOfADiff(blocked);
@@ -1419,7 +1418,7 @@ describe('Code view empty, missing and failing inputs', () => {
     expect(comparison).toEqual({ status: 'blocked', blocked: { kind: 'damaged', designName: 'Kota', pick: 1 } });
     const html = panelHtml({ summaries, first: { kind: 'current' }, second: { kind: 'saved', id }, comparison });
     expect(html).toContain(en('codeview.damaged.design', { name: 'Kota', pick: 1 }));
-    expect(html).toMatch(/<p role="alert"[^>]*>Kota cannot be compared: the card at pick 1 is damaged/);
+    expect(alertTexts(html).some((text) => text.startsWith('Kota cannot be compared: the card at pick 1 is damaged'))).toBe(true);
     expectNothingOfADiff(html);
     // Both choosers stay selectable.
     expect(disabledSelects(html)).toBe(0);
@@ -1542,7 +1541,7 @@ describe('Code view empty, missing and failing inputs', () => {
     expect(html).toContain('Added cards: 0');
     expect(html).toContain('Removed cards: 0');
     expect(html).toContain(en('codeview.diff.same'));
-    expect(html).toMatch(/<p role="status"[^>]*>The two designs are the same\.<\/p>/);
+    expect(noticeTexts(html, 'status')).toContain('The two designs are the same.');
     const items = entryItems(html);
     expect(items).toHaveLength(diamond.length);
     expect(items.every((item) => kindOf(item) === 'unchanged')).toBe(true);
@@ -1589,7 +1588,7 @@ describe('Code view empty, missing and failing inputs', () => {
     expect(html).toContain(message);
     expect(message).toContain(String(DIFF_PICK_LIMIT));
     expect(message).toContain(String(DIFF_PICK_LIMIT + 1));
-    expect(html).toMatch(/<p role="alert"[^>]*>These designs are too long to compare/);
+    expect(alertTexts(html).some((text) => text.startsWith('These designs are too long to compare'))).toBe(true);
     expectNothingOfADiff(html);
     // Both choosers stay listed and selectable, and Compare can be pressed again after another choice.
     expect(disabledSelects(html)).toBe(0);
@@ -1608,7 +1607,7 @@ describe('Code view empty, missing and failing inputs', () => {
       profile: { status: 'failed', failure: { reason: 'not-json' } },
     };
     const html = render(failedState);
-    expect(html).toMatch(/<p role="alert"[^>]*>The card profile could not be used\./);
+    expect(alertTexts(html).some((text) => text.startsWith('The card profile could not be used.'))).toBe(true);
     expect(html).toContain(en('error.profile.banner'));
     expect(lineItems(html)).toEqual([]);
     expect(html).not.toContain(CODE_VIEW_MARKER);
@@ -1645,7 +1644,7 @@ describe('Code view empty, missing and failing inputs', () => {
       const message = refusalMessage(diff.refusal, en);
       messages.push(message);
       expect(html, diff.refusal.reason).toContain(message);
-      expect(html).toMatch(/<p role="alert"/);
+      expect(alertTexts(html).length).toBeGreaterThanOrEqual(1);
       expectNothingOfADiff(html);
       // Both chosen designs stay listed and selectable, and the compare control is still usable.
       expect(disabledSelects(html)).toBe(0);
@@ -1808,7 +1807,7 @@ describe('Code view without colour (R11.7)', () => {
   it('R11.7 the Selected_Pick, a Breakpoint and a Line with both each carry a shape of their own, and a plain Line carries none', () => {
     const items = lineItems(render(readyState(patternOf(5), { selectedPick: 1, breakpoints: [1, 3] })));
     const marks = items.map((item) => hiddenSpans(item)[0]);
-    expect(marks).toEqual(['   ', '▶ ●', '   ', '  ●', '   ']);
+    expect(marks).toEqual(['   ', '► ●', '   ', '  ●', '   ']);
     // The breakpoint control itself shows a filled or an empty circle, and says on or off in aria-pressed.
     const controlText = items.map((item) => /<button[^>]*>([^<]*)<\/button>/.exec(item)?.[1]);
     expect(controlText).toEqual(['○', '●', '○', '●', '○']);
@@ -1833,7 +1832,7 @@ describe('Code view reduced motion (R11.9)', () => {
     const selected = items.find((item) => pickOf(item) === 5_000);
     expect(selected).toBeDefined();
     expect(selected).toContain('aria-current="true"');
-    expect(hiddenSpans(selected!)[0]).toContain('▶');
+    expect(hiddenSpans(selected!)[0]).toContain('►');
     expect(items.length).toBeLessThanOrEqual(WINDOW_SIZE);
     // The screen holds no motion state of its own: the same markup for both settings.
     expect(render(readyState(pattern, { selectedPick: 5_000, prefersReducedMotion: false }))).toBe(calm);

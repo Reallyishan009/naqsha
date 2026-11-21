@@ -1,3 +1,5 @@
+import type { ThemeName } from '../theme/contrast.ts';
+import { THEME_STORAGE_KEY } from '../theme/theme.ts';
 import type { Language } from '../types.ts';
 
 export const LANGUAGE_STORAGE_KEY = 'naqsha.language';
@@ -29,6 +31,41 @@ export function storeLanguage(storage: KeyValueStorage | null, language: Languag
   try {
     storage.setItem(LANGUAGE_STORAGE_KEY, language);
     return true;
+  } catch {
+    return false;
+  }
+}
+
+function isThemeName(value: unknown): value is ThemeName {
+  return value === 'day' || value === 'night';
+}
+
+/** The stored theme, or null when nothing valid is stored or the storage fails. Never throws. */
+export function readStoredTheme(storage: KeyValueStorage | null): ThemeName | null {
+  if (storage === null) return null;
+  try {
+    const value = storage.getItem(THEME_STORAGE_KEY);
+    return isThemeName(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Stores the theme. Returns false when the storage refuses; the app carries on. Never throws. */
+export function storeTheme(storage: KeyValueStorage | null, theme: ThemeName): boolean {
+  if (storage === null) return false;
+  try {
+    storage.setItem(THEME_STORAGE_KEY, theme);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Reads `prefers-color-scheme: dark` once. False when matchMedia is missing or throws. */
+export function browserPrefersDark(): boolean {
+  try {
+    return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches;
   } catch {
     return false;
   }

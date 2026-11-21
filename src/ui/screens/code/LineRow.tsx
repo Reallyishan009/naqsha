@@ -5,6 +5,7 @@ import type { Line } from '../../../codec-view/index.ts';
 import type { Translate } from '../../i18n/messages.ts';
 import { lineAccessibleName } from '../../state/codeView.ts';
 import type { LineControlKind } from '../../state/codeView.ts';
+import { Button } from '../../components/Button.tsx';
 import styles from './LineRow.module.css';
 
 /** The `data-line-control` values: how the listing finds the control that had focus when the Window moves (R11.13). */
@@ -16,7 +17,7 @@ export const BREAKPOINT_MARK = '●';
 /** Shown on the breakpoint control while the pick has no Breakpoint. */
 export const NO_BREAKPOINT_MARK = '○';
 /** Shown in the marks field on the Line of the Selected_Pick (R3.11). */
-export const SELECTED_MARK = '▶';
+export const SELECTED_MARK = '►';
 
 /**
  * The marks field: the Selected_Pick marker, then the Breakpoint marker, each in a slot of its own so the pick
@@ -95,8 +96,8 @@ function LineItemView({ line, selected, breakpoint, pickWidth, hookColumns, t, o
       aria-current={selected ? 'true' : undefined}
       data-pick={pick}
     >
-      <button
-        type="button"
+      <Button
+        variant="quiet"
         className={styles.breakpoint}
         aria-pressed={breakpoint}
         aria-label={t('codeview.breakpoint.name', { pick })}
@@ -104,7 +105,7 @@ function LineItemView({ line, selected, breakpoint, pickWidth, hookColumns, t, o
         data-line-control={BREAKPOINT_CONTROL}
       >
         {breakpoint ? BREAKPOINT_MARK : NO_BREAKPOINT_MARK}
-      </button>
+      </Button>
       <span className={styles.marks} aria-hidden="true">
         {marksText(selected, breakpoint)}
       </span>

@@ -16,7 +16,7 @@ Rules that apply to every task:
 
 ## Tasks
 
-- [ ] 1. Stage 0: screenshot tooling, "before" screenshots and baseline numbers
+- [x] 1. Stage 0: screenshot tooling, "before" screenshots and baseline numbers
   - [x] 1.1 Move the Check_Browser plumbing into `scripts/checks/session.ts`
     - Move `Page`, `freePort`, `startPreview`, `startChrome`, `openPage`, `Cleanup` and `sleep` out of `scripts/check_browser.ts` into `scripts/checks/session.ts` with no change of behaviour. `check_browser.ts` imports them and changes in no other way, so its 13 steps run exactly as before.
     - Add `tests/scripts/session.test.ts`: an example test that reads the source of `session.ts` and `check_browser.ts` and checks that `session.ts` exports each moved name and `check_browser.ts` no longer declares them.
@@ -45,76 +45,76 @@ Rules that apply to every task:
     - Run `npm run build`, then `npm run screenshots -- before`. Check that `media/design/before/` holds exactly the 24 valid files, and that `weave-lost-*` show at least 1 lost card and the repair panel, `keep-versions-*` show a design with 2 or more versions, and `code-diff-*` show at least 1 changed pick.
     - If a capture fails, fix `scripts/screenshots.ts` and run again. No file under `src/`, `public/` or `index.html` may change before this task passes.
     - _Requirements: 24.1, 24.3, 24.4, 24.5, 24.9, 24.10, 24.11_
-  - [-] 1.7 Stage 0 gate and commit
+  - [x] 1.7 Stage 0 gate and commit
     - Run `npm run typecheck`, `npm run test:run`, `npm run build`, `npm run check-bundle` and `npm run check:browser`; all must exit 0 with no test newly skipped.
     - Commit on `auto/build` with the message `Stage 0: screenshot tooling and before screenshots`, adding by name: `scripts/checks/session.ts`, `scripts/checks/screenshots.ts`, `scripts/screenshots.ts`, `scripts/check_browser.ts`, `scripts/check_bundle.ts`, `package.json`, the new files under `tests/scripts/`, `media/design/before/`, and `.kiro/specs/design-and-ux-pass/` (the three spec files and `measurements.md`).
     - _Requirements: 22.6, 22.7, 22.8, 24.1, 24.10, 25.2_
 
 - [ ] 2. Stage A: foundation (fonts, tokens, theme switch, contrast, base components, signature details)
-  - [~] 2.1 Write the font tooling under `scripts/fonts/`
+  - [x] 2.1 Write the font tooling under `scripts/fonts/`
     - Add `codepoints.ts` (reads every string value of `en.json` and `hi.json` and the three Sample_Design names; writes the Latin-and-symbols list and the Devanagari list; adds U+0900 to U+097F, U+200C, U+200D and U+25CC for Rozha One and Hind only), `woff2Cmap.ts` (parses the woff2 table directory, inflates the Brotli stream with `node:zlib`, reads the `cmap` table formats 4 and 12 and returns the covered code points), `report.ts` (bytes before and after for each file, the sum, and the code points each source font lacks, written to `missing-glyphs.json`), `subset.sh` and `README.md`.
     - `subset.sh` downloads the four `.ttf` files and three `OFL.txt` files from `raw.githubusercontent.com/google/fonts/<ref>/ofl/{rozhaone,hind,ibmplexmono}/` into `scripts/fonts/source/` with a pinned commit SHA, then runs `pyftsubset` with `--flavor=woff2 --layout-features='*' --no-hinting` into `public/fonts/`. `README.md` gives the one-time `python3 -m venv /tmp/naqsha-fonts` and `pip install fonttools brotli` setup. Add `scripts/fonts/source/` to `.gitignore`. Nothing here is part of `npm run build`.
     - Names in code follow the glossary (no "column" or "row" in identifiers or comments).
     - _Requirements: 1.5, 1.6, 2.3, 2.5_
-  - [~] 2.2 Subset the fonts, check the licences and record the report
+  - [x] 2.2 Subset the fonts, check the licences and record the report
     - Run the setup and `scripts/fonts/subset.sh`. Commit exactly four woff2 files (`RozhaOne-Regular`, `Hind-Regular`, `Hind-Bold`, `IBMPlexMono-Regular`) and three licence texts (`RozhaOne-OFL.txt`, `Hind-OFL.txt`, `IBMPlexMono-OFL.txt`) under `public/fonts/`, plus `scripts/fonts/missing-glyphs.json`.
     - Under "Licence record" in `measurements.md`, write for each font the licence name, the source URL and the check date (YYYY-MM-DD), and the pinned commit SHA. If a licence is not SIL OFL 1.1 or equivalent, do not copy that font, record it, and ask the user.
     - Under "Font_Weight_Report", write each file's size before and after subsetting and the sum after, typed from the `report.ts` output. If the sum is above 307,200 bytes, list each file above 51,200 bytes and the ranges and weights that could go, and ask the user whether to accept the total before continuing.
     - Record each code point a source font lacks (expected: `●` and `○` in `repair.legend`) under "Notes for the final report".
     - _Requirements: 1.1, 1.5, 1.6, 2.1, 2.2, 2.3, 2.5, 2.6_
-  - [~] 2.3 Check the fonts in the Precache and in the files
+  - [x] 2.3 Check the fonts in the Precache and in the files
     - Add `scripts/checks/fonts.ts` with `FONT_FILES` (the four `./fonts/*.woff2` entries) and `fontPrecacheProblems(entries)`, which names each missing file. Call it in `scripts/check_bundle.ts` next to the unchanged `precacheProblems`, so a missing Font_File exits non-zero and is named.
     - Add `tests/scripts/fonts.test.ts`: `woff2Cmap` on the four committed files covers every Devanagari code point of `hi.json` in the two Hind files and in Rozha One; the other required code points are covered unless listed in `missing-glyphs.json`; there are exactly four woff2 files; each licence text is non-empty; `fontPrecacheProblems` names a missing file and returns nothing for a full list.
     - Confirm the existing `tests/scripts/precache.test.ts` and Offline_Check tests pass unchanged.
     - _Requirements: 1.1, 1.5, 1.6, 1.7, 1.8, 1.12, 2.3_
-  - [~] 2.4 Write the complete tokens in `src/ui/theme/tokens.css`
+  - [x] 2.4 Write the complete tokens in `src/ui/theme/tokens.css`
     - Keep the file the only non-module style sheet. In this order: four `@font-face` rules (family, weight, `font-display: swap`, `src: url('/fonts/<file>') format('woff2')`, no `unicode-range`, no preload), the `:root` block, the `[data-theme='night']` block, base element rules, the focus ring, the Graph_Paper_Ground, and the existing reduced-motion rule. Keep no `}` inside comments or values of the two token blocks.
     - Tokens: `--font-display`, `--font-body`, `--font-data` with exactly the strings of Requirement 1.3; six `--text-*` (14, 16, 18, 22, 28, 36 px); seven `--space-*` (4, 8, 12, 16, 24, 32, 48 px); `--radius-control` 4px and `--radius-panel` 8px; one `--shadow-card`; three `--motion-*` (120, 200, 320 ms); `--touch-target: 48px`, `--leading-body: 1.5`, `--leading-hindi: 1.7`; `--on-zari` and `--on-hole` in both themes. Keep Day `--zari` at `#B0800A`. No other token uses the prefixes `--text-`, `--space-`, `--radius-`, `--shadow-` or `--motion-`.
     - Base rules: `html { font-size: 18px }`; body font, line height and `html[lang='hi']` line height; `td, th, [data-tabular] { font-variant-numeric: tabular-nums }`; `:focus-visible` with a 3px `--zari` outline and 2px offset; `[data-theme='night'] { color-scheme: dark }`; the Graph_Paper_Ground as two hard-stop `linear-gradient` layers on `body` at 8px spacing in `--line` (the only gradient in the App).
     - Add `tests/ui/theme/tokens.test.ts`: the four `@font-face` rules and their relative `src` files exist in `public/fonts`; the three `--font-*` strings; the counts and values of the five token groups; root size 18px; both line heights; `tabular-nums`; the focus ring; the grid rule. The existing tokens-versus-`THEME_TOKENS` test must pass unchanged.
     - _Requirements: 1.2, 1.3, 1.9, 3.1, 3.2, 3.3, 3.5, 3.7, 3.9, 3.10, 3.12, 6.3, 7.1, 15.2, 23.3_
-  - [~] 2.5 Extend the Contrast_Table in `src/ui/theme/contrast.ts`
+  - [x] 2.5 Extend the Contrast_Table in `src/ui/theme/contrast.ts`
     - Add `on-zari` and `on-hole` to `TokenName` and to `THEME_TOKENS` for both themes, with the same values as `tokens.css`. In `TOKEN_PAIRS`, replace the `ink`/`hole`-on-`zari` pair by `on-zari` on `zari`, and add `hole` on `card` (3:1), `on-hole` on `hole` (4.5) and `ink-soft` on `ground` and on `surface` (3:1), so every pair named in Requirement 5.1 is listed for both themes.
     - Export `truncateRatio(ratio)`, which gives two decimals, truncated and never rounded up.
     - Add `scripts/contrast_report.ts`, which prints every pair in both themes with `truncateRatio`, and flags any pair below its minimum. If a pair is below its minimum, record the pair, the two colours, the ratio and a proposed value under "Contrast table" in `measurements.md`, and use the new value in `tokens.css` and `THEME_TOKENS` together.
     - Add `tests/ui/theme/truncate.test.ts` with examples: 4.55 gives "4.55", 4.499 gives "4.49", 4.5 gives "4.50". The existing contrast test runs unchanged and names the pair, theme and ratio on failure.
     - _Requirements: 3.11, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 6.8_
-  - [~] 2.6 Apply the theme before the first paint
+  - [x] 2.6 Apply the theme before the first paint
     - Add `src/ui/theme/theme.ts` with `THEME_STORAGE_KEY = 'naqsha.theme'`, `chooseTheme(stored, prefersDark)` (a stored `day` or `night` wins; otherwise dark gives `night`; otherwise `day`) and `applyTheme(root, theme)` (no-op when `root` is null).
     - In `src/ui/platform/browser.ts` add `readStoredTheme(storage)`, `storeTheme(storage, theme)` (follow `readStoredLanguage` and `storeLanguage`; never throw) and `browserPrefersDark()` (false when `matchMedia` is missing or throws).
     - Add the one inline classic script from the design to `index.html` `<head>`, before the module script. Make `scripts/check_bundle.ts` fail unless `dist/index.html` has that script before the module script and the stylesheet link.
     - Add `tests/ui/theme/theme.test.ts`: `chooseTheme` for every stored and unstored case; the script from `index.html` run in `node:vm` with fake `localStorage` and `matchMedia` agrees with `chooseTheme` for stored `day`, stored `night`, a bad stored value, dark, light, no preference, a throwing `matchMedia` and a throwing `localStorage`; the script sits before the module script.
     - _Requirements: 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.12_
-  - [~] 2.7 Build Button, ButtonLink, Panel, Field, Tabs and Notice
+  - [x] 2.7 Build Button, ButtonLink, Panel, Field, Tabs and Notice
     - Create `src/ui/components/` with one `.tsx` and one `.module.css` for each, as in the design: `Button` (variants primary, secondary, quiet; default `type="button"`; native `disabled` with a dashed border and no fill; 48 by 48 px minimum; text `--on-zari` on `--zari` in every state), `ButtonLink` (an `<a>` with the Button look and `onActivate`), `Panel` (opaque `--surface`, 1px `--line`, `--radius-panel`), `Field` (renders `<label><span>{label}</span>{children}</label>`; control borders `--ink-soft`; 48px height), `Tabs` (toggle buttons with `aria-pressed`, bold text and a drawn check mark on the current choice) and `Notice` (four variants, a different word and a different drawn icon in each, 2px variant border, `role="alert"` by default for `error` only, optional `action`).
     - Every colour is a token, every duration is a motion token, and the only shadow is `var(--shadow-card)`. Add keys `notice.information`, `notice.success`, `notice.warning` and `notice.error` to `en.json` and `hi.json`.
     - Add `tests/ui/components/components.test.tsx` with server-rendered example tests: Button variants and disabled markup; Notice variants differ by word and icon and only `error` has `role="alert"`; Tabs `aria-pressed` and mark; Field markup `<label><span>`; Panel is opaque.
     - _Requirements: 4.10, 5.1, 5.7, 6.1, 6.2, 6.3, 6.4, 6.8, 6.9, 6.10, 7.2_
-  - [~] 2.8 Build WeftProgress and the delayed-progress helper
+  - [x] 2.8 Build WeftProgress and the delayed-progress helper
     - Add `components/WeftProgress.tsx` and its module: visible text and a drawn thread on a `--line` track in an `<svg>`; the thread draws across with an animation of `calc(var(--motion-long) * 4)`; reduced motion shows it fully drawn; no role (the text states the progress).
     - Add `components/delay.ts` with `startDelay(ms, onElapsed, timers)` that returns a cancel function, and the hook `useAfterDelay(active, 300)` that uses it with injected timers. Add keys `progress.reading`, `progress.exporting` and `progress.saving` to both Translation_Files.
     - Add `tests/ui/components/weftProgress.test.tsx`: the markup has visible text and no role; `startDelay` with a fake clock fires once at 300 ms and not at 299 ms, and cancels; the module has no animation outside a motion token.
     - _Requirements: 7.4, 7.5, 23.4_
-  - [~] 2.9 Build ThemeSwitch and Selvedge, and wire them into the Shell
+  - [x] 2.9 Build ThemeSwitch and Selvedge, and wire them into the Shell
     - Add `components/ThemeSwitch.tsx` (`<button role="switch" aria-checked>`; a drawn sun or moon with different shapes, `aria-hidden`; visible `theme.label` text and `theme.on` or `theme.off`; at least 48 by 48 px; text may wrap) and `components/Selvedge.tsx` (an inline `<svg>` 6 px high, a `<pattern>` of `<rect>`s alternating `--zari` and `--madder`, no gradient, no image, `overflow: hidden` on the header). Add keys `theme.label`, `theme.on` and `theme.off` to both files.
     - In `src/ui/App.tsx` keep `theme` in `useState` from `chooseTheme(readStoredTheme(...), browserPrefersDark())` and apply it with `useLayoutEffect(() => applyTheme(document.documentElement, theme), [theme])`. The theme is not in the `AppState` reducer. `Shell` gets `theme` and `onThemeChosen`; the handler calls `storeTheme` and then sets state, and a refused store shows nothing.
     - Put the Selvedge as the first child of `<header>`, replace the language switch by `Tabs`, put the ThemeSwitch beside it, and make the header wrap into stacked groups at 320 px. Keep the `<nav aria-label>`, the four nav buttons and the one `role="status"` live region as they are. Update `Shell.module.css`.
     - Add `tests/ui/components/themeSwitch.test.tsx`: `role="switch"`, `aria-checked` follows the theme, visible state text, and a reducer test showing the theme change touches no `AppState` field.
     - _Requirements: 4.1, 4.2, 4.9, 4.11, 6.10, 7.3, 7.7, 9.5, 23.5, 23.6_
-  - [~] 2.10 Move the four Screens onto the shared components
+  - [x] 2.10 Move the four Screens onto the shared components
     - Replace every raw `<button>`, field, panel and message block in the Weave, Keep, Scan and Code view Screens, and the Shell banner, by `Button`, `Field`, `Panel`, `Tabs` and `Notice`. Remove every colour, background, border and radius declaration for a button element or button class from the four Screen `.module.css` files.
     - Choose the one primary Button of each Screen in every state: Weave "Play" (or "Resume"), Keep the export button (Save is secondary), Scan choose-a-photo (Accept after a read), Code view "Compare". Where a Screen has no such control in a state, it shows no primary Button.
     - Keep every accessible name, role, `aria-*` attribute, data attribute and test id that a test under `tests/` or a script under `scripts/` uses, with the same value. Where one must change, re-aim the test or check at the same strength and note the old selector, new selector and reason under "Changed selectors" in `measurements.md`.
     - _Requirements: 6.5, 6.6, 6.7, 22.1, 22.2, 22.3_
-  - [~] 2.11 Add the style and primary-Button example tests
+  - [x] 2.11 Add the style and primary-Button example tests
     - Add `tests/ui/theme/styles.test.ts`, which reads every `src/ui/**/*.module.css` and the illustration and component sources: no `gradient(`, `backdrop-filter` or `blur(`; every `box-shadow`, `text-shadow` and `drop-shadow(` value is `var(--shadow-card)`; every `transition` and `animation` duration is `var(--motion-*)` or a `calc()` whose operands are only such `var()`s and bare numbers; no colour literal (hexadecimal, `rgb()`, `hsl()` or colour keyword) outside `tokens.css`; no emoji; no button selector or `.button` class that sets colour, background, border or radius in the four Screen modules.
     - Add `tests/ui/screens/primaryButton.test.tsx`: render each of the four Screens in its empty, loading, error and with-content states (the states that exist today) and check that no Screen shows more than one primary Button.
     - _Requirements: 3.6, 3.8, 3.13, 4.10, 6.5, 6.6, 7.6, 7.8, 14.8_
-  - [~] 2.12 Extend `scripts/check_browser.ts` with the Stage A steps
+  - [x] 2.12 Extend `scripts/check_browser.ts` with the Stage A steps
     - Add steps, all additive: switch the theme through the Theme_Switch, reload, and check `data-theme` and the `localStorage` text; record every request origin through `Network.requestWillBeSent` while the four Screens load in both languages and both themes, and expect only the page's own origin and no image request except the favicon and manifest icons; in the offline step read `document.fonts` and expect `loaded` for every family and weight the shown Screens use; extend the no-horizontal-scroll step to the Code view, to Hindi and to the Night_Loom.
     - Remove, skip or loosen no existing assertion.
     - _Requirements: 1.4, 1.10, 4.3, 4.5, 7.7, 14.10, 22.3, 23.2_
-  - [~] 2.13 Stage A gate and commit
+  - [-] 2.13 Stage A gate and commit
     - Run `npm run review-list`, then `npm run typecheck`, `npm run test:run`, `npm run build`, `npm run check-bundle` and `npm run check:browser`; all must exit 0 with no test newly skipped. Run `npm run build && node scripts/contrast_report.ts` and write the table under "Contrast table" in `measurements.md`.
     - Commit with the message `Stage A: fonts, tokens, theme switch and base components`, adding the changed files by name (`src/ui`, `public/fonts`, `index.html`, `scripts`, `tests`, `docs/HINDI_REVIEW.md`, `.gitignore`, `measurements.md`).
     - _Requirements: 22.6, 22.7, 22.8, 25.1, 25.2_

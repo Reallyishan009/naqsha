@@ -33,6 +33,10 @@ import {
 } from '../../state/playback.ts';
 import type { PlaybackAt } from '../../state/playback.ts';
 import type { AppAction, AppState, ClothChoices, ClothView, ReadyCloth } from '../../types.ts';
+import { Button } from '../../components/Button.tsx';
+import { Field } from '../../components/Field.tsx';
+import { Notice } from '../../components/Notice.tsx';
+import { Panel } from '../../components/Panel.tsx';
 import { ClothCanvas, createClothPlayer } from './ClothCanvas.tsx';
 import { RepairNotice } from './RepairNotice.tsx';
 import { TryIt } from './TryIt.tsx';
@@ -65,9 +69,7 @@ function shownCloth(view: ClothView): ReadyCloth | null {
 export function RiseSkipControl({ running, t, onSkip }: { running: boolean; t: Translate; onSkip: () => void }) {
   if (!running) return null;
   return (
-    <button type="button" className={styles.button} onClick={onSkip}>
-      {t('weave.skipRise')}
-    </button>
+    <Button onClick={onSkip}>{t('weave.skipRise')}</Button>
   );
 }
 
@@ -274,7 +276,11 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
       </h2>
 
       <div ref={wrapperRef} className={styles.clothArea}>
-        {empty ? <p className={styles.empty}>{t('weave.empty')}</p> : null}
+        {empty ? (
+          <Panel>
+            <p className={styles.emptyText}>{t('weave.empty')}</p>
+          </Panel>
+        ) : null}
         <div
           className={empty ? styles.hidden : riseRunning ? styles.rise : undefined}
           style={riseRunning ? { filter: `brightness(${level})` } : undefined}
@@ -287,9 +293,9 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
           />
         </div>
         {view.status === 'failed' ? (
-          <p role="alert" className={styles.failure}>
+          <Notice variant="error" word={t('notice.error')}>
             {t(simFailureKey(view.failure))}
-          </p>
+          </Notice>
         ) : null}
         {gapText === '' ? null : <p className={styles.gaps}>{t('weave.gaps', { picks: gapText })}</p>}
       </div>
@@ -306,33 +312,22 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
       <p className={styles.position}>{pickPositionText(t, pick, pickCount)}</p>
 
       <div className={styles.row}>
-        <button ref={playButtonRef} type="button" className={styles.button} disabled={disabled || playing} onClick={onPlay}>
+        <Button ref={playButtonRef} variant="primary" disabled={disabled || playing} onClick={onPlay}>
           {playLabel}
-        </button>
-        <button ref={pauseButtonRef} type="button" className={styles.button} disabled={disabled || !playing} onClick={onPause}>
+        </Button>
+        <Button ref={pauseButtonRef} disabled={disabled || !playing} onClick={onPause}>
           {t('weave.pause')}
-        </button>
-        <button
-          type="button"
-          className={styles.button}
-          disabled={disabled}
-          onClick={() => seekTo(stepBack(pick, pickCount))}
-        >
+        </Button>
+        <Button disabled={disabled} onClick={() => seekTo(stepBack(pick, pickCount))}>
           {t('weave.stepBack')}
-        </button>
-        <button
-          type="button"
-          className={styles.button}
-          disabled={disabled}
-          onClick={() => seekTo(stepForward(pick, pickCount))}
-        >
+        </Button>
+        <Button disabled={disabled} onClick={() => seekTo(stepForward(pick, pickCount))}>
           {t('weave.stepForward')}
-        </button>
+        </Button>
         <RiseSkipControl running={riseRunning} t={t} onSkip={onSkip} />
       </div>
 
-      <label className={styles.field}>
-        <span>{t('weave.scrubber')}</span>
+      <Field label={t('weave.scrubber')} className={styles.scrubberField}>
         <input
           type="range"
           className={styles.scrubber}
@@ -343,48 +338,36 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
           disabled={disabled}
           onChange={(event) => seekTo(scrubTo(Number(event.currentTarget.value), pickCount))}
         />
-      </label>
+      </Field>
 
       <div className={styles.controls}>
-        <label className={styles.field}>
-          <span>{t('weave.speed')}</span>
-          <select
-            className={styles.select}
-            value={speedIndex}
-            disabled={disabled}
-            onChange={(event) => onSpeed(Number(event.currentTarget.value))}
-          >
+        <Field label={t('weave.speed')} className={styles.field}>
+          <select value={speedIndex} disabled={disabled} onChange={(event) => onSpeed(Number(event.currentTarget.value))}>
             <option value={0}>{t('weave.speed.slow')}</option>
             <option value={1}>{t('weave.speed.normal')}</option>
             <option value={2}>{t('weave.speed.fast')}</option>
           </select>
-        </label>
-        <label className={styles.field}>
-          <span>{t('weave.warpColour')}</span>
+        </Field>
+        <Field label={t('weave.warpColour')} className={styles.field}>
           <select
-            className={styles.select}
             value={choices.warpColour}
             disabled={disabled}
             onChange={(event) => setChoices({ ...choices, warpColour: event.currentTarget.value })}
           >
             {colourOptions}
           </select>
-        </label>
-        <label className={styles.field}>
-          <span>{t('weave.weftColour')}</span>
+        </Field>
+        <Field label={t('weave.weftColour')} className={styles.field}>
           <select
-            className={styles.select}
             value={choices.weftColour}
             disabled={disabled}
             onChange={(event) => setChoices({ ...choices, weftColour: event.currentTarget.value })}
           >
             {colourOptions}
           </select>
-        </label>
-        <label className={styles.field}>
-          <span>{t('weave.zari')}</span>
+        </Field>
+        <Field label={t('weave.zari')} className={styles.field}>
           <select
-            className={styles.select}
             value={zariValue}
             disabled={disabled}
             onChange={(event) => {
@@ -399,11 +382,9 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
             <option value="gold">{t('weave.zari.gold')}</option>
             <option value="silver">{t('weave.zari.silver')}</option>
           </select>
-        </label>
-        <label className={styles.field}>
-          <span>{t('weave.repeat')}</span>
+        </Field>
+        <Field label={t('weave.repeat')} className={styles.field}>
           <select
-            className={styles.select}
             value={choices.repeat}
             disabled={disabled}
             onChange={(event) => setChoices({ ...choices, repeat: Number(event.currentTarget.value) })}
@@ -414,7 +395,7 @@ export function WeaveScreen({ state, dispatch, t, scheduler = browserScheduler }
               </option>
             ))}
           </select>
-        </label>
+        </Field>
       </div>
 
       <TryIt profile={profile} confirm={state.confirm} dispatch={dispatch} t={t} />

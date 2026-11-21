@@ -3,6 +3,7 @@ import path from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { Shell } from '../../src/ui/App.tsx';
+import { alertTexts } from '../support/notices.ts';
 import { DICTIONARIES, translator } from '../../src/ui/i18n/messages.ts';
 import { CodeViewScreen } from '../../src/ui/screens/code/CodeViewScreen.tsx';
 import { KeepView } from '../../src/ui/screens/keep/KeepScreen.tsx';
@@ -179,8 +180,8 @@ describe('statuses are not shown by colour alone', () => {
       // Error: the message is text inside an alert, and the failure kind is not the text.
       const failed = scanView(language, { status: 'failed', failure: { reason: 'peg-holes-not-found' } });
       expect(failed).toContain(escape(t('error.read.peg-holes-not-found')));
-      expect(keepView(language, { failureKey: 'error.archive.write-failed' })).toMatch(
-        new RegExp(`<p role="alert"[^>]*>${escape(t('error.archive.write-failed'))}</p>`),
+      expect(alertTexts(keepView(language, { failureKey: 'error.archive.write-failed' }))).toContain(
+        escape(t('error.archive.write-failed')),
       );
       // Success: a sentence.
       expect(keepView(language, { exportDone: true })).toContain(escape(t('keep.export.done')));
@@ -236,10 +237,10 @@ describe('base text size', () => {
       }
     }
     expect(/(?:^|\n)body\s*\{([^}]*)\}/.exec(tokens)?.[1] ?? '').not.toMatch(/font-size/);
-    // Controls take the page font. Buttons, inputs and selects through the token sheet, the Keep text area by its class.
+    // Controls take the page font. Buttons, inputs and selects through the token sheet, the text area through the shared Field.
     const inherit = /([^{}]*)\{[^}]*font:\s*inherit[^}]*\}/.exec(tokens)?.[1] ?? '';
     for (const element of ['button', 'input', 'select']) expect(inherit).toContain(element);
-    expect(strip(readFileSync(path.join(uiDir, 'screens/keep/KeepScreen.module.css'), 'utf8'))).toMatch(/\.input\s*\{[^}]*font:\s*inherit/);
+    expect(strip(readFileSync(path.join(uiDir, 'components/Field.module.css'), 'utf8'))).toMatch(/\.field textarea\s*\{[^}]*font:\s*inherit/);
   });
 });
 
@@ -319,15 +320,24 @@ describe('Code view styles', () => {
   });
 
   it('R11.10 every button, field, select, breakpoint control and Bit_Line region is at least the Touch_Target tall, and a Line is as tall', () => {
-    const wanted: Array<[string, string]> = [
-      ['CodeViewScreen.module.css', '.button'],
-      ['CodeViewScreen.module.css', '.input'],
-      ['DiffPanel.module.css', '.button'],
-      ['DiffPanel.module.css', '.select'],
-      ['LineRow.module.css', '.breakpoint'],
-      ['LineRow.module.css', '.bits'],
-    ];
-    for (const [name, selector] of wanted) {
+    // The buttons and fields of the Code view are the shared Button and Field; their height comes from those modules.
+    const components = path.join(ROOT, 'src/ui/components');
+    const strip = (css: string): string => css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const buttonSheet = strip(readFileSync(path.join(components, 'Button.module.css'), 'utf8'));
+    const fieldSheet = strip(readFileSync(path.join(components, 'Field.module.css'), 'utf8'));
+    expect(ruleBody(buttonSheet, '.button'), 'Button .button').toMatch(/min-height:\s*var\(--touch-target\)/);
+    expect(ruleBody(fieldSheet, ".field input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),\n.field select,\n.field textarea"), 'Field controls').toMatch(/min-height:\s*var\(--touch-target\)/);
+    for (const [file, tag] of [
+      ['CodeViewScreen.tsx', '<Button'],
+      ['DiffPanel.tsx', '<Button'],
+      ['CodeViewScreen.tsx', '<Field'],
+      ['DiffPanel.tsx', '<Field'],
+      ['LineRow.tsx', '<Button'],
+    ] as const) {
+      expect(readFileSync(path.join(codeDir, file), 'utf8'), `${file} uses ${tag}`).toContain(tag);
+      expect(readFileSync(path.join(codeDir, file), 'utf8'), `${file} has no raw button`).not.toMatch(/<button\b/);
+    }
+    for (const [name, selector] of [['LineRow.module.css', '.bits']] as const) {
       const body = ruleBody(sheets.get(name)!, selector);
       expect(body, `${name} ${selector}`).not.toBeNull();
       expect(body, `${name} ${selector}`).toMatch(/min-height:\s*var\(--touch-target\)/);

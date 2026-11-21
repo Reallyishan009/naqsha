@@ -15,6 +15,7 @@ import { TryIt } from '../../../src/ui/screens/weave/TryIt.tsx';
 import { generateSample, sampleWithLostCards } from '../../../src/ui/samples/sampleDesigns.ts';
 import { initialKeepForm } from '../../../src/ui/state/keep.ts';
 import type { Language } from '../../../src/ui/types.ts';
+import { alertTexts } from '../../support/notices.ts';
 import { demoProfile } from '../../support/profiles.ts';
 const profile = demoProfile();
 const noop = (): void => undefined;
@@ -138,7 +139,7 @@ describe('R3.2 the panel', () => {
     const none = suggestRepairs([null, [], null], profile);
     expect(panel('en', {}, none)).toContain(t('repair.none.no-readable-cards'));
     const failed = suggestRepairs(lost, {});
-    expect(panel('en', {}, failed)).toMatch(/role="alert"[^>]*>The card profile is not valid/);
+    expect(alertTexts(panel('en', {}, failed)).some((text) => text.startsWith('The card profile is not valid'))).toBe(true);
   });
   it('R2.1 the kinds that did not apply are explained in words', () => {
     const html = panel('en');
@@ -229,7 +230,8 @@ describe('R8.1 the repair code stays out of the entry chunk', () => {
   it('R6.1 the panel styles wrap long text and keep drawings inside the page', () => {
     const css = readFileSync(path.join(root, 'screens/weave/Repair.module.css'), 'utf8');
     expect(css).toMatch(/\.drawing\s*{[^}]*max-width:\s*100%/);
-    expect(css).toMatch(/\.button\s*{[^}]*min-height:\s*var\(--touch-target\)/);
+    // The panel's buttons are the shared Button, whose height is the touch target.
+    expect(readFileSync(path.join(root, 'components/Button.module.css'), 'utf8')).toMatch(/\.button\s*{[^}]*min-height:\s*var\(--touch-target\)/);
     expect(css).toMatch(/\.evidence\s*{[^}]*overflow-wrap:\s*anywhere/);
   });
 });

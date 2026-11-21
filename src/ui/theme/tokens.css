@@ -1,5 +1,36 @@
-/* Day loom is the default. Night loom is defined but nothing switches to it yet (CUT-LAST, R20).
-   Values must equal THEME_TOKENS in contrast.ts; a test checks it. */
+/* The one global style sheet: fonts, tokens, base rules, focus ring, Graph_Paper_Ground and reduced motion.
+   Day loom is the default. Night loom applies when data-theme is night.
+   Colour values must equal THEME_TOKENS in contrast.ts; a test checks it. */
+
+/* Each font file is fetched only when a rule that uses it applies: no preload and no unicode-range. */
+@font-face {
+  font-family: 'Rozha One';
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/RozhaOne-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Hind';
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/Hind-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Hind';
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/Hind-Bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/IBMPlexMono-Regular.woff2') format('woff2');
+}
+
 :root {
   --ground: #F6EFE0;
   --surface: #FFFBF2;
@@ -12,13 +43,40 @@
   --madder: #9C2B2B;
   --indigo: #27306B;
   --leaf: #2F6B4F;
+  --on-zari: #2A1F14;
+  --on-hole: #F1E8D5;
 
-  --font-display: Georgia, serif;
-  --font-body: system-ui, sans-serif;
-  --font-data: ui-monospace, monospace;
-  --touch-target: 48px;
+  --font-display: 'Rozha One', Georgia, serif;
+  --font-body: Hind, system-ui, sans-serif;
+  --font-data: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --text-small: 14px;
+  --text-meta: 16px;
+  --text-body: 18px;
+  --text-lead: 22px;
+  --text-title: 28px;
+  --text-display: 36px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
   --radius-control: 4px;
   --radius-panel: 8px;
+
+  --shadow-card: 0 2px 6px rgb(0 0 0 / 0.25);
+
+  --motion-short: 120ms;
+  --motion-medium: 200ms;
+  --motion-long: 320ms;
+
+  --touch-target: 48px;
+  --leading-body: 1.5;
+  --leading-hindi: 1.7;
 }
 
 [data-theme='night'] {
@@ -33,6 +91,12 @@
   --madder: #E0625A;
   --indigo: #8FA3FF;
   --leaf: #6FCF9B;
+  --on-zari: #07061A;
+  --on-hole: #F1E8D5;
+}
+
+[data-theme='night'] {
+  color-scheme: dark;
 }
 
 html {
@@ -41,15 +105,24 @@ html {
 
 body {
   margin: 0;
-  background: var(--ground);
   color: var(--ink);
   font-family: var(--font-body);
-  line-height: 1.5;
+  line-height: var(--leading-body);
   text-align: left;
+  /* Graph_Paper_Ground: two hard-stop lines, 1px wide every 8px, in --line. It is the only gradient in the App. */
+  background-color: var(--ground);
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 8px 8px;
 }
 
 html[lang='hi'] body {
-  line-height: 1.7;
+  line-height: var(--leading-hindi);
+}
+
+td,
+th,
+[data-tabular] {
+  font-variant-numeric: tabular-nums;
 }
 
 * {

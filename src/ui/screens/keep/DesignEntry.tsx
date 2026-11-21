@@ -2,6 +2,7 @@ import type { DesignGroup, DesignSummary } from '../../../archive/index.ts';
 import type { Translate } from '../../i18n/messages.ts';
 import { compareTargets, designHeading, versionDetails } from '../../state/keep.ts';
 import type { CompareChoice, Language, PatternOrigin } from '../../types.ts';
+import { Button } from '../../components/Button.tsx';
 import { DeleteConfirm } from './DeleteConfirm.tsx';
 import styles from './KeepScreen.module.css';
 export type EntryHandlers = {
@@ -38,43 +39,37 @@ function VersionActions({ group, version, subject, origin, pendingDeleteId, t, .
   return (
     <>
       <div className={styles.actions}>
-        <button type="button" className={styles.button} aria-label={named('keep.list.open')} onClick={() => handlers.onOpen(version.id)}>
+        <Button aria-label={named('keep.list.open')} onClick={() => handlers.onOpen(version.id)}>
           {t('keep.list.open')}
-        </button>
+        </Button>
         {targets.previous === null ? null : (
-          <button
-            type="button"
-            className={styles.button}
+          <Button
             aria-label={named('keep.version.comparePrevious')}
             onClick={() =>
               handlers.onCompare({ kind: 'saved', id: targets.previous!.id }, { kind: 'saved', id: version.id })
             }
           >
             {t('keep.version.comparePrevious')}
-          </button>
+          </Button>
         )}
         {targets.openDesignId === null ? null : (
-          <button
-            type="button"
-            className={styles.button}
+          <Button
             aria-label={named('keep.version.compareOpen')}
             onClick={() => handlers.onCompare({ kind: 'saved', id: version.id }, { kind: 'current' })}
           >
             {t('keep.version.compareOpen')}
-          </button>
+          </Button>
         )}
-        <button type="button" className={styles.button} aria-label={named('keep.version.restore')} onClick={() => handlers.onRestore(version.id)}>
+        <Button aria-label={named('keep.version.restore')} onClick={() => handlers.onRestore(version.id)}>
           {t('keep.version.restore')}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
           id={`keep-delete-${version.id}`}
-          className={styles.button}
           aria-label={named('keep.list.delete')}
           onClick={() => handlers.onDeleteRequest(version.id)}
         >
           {t('keep.list.delete')}
-        </button>
+        </Button>
       </div>
       {pendingDeleteId === version.id ? (
         <DeleteConfirm t={t} onYes={handlers.onDeleteConfirm} onNo={handlers.onDeleteCancel} />
@@ -111,16 +106,14 @@ export function DesignEntry(props: DesignEntryProps) {
       ) : (
         <>
           <div className={styles.actions}>
-            <button
-              type="button"
-              className={styles.button}
+            <Button
               aria-expanded={expanded}
               aria-controls={versionsId}
               aria-label={`${t(expanded ? 'keep.list.hideVersions' : 'keep.list.showVersions')}: ${heading.name}`}
               onClick={() => handlers.onToggle(group.designId)}
             >
               {t(expanded ? 'keep.list.hideVersions' : 'keep.list.showVersions')}
-            </button>
+            </Button>
           </div>
           {expanded ? (
             <div id={versionsId} role="group" aria-label={t('keep.version.heading', { name: heading.name })} className={styles.versions}>

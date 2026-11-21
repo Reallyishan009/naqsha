@@ -9,36 +9,22 @@
 }
 .panel {
   margin: 16px 0;
-  padding: 16px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
 }
-.empty {
-  padding: 16px;
+.emptyText,
+.failureText {
+  margin: 0;
+}
+.emptyText {
   color: var(--ink-soft);
-  background: var(--surface);
-  border: 1px dashed var(--line);
-  border-radius: var(--radius-panel);
+}
+.confirm {
+  margin-top: 8px;
 }
 .busy {
   font-weight: 700;
 }
-.failure {
-  margin: 8px 0;
-  padding: 12px 16px;
-  border: 2px solid var(--madder);
-  border-radius: var(--radius-panel);
-}
 .details code {
   font-family: var(--font-data);
-}
-.file {
-  display: block;
-  min-height: var(--touch-target);
-  max-width: 100%;
-  margin: 8px 0;
-  font: inherit;
 }
 .row {
   display: flex;
@@ -46,27 +32,6 @@
   align-items: center;
   gap: 8px;
   margin: 8px 0;
-}
-.button {
-  min-width: var(--touch-target);
-  min-height: var(--touch-target);
-  padding: 0 16px;
-  color: var(--ink);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  cursor: pointer;
-}
-.button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.confirm {
-  margin-top: 8px;
-  padding: 12px 16px;
-  background: var(--surface);
-  border: 2px solid var(--zari);
-  border-radius: var(--radius-panel);
 }
 .legend {
   margin: 0 0 8px;
@@ -121,8 +86,6 @@
   min-width: var(--touch-target);
   min-height: var(--touch-target);
   padding: 0;
-  background: transparent;
-  border: 0;
   cursor: pointer;
   transform: translate(-50%, -50%);
 }
@@ -146,7 +109,7 @@
 }
 .marker[data-shape='filled'] .shape {
   background: var(--indigo);
-  border: 2px solid #fff;
+  border: 2px solid var(--on-hole);
 }
 .marker[data-shape='ring'] .shape {
   background: transparent;
@@ -201,7 +164,7 @@
   width: 100%;
   max-width: 32rem;
   overflow: hidden;
-  background: #000;
+  background: var(--hole);
 }
 .video {
   display: block;
@@ -220,8 +183,4 @@
   border-radius: var(--radius-control);
   transform: translate(-50%, -50%);
   pointer-events: none;
-}
-.button:focus-visible {
-  outline: 3px solid var(--zari);
-  outline-offset: 2px;
 }

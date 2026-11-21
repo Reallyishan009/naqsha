@@ -1,0 +1,60 @@
+.notice {
+  --notice-colour: var(--indigo);
+  --notice-word: var(--indigo);
+  padding: var(--space-3) var(--space-4);
+  color: var(--ink);
+  background: var(--surface);
+  border: 2px solid var(--notice-colour);
+  border-radius: var(--radius-panel);
+}
+
+.information {
+  --notice-colour: var(--indigo);
+  --notice-word: var(--indigo);
+}
+
+.success {
+  --notice-colour: var(--leaf);
+  --notice-word: var(--leaf);
+}
+
+.warning {
+  --notice-colour: var(--zari);
+  --notice-word: var(--ink);
+}
+
+.error {
+  --notice-colour: var(--madder);
+  --notice-word: var(--madder);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-1);
+}
+
+.word {
+  color: var(--notice-word);
+  font-weight: 700;
+}
+
+.icon {
+  flex: none;
+  width: 1.25em;
+  height: 1.25em;
+  fill: none;
+  stroke: var(--notice-colour);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.text {
+  margin: 0;
+}
+
+.action {
+  margin-top: var(--space-3);
+}

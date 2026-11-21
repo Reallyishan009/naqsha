@@ -4,6 +4,8 @@ import type { CardProfile, Pattern } from '../../../codec/index.ts';
 import type { Translate } from '../../i18n/messages.ts';
 import type { AppAction } from '../../types.ts';
 import type { RepairPanelProps } from './RepairPanel.tsx';
+import { Button } from '../../components/Button.tsx';
+import { Notice } from '../../components/Notice.tsx';
 import styles from './Repair.module.css';
 /** The panel and src/repair come in one separate chunk, requested the first time the weaver asks for suggestions. */
 export type PanelModule = { RepairPanel: ComponentType<RepairPanelProps> };
@@ -48,40 +50,40 @@ export function RepairNotice({ gapCount, repairedPicks, canUndo, profile, patter
   const Panel = panel.status === 'open' ? panel.Panel : null;
   return (
     <div className={styles.notice}>
-      {gapCount === 0 ? null : (
-        <>
-          <p className={styles.noticeText}>{t(gapCount === 1 ? 'weave.repair.notice.one' : 'weave.repair.notice.other', { count: gapCount })}</p>
-          <div className={styles.actions}>
-            <button type="button" className={styles.button} aria-expanded={expanded} disabled={profile === null || panel.status === 'loading'} onClick={onToggle}>
-              {t(expanded ? 'weave.repair.hide' : 'weave.repair.suggest')}
-            </button>
-          </div>
-          {panel.status === 'loading' ? <p>{t('weave.repair.loading')}</p> : null}
-          {panel.status === 'failed' ? (
-            <p role="alert" className={styles.failure}>
-              {t('weave.repair.loadFailed')}
-            </p>
-          ) : null}
-        </>
-      )}
-      {repairedPicks.length === 0 ? null : (
-        <>
-          <p className={styles.noticeText}>{t('weave.repair.repaired', { picks: repairedPicks.map((pick) => pick + 1).join(', ') })}</p>
-          <div className={styles.actions}>
-            <button
-              type="button"
-              className={styles.button}
-              disabled={!canUndo}
-              onClick={() => {
-                dispatch({ type: 'undo-repair' });
-                dispatch({ type: 'announce', kind: 'confirmation', messageKey: 'repair.undone' });
-              }}
-            >
-              {t('weave.repair.undo')}
-            </button>
-          </div>
-        </>
-      )}
+      <Notice variant={gapCount === 0 ? 'information' : 'warning'} word={t(gapCount === 0 ? 'notice.information' : 'notice.warning')}>
+        {gapCount === 0 ? null : (
+          <>
+            <p className={styles.noticeText}>{t(gapCount === 1 ? 'weave.repair.notice.one' : 'weave.repair.notice.other', { count: gapCount })}</p>
+            <div className={styles.actions}>
+              <Button aria-expanded={expanded} disabled={profile === null || panel.status === 'loading'} onClick={onToggle}>
+                {t(expanded ? 'weave.repair.hide' : 'weave.repair.suggest')}
+              </Button>
+            </div>
+            {panel.status === 'loading' ? <p>{t('weave.repair.loading')}</p> : null}
+          </>
+        )}
+        {repairedPicks.length === 0 ? null : (
+          <>
+            <p className={styles.noticeText}>{t('weave.repair.repaired', { picks: repairedPicks.map((pick) => pick + 1).join(', ') })}</p>
+            <div className={styles.actions}>
+              <Button
+                disabled={!canUndo}
+                onClick={() => {
+                  dispatch({ type: 'undo-repair' });
+                  dispatch({ type: 'announce', kind: 'confirmation', messageKey: 'repair.undone' });
+                }}
+              >
+                {t('weave.repair.undo')}
+              </Button>
+            </div>
+          </>
+        )}
+      </Notice>
+      {panel.status === 'failed' ? (
+        <Notice variant="error" word={t('notice.error')}>
+          {t('weave.repair.loadFailed')}
+        </Notice>
+      ) : null}
       {Panel !== null && profile !== null && gapCount > 0 ? <Panel profile={profile} pattern={pattern} t={t} dispatch={dispatch} /> : null}
     </div>
   );

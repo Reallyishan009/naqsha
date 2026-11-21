@@ -18,6 +18,10 @@ import {
 import type { LoadPixels } from '../../state/scan.ts';
 import { cameraControl } from '../../platform/browser.ts';
 import { ProfileNotice } from '../../ProfileNotice.tsx';
+import { Button } from '../../components/Button.tsx';
+import { Field } from '../../components/Field.tsx';
+import { Notice } from '../../components/Notice.tsx';
+import { Panel } from '../../components/Panel.tsx';
 import type { AppAction, AppState, HookPosition, ScanBatch, ScanState } from '../../types.ts';
 import { BatchList } from './BatchList.tsx';
 import { browserCameraDevice, browserCameraEnv } from './camera.ts';
@@ -59,8 +63,8 @@ export type ScanViewProps = {
 
 function FailureMessage({ failure, t }: { failure: CardReadFailure; t: Translate }) {
   return (
-    <div role="alert" className={styles.failure}>
-      <p>{t(readFailureKey(failure))}</p>
+    <Notice variant="error" word={t('notice.error')}>
+      <p className={styles.failureText}>{t(readFailureKey(failure))}</p>
       {failure.reason === 'invalid-profile' ? (
         <details open className={styles.details}>
           <summary>{t('error.read.details')}</summary>
@@ -73,7 +77,7 @@ function FailureMessage({ failure, t }: { failure: CardReadFailure; t: Translate
           </ul>
         </details>
       ) : null}
-    </div>
+    </Notice>
   );
 }
 
@@ -81,41 +85,43 @@ function FailureMessage({ failure, t }: { failure: CardReadFailure; t: Translate
 export function ScanView(props: ScanViewProps) {
   const { profile, scan, batch, t } = props;
   const readState = scan.status === 'read' ? scan : null;
+  // Choose-a-photo is the one primary control until a card is read; Accept takes over after a read.
+  const choosePrimary = readState === null;
   return (
     <section aria-labelledby="screen-title" className={styles.screen}>
       <h2 id="screen-title" className={styles.screenTitle}>
         {t('nav.scan')}
       </h2>
       {profile === null ? (
-        <p className={styles.empty}>{t('scan.needsProfile')}</p>
+        <Panel>
+          <p className={styles.emptyText}>{t('scan.needsProfile')}</p>
+        </Panel>
       ) : (
         <>
           <ProfileNotice profile={profile} t={t} />
-          <section aria-labelledby="scan-choose-title" className={styles.panel}>
+          <Panel as="section" aria-labelledby="scan-choose-title" className={styles.panel}>
             <h3 id="scan-choose-title" className={styles.sectionTitle}>
               {t('scan.choose.label')}
             </h3>
-            <p>{t('scan.choose.hint')}</p>
-            <input
-              id="scan-file"
-              type="file"
-              accept="image/*"
-              className={styles.file}
-              aria-label={t('scan.choose.label')}
-              disabled={scan.status === 'reading'}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                const file = event.currentTarget.files?.[0];
-                event.currentTarget.value = '';
-                if (file !== undefined) props.onFile(file);
-              }}
-            />
+            <Field label={t('scan.choose.hint')} emphasis={choosePrimary ? 'primary' : undefined}>
+              <input
+                id="scan-file"
+                type="file"
+                accept="image/*"
+                aria-label={t('scan.choose.label')}
+                disabled={scan.status === 'reading'}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                  const file = event.currentTarget.files?.[0];
+                  event.currentTarget.value = '';
+                  if (file !== undefined) props.onFile(file);
+                }}
+              />
+            </Field>
             {props.cameraSlot ?? null}
             {props.replacingIndex === null ? null : (
               <div className={styles.row}>
                 <p>{t('scan.replacing', { number: props.replacingIndex + 1 })}</p>
-                <button type="button" className={styles.button} onClick={props.onCancelReplacing}>
-                  {t('scan.replacing.cancel', { number: props.replacingIndex + 1 })}
-                </button>
+                <Button onClick={props.onCancelReplacing}>{t('scan.replacing.cancel', { number: props.replacingIndex + 1 })}</Button>
               </div>
             )}
             {scan.status === 'reading' ? (
@@ -124,13 +130,13 @@ export function ScanView(props: ScanViewProps) {
               </p>
             ) : null}
             {scan.status === 'failed' ? <FailureMessage failure={scan.failure} t={t} /> : null}
-          </section>
+          </Panel>
           {readState === null ? null : (
             <ReadPanel {...props} profile={profile} readState={readState} />
           )}
         </>
       )}
-      <section aria-labelledby="scan-batch-title" className={styles.panel}>
+      <Panel as="section" aria-labelledby="scan-batch-title" className={styles.panel}>
         <h3 id="scan-batch-title" className={styles.sectionTitle}>
           {t('scan.batch.heading')}
         </h3>
@@ -145,26 +151,20 @@ export function ScanView(props: ScanViewProps) {
           onMove={props.onMove}
           onScanAgain={props.onScanAgain}
         />
-        <button type="button" className={styles.button} disabled={batch.length === 0} onClick={props.onDone}>
+        <Button disabled={batch.length === 0} onClick={props.onDone}>
           {t('scan.done')}
-        </button>
+        </Button>
         {props.confirmingDone ? (
-          <div role="group" aria-label={t('scan.done.question')} className={styles.confirm}>
+          <Panel role="group" aria-label={t('scan.done.question')} className={styles.confirm}>
             <p>{t('scan.done.question')}</p>
             <div className={styles.row}>
-              <button type="button" className={styles.button} onClick={() => props.onCommit('replace')}>
-                {t('scan.done.replace')}
-              </button>
-              <button type="button" className={styles.button} onClick={() => props.onCommit('append')}>
-                {t('scan.done.append')}
-              </button>
-              <button type="button" className={styles.button} onClick={props.onDoneCancel}>
-                {t('scan.done.cancel')}
-              </button>
+              <Button onClick={() => props.onCommit('replace')}>{t('scan.done.replace')}</Button>
+              <Button onClick={() => props.onCommit('append')}>{t('scan.done.append')}</Button>
+              <Button onClick={props.onDoneCancel}>{t('scan.done.cancel')}</Button>
             </div>
-          </div>
+          </Panel>
         ) : null}
-      </section>
+      </Panel>
     </section>
   );
 }
@@ -177,7 +177,7 @@ function ReadPanel(props: ReadPanelProps) {
   const markers = hookMarkers(profile, pose, grid, corrected);
   const spacing = hookSpacingCssPx(profile, pose, image.width, viewWidthPx);
   return (
-    <section aria-labelledby="scan-read-title" className={styles.panel}>
+    <Panel as="section" aria-labelledby="scan-read-title" className={styles.panel}>
       <h3 id="scan-read-title" className={styles.sectionTitle}>
         {t('scan.legend.heading')}
       </h3>
@@ -194,15 +194,9 @@ function ReadPanel(props: ReadPanelProps) {
       </ul>
       <p>{t('scan.legend.tap')}</p>
       <div role="group" aria-label={t('scan.zoom.heading')} className={styles.row}>
-        <button type="button" className={styles.button} onClick={() => props.onZoom(zoom / ZOOM_STEP)}>
-          {t('scan.zoom.out')}
-        </button>
-        <button type="button" className={styles.button} onClick={() => props.onZoom(zoom * ZOOM_STEP)}>
-          {t('scan.zoom.in')}
-        </button>
-        <button type="button" className={styles.button} onClick={() => props.onZoom(initialZoom(spacing))}>
-          {t('scan.zoom.fit')}
-        </button>
+        <Button onClick={() => props.onZoom(zoom / ZOOM_STEP)}>{t('scan.zoom.out')}</Button>
+        <Button onClick={() => props.onZoom(zoom * ZOOM_STEP)}>{t('scan.zoom.in')}</Button>
+        <Button onClick={() => props.onZoom(initialZoom(spacing))}>{t('scan.zoom.fit')}</Button>
         <span>{t('scan.zoom.value', { percent: Math.round(zoom * 100) })}</span>
       </div>
       <CardOverlay
@@ -217,17 +211,15 @@ function ReadPanel(props: ReadPanelProps) {
       />
       <p>{t('scan.corrections', { count: corrected.length })}</p>
       <div className={styles.row}>
-        <button type="button" className={styles.button} disabled={corrected.length === 0} onClick={props.onUndo}>
+        <Button disabled={corrected.length === 0} onClick={props.onUndo}>
           {t('scan.undo')}
-        </button>
-        <button type="button" className={styles.button} onClick={props.onAccept}>
+        </Button>
+        <Button variant="primary" onClick={props.onAccept}>
           {t('scan.accept')}
-        </button>
-        <button type="button" className={styles.button} onClick={props.onDiscard}>
-          {t('scan.discard')}
-        </button>
+        </Button>
+        <Button onClick={props.onDiscard}>{t('scan.discard')}</Button>
       </div>
-    </section>
+    </Panel>
   );
 }
 

@@ -1258,5 +1258,45 @@
   "error.codeview.load": {
     "text": "कोड दृश्य लोड नहीं हो सका। बाकी स्क्रीन चल रही हैं।",
     "reviewed": false
+  },
+  "notice.information": {
+    "text": "सूचना",
+    "reviewed": false
+  },
+  "notice.success": {
+    "text": "हो गया",
+    "reviewed": false
+  },
+  "notice.warning": {
+    "text": "सावधान",
+    "reviewed": false
+  },
+  "notice.error": {
+    "text": "समस्या",
+    "reviewed": false
+  },
+  "progress.reading": {
+    "text": "कार्ड पढ़ा जा रहा है…",
+    "reviewed": false
+  },
+  "progress.exporting": {
+    "text": "फ़ाइल तैयार हो रही है…",
+    "reviewed": false
+  },
+  "progress.saving": {
+    "text": "सहेजा जा रहा है…",
+    "reviewed": false
+  },
+  "theme.label": {
+    "text": "रात का करघा",
+    "reviewed": false
+  },
+  "theme.on": {
+    "text": "चालू",
+    "reviewed": false
+  },
+  "theme.off": {
+    "text": "बंद",
+    "reviewed": false
   }
 }

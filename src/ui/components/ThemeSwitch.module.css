@@ -1,0 +1,54 @@
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-4);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  text-align: left;
+  background: var(--surface);
+  border: 2px solid var(--ink-soft);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  transition: transform var(--motion-short);
+}
+
+.switch:active {
+  transform: translateY(1px);
+}
+
+/* The Night loom is on: bold text and a --zari border, besides the moon. */
+.switch[aria-checked='true'] {
+  font-weight: 700;
+  border-color: var(--zari);
+}
+
+.icon {
+  flex: none;
+  width: 1.5em;
+  height: 1.5em;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.switch[aria-checked='true'] .icon {
+  fill: var(--zari);
+  stroke: var(--zari);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.state {
+  font-size: var(--text-small);
+}

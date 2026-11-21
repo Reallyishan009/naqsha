@@ -69,7 +69,7 @@ describe('deploy configuration', () => {
     expect(JSON.parse(readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'))).not.toHaveProperty('env');
   });
 
-  it('R13.5 every font stack ends in a generic family, and no web font is declared', () => {
+  it('R13.5 every font stack ends in a generic family, and a web font is declared only in the token file, from a relative path', () => {
     const tokens = readFileSync(path.join(SRC, 'ui', 'theme', 'tokens.css'), 'utf8');
     const stacks = [...tokens.matchAll(/--font-[\w-]+:\s*([^;]+);/g)].map((match) => match[1]!.trim());
     expect(stacks.length).toBeGreaterThanOrEqual(3);
@@ -78,8 +78,15 @@ describe('deploy configuration', () => {
       expect(['serif', 'sans-serif', 'monospace', 'system-ui'], stack).toContain(last);
     }
     for (const file of filesUnder(SRC, /\.css$/)) {
-      const css = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-      expect(css, `${file} declares a web font`).not.toMatch(/@font-face|@import/);
+      const withFaces = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+      expect(withFaces, `${file} imports a style sheet`).not.toMatch(/@import/);
+      // Only the token file declares fonts (R1.2), and each src is a path with no scheme and no host.
+      const faces = [...withFaces.matchAll(/@font-face\s*\{[^}]*\}/g)].map((match) => match[0]);
+      if (!file.endsWith(`${path.sep}theme${path.sep}tokens.css`)) expect(faces, `${file} declares a web font`).toEqual([]);
+      for (const face of faces) {
+        for (const source of face.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)) expect(source[1], `${file}: ${source[1]}`).toMatch(/^\/?fonts\/[\w-]+\.woff2$/);
+      }
+      const css = withFaces.replace(/@font-face\s*\{[^}]*\}/g, '');
       for (const match of css.matchAll(/font-family:\s*([^;]+);/g)) {
         const value = match[1]!.trim();
         const generic = /(^|,)\s*(serif|sans-serif|monospace|system-ui)\s*$/.test(value);

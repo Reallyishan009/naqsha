@@ -1,10 +1,6 @@
-/* Plain and working: a design pass follows. Tokens and control sizes are the ones the Keep and Code view screens use. */
+/* Layout only: the fill, border and radius come from the shared Panel. */
 .panel {
   margin: 16px 0;
-  padding: 16px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
 }
 
 .title {
@@ -26,60 +22,15 @@
 }
 
 .field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
   flex: 1 1 14rem;
   min-width: 0;
 }
 
-.label {
-  font-weight: 700;
-}
 
-.select {
-  min-width: 0;
-  min-height: var(--touch-target);
-  padding: 8px;
-  color: var(--ink);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  font: inherit;
-}
 
-.button {
-  min-width: var(--touch-target);
-  min-height: var(--touch-target);
-  padding: 0 16px;
-  color: var(--ink);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  cursor: pointer;
-}
 
-/* Disabled shows as dimmed with a not-allowed cursor, besides the native disabled state. */
-.button:disabled,
-.select:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 
-.notice {
-  margin: 8px 0;
-  padding: 12px 16px;
-  border: 2px dashed var(--line);
-  border-radius: var(--radius-panel);
-}
 
-.failure {
-  margin: 8px 0;
-  padding: 12px 16px;
-  border: 2px solid var(--madder);
-  border-radius: var(--radius-panel);
-  overflow-wrap: anywhere;
-}
 
 .result {
   margin-top: 12px;

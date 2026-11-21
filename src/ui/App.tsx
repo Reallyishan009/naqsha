@@ -1,23 +1,33 @@
-import { Component, lazy, Suspense, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { Component, lazy, Suspense, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { Dispatch, ErrorInfo, ReactNode } from 'react';
 import { DICTIONARIES, profileFailureKey, translator } from './i18n/messages.ts';
 import type { Translate } from './i18n/messages.ts';
 import {
+  browserPrefersDark,
   browserPrefersReducedMotion,
   browserStorage,
   readStoredLanguage,
+  readStoredTheme,
   setDocumentLanguage,
   storeLanguage,
+  storeTheme,
 } from './platform/browser.ts';
 import type { KeyValueStorage } from './platform/browser.ts';
 import { browserServiceWorkers, isBuiltSite, registerServiceWorker, reloadPage } from './platform/serviceWorker.ts';
 import type { ServiceWorkerHandle } from './platform/serviceWorker.ts';
 import { loadProfile } from './profile/loadProfile.ts';
 import { profileUrl } from './profile/profileUrl.ts';
+import { Button } from './components/Button.tsx';
+import { Notice } from './components/Notice.tsx';
+import { Selvedge } from './components/Selvedge.tsx';
+import { Tabs } from './components/Tabs.tsx';
+import { ThemeSwitch } from './components/ThemeSwitch.tsx';
 import styles from './Shell.module.css';
 import { KeepScreen } from './screens/keep/KeepScreen.tsx';
 import { WeaveScreen } from './screens/weave/WeaveScreen.tsx';
 import { appReducer, initialAppState } from './state/appState.ts';
+import type { ThemeName } from './theme/contrast.ts';
+import { applyTheme, chooseTheme } from './theme/theme.ts';
 import './theme/tokens.css';
 import type { AppAction, AppState, Language, Screen } from './types.ts';
 
@@ -61,64 +71,82 @@ export type ShellProps = {
   dispatch: Dispatch<AppAction>;
   /** Called when the user picks a language, so the choice can be stored. */
   onLanguageChosen?: (language: Language) => void;
+  /** The chosen theme. It lives in App, not in the AppState reducer, so a change cannot touch the pattern, language or Screen (R4.9). */
+  theme?: ThemeName;
+  /** Called when the user flips the Night loom switch, so the choice can be stored and applied. */
+  onThemeChosen?: (theme: ThemeName) => void;
   /** True when a new version of the app is waiting, so the visitor is offered the control that loads it (R24.5). */
   updateReady?: boolean;
   onLoadUpdate?: () => void;
 };
 
 /** The shell: navigation, language switch, profile banner, the current screen and one live region. Pure of browser APIs. */
-export function Shell({ state, dispatch, onLanguageChosen, updateReady = false, onLoadUpdate }: ShellProps) {
+export function Shell({ state, dispatch, onLanguageChosen, theme = 'day', onThemeChosen, updateReady = false, onLoadUpdate }: ShellProps) {
   const t = useMemo(() => translator(DICTIONARIES, state.language), [state.language]);
   const { profile, announcement } = state;
   return (
     <div className={styles.shell}>
       <header className={styles.header}>
-        <h1 className={styles.title}>{t('app.title')}</h1>
-        <nav aria-label={t('nav.label')} className={styles.nav}>
-          {SCREENS.map((screen) => (
-            <button
-              key={screen}
-              type="button"
-              className={styles.navButton}
-              aria-current={state.screen === screen ? 'page' : undefined}
-              onClick={() => dispatch({ type: 'navigate', screen })}
-            >
-              {t(`nav.${screen}`)}
-            </button>
-          ))}
-        </nav>
-        <div role="group" aria-label={t('language.label')} className={styles.languages}>
-          {LANGUAGES.map((language) => (
-            <button
-              key={language}
-              type="button"
-              lang={language}
-              className={styles.languageButton}
-              aria-pressed={state.language === language}
-              onClick={() => {
+        <Selvedge />
+        <div className={styles.bar}>
+          <h1 className={styles.title}>{t('app.title')}</h1>
+          <div className={styles.switches}>
+            <Tabs
+              label={t('language.label')}
+              items={LANGUAGES.map((language) => ({
+                key: language,
+                lang: language,
+                label: translator(DICTIONARIES, language)(`language.${language}`),
+              }))}
+              current={state.language}
+              onChoose={(key) => {
+                const language: Language = key === 'en' ? 'en' : 'hi';
                 dispatch({ type: 'set-language', language });
                 onLanguageChosen?.(language);
               }}
-            >
-              {translator(DICTIONARIES, language)(`language.${language}`)}
-            </button>
-          ))}
+            />
+            <ThemeSwitch
+              theme={theme}
+              label={t('theme.label')}
+              stateText={t(theme === 'night' ? 'theme.on' : 'theme.off')}
+              onChoose={(next) => onThemeChosen?.(next)}
+            />
+          </div>
+          <nav aria-label={t('nav.label')} className={styles.nav}>
+            {SCREENS.map((screen) => (
+              <button
+                key={screen}
+                type="button"
+                className={styles.navButton}
+                aria-current={state.screen === screen ? 'page' : undefined}
+                onClick={() => dispatch({ type: 'navigate', screen })}
+              >
+                {t(`nav.${screen}`)}
+              </button>
+            ))}
+          </nav>
         </div>
       </header>
       {updateReady ? (
-        <div className={styles.updateBanner}>
-          <p>{t('update.ready')}</p>
-          <button type="button" className={styles.updateButton} onClick={() => onLoadUpdate?.()}>
-            {t('update.load')}
-          </button>
+        <div className={styles.noticeSlot}>
+          <Notice
+            variant="information"
+            word={t('notice.information')}
+            action={<Button onClick={() => onLoadUpdate?.()}>{t('update.load')}</Button>}
+          >
+            {t('update.ready')}
+          </Notice>
         </div>
       ) : null}
       {profile.status === 'failed' ? (
-        <div className={styles.banner}>
-          <p>
-            <strong>{t('error.profile.banner')}</strong>
-          </p>
-          <p>{t(profileFailureKey(profile.failure))}</p>
+        <div className={styles.noticeSlot}>
+          {/* No role: the Shell's live region and the Screens already announce a profile failure. */}
+          <Notice variant="error" word={t('notice.error')} role={null}>
+            <p className={styles.noticeLine}>
+              <strong>{t('error.profile.banner')}</strong>
+            </p>
+            <p className={styles.noticeLine}>{t(profileFailureKey(profile.failure))}</p>
+          </Notice>
         </div>
       ) : null}
       {profile.status === 'loading' ? <p className={styles.loading}>{t('status.loading')}</p> : null}
@@ -187,6 +215,13 @@ export function App({ fetchText = defaultFetchText, storage, prefersReducedMotio
     setDocumentLanguage(state.language);
   }, [state.language]);
 
+  // The theme is not in the reducer: changing it touches no AppState field (R4.9). The inline script of index.html
+  // chose the same value before the first paint, from the same inputs.
+  const [theme, setTheme] = useState<ThemeName>(() => chooseTheme(readStoredTheme(store), browserPrefersDark()));
+  useLayoutEffect(() => {
+    applyTheme(document.documentElement, theme);
+  }, [theme]);
+
   const [updateReady, setUpdateReady] = useState(false);
   const serviceWorker = useRef<ServiceWorkerHandle | null>(null);
 
@@ -208,6 +243,12 @@ export function App({ fetchText = defaultFetchText, storage, prefersReducedMotio
       state={state}
       dispatch={dispatch}
       onLanguageChosen={(language) => storeLanguage(store, language)}
+      theme={theme}
+      onThemeChosen={(next) => {
+        // A refused store leaves the choice applied for this page session and shows nothing (R4.5).
+        storeTheme(store, next);
+        setTheme(next);
+      }}
       updateReady={updateReady}
       onLoadUpdate={() => serviceWorker.current?.loadUpdate()}
     />

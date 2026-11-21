@@ -6,6 +6,9 @@ import type { GapRepair, RepairResult, Suggestion } from '../../../repair/index.
 import type { Translate } from '../../i18n/messages.ts';
 import type { AppAction } from '../../types.ts';
 import { evidenceText, failureKey, highConfidenceItems, punchedCount } from './repairText.ts';
+import { Button } from '../../components/Button.tsx';
+import { Notice } from '../../components/Notice.tsx';
+import { Panel } from '../../components/Panel.tsx';
 import styles from './Repair.module.css';
 const HOOK_SPACING_PX = 8;
 /** One proposed card: a filled circle for a punched hole and a small ring for a position that is not punched. */
@@ -56,7 +59,11 @@ function GapItem({ gap, skipped, t, onAccept, onSkip, onShowAgain }: { gap: GapR
     <li className={styles.gap}>
       <p className={styles.gapTitle}>{t('repair.gap', { pick: gap.pick + 1, state: t(`repair.gap.${gap.gapKind}`) })}</p>
       {gap.suggestions.length === 0 ? <p>{t(`repair.none.${gap.none ?? 'no-evidence'}`)}</p> : null}
-      {gap.conflict ? <p className={styles.conflict}>{t('repair.conflict')}</p> : null}
+      {gap.conflict ? (
+        <Notice variant="warning" word={t('notice.warning')}>
+          {t('repair.conflict')}
+        </Notice>
+      ) : null}
       {gap.suggestions.map((suggestion) => {
         const key = skipKey(gap.pick, suggestion.kind);
         const kind = t(`repair.kind.${suggestion.kind}`);
@@ -65,9 +72,9 @@ function GapItem({ gap, skipped, t, onAccept, onSkip, onShowAgain }: { gap: GapR
             <div key={key} className={styles.suggestion}>
               <p className={styles.kind}>{kind}</p>
               <p>{t('repair.skipped')}</p>
-              <button type="button" className={styles.button} aria-label={`${t('repair.showAgain')}: ${where}, ${kind}`} onClick={() => onShowAgain(key)}>
+              <Button aria-label={`${t('repair.showAgain')}: ${where}, ${kind}`} onClick={() => onShowAgain(key)}>
                 {t('repair.showAgain')}
-              </button>
+              </Button>
             </div>
           );
         }
@@ -79,12 +86,12 @@ function GapItem({ gap, skipped, t, onAccept, onSkip, onShowAgain }: { gap: GapR
             <p className={styles.evidence}>{evidenceText(t, suggestion)}</p>
             <CardDrawing card={suggestion.card} t={t} />
             <div className={styles.actions}>
-              <button type="button" className={styles.button} aria-label={`${t('repair.accept')}: ${where}, ${kind}`} onClick={() => onAccept(gap.pick, suggestion)}>
+              <Button aria-label={`${t('repair.accept')}: ${where}, ${kind}`} onClick={() => onAccept(gap.pick, suggestion)}>
                 {t('repair.accept')}
-              </button>
-              <button type="button" className={styles.button} aria-label={`${t('repair.skip')}: ${where}, ${kind}`} onClick={() => onSkip(key)}>
+              </Button>
+              <Button aria-label={`${t('repair.skip')}: ${where}, ${kind}`} onClick={() => onSkip(key)}>
                 {t('repair.skip')}
-              </button>
+              </Button>
             </div>
           </div>
         );
@@ -110,15 +117,15 @@ export function RepairPanelView(props: RepairPanelViewProps) {
   const headingId = useId();
   const highCount = result.ok ? highConfidenceItems(result.gaps).length : 0;
   return (
-    <section aria-labelledby={headingId} className={styles.panel}>
+    <Panel as="section" aria-labelledby={headingId} className={styles.panel}>
       <h3 id={headingId} tabIndex={-1} ref={props.headingRef} className={styles.heading}>
         {t('repair.heading')}
       </h3>
       <p className={styles.guesses}>{t('repair.guesses')}</p>
       {!result.ok ? (
-        <p role="alert" className={styles.failure}>
+        <Notice variant="error" word={t('notice.error')}>
           {t(failureKey(result.failure))}
-        </p>
+        </Notice>
       ) : result.gaps.length === 0 ? (
         <p>{t('repair.noGaps')}</p>
       ) : (
@@ -130,13 +137,13 @@ export function RepairPanelView(props: RepairPanelViewProps) {
             ))}
           </ul>
           <div className={styles.actions}>
-            <button type="button" className={`${styles.button} ${styles.secondary}`} disabled={highCount === 0} onClick={props.onAcceptAllHigh}>
+            <Button disabled={highCount === 0} onClick={props.onAcceptAllHigh}>
               {t('repair.acceptAll')}
-            </button>
+            </Button>
           </div>
         </>
       )}
-    </section>
+    </Panel>
   );
 }
 export type RepairPanelProps = {

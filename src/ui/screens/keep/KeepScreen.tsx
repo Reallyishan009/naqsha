@@ -19,6 +19,10 @@ import {
 } from '../../state/keep.ts';
 import type { KeepForm, KeepFormAction } from '../../state/keep.ts';
 import { ProfileNotice } from '../../ProfileNotice.tsx';
+import { Button } from '../../components/Button.tsx';
+import { Field } from '../../components/Field.tsx';
+import { Notice } from '../../components/Notice.tsx';
+import { Panel } from '../../components/Panel.tsx';
 import type { AppAction, AppState, CompareChoice, Language, PatternOrigin } from '../../types.ts';
 import { DesignEntry } from './DesignEntry.tsx';
 import styles from './KeepScreen.module.css';
@@ -142,14 +146,18 @@ export function KeepView(props: KeepViewProps) {
         {t('nav.keep')}
       </h2>
 
-      {pattern.length === 0 ? <p className={styles.empty}>{t('keep.empty')}</p> : null}
+      {pattern.length === 0 ? (
+        <Panel className={styles.block}>
+          <p className={styles.emptyText}>{t('keep.empty')}</p>
+        </Panel>
+      ) : null}
       {failureKey === null ? null : (
-        <p role="alert" className={styles.failure}>
+        <Notice variant="error" word={t('notice.error')}>
           {t(failureKey)}
-        </p>
+        </Notice>
       )}
 
-      <section aria-labelledby="keep-export-title" className={styles.panel}>
+      <Panel as="section" aria-labelledby="keep-export-title" className={styles.panel}>
         <h3 id="keep-export-title" className={styles.sectionTitle}>
           {t('keep.export.heading')}
         </h3>
@@ -173,24 +181,26 @@ export function KeepView(props: KeepViewProps) {
         ))}
         <p>{t('keep.export.untested')}</p>
         {notice}
-        <button type="button" className={styles.button} disabled={!exportEnabled} onClick={props.onExport}>
+        <Button variant="primary" disabled={!exportEnabled} onClick={props.onExport}>
           {t('keep.export.button')}
-        </button>
+        </Button>
         {(props.repairedCount ?? 0) > 0 ? <p>{t('keep.export.guesses')}</p> : null}
-        {exportDone ? <p className={styles.done}>{t('keep.export.done')}</p> : null}
-      </section>
+        {exportDone ? (
+          <Notice variant="success" word={t('notice.success')}>
+            {t('keep.export.done')}
+          </Notice>
+        ) : null}
+      </Panel>
 
-      <section aria-labelledby="keep-save-title" className={styles.panel}>
+      <Panel as="section" aria-labelledby="keep-save-title" className={styles.panel}>
         <h3 id="keep-save-title" className={styles.sectionTitle}>
           {t('keep.save.heading')}
         </h3>
         <div className={styles.fields}>
           {FIELDS.map((field) => (
-            <label key={field} className={styles.field}>
-              <span>{t(`keep.field.${field}`)}</span>
+            <Field key={field} label={t(`keep.field.${field}`)} className={styles.field}>
               {field === 'notes' ? (
                 <textarea
-                  className={styles.input}
                   rows={3}
                   value={form.metadata[field]}
                   onChange={(event) => props.onFormAction({ type: 'set-field', field, value: event.currentTarget.value })}
@@ -198,24 +208,21 @@ export function KeepView(props: KeepViewProps) {
               ) : (
                 <input
                   type="text"
-                  className={styles.input}
                   value={form.metadata[field]}
                   onChange={(event) => props.onFormAction({ type: 'set-field', field, value: event.currentTarget.value })}
                 />
               )}
-            </label>
+            </Field>
           ))}
         </div>
-        <label className={styles.field}>
-          <span>{t('keep.save.note')}</span>
+        <Field label={t('keep.save.note')}>
           <input
             type="text"
-            className={styles.input}
             maxLength={NOTE_MAX}
             value={form.note}
             onChange={(event) => props.onFormAction({ type: 'set-note', value: event.currentTarget.value })}
           />
-        </label>
+        </Field>
         {origin.kind !== 'archive' ? null : (
           <fieldset className={styles.fieldset}>
             <legend className={styles.legend}>{t('keep.save.mode.legend')}</legend>
@@ -235,18 +242,20 @@ export function KeepView(props: KeepViewProps) {
           </fieldset>
         )}
         {notice}
-        <button type="button" className={styles.button} disabled={!saveEnabled} onClick={props.onSave}>
+        <Button disabled={!saveEnabled} onClick={props.onSave}>
           {t('keep.save.button')}
-        </button>
+        </Button>
         <p className={styles.legal}>{t('keep.save.legal')}</p>
         {savedText === null ? null : (
-          <p id="keep-saved" tabIndex={-1} className={styles.done}>
-            {savedText}
-          </p>
+          <Notice variant="success" word={t('notice.success')}>
+            <p id="keep-saved" tabIndex={-1} className={styles.done}>
+              {savedText}
+            </p>
+          </Notice>
         )}
-      </section>
+      </Panel>
 
-      <section aria-labelledby="keep-list-title" className={styles.panel}>
+      <Panel as="section" aria-labelledby="keep-list-title" className={styles.panel}>
         <h3 id="keep-list-title" tabIndex={-1} className={styles.sectionTitle}>
           {t('keep.list.heading')}
         </h3>
@@ -274,7 +283,7 @@ export function KeepView(props: KeepViewProps) {
             ))}
           </ul>
         )}
-      </section>
+      </Panel>
     </section>
   );
 }

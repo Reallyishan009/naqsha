@@ -5,6 +5,10 @@ import { printFailureKey } from '../../i18n/messages.ts';
 import type { Translate } from '../../i18n/messages.ts';
 import { generateSample, sampleWithLostCards } from '../../samples/sampleDesigns.ts';
 import type { AppAction, Confirm, SampleDesign } from '../../types.ts';
+import { Button } from '../../components/Button.tsx';
+import { Field } from '../../components/Field.tsx';
+import { Notice } from '../../components/Notice.tsx';
+import { Panel } from '../../components/Panel.tsx';
 import styles from './WeaveScreen.module.css';
 
 export const SAMPLE_DESIGNS: ReadonlyArray<SampleDesign> = ['diamond', 'border', 'floral'];
@@ -77,34 +81,29 @@ function PrintControls({ design, profile, pattern, t, loadPrint }: PrintControls
   };
   return (
     <div role="group" aria-label={`${t(`tryit.${design}`)}: ${t('print.pick')}`} className={styles.printGroup}>
-      <label className={styles.field}>
-        <span>
-          {t(`tryit.${design}`)}: {t('print.pick')} ({shownPick} / {pickCount})
-        </span>
+      <Field
+        className={styles.field}
+        label={`${t(`tryit.${design}`)}: ${t('print.pick')} (${shownPick} / ${pickCount})`}
+      >
         <input
           type="number"
-          className={styles.select}
           min={1}
           max={Math.max(1, pickCount)}
           step={1}
           value={shownPick}
           onChange={(event) => setPickNumber(clampPickNumber(event.currentTarget.valueAsNumber, pickCount))}
         />
-      </label>
+      </Field>
       <div className={styles.row}>
-        <button type="button" className={styles.button} onClick={() => start('png')}>
-          {t('print.png')}
-        </button>
-        <button type="button" className={styles.button} onClick={() => start('svg')}>
-          {t('print.svg')}
-        </button>
+        <Button onClick={() => start('png')}>{t('print.png')}</Button>
+        <Button onClick={() => start('svg')}>{t('print.svg')}</Button>
       </div>
       <p>{t('print.scale')}</p>
       <p>{t('print.notCut')}</p>
       {failureKey === null ? null : (
-        <p role="alert" className={styles.failure}>
+        <Notice variant="error" word={t('notice.error')}>
           {t(failureKey)}
-        </p>
+        </Notice>
       )}
     </div>
   );
@@ -125,10 +124,8 @@ export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModu
       <p>{t('tryit.intro')}</p>
       <div className={styles.row}>
         {SAMPLE_DESIGNS.map((design) => (
-          <button
+          <Button
             key={design}
-            type="button"
-            className={styles.button}
             disabled={profile === null}
             onClick={() => {
               if (profile === null) return;
@@ -136,13 +133,11 @@ export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModu
             }}
           >
             {t(`tryit.${design}`)}
-          </button>
+          </Button>
         ))}
       </div>
       <div className={styles.row}>
-        <button
-          type="button"
-          className={styles.button}
+        <Button
           disabled={profile === null}
           onClick={() => {
             if (profile === null) return;
@@ -150,7 +145,7 @@ export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModu
           }}
         >
           {t('tryit.lost')}
-        </button>
+        </Button>
       </div>
       <p>{t('tryit.lost.hint')}</p>
       {profile === null || samples === null
@@ -159,17 +154,13 @@ export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModu
             <PrintControls key={design} design={design} profile={profile} pattern={pattern} t={t} loadPrint={loadPrint} />
           ))}
       {asking ? (
-        <div role="group" aria-label={t('tryit.confirmReplace')} className={styles.confirm}>
+        <Panel role="group" aria-label={t('tryit.confirmReplace')} className={styles.confirm}>
           <p>{t('tryit.confirmReplace')}</p>
           <div className={styles.row}>
-            <button type="button" className={styles.button} onClick={() => dispatch({ type: 'confirm-accepted' })}>
-              {t('tryit.confirmYes')}
-            </button>
-            <button type="button" className={styles.button} onClick={() => dispatch({ type: 'confirm-dismissed' })}>
-              {t('tryit.confirmNo')}
-            </button>
+            <Button onClick={() => dispatch({ type: 'confirm-accepted' })}>{t('tryit.confirmYes')}</Button>
+            <Button onClick={() => dispatch({ type: 'confirm-dismissed' })}>{t('tryit.confirmNo')}</Button>
           </div>
-        </div>
+        </Panel>
       ) : null}
     </section>
   );

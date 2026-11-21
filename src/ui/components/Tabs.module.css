@@ -1,0 +1,45 @@
+.tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-4);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  background: var(--surface);
+  border: 2px solid var(--ink-soft);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  transition: transform var(--motion-short);
+}
+
+.tab:active {
+  transform: translateY(1px);
+}
+
+/* The current choice: bold text and a check mark, besides the --zari fill. */
+.current {
+  color: var(--on-zari);
+  font-weight: 700;
+  background: var(--zari);
+  border-color: var(--zari);
+}
+
+.mark {
+  flex: none;
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: var(--on-zari);
+  stroke-width: 2.5;
+  stroke-linecap: square;
+}

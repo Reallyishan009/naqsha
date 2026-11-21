@@ -1,0 +1,64 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  color: var(--ink);
+}
+
+.field > span {
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+}
+
+/* The control border is --ink-soft (--line is too faint to find a field by). */
+.field input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+.field select,
+.field textarea {
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-3);
+  color: var(--ink);
+  font: inherit;
+  background: var(--surface);
+  border: 1px solid var(--ink-soft);
+  border-radius: var(--radius-control);
+}
+
+/* A disabled control differs by more than colour: a dashed border. */
+.field input:disabled,
+.field select:disabled,
+.field textarea:disabled {
+  border-style: dashed;
+  cursor: not-allowed;
+}
+
+.field input[type='file'] {
+  max-width: 100%;
+  font: inherit;
+}
+
+.field input[type='file']::file-selector-button {
+  min-height: var(--touch-target);
+  margin-inline-end: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  background: var(--surface);
+  border: 2px solid var(--ink-soft);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+/* The file chooser of the one primary action of a Screen takes the primary Button look. */
+.field[data-emphasis='primary'] input[type='file']::file-selector-button {
+  color: var(--on-zari);
+  background: var(--zari);
+  border-color: var(--zari);
+}
+
+/* Disabled looks like a disabled Button: a dashed border, no fill. */
+.field[data-emphasis='primary'] input[type='file']:disabled::file-selector-button {
+  color: var(--ink-soft);
+  background: none;
+  border: 2px dashed var(--ink-soft);
+}

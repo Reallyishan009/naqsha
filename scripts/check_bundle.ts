@@ -4,11 +4,14 @@
  * - dist/index.html has no URL that starts with `/` or `http` (R23.3, R13).
  * - a Scan-only marker string is absent from the entry chunk and present in another chunk (R16.10).
  * - the web app manifest and its icons are there, relative and the size they declare (R24.7).
+ * - the inline theme script comes before the module script and the stylesheet link (R4.12).
  * - dist/sw.js carries a generated precache list that covers the built site with a versioned cache name (R24.2, R24.6).
+ * - the four Font_Files are in that precache list (design-and-ux-pass R1.7, R1.12).
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
+import { fontPrecacheProblems } from './checks/fonts.ts';
 import { parsePngInfo } from './checks/pngHeader.ts';
 import { precacheProblems, readPrecacheBlock } from './checks/precache.ts';
 import type { DistFile } from './checks/precache.ts';
@@ -67,6 +70,31 @@ export function findEntryChunk(html: string): string | null {
   return match ? match[1]! : null;
 }
 
+/**
+ * The inline theme script must come first in dist/index.html: before the module script and before the
+ * stylesheet link, so `data-theme` is set before the first paint (R4.12). Returns a list of problems.
+ */
+export function themeScriptProblems(html: string): string[] {
+  let themeAt = -1;
+  for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    const attributes = match[1]!;
+    if (/\bsrc\s*=/i.test(attributes) || /\btype\s*=\s*["']module["']/i.test(attributes)) continue;
+    if (match[2]!.includes('naqsha.theme') && match[2]!.includes('data-theme')) {
+      themeAt = match.index!;
+      break;
+    }
+  }
+  if (themeAt < 0) return ['dist/index.html has no inline classic theme script'];
+  const problems: string[] = [];
+  const moduleAt = html.search(/<script\b[^>]*\btype\s*=\s*["']module["']/i);
+  if (moduleAt < 0) problems.push('dist/index.html has no module script, so the theme script cannot be checked against it');
+  else if (themeAt > moduleAt) problems.push('the inline theme script in dist/index.html comes after the module script');
+  const sheetAt = html.search(/<link\b[^>]*\brel\s*=\s*["']stylesheet["']/i);
+  if (sheetAt < 0) problems.push('dist/index.html has no stylesheet link, so the theme script cannot be checked against it');
+  else if (themeAt > sheetAt) problems.push('the inline theme script in dist/index.html comes after the stylesheet link');
+  return problems;
+}
+
 export function gzippedSize(bytes: Uint8Array): number {
   return gzipSync(bytes, { level: 9 }).length;
 }
@@ -117,6 +145,8 @@ export function checkBundle(distDir: string): BundleReport {
   const html = readFileSync(path.join(distDir, 'index.html'), 'utf8');
   const absoluteUrls = findAbsoluteUrls(html);
   if (absoluteUrls.length > 0) problems.push(`dist/index.html has absolute URLs: ${absoluteUrls.join(', ')}`);
+
+  problems.push(...themeScriptProblems(html));
 
   const entryChunk = findEntryChunk(html);
   let gzippedBytes = 0;
@@ -196,6 +226,7 @@ export function checkBundle(distDir: string): BundleReport {
       precache = { cacheName: block.cacheName, entries: block.entries.length };
       const distFiles: DistFile[] = files.map((file) => ({ path: file, contentHash: '' }));
       problems.push(...precacheProblems(block.entries, distFiles));
+      problems.push(...fontPrecacheProblems(block.entries));
     }
   }
   return { entryChunk: entryChunk ?? '', gzippedBytes, scanChunks, chunks, absoluteUrls, precache, icons, problems };

@@ -4,6 +4,7 @@ import type { PixelData } from '../../../reader/index.ts';
 import type { Translate } from '../../i18n/messages.ts';
 import { markerLabel, nextMarkerIndex } from '../../state/scan.ts';
 import type { HookMarker, HookPosition } from '../../types.ts';
+import { Button } from '../../components/Button.tsx';
 import styles from './ScanScreen.module.css';
 
 export type CardOverlayProps = {
@@ -49,12 +50,12 @@ export function CardOverlay({ image, markers, hookRows, hookColumns, zoom, hitPx
       <div className={styles.stage} style={{ width: `${zoom * 100}%` }}>
         <PhotoCanvas image={image} label={t('scan.image.alt')} />
         {markers.map((marker, index) => (
-          <button
+          <Button
             key={`${marker.hookRow}-${marker.hookColumn}`}
             ref={(element) => {
               buttons.current[index] = element;
             }}
-            type="button"
+            variant="quiet"
             className={styles.marker}
             data-shape={marker.shape}
             data-corrected={marker.corrected ? 'true' : 'false'}
@@ -73,7 +74,7 @@ export function CardOverlay({ image, markers, hookRows, hookColumns, zoom, hitPx
           >
             <span aria-hidden="true" className={styles.shape} />
             {marker.corrected ? <span aria-hidden="true" className={styles.badge} /> : null}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

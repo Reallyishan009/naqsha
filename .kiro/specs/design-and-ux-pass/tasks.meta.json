@@ -113,6 +113,11 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795230434312
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230608030
       }
     ],
     "2.1 Write the font tooling under `scripts/fonts/`": [
@@ -120,6 +125,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229213483
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230620495
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230975528
       }
     ],
     "2.2 Subset the fonts, check the licences and record the report": [
@@ -127,6 +142,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229213537
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230981499
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231135706
       }
     ],
     "2.3 Check the fonts in the Precache and in the files": [
@@ -134,6 +159,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229213604
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231141308
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231308894
       }
     ],
     "2.4 Write the complete tokens in `src/ui/theme/tokens.css`": [
@@ -141,6 +176,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229213645
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231141485
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231309039
       }
     ],
     "2.5 Extend the Contrast_Table in `src/ui/theme/contrast.ts`": [
@@ -148,6 +193,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229213716
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230620650
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230976069
       }
     ],
     "2.6 Apply the theme before the first paint": [
@@ -155,6 +210,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229213757
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230981760
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231136353
       }
     ],
     "2.7 Build Button, ButtonLink, Panel, Field, Tabs and Notice": [
@@ -162,6 +227,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229213853
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231313916
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231542599
       }
     ],
     "2.8 Build WeftProgress and the delayed-progress helper": [
@@ -169,6 +244,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229213913
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231547458
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231746168
       }
     ],
     "2.9 Build ThemeSwitch and Selvedge, and wire them into the Shell": [
@@ -176,6 +261,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229214499
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231751386
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795232057049
       }
     ],
     "2.10 Move the four Screens onto the shared components": [
@@ -183,6 +278,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229214609
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795232058145
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795233115328
       }
     ],
     "2.11 Add the style and primary-Button example tests": [
@@ -190,6 +295,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229214675
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795233115895
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795233763550
       }
     ],
     "2.12 Extend `scripts/check_browser.ts` with the Stage A steps": [
@@ -197,6 +312,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229214742
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795233120847
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795233763335
       }
     ],
     "2.13 Stage A gate and commit": [
@@ -204,6 +329,11 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229214794
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795233767196
       }
     ],
     "3.1 Build Disclosure, ScreenIntro, EmptyState, StateMessage and LoadingState": [
@@ -470,6 +600,13 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229216634
+      }
+    ],
+    "1. Stage 0: screenshot tooling, \"before\" screenshots and baseline numbers": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230608147
       }
     ]
   }

@@ -1,9 +1,5 @@
 .notice {
   margin: 12px 0;
-  padding: 12px 16px;
-  background: var(--surface);
-  border: 2px solid var(--zari);
-  border-radius: var(--radius-panel);
 }
 .noticeText {
   margin: 0 0 8px;
@@ -16,36 +12,8 @@
   gap: 8px;
   margin: 8px 0;
 }
-.button {
-  min-width: var(--touch-target);
-  min-height: var(--touch-target);
-  max-width: 100%;
-  padding: 0 16px;
-  color: var(--ink);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  cursor: pointer;
-}
-.button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.secondary {
-  border-style: dashed;
-}
-.failure {
-  margin: 8px 0;
-  padding: 12px 16px;
-  border: 2px solid var(--madder);
-  border-radius: var(--radius-panel);
-}
 .panel {
   margin: 12px 0;
-  padding: 16px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
 }
 .heading {
   margin: 0 0 8px;
@@ -95,12 +63,6 @@
   height: auto;
   margin: 8px 0;
   color: var(--ink);
-}
-.conflict {
-  margin: 4px 0;
-  padding: 8px 12px;
-  border: 2px dashed var(--ink);
-  overflow-wrap: anywhere;
 }
 .why {
   margin: 8px 0 0;
