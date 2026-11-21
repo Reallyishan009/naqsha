@@ -280,6 +280,7 @@
   "codeview.empty": "There is no design yet. Read a card on the Scan screen, or choose a sample design on the Weave screen.",
   "codeview.damaged.design": "{name} cannot be compared: the card at pick {pick} is damaged. Scan that card again or choose another design.",
   "codeview.diff.heading": "Compare two designs",
+  "codeview.scrollHint": "A line cut off at the edge scrolls sideways.",
   "codeview.diff.hint": "Added means the card is only in the later design. Removed means the card is only in the earlier design.",
   "codeview.diff.first.label": "Earlier design",
   "codeview.diff.second.label": "Later design",
@@ -345,5 +346,14 @@
   "scan.purpose": "Read a card from a photo and add it to your design, one card for each pick.",
   "scan.nextStep": "Choose a photo of one card, check the marks, then accept the card.",
   "codeview.purpose": "See each card of the design as a line of bits, and compare two designs.",
-  "codeview.nextStep": "Open a design, then compare it with another, or step through its picks one by one."
+  "codeview.nextStep": "Open a design, then compare it with another, or step through its picks one by one.",
+  "card.title": "Card for pick {pick}",
+  "card.desc": "{punched} of {total} hook positions punched",
+  "card.damaged": "This card is damaged",
+  "card.missing": "This card is missing",
+  "card.mismatch": "This card does not match the card profile",
+  "card.cannotDraw": "This card cannot be drawn because the card profile is not valid",
+  "hero.title": "A Jacquard loom lifting warp ends",
+  "hero.desc": "A Jacquard head above a punched card that presses on the needles. Where the card has holes, the hooks rise and the matching warp ends lift above the rest, drawn higher and in gold. Lifted warp ends: {lifted}. One weft thread passes under them.",
+  "hero.desc.plain": "A Jacquard head above a punched card that presses on the needles, with the warp ends below at rest. No hook is raised and no warp end is lifted. One weft thread passes."
 }

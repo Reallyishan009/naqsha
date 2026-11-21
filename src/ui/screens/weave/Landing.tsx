@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { Dispatch } from 'react';
+import type { Dispatch, ReactElement } from 'react';
 import type { CardProfile, Pattern } from '../../../codec/index.ts';
 import { profileFailureKey } from '../../i18n/messages.ts';
 import type { Translate } from '../../i18n/messages.ts';
@@ -10,11 +10,20 @@ import { ButtonLink } from '../../components/ButtonLink.tsx';
 import { LoadingState } from '../../components/LoadingState.tsx';
 import { ScreenIntro } from '../../components/ScreenIntro.tsx';
 import { StateMessage } from '../../components/StateMessage.tsx';
+import type { DrawingProps } from '../../illustrations/Drawing.tsx';
+import { HeroLoom } from '../../illustrations/HeroLoom.tsx';
+import { KeepStepIcon, ScanStepIcon, WeaveStepIcon } from '../../illustrations/StepIcons.tsx';
+import { cardGeometry } from '../../illustrations/cardGeometry.ts';
+import { heroLayout } from '../../illustrations/heroLayout.ts';
 import { ClothPreview } from './ClothPreview.tsx';
 import { SAMPLE_DESIGNS } from './TryIt.tsx';
 import styles from './Landing.module.css';
 
-const STEP_KEYS: ReadonlyArray<string> = ['landing.step.scan', 'landing.step.weave', 'landing.step.keep'];
+const STEPS: ReadonlyArray<{ key: string; Icon: (props: DrawingProps) => ReactElement }> = [
+  { key: 'landing.step.scan', Icon: ScanStepIcon },
+  { key: 'landing.step.weave', Icon: WeaveStepIcon },
+  { key: 'landing.step.keep', Icon: KeepStepIcon },
+];
 
 export type SampleTileProps = {
   design: SampleDesign;
@@ -103,8 +112,8 @@ export type LandingProps = {
 
 /**
  * The first Screen: what Naqsha does, in three steps, and three designs to try. Shown while the Current_Pattern has
- * no pick. In reading order: heading, headline, two intro lines, the place for the Hero_Loom, the three steps, the
- * tiles and the link to Scan. The Hero_Loom holds nothing to focus, so CSS may place it elsewhere.
+ * no pick. In reading order: heading, headline, two intro lines, the Hero_Loom, the three steps, the tiles and the
+ * link to Scan. The Hero_Loom holds nothing to focus, so CSS may place it elsewhere.
  */
 export function Landing({ state, dispatch, t, onRetryProfile }: LandingProps) {
   const ready: CardProfile | null = state.profile.status === 'ready' ? state.profile.profile : null;
@@ -112,6 +121,8 @@ export function Landing({ state, dispatch, t, onRetryProfile }: LandingProps) {
     () => (ready === null ? null : SAMPLE_DESIGNS.map((design) => ({ design, pattern: generateSample(ready, design) }))),
     [ready],
   );
+  // The Hero_Loom is drawn from the first Sample_Design; its slot takes the drawing's shape once there is a valid profile.
+  const heroSlotStyle = ready !== null && cardGeometry(ready).ok ? { aspectRatio: heroLayout(ready).aspect } : undefined;
   return (
     <section aria-labelledby="screen-title" className={styles.screen}>
       <div className={styles.landing}>
@@ -122,13 +133,17 @@ export function Landing({ state, dispatch, t, onRetryProfile }: LandingProps) {
         <div className={styles.intro}>
           <ScreenIntro purpose={t('weave.purpose')} next={t('weave.empty')} />
         </div>
-        {/* Reserved for the Hero_Loom, at the size it will have, so the page does not move when it arrives. */}
-        <div className={styles.heroSlot} data-hero-slot="" aria-hidden="true" />
+        {/* The Hero_Loom's place: the box has the picture's own shape, so the page does not move when it is drawn. */}
+        <div className={styles.heroSlot} data-hero-slot="" style={heroSlotStyle}>
+          {ready !== null && previews !== null && previews[0] !== undefined ? (
+            <HeroLoom profile={ready} pattern={previews[0].pattern} reducedMotion={state.prefersReducedMotion} t={t} />
+          ) : null}
+        </div>
         <ol className={styles.steps} aria-label={t('landing.steps.name')}>
-          {STEP_KEYS.map((key) => (
+          {STEPS.map(({ key, Icon }) => (
             <li key={key} className={styles.step}>
-              {/* The place of the Step_Icon; until it is drawn, the number of the step fills it. */}
-              <span className={styles.stepMark} aria-hidden="true" />
+              {/* The label states the step, so the Step_Icon is decoration. */}
+              <Icon />
               <span className={styles.stepLabel}>{t(key)}</span>
             </li>
           ))}

@@ -27,6 +27,7 @@ import { Notice } from '../../components/Notice.tsx';
 import { Panel } from '../../components/Panel.tsx';
 import { ScreenIntro } from '../../components/ScreenIntro.tsx';
 import { StateMessage } from '../../components/StateMessage.tsx';
+import { NoSavedDesignsIllustration } from '../../illustrations/SpotIllustrations.tsx';
 import { WeftProgress } from '../../components/WeftProgress.tsx';
 import type { AppAction, AppState, CompareChoice, Language, PatternOrigin } from '../../types.ts';
 import { DesignEntry } from './DesignEntry.tsx';
@@ -229,7 +230,7 @@ export function KeepView(props: KeepViewProps) {
       </Panel>
 
       {/* The export choices and the other details of the design: collapsed on arrival, so the name, Save and export stay in view. */}
-      <div className={styles.more}>
+      <Panel className={styles.more}>
         <Disclosure label={t('disclosure.more')}>
           {OPTION_GROUPS.map((group) => (
             <fieldset key={group.name} className={styles.fieldset}>
@@ -295,14 +296,14 @@ export function KeepView(props: KeepViewProps) {
             </fieldset>
           )}
         </Disclosure>
-      </div>
+      </Panel>
 
       <Panel as="section" aria-labelledby="keep-list-title" className={styles.panel}>
         <h3 id="keep-list-title" tabIndex={-1} className={styles.sectionTitle}>
           {t('keep.list.heading')}
         </h3>
         {designs !== null && designs.length === 0 ? (
-          <StateMessage variant="empty" message={t('keep.list.empty')} next={t('keep.list.empty.next')} t={t} />
+          <StateMessage variant="empty" illustration={<NoSavedDesignsIllustration />} message={t('keep.list.empty')} next={t('keep.list.empty.next')} t={t} />
         ) : null}
         {designs === null || designs.length === 0 ? null : (
           <ul className={styles.list}>

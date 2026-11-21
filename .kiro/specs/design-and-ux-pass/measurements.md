@@ -23,6 +23,29 @@ Every JavaScript chunk, as printed:
 
 Scan chunk: `assets/ScanScreen-02MsZOA5.js`, 9152 bytes gzipped.
 
+## After Stage C bundle
+
+Task 4.7. Label: after Stage C. Printed by `npm run check-bundle` after `npm run build` (gzip level 9). "Change" is after minus the baseline (before Stage A) above.
+
+Entry_Chunk: `./assets/index-DrddQ7uj.js`, 109126 bytes gzipped (limit 204800), 8051 bytes more than the baseline 101075. The limit is 95674 bytes away.
+
+| File | Baseline (before Stage A) | After Stage C | Change |
+|---|---|---|---|
+| assets/CodeViewScreen-CGYejRHN.js | 9321 | 9504 | +183 |
+| assets/Panel-ChUTrmoB.js | (not present) | 3908 | +3908 |
+| assets/RepairPanel-CoxnrWd3.js | 3119 | 3026 | -93 |
+| assets/ScanScreen-CcvgxDeV.js | 9152 | 9064 | -88 |
+| assets/bits-DtHZV-gD.js | 510 | 507 | -3 |
+| assets/download-BjoTNPCU.js | 2227 | 2279 | +52 |
+| assets/index-DrddQ7uj.js (Entry_Chunk) | 101075 | 109126 | +8051 |
+| assets/style-*.js | 538 | (not present) | -538 |
+| assets/validateCardGrid-ClOvHDqy.js | 2975 | 2978 | +3 |
+| Sum of all JavaScript chunks | 128917 | 140392 | +11475 |
+
+Scan chunk: `assets/ScanScreen-CcvgxDeV.js`, 9064 bytes gzipped (baseline 9152, -88).
+
+Notes: the Entry_Chunk is under 204,800 bytes, so no change was needed. `HeroLoom.tsx` keeps its static import, no Illustration was moved into a lazy chunk, and no fallback or error boundary was added. `npm run build` and `npm run check-bundle` both exit 0 ("bundle check passed"). The `style` chunk of the baseline is no longer a separate file and a new shared `Panel` chunk appeared (with its own `Panel-*.css`), so the per-file rows for those two do not compare like for like; the sum row does.
+
 ## Licence record
 
 Task 2.2. Checked 2026-11-21. Pinned google/fonts commit SHA: `06bfe0d62a98375cb09c942fa18e68bd32cff057` (`FONTS_REF` in `scripts/fonts/subset.sh`). Each licence text was downloaded from that commit and the script confirmed that it contains "SIL OPEN FONT LICENSE Version 1.1". All three are SIL OFL 1.1, so all four fonts were copied.
@@ -93,6 +116,12 @@ Task 2.10 (the four Screens moved onto Button, Field, Panel and Notice). Strengt
   - `tests/ui/screens/repair.test.tsx`, "R1.2 a gap with no suggestion says why, and an invalid input is an alert": old `/role="alert"[^>]*>The card profile is not valid/`; new an alert text starts with "The card profile is not valid".
   - `tests/ui/screens/code.test.tsx`, four tests (R7.2 "Saved designs cannot be reached", R7.3 "Kota cannot be compared...", R7.8 "These designs are too long to compare", R7.6 "The card profile could not be used."): old `/<p role="alert"[^>]*>TEXT/`; new an alert text starts with TEXT. R6.12 R6.13: old `/<p role="alert"/` (one or more); new `alertTexts(html).length >= 1`. R7.5: old `/<p role="status"[^>]*>The two designs are the same\.<\/p>/`; new `noticeTexts(html, 'status')` contains "The two designs are the same.".
 - A Field renders `<label><span>TEXT</span>CONTROL</label>`, so the label wraps its control and has no `for`. The `<span>` has no class (the Field module styles `.field > span`), so the existing `<span>Speed</span>` and `<label[^>]*><span>` tests pass unchanged.
+Task 4.4 (every card picture is `CardDrawing`). Strength is kept.
+- `tests/ui/screens/repair.test.tsx`, "R3.2 each drawing uses a filled circle ...": old `html` contains `fill="currentColor"` and `fill="none"`; new the `<circle>` elements with class `punchedHole` equal the punched count of every suggested card and those with class `unpunchedMark` equal the unpunched count (counts are exact, where the old check only found one of each). The `aria-label="Proposed card: N of 192 hook positions punched"` check and the legend check are unchanged. Reason: the drawing no longer sets `fill` on the circle; the style sheet does.
+- `tests/ui/accessibility.test.tsx` "R14.4 ... has a text name": old, an `<svg>` is named only by `aria-label` or `alt`; new, an `<svg>` is also named by a non-empty `<title>` as its first child. Reason: the Weave `CardDrawing` takes its name from `card.title` in a `<title>`. An svg with neither is still reported (the checker's own self-test is unchanged).
+- `tests/ui/accessibility.test.tsx` "R14.11 the base text size ...": old, the only `@media` allowed in any `src/ui` style sheet is `(prefers-reduced-motion: reduce)`; new, a `(min-width: Npx)` query is also allowed when its block holds no `font` text. Reason: Requirement 12.4 puts the card beside the cloth from 720 px. The test's purpose (no query changes the text size) is kept and is now checked inside the block.
+- `tests/ui/screens/repair.test.tsx` helper `panel()` passes the new `profile` prop of `RepairPanelView` (the drawing is made from the Card_Profile). No assertion changed.
+- `tests/ui/screens/cardDrawing.test.tsx` (R15.6, the circle count of `CardThumb`) is unchanged and passes: `CardThumb` is still imported from `BatchList.tsx`, which re-exports it.
   - `tests/ui/screens/code.test.tsx`, "R3.4 R3.5 the jump control ...": old `<label for=ID>Go to pick number</label><input ...inputMode="numeric".../>` and `id="ID"` on the input; new `<label><span>Go to pick number</span><input ...inputMode="numeric".../></label>`. The label names the input by wrapping it. Reason: the shared Field wraps its control.
   - `tests/ui/screens/code.test.tsx`, "R6.16 an empty Archive ..." and "R7.1 an empty Current_Pattern ...": old `<label for=ID>Earlier design</label>` (and Later), and `>Earlier design</label>`; new `<label><span>Earlier design</span><select` (and Later). Same reason.
   - `tests/ui/components/components.test.tsx`, "R6.8 a Field renders a label ...": old `<span class="...">Name</span>`; new `<span>Name</span>`. This is the design's own markup (`<label><span>{label}</span>{children}</label>`), which the 2.7 version had drawn with a class on the span.
@@ -131,6 +160,22 @@ Task 3.7 (Code view: the compare panel moves under the intro and above the pick 
 ## Hindi wrapping fixes
 
 ## After inspection
+
+Task 4.9. Three rounds (build, `npm run screenshots -- after`, look at the files). All 24 files in `media/design/after/` were opened; the last round's files are the ones kept.
+
+Defects found and fixed:
+- `code-diff-day-1280.png`, `code-diff-night-1280.png`: the Bit_Lines of the diff entries and of the pick list are cut at the right edge (they scroll sideways, as R11.8 requires) with nothing that says so. Fix: a visible line "A line cut off at the edge scrolls sideways." (`codeview.scrollHint`, en and hi) above the diff entries (`DiffPanel.tsx`) and above the pick list (`CodeViewScreen.tsx`, `.scrollHint`); the scroll regions (`.entries`, `.textArea`, `.bits`) get an always-drawn bar in theme colours (`DiffPanel.module.css`, `LineRow.module.css`). Headless Chrome does not paint the bars in the captures, so the sentence is what the files show.
+- `code-diff-day-320.png`, `code-diff-night-320.png`: a diff entry showed only about 20 characters of its Bit_Line, because the marker, the word "Changed" and the pick number took the line before it. Fix: in a container no wider than 40rem (`@container` on `.entries`) the entry is a block, so the Bit_Line and its ^ row take the line below the label and start at the left edge (`DiffPanel.module.css`).
+- `keep-versions-day-1280.png`, `keep-versions-night-1280.png`, `keep-versions-day-320.png`, `keep-versions-night-320.png`: the contents of "More" (colour choices, Metadata fields, note, save mode) sat on the bare page between two panels, so the screen looked unfinished. Fix: the "More" Disclosure is inside a `Panel` (`KeepScreen.tsx`).
+- `code-diff-*`: the Code view empty state had no Spot_Illustration beside it in one path; `NothingToCompareIllustration` is passed (`CodeViewScreen.tsx`).
+- `scripts/screenshots.ts` hint (not a defect in `src/`): the overlap hint reported 3 pairs on `weave-lost-*-1280.png` ("The cards on both sides are th…" against "Pick 16", "Pick 36" and "Accept all high-confidence…") and 307 pairs on `code-diff-*-1280.png`. The first came from the text of a closed `<details>` ("Why not the other kinds?"), which the capture's `content-visibility: visible` override made measurable though it is not drawn; the second from Bit_Lines scrolled out of their scroll region. The hint now ignores closed `<details>` content (the summary stays) and cuts each box by the scroll or clip box of its ancestors. Result: 0 overlapping pairs and no sideways overflow in all 24 files, and the files show no overlap.
+- Hindi string `codeview.nextStep` held a hyphen ("एक-एक"), which the Diff_Entry marker rule (R10.6/R10.7, `tests/ui/i18n/messages.test.ts`) forbids. It was found when the new key changed the order of the property's sample. Now "…उसकी पिकें एक के बाद एक देखें।" in `hi.json` and `HINDI_REVIEW.md` (still unreviewed). No property was changed.
+
+Seen and left as it is (a choice, not a defect): on the Landing at 1280 the text block is centred in the height of the Hero_Loom (an empty band above "Weave", by design: no hole under the step strip); the cloth canvas on Weave shows an unwoven band above the cloth; the repair panel on Weave 1280 spans the cloth column only. Text and graphic contrast and the gap between adjacent controls looked right in all 24 files (every gap seen is 8 px or more).
+
+Unfixed: none.
+
+Hindi wrapping fixes: no Hindi file is among the 24; the Hindi strings that grow their controls at 320 px are covered by `check:browser` step 17. `codeview.nextStep` and `codeview.scrollHint` wrap in their paragraphs.
 
 ## Keys with equal Hindi one and other text
 
@@ -172,6 +217,14 @@ Task 3.9 (delayed Thread_Progress). No selector, accessible name or test id chan
 - Keep: `KeepScreen` has `exporting` and `saving` state and passes them to `KeepView`, which shows `WeftProgress` (`progress.exporting`, `progress.saving`) in the export and save panels after 300 ms. A second click while one is running is ignored.
 - Behaviour change in Keep export: `onExport` now waits one `setTimeout(0)` before it builds and downloads the file, so the browser can paint the progress; before, it ran in the click handler. `runExport` is unchanged. `check:browser` steps 8 and 15 (BMP export, online and offline) still pass.
 - `KeepView` and `ScanView` take an optional `afterDelay` prop (default `useAfterDelay`). Reason: tests render on the server, where effects never run, and the project forbids `vi.mock`; the new `tests/ui/screens/delayedProgress.test.tsx` passes a rule driven by a fake clock and the real `startDelay`.
+
+## Step_Icons and Spot_Illustrations
+Task 4.6. No test id, accessible name or selector changed; no existing assertion was touched.
+- New in `src/ui/illustrations/`: `strokes.ts` (`STROKE.line` 2 and `STROKE.fine` 1.5, the only stroke widths), `Drawing.tsx` (the shared `<svg>`: viewBox, round pen, `aria-hidden` by default or `role="img"` with `<title>` and `<desc>` when `decorative` is false), `Drawings.module.css` (token colours, `max-width` 2rem for a Step_Icon and 11rem for a Spot_Illustration), `StepIcons.tsx`, `SpotIllustrations.tsx`. No new i18n key (every drawing is decorative beside its text), so `ADDED_KEYS` and `HINDI_REVIEW.md` are unchanged.
+- Landing: each Step_Strip item draws its Step_Icon in place of the CSS-numbered circle. `.stepMark` and the step counter were removed from `Landing.module.css`, and the gap between icon and label is 0 (the drawing has its own margin).
+- Keep, Scan and Code view pass their Spot_Illustration to the `illustration` prop of the `empty` StateMessage.
+- Defect found by `check:browser` steps 15, 16 and 18: with a 56 px icon the Landing's first tile ended at 713 px (en) and 705 px (hi) against the 700 px limit, and steps 16 and 18 failed after it. Fixed by a 32 px icon and a 0 gap; all 19 steps pass.
+- New `tests/ui/illustrations/illustrations.test.tsx` (examples only, as the task lists).
 
 ## Notes for the final report
 

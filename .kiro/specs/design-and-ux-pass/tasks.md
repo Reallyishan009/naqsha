@@ -119,7 +119,7 @@ Rules that apply to every task:
     - Commit with the message `Stage A: fonts, tokens, theme switch and base components`, adding the changed files by name (`src/ui`, `public/fonts`, `index.html`, `scripts`, `tests`, `docs/HINDI_REVIEW.md`, `.gitignore`, `measurements.md`).
     - _Requirements: 22.6, 22.7, 22.8, 25.1, 25.2_
 
-- [ ] 3. Stage B: understanding (Landing, navigation, disclosure, states, translations)
+- [x] 3. Stage B: understanding (Landing, navigation, disclosure, states, translations)
   - [x] 3.1 Build Disclosure, ScreenIntro, EmptyState, StateMessage and LoadingState
     - Add `components/Disclosure.tsx`: a `<button aria-expanded aria-controls>` followed by `<div id hidden={!expanded}>`; collapsed on mount unless `expanded` is given; controlled use through `expanded` and `onToggle`; the content stays mounted so entered values are kept; Escape inside the panel collapses it and focuses the button.
     - Add `ScreenIntro({ purpose, next })` (two `<p>` lines), `EmptyState` (a Panel with an optional decorative illustration, a message and a next-step sentence), `StateMessage` (a Notice or an EmptyState, with an optional retry that is a secondary Button of at least 48 px) and `LoadingState` (`<div role="status">` with text and a WeftProgress, mounted only while loading).
@@ -175,56 +175,56 @@ Rules that apply to every task:
     - Add one step that reads `getBoundingClientRect().bottom` of the headline, the Step_Strip and the first tile at 390 by 844 in English and in Hindi and expects them within 700 px, and that starts a sample from a tile; add a step that checks the primary Button of each Screen is within the first 844 px at 390 by 844.
     - List each changed step under "Disclosure check changes" in `measurements.md` with the old selector, the new selector and the reason. No existing assertion is removed or loosened.
     - _Requirements: 8.10, 10.7, 10.8, 22.2, 22.3, 23.7_
-  - [-] 3.12 Stage B gate and commit
+  - [x] 3.12 Stage B gate and commit
     - Run `npm run review-list`, `npm run typecheck`, `npm run test:run`, `npm run build`, `npm run check-bundle` and `npm run check:browser`; all must exit 0 with no test newly skipped.
     - Commit with the message `Stage B: landing, navigation, disclosure and states`, adding the changed files by name.
     - _Requirements: 22.6, 22.7, 22.8, 25.1, 25.2_
 
 - [ ] 4. Stage C: illustrations, bundle numbers, "after" screenshots and inspection
-  - [~] 4.1 Add `cardGeometry` in `src/ui/illustrations/cardGeometry.ts`
+  - [x] 4.1 Add `cardGeometry` in `src/ui/illustrations/cardGeometry.ts`
     - Export the `CardGeometry` type and `cardGeometry(profile)`, which calls `validateCardProfile` from `src/codec` and returns `{ ok: false }` for an invalid profile. Build the hook centres with the exported `hookCentreMm` from `printable/layout.ts`. The punched positions come from `validateCardGrid(profile, grid)` returning no violation. No card dimension is written as a literal.
     - Add `tests/ui/illustrations/cardGeometry.test.ts`: the demo profile's size, hook centres, hole diameter, the two peg holes with their own diameters and the lacing holes come from the profile; a second profile with other values gives other numbers; an invalid profile returns `{ ok: false }`.
     - _Requirements: 12.2, 12.3, 12.5, 12.12_
-  - [~] 4.2 Add `heroLayout` and `heroPose`
+  - [x] 4.2 Add `heroLayout` and `heroPose`
     - In `heroLayout.ts` export `heroLayout(profile)` returning the viewBox size, the card box and the x of each end (`MARGIN_UNITS + i * END_PITCH_UNITS`), with `LIFT_UNITS`, `PRESS_UNITS` and `END_PITCH_UNITS` as drawing units.
     - In `heroPose.ts` export `heroPose(profile, pattern)`: the first pick with at least one punched hook position, checked with `validateCardGrid`, encoded with `encodeCardGrid`, returning `{ kind: 'lifted', pickIndex, grid, liftedEnds, endsPerPick }`, or `{ kind: 'plain' }` when no pick qualifies, the grid does not match, or encoding fails. Each lifted end is the end its hook position maps to.
     - Add `tests/ui/illustrations/heroPose.test.ts`: the first pick with a punched hook position is chosen; the lifted-end count equals that pick's punched count and each sits at its encoded end; a Pattern with no usable pick, a mismatching grid and an empty Pattern return `plain`; the layout has one x per end.
     - _Requirements: 13.2, 13.10_
-  - [~] 4.3 Build CardDrawing, CardFace and the CardThumb wrapper
+  - [x] 4.3 Build CardDrawing, CardFace and the CardThumb wrapper
     - Add `CardDrawing.tsx`, `CardFace` (the part shared with the Hero_Loom) and `CardDrawing.module.css` with the props in the design. The `<svg>` has `viewBox` from the profile size and `width: 100%`. It draws the stock `<rect>` (no `rx`, corner radius 0, 1px `--ink-soft` outline with `vector-effect: non-scaling-stroke`), one `<circle class="punchedHole">` per punched hook position, the two peg holes, the lacing holes, and with `marks="rings"` an `unpunchedMark` circle per unpunched position. The shadow is `box-shadow: var(--shadow-card)` on the `<figure>`. Wrap in `React.memo`.
     - Cases: invalid profile draws no card and shows `card.cannotDraw`; a grid that does not match draws stock, peg holes and lacing holes with `card.mismatch` in `<desc>`; `damaged` or `missing` draws a `--madder` hatch gap and a `<figcaption>` with `card.damaged` or `card.missing`; `adjacentText` false gives `role="img"` with `<title>` and `<desc>`; `adjacentText` true gives `aria-hidden="true"` with neither. Keep `CardThumb` as a thin wrapper so existing imports work.
     - Add keys `card.title`, `card.desc`, `card.damaged`, `card.missing`, `card.mismatch` and `card.cannotDraw` to both files.
     - Add `tests/ui/illustrations/cardDrawing.test.tsx`: the number of `punchedHole` circles equals the punched count; centres and radius equal the geometry for the demo profile and for a second profile; corner radius 0; the mismatch and invalid-profile cases do not throw; the `aria-hidden` and `role="img"` cases; the damaged and missing text; no colour literal in the module. `tests/ui/screens/cardDrawing.test.tsx` still passes unchanged.
     - _Requirements: 3.4, 4.11, 12.1, 12.2, 12.3, 12.5, 12.6, 12.7, 12.8, 12.9, 12.10, 12.11, 12.12_
-  - [~] 4.4 Replace every earlier card picture with CardDrawing
+  - [x] 4.4 Replace every earlier card picture with CardDrawing
     - In `WeavePlayer.tsx` draw the current card of the shown pick with `CardDrawing` beside the cloth from 720 px and below the playback strip on narrow screens (`adjacentText` false; the last card while finished). In `scan/BatchList.tsx` use `CardThumb` with `label` set to the existing `scan.batch.thumb.alt` text. In `RepairPanel.tsx` remove the old `CardDrawing` and use the new one with `marks="rings"` and `label` set to the existing `repair.draw` text. Show a lost card with `state="missing"` or `"damaged"`. `CardOverlay` stays, because it marks sampled positions on a photograph.
     - Re-aim `tests/ui/screens/repair.test.tsx` R3.2 from `fill="currentColor"` and `fill="none"` to: `punchedHole` circles equal the punched count, `unpunchedMark` circles equal the unpunched count, and the `aria-label` and the legend are unchanged. Log the old and new selector under "Changed selectors".
     - Add an example test that no old card picture remains in `src/ui` (the old drawing's name or markup is not found outside the new component).
     - _Requirements: 12.4, 12.10, 12.11, 22.1, 22.2, 22.3_
-  - [~] 4.5 Build the HeroLoom and add it to the Landing
+  - [x] 4.5 Build the HeroLoom and add it to the Landing
     - Add `HeroLoom.tsx` and `HeroLoom.module.css`: a Jacquard head frame, the card through `CardFace`, a needle, a hook and a warp line for each end, and a weft bar. Hooks and ends of the lifted pose get `hookRaised` and `endLifted`, translated up by `--lift` from `LIFT_UNITS`, so raised and resting differ by position, and also by colour (`--zari` against `--indigo`).
     - One Lift_Cycle with `animation-iteration-count: 1` and duration `calc(var(--motion-long) * 6)`: the card presses by `PRESS_UNITS`, the raised hooks and lifted ends rise, the weft bar passes, everything returns to rest. The element is never remounted by a re-render or a language change. Under reduced motion (`data-motion="still"` from `AppState.prefersReducedMotion`, and the `@media` rule) the base transform is the lifted pose and nothing animates.
     - `role="img"` with `aria-labelledby` pointing at `<title>` (`hero.title`) and `<desc>` (`hero.desc`) in the current language. It scales to its container and causes no horizontal overflow at 320 and 1280 px. Add `hero.title` and `hero.desc` to both files. Place it in the Landing slot, after the scan link on narrow screens by CSS `order`, with no focusable element.
     - Add `tests/ui/illustrations/hero.test.tsx`: raised-hook count and lifted-end count each equal the punched count of the chosen pick, at the encoded indices; the `plain` pose draws no raised hook and no lifted end; `data-motion="still"` under reduced motion; title and desc change with the language; one animation with one iteration; no colour literal.
     - _Requirements: 4.11, 13.1, 13.2, 13.3, 13.4, 13.5, 13.7, 13.8, 13.10, 23.4_
-  - [~] 4.6 Build Step_Icons and Spot_Illustrations and wire them in
+  - [x] 4.6 Build Step_Icons and Spot_Illustrations and wire them in
     - Add `StepIcons.tsx` (scan: a frame with corner brackets; weave: a cloth with one weft passing; keep: a folder tab with a tick) and `SpotIllustrations.tsx` (no saved designs: an empty shelf; no cards scanned: an empty camera frame; nothing to compare: two sheets side by side with a gap). Each has a `viewBox`, `width: 100%` up to a CSS `max-width`, colours only from `currentColor` or token classes, `decorative` defaulting to `true` (`aria-hidden`, no `<title>`), and drawing content different from the others. No gradient, `<filter>`, emoji, religious symbol, deity, skull or blood.
     - Put a Step_Icon in each Step_Strip item of the Landing, and the matching Spot_Illustration in the `EmptyState` of Keep, Scan and Code view, each beside its text message.
     - Add `tests/ui/illustrations/illustrations.test.tsx`: the three icons differ and the three illustrations differ; each has a `viewBox`; no colour literal, `<filter>`, `linearGradient`, `radialGradient` or emoji in the source; the non-decorative form has `role="img"`, a `<title>` and a `<desc>`; the repository holds no svg, png, jpg, jpeg, gif, webp, ico, woff, woff2, ttf or otf file added for an illustration (outside `public/fonts`); `package.json` has the same `dependencies` and `devDependencies` as in the Stage 0 commit.
     - _Requirements: 8.3, 11.5, 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.8, 14.9, 23.8, 25.10_
-  - [~] 4.7 Measure the bundle after Stage C
+  - [x] 4.7 Measure the bundle after Stage C
     - Run `npm run build` and `npm run check-bundle`. Under "Baseline bundle" in `measurements.md` add the file name and gzipped bytes of the Entry_Chunk and of every other JavaScript chunk, labelled "after Stage C".
     - If the Entry_Chunk is 204,800 bytes or more, change only `HeroLoom.tsx` to be loaded with `lazy` and a `Suspense` fallback of the same size built from `heroLayout`, add an error boundary that keeps the fallback if the chunk fails, name each Illustration moved in `measurements.md`, and add an example test for the fallback size. If it is under the limit, keep the static import and say so in the notes.
     - _Requirements: 13.6, 13.9, 15.1, 15.3, 15.4, 15.5, 15.6_
-  - [~] 4.8 Take the 24 "after" screenshots
+  - [x] 4.8 Take the 24 "after" screenshots
     - Add to `scripts/screenshots.ts` the automatic hints for each view (`scrollWidth <= clientWidth`, and the bounding boxes of text elements that overlap), printed per file. They are hints only.
     - Run `npm run build`, then `npm run screenshots -- after`. Check `media/design/after/` holds exactly 24 valid files, taken with the theme chosen only through the Theme_Switch, and that the lost, versions and diff views show the content Requirement 24.9 names.
     - _Requirements: 24.2, 24.3, 24.4, 24.6, 24.9, 24.10, 24.11_
-  - [~] 4.9 Inspect the 24 "after" files and fix every defect
+  - [x] 4.9 Inspect the 24 "after" files and fix every defect
     - Open each of the 24 files with the file reader and look for these defects: overlapping text or control boxes, text cut off by its container, a horizontal scrollbar, text below 4.5:1 or a meaningful graphic below 3:1, and two adjacent controls less than 8 px apart. Fix each defect in `src/ui` (a Hindi string that cannot fit at 320 px wraps and grows its control; record its key and the fix under "Hindi wrapping fixes"), rebuild, and retake each file that changed with `npm run screenshots -- after`. Do at most 3 rounds.
     - Under "After inspection" in `measurements.md` list each defect with its file name and how it was fixed, or state that none were found. List any defect left after round 3 as unfixed with its file name.
     - _Requirements: 5.3, 23.2, 23.9, 23.10, 24.7, 24.8_
-  - [~] 4.10 Stage C gate and commit
+  - [-] 4.10 Stage C gate and commit
     - Run `npm run review-list`, `npm run typecheck`, `npm run test:run`, `npm run build`, `npm run check-bundle`, `npm run check:browser` and `node scripts/contrast_report.ts` (update the "Contrast table" notes if a value changed); all commands must exit 0 with no test newly skipped.
     - Commit with the message `Stage C: card drawing, hero loom and illustrations`, adding the changed files by name, including `media/design/after/`.
     - _Requirements: 22.6, 22.7, 22.8, 25.1, 25.2_

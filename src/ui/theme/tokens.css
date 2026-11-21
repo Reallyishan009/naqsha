@@ -101,6 +101,8 @@
 
 html {
   font-size: 18px;
+  /* The native radio, check box and slider take the accent instead of the browser's blue. */
+  accent-color: var(--zari);
 }
 
 body {

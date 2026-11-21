@@ -46,6 +46,7 @@
 /* The one scroller of the entries, and the one tab stop among them (R11.1). It scrolls in both directions, so a Bit_Line
    and its ^ row, which sit in one block, scroll sideways together. It is never wider than the page (R11.8). */
 .entries {
+  container-type: inline-size;
   min-width: 0;
   max-width: 100%;
   max-height: 70vh;
@@ -148,4 +149,43 @@
   margin: 0;
   min-height: 1.5em;
   overflow-wrap: anywhere;
+}
+
+/* The bar of a region that scrolls sideways is drawn all the time, so a line cut at the edge reads as "scrolls on" and
+   not as broken text. Overlay bars hide until a touch. The colours are theme tokens. Firefox keeps its own bar. */
+.entries::-webkit-scrollbar,
+.textArea::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.entries::-webkit-scrollbar-track,
+.textArea::-webkit-scrollbar-track {
+  background: var(--line);
+}
+
+.entries::-webkit-scrollbar-thumb,
+.textArea::-webkit-scrollbar-thumb {
+  background: var(--ink-soft);
+  border: 2px solid var(--line);
+  border-radius: 5px;
+}
+
+/* On a narrow screen the marker, the kind and the pick number take a line, and the Bit_Line takes the line below it,
+   so it starts at the left edge and shows as much of the line as the width allows before it scrolls sideways. */
+@container (max-width: 40rem) {
+  .entry {
+    display: block;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .marker,
+  .kind {
+    margin-right: 8px;
+  }
+
+  .bits {
+    margin-top: 4px;
+  }
 }

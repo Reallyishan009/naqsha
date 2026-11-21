@@ -39,11 +39,14 @@
   font-size: var(--text-body);
 }
 
-/* The place of the Hero_Loom: a fixed shape, so the page does not move when the drawing arrives. */
+/* The place of the Hero_Loom: a box of the drawing's own shape (set inline once there is a profile), so the page
+   does not move when the drawing arrives. 3 / 2 holds the place while there is no profile yet. */
 .heroSlot {
   order: 1;
   width: 100%;
+  max-width: 100%;
   aspect-ratio: 3 / 2;
+  min-width: 0;
 }
 
 .steps {
@@ -53,34 +56,14 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  counter-reset: step;
 }
 
 .step {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-1);
-  counter-increment: step;
+  gap: 0;
   min-width: 0;
-}
-
-/* The slot of the Step_Icon. Until the icon is drawn it holds the number of the step. */
-.stepMark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--space-5);
-  height: var(--space-5);
-  font-size: var(--text-meta);
-  font-weight: 700;
-  color: var(--ink);
-  border: 2px solid var(--ink-soft);
-  border-radius: 50%;
-}
-
-.stepMark::before {
-  content: counter(step);
 }
 
 .stepLabel {
@@ -144,14 +127,19 @@
 
 @container (min-width: 40rem) {
   .landing {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
     grid-template-areas:
+      'above hero'
       'title hero'
       'headline hero'
       'intro hero'
       'steps hero'
+      'below hero'
       'tiles tiles'
       'link link';
+    /* The drawing is taller than the text beside it. The two spare rows share the extra height, so the text block sits
+       in the middle of the drawing's height, with no empty hole under it. */
+    grid-template-rows: minmax(0, 1fr) auto auto auto auto minmax(0, 1fr) auto auto;
     column-gap: var(--space-6);
   }
 

@@ -25,6 +25,7 @@ import {
   riseLevel,
   riseReducer,
   focusAfterSkip,
+  pickLabel,
   scrubTo,
   shownPick,
   SPEEDS,
@@ -34,6 +35,7 @@ import {
 import type { PlaybackAt } from '../../state/playback.ts';
 import type { AppAction, AppState, ClothChoices, ClothView, ReadyCloth } from '../../types.ts';
 import { Button } from '../../components/Button.tsx';
+import { CardDrawing } from '../../illustrations/CardDrawing.tsx';
 import { Disclosure } from '../../components/Disclosure.tsx';
 import { Field } from '../../components/Field.tsx';
 import { Notice } from '../../components/Notice.tsx';
@@ -270,6 +272,9 @@ export function WeavePlayer({ state, dispatch, t, arrival, scheduler = browserSc
   const riseRunning = rise === 'running' && !state.prefersReducedMotion;
   const level = riseRunning ? riseLevel(riseFraction(pick, pickCount), false, false) : 1;
   const canvasSize = shown?.settings.viewport ?? viewport;
+  // The card of the pick shown (the last card once finished), drawn with its lost state when the pick is a gap.
+  const cardNumber = pickLabel(pick, pickCount).current;
+  const cardGap = shown?.cloth.gaps.find((gap) => gap.pick === cardNumber - 1);
   const colourOptions = COLOURS.map((colour) => (
     <option key={colour.hex} value={colour.hex}>
       {t(colour.key)}
@@ -284,6 +289,7 @@ export function WeavePlayer({ state, dispatch, t, arrival, scheduler = browserSc
       </h2>
       <ScreenIntro purpose={t('weave.purpose')} next={t('weave.nextStep')} />
 
+      <div className={styles.playArea}>
       <div ref={wrapperRef} className={styles.clothArea}>
         {empty ? (
           <Panel>
@@ -309,6 +315,7 @@ export function WeavePlayer({ state, dispatch, t, arrival, scheduler = browserSc
         {gapText === '' ? null : <p className={styles.gaps}>{t('weave.gaps', { picks: gapText })}</p>}
       </div>
 
+      <div className={styles.notice}>
       <RepairNotice
         gapCount={shown === null ? 0 : shown.cloth.gaps.length}
         repairedPicks={state.repairs.picks}
@@ -318,6 +325,7 @@ export function WeavePlayer({ state, dispatch, t, arrival, scheduler = browserSc
         t={t}
         dispatch={dispatch}
       />
+      </div>
       <p className={styles.position} data-tabular>
         {pickPositionText(t, pick, pickCount)}
       </p>
@@ -336,6 +344,18 @@ export function WeavePlayer({ state, dispatch, t, arrival, scheduler = browserSc
           {t('weave.stepForward')}
         </Button>
         <RiseSkipControl running={riseRunning} t={t} onSkip={onSkip} />
+      </div>
+      {empty ? null : (
+        <div className={styles.card}>
+          <CardDrawing
+            profile={profile}
+            grid={pattern[cardNumber - 1] ?? null}
+            state={cardGap?.kind ?? 'ok'}
+            pickNumber={cardNumber}
+            t={t}
+          />
+        </div>
+      )}
       </div>
 
       <Field label={t('weave.scrubber')} className={styles.scrubberField}>

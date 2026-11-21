@@ -90,6 +90,17 @@
   gap: 0.5rem;
   margin-top: 1rem;
 }
+/* The flex gap spaces the lines; a paragraph margin on top of it left a 44px hole between two sentences. */
+.printGroup p {
+  margin: 0;
+}
+.printGroup > .field {
+  max-width: 16rem;
+}
+.printGroup + .printGroup {
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
 
 .emptyText {
   margin: 0;
@@ -102,4 +113,49 @@
 
 .confirm {
   margin-top: 12px;
+}
+/* The cloth, its notice and the playback strip, with the card of the pick shown: below the strip on a narrow
+   screen, beside the cloth from 720px. */
+.playArea {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 var(--space-4);
+}
+.playArea > * {
+  min-width: 0;
+}
+.notice {
+  min-width: 0;
+}
+.card {
+  width: 12rem;
+  max-width: 100%;
+  margin: var(--space-2) 0;
+}
+@media (min-width: 720px) {
+  .playArea {
+    grid-template-columns: minmax(0, 1fr) 12rem;
+    grid-template-areas:
+      'cloth card'
+      'notice .'
+      'position .'
+      'strip .';
+    align-items: start;
+  }
+  .playArea > .clothArea {
+    grid-area: cloth;
+  }
+  .playArea > .card {
+    grid-area: card;
+    margin-top: 0;
+  }
+  .playArea > .notice {
+    grid-area: notice;
+  }
+  .playArea > .position {
+    grid-area: position;
+  }
+  .playArea > .strip {
+    grid-area: strip;
+  }
 }

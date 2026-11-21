@@ -50,6 +50,10 @@
   cursor: pointer;
 }
 
+.choice + .choice {
+  margin-top: 8px;
+}
+
 .radio {
   width: 24px;
   height: 24px;

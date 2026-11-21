@@ -57,12 +57,15 @@
   margin: 4px 0;
   overflow-wrap: anywhere;
 }
-.drawing {
-  display: block;
+.suggestion .drawing {
+  width: 16rem;
   max-width: 100%;
-  height: auto;
   margin: 8px 0;
-  color: var(--ink);
+}
+.gap .lostCard {
+  width: 10rem;
+  max-width: 100%;
+  margin: 8px 0;
 }
 .why {
   margin: 8px 0 0;

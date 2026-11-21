@@ -25,6 +25,7 @@ import { Field } from '../../components/Field.tsx';
 import { Panel } from '../../components/Panel.tsx';
 import { ScreenIntro } from '../../components/ScreenIntro.tsx';
 import { StateMessage } from '../../components/StateMessage.tsx';
+import { NoCardsScannedIllustration } from '../../illustrations/SpotIllustrations.tsx';
 import { WeftProgress } from '../../components/WeftProgress.tsx';
 import type { AppAction, AppState, HookPosition, ScanBatch, ScanState } from '../../types.ts';
 import { BatchList } from './BatchList.tsx';
@@ -145,11 +146,12 @@ export function ScanView(props: ScanViewProps) {
           </Panel>
           <ProfileNotice profile={profile} t={t} />
           {batch.length === 0 ? (
-            <StateMessage variant="empty" message={t('scan.batch.empty')} next={t('scan.batch.empty.next')} t={t} />
+            <StateMessage variant="empty" illustration={<NoCardsScannedIllustration />} message={t('scan.batch.empty')} next={t('scan.batch.empty.next')} t={t} />
           ) : null}
         </>
       )}
       {/* Everything else is behind "More": it starts collapsed and the screen opens it when a read completes. */}
+      <div className={styles.more}>
       <Disclosure label={t('disclosure.more')} expanded={props.moreExpanded} onToggle={props.onMoreToggle}>
         {props.replacingIndex === null ? null : (
           <div className={styles.row}>
@@ -190,6 +192,7 @@ export function ScanView(props: ScanViewProps) {
           ) : null}
         </Panel>
       </Disclosure>
+      </div>
     </section>
   );
 }

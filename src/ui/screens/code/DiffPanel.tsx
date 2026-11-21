@@ -437,6 +437,7 @@ function DiffResult({ first, second, diff, t, diffTextDeps }: DiffResultProps) {
     <div className={styles.result}>
       <Counts diff={diff} t={t} />
       <p className={styles.hint}>{t('codeview.diff.hint')}</p>
+      <p className={styles.hint}>{t('codeview.scrollHint')}</p>
       {isSameDesign(diff) ? (
         <Notice variant="information" word={t('notice.information')} role="status">
           {t('codeview.diff.same')}

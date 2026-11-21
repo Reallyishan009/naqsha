@@ -25,6 +25,7 @@ function panel(language: Language, overrides: Partial<Parameters<typeof RepairPa
   return renderToStaticMarkup(
     <RepairPanelView
       result={shown}
+      profile={profile}
       skipped={new Set()}
       t={translator(DICTIONARIES, language)}
       onAccept={noop}
@@ -97,8 +98,13 @@ describe('R3.2 the panel', () => {
   });
   it('R3.2 each drawing uses a filled circle for a punched hole and a ring for one that is not, and says how many are punched', () => {
     const html = panel('en');
-    expect(html).toContain('fill="currentColor"');
-    expect(html).toContain('fill="none"');
+    if (!result.ok) throw new Error('failed');
+    const cards = result.gaps.flatMap((gap) => gap.suggestions.map((suggestion) => suggestion.card));
+    const punched = cards.reduce((sum, card) => sum + card.flat().filter(Boolean).length, 0);
+    const unpunched = cards.reduce((sum, card) => sum + card.flat().filter((hole) => !hole).length, 0);
+    const classCount = (name: string): number => (html.match(new RegExp(`<circle[^>]*class="[^"]*${name}[^"]*"`, 'g')) ?? []).length;
+    expect(classCount('punchedHole')).toBe(punched);
+    expect(classCount('unpunchedMark')).toBe(unpunched);
     expect(html).toMatch(/aria-label="Proposed card: \d+ of 192 hook positions punched"/);
     expect(html).toContain(t('repair.legend'));
   });

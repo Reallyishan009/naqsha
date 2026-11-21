@@ -10,6 +10,9 @@
 .panel {
   margin: 16px 0;
 }
+.more {
+  margin: 16px 0 0;
+}
 .emptyText {
   margin: 0;
   color: var(--ink-soft);
@@ -148,9 +151,6 @@
   width: 100%;
   max-width: 12rem;
   height: auto;
-}
-.thumbCard {
-  fill: var(--card);
 }
 .note {
   margin: 8px 0;

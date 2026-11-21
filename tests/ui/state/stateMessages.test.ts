@@ -71,6 +71,15 @@ export const ADDED_KEYS: readonly string[] = [
   'scan.nextStep',
   'codeview.purpose',
   'codeview.nextStep',
+  'card.title',
+  'card.desc',
+  'card.damaged',
+  'card.missing',
+  'card.mismatch',
+  'card.cannotDraw',
+  'hero.title',
+  'hero.desc',
+  'hero.desc.plain',
 ];
 
 /** The purpose and next-step key of each of the four screens (R10.1). */

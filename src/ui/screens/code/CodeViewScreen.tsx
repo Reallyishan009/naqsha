@@ -17,6 +17,7 @@ import { Field } from '../../components/Field.tsx';
 import { Notice } from '../../components/Notice.tsx';
 import { ScreenIntro } from '../../components/ScreenIntro.tsx';
 import { StateMessage } from '../../components/StateMessage.tsx';
+import { NothingToCompareIllustration } from '../../illustrations/SpotIllustrations.tsx';
 import styles from './CodeViewScreen.module.css';
 import { DiffPanel } from './DiffPanel.tsx';
 import type { DiffTextDeps } from './diffText.ts';
@@ -270,7 +271,7 @@ export function CodeViewScreen({
       ) : null}
 
       {pickCount === 0 ? (
-        <StateMessage variant="empty" message={t('codeview.empty')} next={t('codeview.nextStep')} t={t} />
+        <StateMessage variant="empty" illustration={<NothingToCompareIllustration />} message={t('codeview.empty')} next={t('codeview.nextStep')} t={t} />
       ) : !bodyShown ? null : (
         <>
           <p className={styles.summary}>
@@ -279,6 +280,7 @@ export function CodeViewScreen({
           </p>
           <div className={styles.body}>
             <div className={styles.listingPane}>
+              {lines.length === 0 ? null : <p className={styles.scrollHint}>{t('codeview.scrollHint')}</p>}
               {/* A Listing given no Lines for a pattern with picks would ask for a new empty Window on every render. */}
               {lines.length === 0 ? null : (
                 <Listing

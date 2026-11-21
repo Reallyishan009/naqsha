@@ -300,6 +300,11 @@ type LayoutMetrics = { cssContentSize?: { height: number }; contentSize: { heigh
 
 /** Writes one full-page PNG, `width` pixels wide, as soon as it is taken. */
 async function capture(page: Page, width: number, file: string): Promise<void> {
+  // The Code view lists its diff entries with `content-visibility: auto`, so a full-page capture would leave the entries
+  // below the 800 px window blank, although a weaver who scrolls to them sees them. The page is painted in full for the capture.
+  await page.ev(
+    `(()=>{let s=document.getElementById('naqsha-paint-all');if(!s){s=document.createElement('style');s.id='naqsha-paint-all';s.textContent='*{content-visibility:visible !important}';document.head.appendChild(s)}return true})()`,
+  );
   await page.ev(`document.fonts.ready.then(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>r(true)))))`);
   const metrics = await page.cdp.call<LayoutMetrics>('Page.getLayoutMetrics');
   const contentHeight = Math.max(WINDOW_HEIGHT, Math.ceil((metrics.cssContentSize ?? metrics.contentSize).height));
@@ -309,6 +314,51 @@ async function capture(page: Page, width: number, file: string): Promise<void> {
     clip: { x: 0, y: 0, width, height: contentHeight, scale: 1 },
   });
   writeFileSync(file, Buffer.from(shot.data, 'base64'));
+}
+
+// ---------------------------------------------------------------- hints
+
+/** Page expression: the sideways overflow and the overlapping text boxes, as plain data. */
+const HINTS_EXPRESSION = `(()=>{
+  const root=document.documentElement;
+  /* The box a weaver can see: the element's box cut by every ancestor that clips or scrolls, or null when nothing shows. */
+  const shown=e=>{
+    const b=e.getBoundingClientRect();
+    let l=b.left,t=b.top,r=b.right,u=b.bottom;
+    for(let p=e.parentElement;p&&p!==root&&p!==document.body;p=p.parentElement){
+      const s=getComputedStyle(p);
+      if(s.overflowX==='visible'&&s.overflowY==='visible')continue;
+      const c=p.getBoundingClientRect();
+      if(s.overflowX!=='visible'){l=Math.max(l,c.left);r=Math.min(r,c.right);}
+      if(s.overflowY!=='visible'){t=Math.max(t,c.top);u=Math.min(u,c.bottom);}
+    }
+    return r-l>0&&u-t>0?{left:l,top:t,right:r,bottom:u}:null;
+  };
+  const texts=[...document.querySelectorAll('body *')].filter(e=>{
+    if(e.children.length!==0||e.textContent.trim()==='')return false;
+    const s=getComputedStyle(e);
+    if(s.visibility==='hidden'||s.display==='none')return false;
+    const d=e.closest('details:not([open])');if(d&&!e.closest('summary'))return false;
+    return shown(e)!==null;
+  }).map(e=>({e,r:shown(e)}));
+  const clashes=[];
+  for(let i=0;i<texts.length;i++)for(let j=i+1;j<texts.length;j++){
+    const a=texts[i].r,b=texts[j].r;
+    const w=Math.min(a.right,b.right)-Math.max(a.left,b.left);
+    const h=Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top);
+    if(w>1&&h>1)clashes.push(JSON.stringify(texts[i].e.textContent.trim().slice(0,30))+' / '+JSON.stringify(texts[j].e.textContent.trim().slice(0,30)));
+  }
+  return {scrollWidth:root.scrollWidth,clientWidth:root.clientWidth,clashes};
+})()`;
+
+type Hints = { scrollWidth: number; clientWidth: number; clashes: string[] };
+
+/** Prints the automatic hints for the page as it is shown. They are hints only and never change the exit status. */
+async function printHints(page: Page, name: string): Promise<void> {
+  const hints = await page.ev<Hints>(HINTS_EXPRESSION);
+  const fits = hints.scrollWidth <= hints.clientWidth;
+  console.log(`hint  ${name}: scrollWidth ${hints.scrollWidth} ${fits ? '<=' : '>'} clientWidth ${hints.clientWidth}; ${hints.clashes.length} overlapping text box pair(s)`);
+  for (const pair of hints.clashes.slice(0, 10)) console.log(`hint  ${name}:   overlap ${pair}`);
 }
 
 // ---------------------------------------------------------------- main
@@ -379,6 +429,11 @@ async function main(): Promise<number> {
             const name = `${view}-${theme}-${width}.png`;
             await capture(page, width, path.join(outDir, name));
             console.log(`saved ${name}`);
+            try {
+              await printHints(page, name);
+            } catch (error) {
+              console.log(`hint  ${name}: could not be computed: ${messageOf(error)}`);
+            }
           }
         } catch (error) {
           const lost = names.filter((name) => !existsSync(path.join(outDir, name)));

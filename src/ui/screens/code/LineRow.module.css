@@ -79,3 +79,20 @@
   white-space: nowrap;
   border: 1px dashed var(--ink);
 }
+
+/* The bar of a region that scrolls sideways is drawn all the time, so a line cut at the edge reads as "scrolls on" and
+   not as broken text. Overlay bars hide until a touch. The colours are theme tokens. Firefox keeps its own bar. */
+.bits::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.bits::-webkit-scrollbar-track {
+  background: var(--line);
+}
+
+.bits::-webkit-scrollbar-thumb {
+  background: var(--ink-soft);
+  border: 2px solid var(--line);
+  border-radius: 5px;
+}

@@ -1,48 +1,20 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { Dispatch } from 'react';
-import type { CardGrid, CardProfile, Pattern } from '../../../codec/index.ts';
+import type { CardProfile, Pattern } from '../../../codec/index.ts';
 import { suggestRepairs } from '../../../repair/index.ts';
 import type { GapRepair, RepairResult, Suggestion } from '../../../repair/index.ts';
 import type { Translate } from '../../i18n/messages.ts';
 import type { AppAction } from '../../types.ts';
 import { evidenceText, failureKey, highConfidenceItems, punchedCount } from './repairText.ts';
+import { CardDrawing } from '../../illustrations/CardDrawing.tsx';
 import { Button } from '../../components/Button.tsx';
 import { Notice } from '../../components/Notice.tsx';
 import { Panel } from '../../components/Panel.tsx';
 import styles from './Repair.module.css';
-const HOOK_SPACING_PX = 8;
-/** One proposed card: a filled circle for a punched hole and a small ring for a position that is not punched. */
-export function CardDrawing({ card, t }: { card: CardGrid; t: Translate }) {
-  const hookColumns = card[0]?.length ?? 0;
-  const { punched, total } = punchedCount(card);
-  const label = t('repair.draw', { punched, total });
-  return (
-    <svg
-      className={styles.drawing}
-      role="img"
-      aria-label={label}
-      viewBox={`0 0 ${Math.max(1, hookColumns) * HOOK_SPACING_PX} ${Math.max(1, card.length) * HOOK_SPACING_PX}`}
-      width={Math.max(1, hookColumns) * HOOK_SPACING_PX}
-    >
-      <title>{label}</title>
-      {card.map((hookRow, hookRowIndex) =>
-        hookRow.map((punchedHole, hookColumnIndex) => (
-          <circle
-            key={`${hookRowIndex}-${hookColumnIndex}`}
-            cx={hookColumnIndex * HOOK_SPACING_PX + HOOK_SPACING_PX / 2}
-            cy={hookRowIndex * HOOK_SPACING_PX + HOOK_SPACING_PX / 2}
-            r={punchedHole ? HOOK_SPACING_PX / 2 - 1 : HOOK_SPACING_PX / 4}
-            fill={punchedHole ? 'currentColor' : 'none'}
-            stroke="currentColor"
-            strokeWidth={1}
-          />
-        )),
-      )}
-    </svg>
-  );
-}
 export type RepairPanelViewProps = {
   result: RepairResult;
+  /** The Card_Profile the proposed cards are drawn from; null draws the notice that the card cannot be drawn. */
+  profile: CardProfile | null;
   /** Keys `${pick}:${kind}` of the suggestions the weaver skipped. */
   skipped: ReadonlySet<string>;
   t: Translate;
@@ -53,11 +25,20 @@ export type RepairPanelViewProps = {
   onShowAgain: (key: string) => void;
 };
 export const skipKey = (pick: number, kind: Suggestion['kind']): string => `${pick}:${kind}`;
-function GapItem({ gap, skipped, t, onAccept, onSkip, onShowAgain }: { gap: GapRepair } & Pick<RepairPanelViewProps, 'skipped' | 't' | 'onAccept' | 'onSkip' | 'onShowAgain'>) {
+function GapItem({ gap, profile, skipped, t, onAccept, onSkip, onShowAgain }: { gap: GapRepair } & Pick<RepairPanelViewProps, 'profile' | 'skipped' | 't' | 'onAccept' | 'onSkip' | 'onShowAgain'>) {
   const where = t('repair.gap.short', { pick: gap.pick + 1 });
   return (
     <li className={styles.gap}>
       <p className={styles.gapTitle}>{t('repair.gap', { pick: gap.pick + 1, state: t(`repair.gap.${gap.gapKind}`) })}</p>
+      <CardDrawing
+        profile={profile}
+        grid={null}
+        state={gap.gapKind}
+        pickNumber={gap.pick + 1}
+        adjacentText
+        className={styles.lostCard}
+        t={t}
+      />
       {gap.suggestions.length === 0 ? <p>{t(`repair.none.${gap.none ?? 'no-evidence'}`)}</p> : null}
       {gap.conflict ? (
         <Notice variant="warning" word={t('notice.warning')}>
@@ -84,7 +65,14 @@ function GapItem({ gap, skipped, t, onAccept, onSkip, onShowAgain }: { gap: GapR
               {kind} · {t(`repair.confidence.${suggestion.confidence}`)}
             </p>
             <p className={styles.evidence}>{evidenceText(t, suggestion)}</p>
-            <CardDrawing card={suggestion.card} t={t} />
+            <CardDrawing
+              profile={profile}
+              grid={suggestion.card}
+              marks="rings"
+              label={t('repair.draw', { ...punchedCount(suggestion.card) })}
+              className={styles.drawing}
+              t={t}
+            />
             <div className={styles.actions}>
               <Button aria-label={`${t('repair.accept')}: ${where}, ${kind}`} onClick={() => onAccept(gap.pick, suggestion)}>
                 {t('repair.accept')}
@@ -133,7 +121,7 @@ export function RepairPanelView(props: RepairPanelViewProps) {
           <p className={styles.legend}>{t('repair.legend')}</p>
           <ul className={styles.gapList}>
             {result.gaps.map((gap) => (
-              <GapItem key={gap.pick} gap={gap} skipped={props.skipped} t={t} onAccept={props.onAccept} onSkip={props.onSkip} onShowAgain={props.onShowAgain} />
+              <GapItem key={gap.pick} gap={gap} profile={props.profile} skipped={props.skipped} t={t} onAccept={props.onAccept} onSkip={props.onSkip} onShowAgain={props.onShowAgain} />
             ))}
           </ul>
           <div className={styles.actions}>
@@ -168,6 +156,7 @@ export function RepairPanel({ profile, pattern, t, dispatch }: RepairPanelProps)
   return (
     <RepairPanelView
       result={result}
+      profile={profile}
       skipped={skipped}
       t={t}
       headingRef={headingRef}

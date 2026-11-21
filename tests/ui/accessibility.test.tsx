@@ -135,9 +135,11 @@ function unnamed(html: string): string[] {
     if (id !== undefined && namedById.has(id)) continue;
     if (ariaLabel(match[2]!) === '') missing.push(`${match[1]} ${match[2]}`);
   }
-  for (const match of html.matchAll(/<(canvas|svg|img)\b([^>]*)>/g)) {
+  for (const match of html.matchAll(/<(canvas|svg|img)\b([^>]*)>(<title>[^<]*<\/title>)?/g)) {
     if (/aria-hidden="true"/.test(match[2]!)) continue;
-    const named = ariaLabel(match[2]!) !== '' || /\balt="[^"]+"/.test(match[2]!);
+    // An svg is named by its aria-label or by a non-empty <title> as its first child (the CardDrawing of Weave).
+    const titled = match[1] === 'svg' && /<title>[^<]*\S[^<]*<\/title>/.test(match[3] ?? '');
+    const named = ariaLabel(match[2]!) !== '' || /\balt="[^"]+"/.test(match[2]!) || titled;
     if (!named) missing.push(`${match[1]} ${match[2]}`);
   }
   return missing;
@@ -233,7 +235,17 @@ describe('base text size', () => {
     for (const file of cssFiles(uiDir)) {
       const css = strip(readFileSync(file, 'utf8'));
       for (const query of css.matchAll(/@media\s*([^{]*)\{/g)) {
-        expect(query[1]!.trim(), `${path.relative(uiDir, file)} has a media query`).toBe('(prefers-reduced-motion: reduce)');
+        const condition = query[1]!.trim();
+        if (/^\(min-width:\s*\d+px\)$/.test(condition)) {
+          // A width query may lay a screen out, and may not touch a font: its block holds no `font` property.
+          let depth = 1;
+          let end = query.index! + query[0].length;
+          while (depth > 0 && end < css.length) depth += css[end] === '{' ? 1 : css[end] === '}' ? -1 : 0, end++;
+          const block = css.slice(query.index! + query[0].length, end);
+          expect(block, `${path.relative(uiDir, file)} sets a font inside ${condition}`).not.toMatch(/font/);
+          continue;
+        }
+        expect(condition, `${path.relative(uiDir, file)} has a media query`).toBe('(prefers-reduced-motion: reduce)');
       }
     }
     expect(/(?:^|\n)body\s*\{([^}]*)\}/.exec(tokens)?.[1] ?? '').not.toMatch(/font-size/);
