@@ -353,7 +353,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - The boundary test of task 1.3 now has a non-empty `src/ui` file set; confirm it passes and reports on the real Code view files.
     - _Requirements: R8.4, R12.9_
 
-- [ ] 4. Bundle, precache, browser checks and docs
+- [x] 4. Bundle, precache, browser checks and docs
   - _Requirements: R8.6, R8.10, R9.2, R9.3, R9.4, R9.5, R9.6, R9.7, R9.8, R9.9, R11.8, R12.5, R12.6, R12.7, R12.9, R12.10, R12.11_
 
   - [x] 4.1 Parameterise `check_bundle` over chunk markers
@@ -387,7 +387,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - Regenerate `docs/HINDI_REVIEW.md` so the unreviewed Code view strings are listed.
     - _Requirements: R8.10, R9.4_
 
-  - [~] 4.5 Final checkpoint
+  - [x] 4.5 Final checkpoint
     - Ensure all tests pass, ask the user if questions arise.
     - Run `npm run test:run`, `npm run typecheck`, `npm run build`, `npm run check-bundle` and `npm run check:all`, and report the exact output of every failure. Zero typecheck errors with `"strict": true`, and no `any`, `as any`, `@ts-ignore` or `@ts-expect-error` anywhere in the feature (R8.6).
     - Confirm all eight demo-essential properties exist and pass: P1, P2, P3, P4, P5, P6, P7, P10 (R12.5). Name every cuttable task that was dropped and what it leaves unchecked (R12.7).
