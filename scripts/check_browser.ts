@@ -14,6 +14,7 @@ import type { CardGrid, CardProfile } from '../src/codec/index.ts';
 import { DEFAULT_EXPORT_OPTIONS, exportPatternBmp, readPatternBmp } from '../src/exporter/index.ts';
 import { DEFAULT_PIXELS_PER_MM } from '../src/ui/printable/raster.ts';
 import { generateSample } from '../src/ui/samples/sampleDesigns.ts';
+import { WINDOW_SIZE } from '../src/ui/state/codeView.ts';
 import { bmpMismatches, parseBmpHeader } from './checks/bmpHeader.ts';
 import { findChrome } from './checks/chrome.ts';
 import { parsePngInfo } from './checks/pngHeader.ts';
@@ -438,6 +439,20 @@ async function checkDisclosure(page: Page, screen: AnyScreen, index: number): Pr
   return `${where}: collapsed on arrival, ${closed.tabbable} controls out of the Tab order, Enter and Space toggle aria-expanded, the primary Button stays in view when it opens; ${focusReturn}`;
 }
 
+/**
+ * Every element of the page that is the "newer Naqsha is ready" notice, found by what it says: an element whose own text
+ * is the `update.ready` message, or a button whose accessible name (its `aria-label`, else its text) is the `update.load`
+ * label, in either language. Hidden elements count too. Returns one line per hit, so an empty list means no notice.
+ */
+const UPDATE_NOTICE_HITS = `(()=>{const messages=${JSON.stringify([EN['update.ready'], HI['update.ready']])};const labels=${JSON.stringify([EN['update.load'], HI['update.load']])};const hits=[];for(const e of document.body.querySelectorAll('*')){const own=[...e.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim();if(own!==''&&messages.includes(own))hits.push('<'+e.tagName.toLowerCase()+'> says "'+own+'"')}for(const b of document.body.querySelectorAll('button,[role="button"]')){const name=(b.getAttribute('aria-label')||b.textContent||'').trim();if(labels.includes(name))hits.push('button named "'+name+'"')}return hits})()`;
+
+/** Puts a copy of the notice text on the page for a moment and checks the finder sees it, so "no notice found" cannot mean "finder broken". */
+async function updateNoticeFinderWorks(page: Page): Promise<boolean> {
+  return page.ev<boolean>(
+    `(()=>{const probe=document.createElement('p');probe.textContent=${JSON.stringify(EN['update.ready'])};document.body.appendChild(probe);const found=${UPDATE_NOTICE_HITS}.length>0;probe.remove();return found})()`,
+  );
+}
+
 const KEEP_LIST_TEXT = `(()=>{const h=document.getElementById('keep-list-title');const s=h?h.closest('section'):null;return s?s.innerText:null})()`;
 
 function buildSteps(ctx: Context): BrowserStep[] {
@@ -460,13 +475,17 @@ function buildSteps(ctx: Context): BrowserStep[] {
         await sleep(500);
         expect(page.consoleErrors.length === 0, `console errors on load:\n${page.consoleErrors.join('\n')}`);
         // The first install of the service worker is not an update: once it controls the page, no "newer Naqsha" notice shows.
-        await page.waitFor(`navigator.serviceWorker.controller!==null`, 'the first service worker to take control of the page');
-        await sleep(300);
-        const notice = await page.ev<boolean>(
-          `(()=>{const text=document.body.innerText;return ${JSON.stringify([EN['update.ready'], HI['update.ready']])}.some(m=>m&&text.includes(m))})()`,
+        // The worker has installed, is active, controls this page, and no second worker is installing or waiting.
+        const worker = await page.waitFor<string>(
+          `(async()=>{if(!('serviceWorker' in navigator))return null;const r=await navigator.serviceWorker.ready.catch(()=>null);if(!r||!r.active||r.active.state!=='activated'||!navigator.serviceWorker.controller)return null;return r.waiting||r.installing?null:'active, controlling, none waiting'})()`,
+          'the first service worker to install, activate and take control of the page',
+          30_000,
         );
-        expect(!notice, 'the "newer Naqsha is ready" notice is shown on a first visit');
-        return `title "${title}", "${heading}" visible, Try it enabled, no console errors, no update notice on the first visit`;
+        await sleep(1_000);
+        expect(await updateNoticeFinderWorks(page), 'the finder of the update notice does not see a copy of its text, so it proves nothing');
+        const hits = await page.ev<string[]>(UPDATE_NOTICE_HITS);
+        expect(hits.length === 0, `the "newer Naqsha is ready" notice is shown on a first visit: ${hits.join('; ')}`);
+        return `title "${title}", "${heading}" visible, Try it enabled, no console errors, no "${EN['update.ready']}" notice on the first visit (worker ${worker}; found by text and button name)`;
       },
     },
     {
@@ -1197,6 +1216,98 @@ function buildSteps(ctx: Context): BrowserStep[] {
           expect(failedFonts.length === 0, `font requests failed: ${failedFonts.join(' | ')}`);
           return `${note}; no font request failed`;
         };
+        /**
+         * The Landing is on screen with the network off, with its Hero_Loom drawn: the svg is found by its role "img" and its accessible
+         * name (the `hero.title` text, from its `<title>` through `aria-labelledby`) inside the hero slot, and has a size and shapes.
+         */
+        const landingLoads = async (): Promise<string> => {
+          const language: Language = (await page.ev<string>('document.documentElement.lang')) === 'hi' ? 'hi' : 'en';
+          const words = WORDS[language];
+          const seen = await page
+            .waitFor<{ name: string; width: number; height: number; shapes: number; headline: string; tiles: number; navigation: string }>(
+              `(()=>{const slot=document.querySelector('[data-hero-slot]');const svg=slot?slot.querySelector('svg[role="img"]'):null;if(!svg)return null;const ids=(svg.getAttribute('aria-labelledby')||'').split(/\\s+/).filter(Boolean);const name=ids.map(id=>{const e=document.getElementById(id);return e?e.textContent.trim():''}).join(' ').trim();const r=svg.getBoundingClientRect();const h=document.querySelector('main h3');const nav=performance.getEntriesByType('navigation')[0];return {name,width:r.width,height:r.height,shapes:svg.querySelectorAll('path,rect,circle,line,polygon,polyline,ellipse').length,headline:h?h.textContent.trim():'',tiles:document.querySelectorAll('[data-sample]').length,navigation:nav?nav.type:'unknown'}})()`,
+              'the hero loom drawing (an svg with role "img" in the hero slot) on the Landing',
+              20_000,
+            )
+            .catch(async (error: unknown) => {
+              const state = await page.ev<string>(
+                `JSON.stringify({screen:document.querySelector('#screen-title')?.textContent.trim()??null,slot:!!document.querySelector('[data-hero-slot]'),slotHtml:(document.querySelector('[data-hero-slot]')?.innerHTML||'').slice(0,120),text:(document.body.innerText||'').slice(0,160)})`,
+              );
+              throw new Error(`${error instanceof Error ? error.message : String(error)}; page: ${state}`);
+            });
+          expect(seen.name.startsWith(words['hero.title']!), `the hero loom's accessible name is "${seen.name.slice(0, 60)}", expected it to start with "${words['hero.title']}"`);
+          expect(seen.width > 0 && seen.height > 0 && seen.shapes > 0, `the hero loom is ${Math.round(seen.width)}x${Math.round(seen.height)} px with ${seen.shapes} shapes`);
+          expect(seen.headline === words['landing.headline'], `the Landing headline is "${seen.headline}", expected "${words['landing.headline']}"`);
+          expect(seen.tiles >= DESIGNS.length, `the Landing shows ${seen.tiles} sample controls, expected ${DESIGNS.length}`);
+          return `Landing on screen offline (document loaded by ${seen.navigation}): headline "${seen.headline}", hero loom "${words['hero.title']}" ${Math.round(seen.width)}x${Math.round(seen.height)} px with ${seen.shapes} shapes, ${seen.tiles} sample controls`;
+        };
+        /**
+         * R9.7: the first open of Code view in this page session, with Chrome offline and the preview server stopped. The listing is
+         * absent first; Diamond is chosen on Weave; the Code navigation item is clicked; the listing arrives (only the Precache can
+         * give it); the screen shows the Diamond pick count; at most WINDOW_SIZE Lines are in the document; the Selected_Pick is 0 and
+         * is 1 after one activation of the step forward control.
+         */
+        const firstCodeViewOpen = async (): Promise<string> => {
+          const listing = `document.getElementById('naqsha-code-view-listing')`;
+          const lines = `[...(${listing}).querySelectorAll('li[data-pick]')]`;
+          const current = `${lines}.filter(li=>li.getAttribute('aria-current')==='true').map(li=>li.getAttribute('data-pick'))`;
+          expect(!(await page.ev<boolean>(`!!${listing}`)), 'the Code view listing is already in the document, so this is not the first open of Code view in this page session');
+          const expected = await chooseSample(page, 'diamond');
+          await clickNavItem(page, EN['nav.code']!);
+          await page.waitFor(`!!${listing}`, 'the Code view listing to arrive from the Precache', 20_000).catch(async (error: unknown) => {
+            const state = await page.ev<string>(
+              `JSON.stringify({screen:document.querySelector('#screen-title')?.textContent.trim()??null,text:(document.querySelector('main')?.innerText||'').slice(0,160)})`,
+            );
+            throw new Error(`${error instanceof Error ? error.message : String(error)}; page: ${state}`);
+          });
+          const countText = format(EN[expected === 1 ? 'codeview.pickCount.one' : 'codeview.pickCount.other']!, { count: expected });
+          await page
+            .waitFor(`[...document.querySelectorAll('main span')].some(s=>s.textContent.trim()===${JSON.stringify(countText)})`, `the Code view to show "${countText}"`, 10_000)
+            .catch(async (error: unknown) => {
+              const shown = await page.ev<string>(`(document.querySelector('main')?.innerText||'').slice(0,200)`);
+              throw new Error(`${error instanceof Error ? error.message : String(error)}; the screen shows: ${JSON.stringify(shown)}`);
+            });
+          const count = await page.ev<number>(`${lines}.length`);
+          expect(count >= 1 && count <= WINDOW_SIZE, `the listing holds ${count} Lines, expected 1 to ${WINDOW_SIZE} (WINDOW_SIZE)`);
+          const before = await page.ev<(string | null)[]>(current);
+          expect(before.length === 1 && before[0] === '0', `before the step, the Lines marked aria-current="true" have data-pick ${JSON.stringify(before)}, expected ["0"]`);
+          await page.clickText('button', EN['codeview.step.forward']!);
+          const after = await page
+            .waitFor<(string | null)[]>(`(()=>{const c=${current};return c.length===1&&c[0]==='1'?c:null})()`, 'the Selected_Pick to move to pick 1 after one step forward', 5_000)
+            .catch(async (error: unknown) => {
+              const seen = await page.ev<(string | null)[]>(current);
+              throw new Error(`${error instanceof Error ? error.message : String(error)}; the Lines marked aria-current="true" have data-pick ${JSON.stringify(seen)}`);
+            });
+          return `listing arrived with no network; "${countText}" shown, ${count} of at most ${WINDOW_SIZE} Lines in the document, Selected_Pick ${before[0]} then ${after[0]} after one step forward`;
+        };
+        /**
+         * The three families by name, after the Screens that use them have been shown: `document.fonts.check` is true for each
+         * weight the app uses, a FontFace of each family and weight exists (check() is also true for a family with no face), and every
+         * FontFace of those families has status "loaded". A face that is not loaded is asked to load, to say why.
+         */
+        const FONT_SPECS = ['400 18px "Rozha One"', '400 18px Hind', '700 18px Hind', '400 14px "IBM Plex Mono"'] as const;
+        const FONT_FACES = [
+          { family: 'Rozha One', weight: 400 },
+          { family: 'Hind', weight: 400 },
+          { family: 'Hind', weight: 700 },
+          { family: 'IBM Plex Mono', weight: 400 },
+        ] as const;
+        const fontFamiliesLoaded = async (): Promise<string> => {
+          const seen = await page.ev<{ checks: { spec: string; ok: boolean }[]; faces: { family: string; weight: number; status: string; why: string }[] }>(
+            `(async()=>{await document.fonts.ready;const specs=${JSON.stringify(FONT_SPECS)};const checks=specs.map(spec=>({spec,ok:document.fonts.check(spec)}));const families=${JSON.stringify([...new Set(FONT_FACES.map((face) => face.family))])};const faces=[];for(const f of document.fonts){const family=f.family.replace(/["']/g,'');if(!families.includes(family))continue;const status=f.status;let why='';if(status!=='loaded'){try{await f.load();why='asking it to load afterwards gave status '+f.status}catch(e){why='asking it to load failed: '+String(e)}}faces.push({family,weight:Number(f.weight),status,why})}return {checks,faces}})()`,
+          );
+          const problems: string[] = [];
+          for (const check of seen.checks) if (!check.ok) problems.push(`document.fonts.check(${check.spec}) is false`);
+          for (const wanted of FONT_FACES) {
+            const face = seen.faces.find((candidate) => candidate.family === wanted.family && candidate.weight === wanted.weight);
+            if (face === undefined) problems.push(`no FontFace for ${wanted.family} ${wanted.weight} is in document.fonts`);
+          }
+          for (const face of seen.faces) if (face.status !== 'loaded') problems.push(`${face.family} ${face.weight} has status ${face.status}${face.why === '' ? '' : `: ${face.why}`}`);
+          const failedFonts = failedRequests.filter((line) => line.includes('/fonts/'));
+          if (failedFonts.length > 0) problems.push(`font requests failed: ${failedFonts.join(' | ')}`);
+          expect(problems.length === 0, problems.join('; '));
+          return `document.fonts.check is true for ${FONT_SPECS.join(', ')}; ${seen.faces.length} FontFaces (${seen.faces.map((face) => `${face.family} ${face.weight}`).join(', ')}) all have status loaded`;
+        };
         const groups: OfflineGroup[] = [];
         try {
           await cdp.call('Network.enable');
@@ -1248,11 +1359,16 @@ function buildSteps(ctx: Context): BrowserStep[] {
           // A: the page stays as it is and the network goes away.
           const keepChecks: OfflineCheck[] = [worker, serverGone, cacheAnswers];
           keepChecks.push(await run('the network is really off', confirmOffline));
+          // The Landing is still the first thing on this page, so it is checked before a sample is chosen.
+          keepChecks.push(await run('the Landing loads offline with its hero loom drawing', landingLoads));
           keepChecks.push(await run('a Try it sample plays to its last pick', playDiamond));
           keepChecks.push(await run('language switching works', languageSwitches));
           keepChecks.push(await run('the first Scan open works offline', firstScanOpen));
+          // Before the font check, which opens every Screen, the Code view one included.
+          keepChecks.push(await run('the first Code view open works offline', firstCodeViewOpen));
           keepChecks.push(await run('a BMP export works offline', exportOneBitBmp));
           keepChecks.push(await run('every font the shown Screens use is loaded', fontsLoaded));
+          keepChecks.push(await run('Rozha One, Hind and IBM Plex Mono are loaded', fontFamiliesLoaded));
           groups.push({ title: 'A. offline, no reload', checks: keepChecks });
 
           // B: reload with no network at all; everything must come from the worker's cache.
@@ -1286,27 +1402,34 @@ function buildSteps(ctx: Context): BrowserStep[] {
           reloadChecks.push(loaded);
           const afterReload = [
             'the network is really off',
+            'the Landing loads offline with its hero loom drawing',
             'Weave renders',
             'a Try it sample plays to its last pick',
             'the first Scan open works offline',
+            'the first Code view open works offline',
             'a BMP export works offline',
             'language switching works',
             'every font the shown Screens use is loaded',
+            'Rozha One, Hind and IBM Plex Mono are loaded',
           ] as const;
           if (loaded.status === 'pass') {
             reloadChecks.push(await run(afterReload[0], confirmOffline));
+            // The document was just loaded with no network, so this is the Landing of a fresh offline load.
+            reloadChecks.push(await run(afterReload[1], landingLoads));
             reloadChecks.push(
-              await run(afterReload[1], async () => {
+              await run(afterReload[2], async () => {
                 await goTo(page, 'weave');
                 await page.waitFor(`!!document.querySelector('canvas')`, 'the cloth canvas', 10_000);
                 return 'Weave screen with a canvas';
               }),
             );
-            reloadChecks.push(await run(afterReload[2], playDiamond));
-            reloadChecks.push(await run(afterReload[3], firstScanOpen));
-            reloadChecks.push(await run(afterReload[4], exportOneBitBmp));
-            reloadChecks.push(await run(afterReload[5], languageSwitches));
-            reloadChecks.push(await run(afterReload[6], fontsLoaded));
+            reloadChecks.push(await run(afterReload[3], playDiamond));
+            reloadChecks.push(await run(afterReload[4], firstScanOpen));
+            reloadChecks.push(await run(afterReload[5], firstCodeViewOpen));
+            reloadChecks.push(await run(afterReload[6], exportOneBitBmp));
+            reloadChecks.push(await run(afterReload[7], languageSwitches));
+            reloadChecks.push(await run(afterReload[8], fontsLoaded));
+            reloadChecks.push(await run(afterReload[9], fontFamiliesLoaded));
           } else {
             for (const name of afterReload) reloadChecks.push(notRun(name, 'not tested: the page did not load after the reload'));
           }

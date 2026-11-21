@@ -370,7 +370,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - Identify the Code view chunk as the `.js` file of `dist/assets` containing `naqsha-code-view-listing`, and assert that an entry of the generated precache list in `dist/sw.js` names that file; fail naming the chunk it looked for (R9.6). `scripts/build_precache.ts` needs no change, because it lists every file of `dist/` — confirm that in the test and that the list omits no file of the Built_Site and names no file that is not one (R9.5).
     - _Requirements: R9.5, R9.6_
 
-  - [~] 4.3 `check:browser`: the offline Code view checks and the width sweep
+  - [x] 4.3 `check:browser`: the offline Code view checks and the width sweep
     - **[demo-essential]**
     - Files: `scripts/check_browser.ts`.
     - Add `'code'` to the `SCREENS` constant, so step 12 measures the Code view screen at 320, 390 and 1280 CSS pixels and fails if the document is wider than the viewport at any of them (R11.8).
