@@ -14,11 +14,12 @@ import { woff2CodePoints } from '../../scripts/fonts/woff2Cmap.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const FONT_DIR = path.join(ROOT, 'public/fonts');
-const LICENCE_FILES = ['RozhaOne-OFL.txt', 'Hind-OFL.txt', 'IBMPlexMono-OFL.txt'];
+const LICENCE_FILES = ['RozhaOne-OFL.txt', 'Hind-OFL.txt', 'IBMPlexMono-OFL.txt', 'Newsreader-OFL.txt'];
 
-/** The files that carry Devanagari: Rozha One and both Hind files. IBM Plex Mono carries none. */
+/** The files that carry Devanagari: Rozha One and both Hind files. IBM Plex Mono and Newsreader carry none (Latin only). */
 const DEVANAGARI_FONTS = ['RozhaOne-Regular.woff2', 'Hind-Regular.woff2', 'Hind-Bold.woff2'];
-const ALL_FONTS = [...DEVANAGARI_FONTS, 'IBMPlexMono-Regular.woff2'];
+const LATIN_FONTS = ['IBMPlexMono-Regular.woff2', 'Newsreader-Regular.woff2', 'Newsreader-Italic.woff2'];
+const ALL_FONTS = [...DEVANAGARI_FONTS, ...LATIN_FONTS];
 
 function coveredBy(file: string): ReadonlySet<number> {
   const result = woff2CodePoints(readFileSync(path.join(FONT_DIR, file)));
@@ -44,7 +45,7 @@ function hex(codePoint: number): string {
 }
 
 describe('Font_Files', () => {
-  it('R1.1 there are exactly four woff2 files under public/fonts, and FONT_FILES names them', () => {
+  it('R1.1 there are exactly six woff2 files under public/fonts, and FONT_FILES names them', () => {
     const woff2 = readdirSync(FONT_DIR).filter((name) => name.endsWith('.woff2')).sort();
     expect(woff2).toEqual([...ALL_FONTS].sort());
     expect(FONT_FILES.map((entry) => entry.replace(/^\.\/fonts\//, '')).sort()).toEqual(woff2);
@@ -97,7 +98,7 @@ describe('fontPrecacheProblems', () => {
     expect(fontPrecacheProblems([])).toHaveLength(FONT_FILES.length);
   });
 
-  it('R1.7 returns nothing when all four Font_Files are listed', () => {
+  it('R1.7 returns nothing when all six Font_Files are listed', () => {
     expect(fontPrecacheProblems(['./', './index.html', ...FONT_FILES])).toEqual([]);
   });
 });

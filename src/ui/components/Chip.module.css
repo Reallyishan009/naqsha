@@ -1,0 +1,18 @@
+.chip {
+  display: inline-block;
+  max-width: 100%;
+  padding: var(--space-1) var(--space-3);
+  color: var(--ink);
+  font-size: var(--text-small);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  border-radius: var(--radius-pill);
+}
+.quiet {
+  background: var(--tint);
+}
+/* Over a picture the chip stays opaque, so its text keeps its contrast on any photo. */
+.picture {
+  background: var(--surface);
+  box-shadow: var(--shadow-lift);
+}

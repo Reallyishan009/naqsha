@@ -11,13 +11,13 @@
   gap: var(--space-2);
   min-width: var(--touch-target);
   min-height: var(--touch-target);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-4);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: var(--text-body);
   background: var(--surface);
-  border: 2px solid var(--ink-soft);
-  border-radius: var(--radius-control);
+  border: 1px solid var(--ink-soft);
+  border-radius: var(--radius-pill);
   cursor: pointer;
   transition: transform var(--motion-short);
 }
@@ -26,12 +26,12 @@
   transform: translateY(1px);
 }
 
-/* The current choice: bold text and a check mark, besides the --zari fill. */
+/* The current choice: bold text and a check mark, besides the --primary fill. */
 .current {
-  color: var(--on-zari);
+  color: var(--on-primary);
   font-weight: 700;
-  background: var(--zari);
-  border-color: var(--zari);
+  background: var(--primary);
+  border-color: var(--primary);
 }
 
 .mark {
@@ -39,7 +39,7 @@
   width: 1em;
   height: 1em;
   fill: none;
-  stroke: var(--on-zari);
+  stroke: var(--on-primary);
   stroke-width: 2.5;
   stroke-linecap: square;
 }

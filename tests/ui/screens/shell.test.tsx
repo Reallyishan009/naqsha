@@ -83,6 +83,23 @@ describe('shell', () => {
     }
   });
 
+  it('the pill header has a named menu button that starts collapsed, the group it controls, and one Scan pill, in both languages', () => {
+    for (const language of LANGUAGES) {
+      const t = translator(DICTIONARIES, language);
+      const html = render({ ...initialAppState, language });
+      const button = /<button\b[^>]*aria-expanded="false"[^>]*aria-controls="([^"]+)"[^>]*>(.*?)<\/button>/.exec(html);
+      expect(button, `${language} menu button`).not.toBeNull();
+      expect(button![2]).toContain(`<span>${t('nav.menu')}</span>`);
+      // The group holds the navigation, the language switch, the theme switch and the Scan pill, so it can hide them as one.
+      const group = new RegExp(`<div id="${button![1]}"[^>]*data-open="false"[^>]*>(.*)</div></div></header>`).exec(html)?.[1] ?? '';
+      expect(group).toContain('<nav ');
+      expect(group).toContain('role="group"');
+      expect(group).toContain('role="switch"');
+      expect(group).toContain(`>${t('nav.scanCard')}</button>`);
+      expect(html.split(`>${t('nav.scanCard')}</button>`)).toHaveLength(2);
+    }
+  });
+
   it('R12.2 the language switch offers both languages as pressable buttons', () => {
     const html = render({ ...initialAppState, language: 'hi' });
     expect(html).toContain('aria-pressed="true"');

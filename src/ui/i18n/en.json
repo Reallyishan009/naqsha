@@ -385,5 +385,7 @@
   "processLoop.desc": "A loop that repeats every seven seconds. A punch card slides into the Jacquard head and its holes light up. The hooks under the holes rise and lift their warp ends, a weft thread passes under them, and one more row of cloth appears. The cards follow one another, faster and faster, for {picks} picks, until the cloth is finished.",
   "processLoop.desc.still": "The finished cloth of {picks} picks, and the last punch card in the Jacquard head with its holes lit. The hooks under the holes are raised and lift their warp ends. Nothing moves.",
   "processLoop.pause": "Pause the loom picture",
-  "processLoop.play": "Play the loom picture"
+  "processLoop.play": "Play the loom picture",
+  "nav.menu": "Menu",
+  "nav.scanCard": "Scan a card"
 }

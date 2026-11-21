@@ -1546,5 +1546,13 @@
   "processLoop.play": {
     "text": "करघे का चित्र चलाएँ",
     "reviewed": false
+  },
+  "nav.menu": {
+    "text": "मेनू",
+    "reviewed": false
+  },
+  "nav.scanCard": {
+    "text": "कार्ड स्कैन करें",
+    "reviewed": false
   }
 }

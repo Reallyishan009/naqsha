@@ -186,13 +186,14 @@ Naqsha is not the first project to read Jacquard punch cards with a camera. It b
 
 ### Fonts
 
-Naqsha ships three font families, and all three are listed here. Each is licensed under the SIL Open Font License 1.1 (SIL OFL 1.1). The fonts are self-hosted: the app loads them from its own site and makes no request to a font service. They are subset to the characters the app uses (Basic Latin, the symbols in the app text, and for Rozha One and Hind the Devanagari block) and saved as woff2 files in `public/fonts/`. The full licence text and copyright notice of each font is in `public/fonts/` next to its woff2 files (`RozhaOne-OFL.txt`, `Hind-OFL.txt` and `IBMPlexMono-OFL.txt`). The source files were taken from the [google/fonts](https://github.com/google/fonts) repository at commit `06bfe0d62a98375cb09c942fa18e68bd32cff057`.
+Naqsha ships four font families, and all four are listed here. Each is licensed under the SIL Open Font License 1.1 (SIL OFL 1.1). The fonts are self-hosted: the app loads them from its own site and makes no request to a font service. They are subset to the characters the app uses (Basic Latin, the symbols in the app text, and for Rozha One and Hind the Devanagari block; Newsreader is Latin only, in roman and italic, with its weight and optical size axes fixed at 400 and 36) and saved as woff2 files in `public/fonts/`. The full licence text and copyright notice of each font is in `public/fonts/` next to its woff2 files (`RozhaOne-OFL.txt`, `Hind-OFL.txt`, `IBMPlexMono-OFL.txt` and `Newsreader-OFL.txt`). The source files were taken from the [google/fonts](https://github.com/google/fonts) repository at commit `06bfe0d62a98375cb09c942fa18e68bd32cff057`.
 
 | Font | Designer or foundry | Licence | Obtained from |
 |---|---|---|---|
-| Rozha One (display text, weight 400) | Indian Type Foundry | SIL OFL 1.1 | [google/fonts, `ofl/rozhaone`](https://github.com/google/fonts/tree/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/rozhaone) |
+| Rozha One (display text for Devanagari headings, weight 400) | Indian Type Foundry | SIL OFL 1.1 | [google/fonts, `ofl/rozhaone`](https://github.com/google/fonts/tree/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/rozhaone) |
 | Hind (body text, weights 400 and 700) | Indian Type Foundry | SIL OFL 1.1 | [google/fonts, `ofl/hind`](https://github.com/google/fonts/tree/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/hind) |
 | IBM Plex Mono (data text, weight 400) | IBM Corp. | SIL OFL 1.1 | [google/fonts, `ofl/ibmplexmono`](https://github.com/google/fonts/tree/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/ibmplexmono) |
+| Newsreader (headings in Latin text, roman and italic, weight 400) | Production Type | SIL OFL 1.1 | [google/fonts, `ofl/newsreader`](https://github.com/google/fonts/tree/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/newsreader) |
 
 No other credits are listed beyond the research and the fonts above.
 

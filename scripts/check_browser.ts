@@ -24,7 +24,7 @@ import { newPickWatch, stepPickWatch } from './checks/pickWatch.ts';
 import { encodePngRgba } from './png_rgba.ts';
 import { exitCodeFor, formatResult, formatSummary, runBrowserSteps } from './checks/report.ts';
 import type { BrowserResult, BrowserStep } from './checks/report.ts';
-import { Page, byText, expect, openPage, sleep, startChrome, startPreview } from './checks/session.ts';
+import { Page, byText, expect, openHeaderMenu, openPage, sleep, startChrome, startPreview } from './checks/session.ts';
 import type { Cleanup } from './checks/session.ts';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
@@ -75,13 +75,22 @@ type Context = {
   printedPickIndex: number;
 };
 
+/** The accessible name of the header menu button in each language: only the narrowest width draws it, and it holds the header controls. */
+const MENU_NAMES: readonly string[] = [EN['nav.menu']!, HI['nav.menu']!];
+/** Opens the header menu by its accessible name where the page draws it (under 360 px); at 390 and 1280 px it does nothing, so those widths reach every control without a menu. */
+const openMenu = (page: Page): Promise<void> => openHeaderMenu(page, MENU_NAMES);
+
 async function ensureEnglish(page: Page): Promise<void> {
-  if ((await page.ev<string>('document.documentElement.lang')) !== 'en') await page.clickText('button', EN['language.en']!);
+  if ((await page.ev<string>('document.documentElement.lang')) !== 'en') {
+    await openMenu(page);
+    await page.clickText('button', EN['language.en']!);
+  }
   await page.waitFor(`document.documentElement.lang==='en'`, 'the page language to be en');
 }
 
 /** Clicks the navigation item whose text starts with the label: the Code view item also carries the word "Advanced". */
 async function clickNavItem(page: Page, label: string): Promise<void> {
+  await openMenu(page);
   await page.click(
     `[...document.querySelectorAll('nav button')].find(b=>b.textContent.trim().startsWith(${JSON.stringify(label)}))`,
     `nav button "${label}"`,
@@ -129,7 +138,10 @@ const HEADING_KEY: Record<AnyScreen, string> = { weave: 'nav.weave', keep: 'nav.
 const THEME_STORAGE_KEY = 'naqsha.theme';
 
 async function ensureLanguage(page: Page, language: Language): Promise<void> {
-  if ((await page.ev<string>('document.documentElement.lang')) !== language) await page.clickText('button', WORDS[language]['language.' + language]!);
+  if ((await page.ev<string>('document.documentElement.lang')) !== language) {
+    await openMenu(page);
+    await page.clickText('button', WORDS[language]['language.' + language]!);
+  }
   await page.waitFor(`document.documentElement.lang===${JSON.stringify(language)}`, `the page language to be ${language}`);
 }
 
@@ -160,21 +172,24 @@ async function chooseTheme(page: Page, theme: ThemeChoice): Promise<void> {
   // The switch is found by its name in the language the page shows now.
   const language: Language = (await page.ev<string>('document.documentElement.lang')) === 'hi' ? 'hi' : 'en';
   const now = await readTheme(page, language);
-  if (now.dataTheme !== theme) await page.click(themeSwitch(language), 'the Theme_Switch');
+  if (now.dataTheme !== theme) {
+    await openMenu(page);
+    await page.click(themeSwitch(language), 'the Theme_Switch');
+  }
   await page.waitFor(`document.documentElement.getAttribute('data-theme')===${JSON.stringify(theme)}`, `data-theme to be ${theme}`);
 }
 
-type FontUse = { declared: number; used: { family: string; weight: number; status: string }[] };
+type FontUse = { declared: number; used: { family: string; weight: number; style: 'normal' | 'italic'; status: string }[] };
 
 /**
  * Every family and weight the visible text of the shown Screen uses, among the faces the style sheet declares,
  * with the loading status of the face that the browser picks for that weight.
  */
-const FONT_USE = `(()=>{const faces=[...document.fonts].map(f=>({family:f.family.replace(/["']/g,''),weight:Number(f.weight),status:f.status}));const declared={};for(const f of faces){(declared[f.family]=declared[f.family]||[]).push(f.weight)}const pick=(list,w)=>{if(list.includes(w))return w;const up=list.filter(x=>x>w).sort((a,b)=>a-b),down=list.filter(x=>x<w).sort((a,b)=>b-a);return w>500?(up[0]??down[0]):(down[0]??up[0])};const used=new Map();for(const e of document.body.querySelectorAll('*')){if(![...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()!==''))continue;if(e.getClientRects().length===0)continue;const cs=getComputedStyle(e);if(cs.visibility==='hidden')continue;const family=cs.fontFamily.split(',')[0].trim().replace(/["']/g,'');const list=declared[family];if(!list)continue;const weight=pick(list,Number(cs.fontWeight)||400);used.set(family+' '+weight,{family,weight})}return {declared:faces.length,used:[...used.values()].map(u=>{const face=faces.find(f=>f.family===u.family&&f.weight===u.weight);return {family:u.family,weight:u.weight,status:face?face.status:'missing'}})}})()`;
+const FONT_USE = `(()=>{const faces=[...document.fonts].map(f=>({family:f.family.replace(/["']/g,''),weight:Number(f.weight),style:f.style==='italic'?'italic':'normal',status:f.status}));const declared={};for(const f of faces){const k=f.family+'|'+f.style;(declared[k]=declared[k]||[]).push(f.weight)}const pick=(list,w)=>{if(list.includes(w))return w;const up=list.filter(x=>x>w).sort((a,b)=>a-b),down=list.filter(x=>x<w).sort((a,b)=>b-a);return w>500?(up[0]??down[0]):(down[0]??up[0])};const used=new Map();for(const e of document.body.querySelectorAll('*')){if(![...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()!==''))continue;if(e.getClientRects().length===0)continue;const cs=getComputedStyle(e);if(cs.visibility==='hidden')continue;const family=cs.fontFamily.split(',')[0].trim().replace(/["']/g,'');const want=cs.fontStyle==='normal'?'normal':'italic';const style=declared[family+'|'+want]?want:'normal';const list=declared[family+'|'+style];if(!list)continue;const weight=pick(list,Number(cs.fontWeight)||400);used.set(family+' '+weight+' '+style,{family,weight,style})}return {declared:faces.length,used:[...used.values()].map(u=>{const face=faces.find(f=>f.family===u.family&&f.weight===u.weight&&f.style===u.style);return {family:u.family,weight:u.weight,style:u.style,status:face?face.status:'missing'}})}})()`;
 
 /** Waits until every face the shown Screen uses reports `loaded`, and says which faces those are. */
 async function usedFontsLoaded(page: Page, what: string): Promise<string[]> {
-  const describe = (seen: FontUse): string[] => seen.used.map((face) => `${face.family} ${face.weight}`);
+  const describe = (seen: FontUse): string[] => seen.used.map((face) => `${face.family} ${face.weight}${face.style === 'italic' ? ' italic' : ''}`);
   try {
     const seen = await page.waitFor<FontUse>(
       `(()=>{const r=${FONT_USE};return r.used.length>0&&r.used.every(u=>u.status==='loaded')?r:null})()`,
@@ -184,7 +199,7 @@ async function usedFontsLoaded(page: Page, what: string): Promise<string[]> {
     return describe(seen);
   } catch (error) {
     const seen = await page.ev<FontUse>(FONT_USE);
-    const states = seen.used.map((face) => `${face.family} ${face.weight} is ${face.status}`);
+    const states = seen.used.map((face) => `${face.family} ${face.weight}${face.style === 'italic' ? ' italic' : ''} is ${face.status}`);
     throw new Error(`${what}: ${error instanceof Error ? error.message : String(error)}; ${states.length === 0 ? 'no declared font is used by the visible text' : states.join(', ')}`);
   }
 }
@@ -1038,12 +1053,14 @@ function buildSteps(ctx: Context): BrowserStep[] {
             await chooseTheme(page, theme);
             for (const language of LANGUAGES) {
               await showScreen(page, 'weave', language);
+              // At 320 px the controls are behind the Menu button, so it is opened (by its name) before they are measured.
+              await openMenu(page);
               await settleLayout(page);
               const result = await page.ev<{ count: number; problems: string[] }>(
-                `(()=>{const controls=[...document.querySelectorAll('header nav button,header [role="group"] button,header [role="switch"]')];const vw=window.innerWidth;const problems=[];const rects=controls.map(c=>c.getBoundingClientRect());controls.forEach((c,i)=>{const name=(c.getAttribute('aria-label')||c.textContent).trim();const r=rects[i];if(c.scrollWidth>c.clientWidth+1||c.scrollHeight>c.clientHeight+1)problems.push('"'+name+'" scrolls '+c.scrollWidth+'x'+c.scrollHeight+' in '+c.clientWidth+'x'+c.clientHeight);const walker=document.createTreeWalker(c,NodeFilter.SHOW_TEXT);for(let n=walker.nextNode();n;n=walker.nextNode()){if(!n.textContent.trim())continue;const range=document.createRange();range.selectNodeContents(n);for(const t of range.getClientRects()){if(t.left<r.left-1||t.right>r.right+1||t.top<r.top-1||t.bottom>r.bottom+1||t.left<-0.5||t.right>vw+0.5){problems.push('the text "'+n.textContent.trim()+'" of "'+name+'" is outside its control');break}}}});for(let i=0;i<controls.length;i++)for(let j=i+1;j<controls.length;j++){const a=rects[i],b=rects[j];if(a.left<b.right-0.5&&b.left<a.right-0.5&&a.top<b.bottom-0.5&&b.top<a.bottom-0.5)problems.push('"'+(controls[i].getAttribute('aria-label')||controls[i].textContent).trim()+'" overlaps "'+(controls[j].getAttribute('aria-label')||controls[j].textContent).trim()+'"')}return {count:controls.length,problems}})()`,
+                `(()=>{const controls=[...document.querySelectorAll('header button')];const vw=window.innerWidth;const problems=[];const rects=controls.map(c=>c.getBoundingClientRect());controls.forEach((c,i)=>{const name=(c.getAttribute('aria-label')||c.textContent).trim();const r=rects[i];if(c.scrollWidth>c.clientWidth+1||c.scrollHeight>c.clientHeight+1)problems.push('"'+name+'" scrolls '+c.scrollWidth+'x'+c.scrollHeight+' in '+c.clientWidth+'x'+c.clientHeight);const walker=document.createTreeWalker(c,NodeFilter.SHOW_TEXT);for(let n=walker.nextNode();n;n=walker.nextNode()){if(!n.textContent.trim())continue;const range=document.createRange();range.selectNodeContents(n);for(const t of range.getClientRects()){if(t.left<r.left-1||t.right>r.right+1||t.top<r.top-1||t.bottom>r.bottom+1||t.left<-0.5||t.right>vw+0.5){problems.push('the text "'+n.textContent.trim()+'" of "'+name+'" is outside its control');break}}}});for(let i=0;i<controls.length;i++)for(let j=i+1;j<controls.length;j++){const a=rects[i],b=rects[j];if(a.left<b.right-0.5&&b.left<a.right-0.5&&a.top<b.bottom-0.5&&b.top<a.bottom-0.5)problems.push('"'+(controls[i].getAttribute('aria-label')||controls[i].textContent).trim()+'" overlaps "'+(controls[j].getAttribute('aria-label')||controls[j].textContent).trim()+'"')}return {count:controls.length,problems}})()`,
               );
               const verdict = `at 320 (${language}, ${theme}): ${result.count} header controls`;
-              if (result.count !== 7) failures.push(`${verdict}, expected 7 (4 navigation items, 2 languages, the Theme_Switch)`);
+              if (result.count !== 9) failures.push(`${verdict}, expected 9 (the Menu button, 4 navigation items, 2 languages, the Theme_Switch, the Scan pill)`);
               else if (result.problems.length > 0) failures.push(`${verdict}: ${result.problems.join('; ')}`);
               else lines.push(`${verdict}: every label inside its control, no overlap`);
             }
@@ -1281,32 +1298,34 @@ function buildSteps(ctx: Context): BrowserStep[] {
           return `listing arrived with no network; "${countText}" shown, ${count} of at most ${WINDOW_SIZE} Lines in the document, Selected_Pick ${before[0]} then ${after[0]} after one step forward`;
         };
         /**
-         * The three families by name, after the Screens that use them have been shown: `document.fonts.check` is true for each
+         * The four families by name, after the Screens that use them have been shown (the Newsreader italic face is asked to load first, because no Screen uses it yet; it must still load offline): `document.fonts.check` is true for each
          * weight the app uses, a FontFace of each family and weight exists (check() is also true for a family with no face), and every
          * FontFace of those families has status "loaded". A face that is not loaded is asked to load, to say why.
          */
-        const FONT_SPECS = ['400 18px "Rozha One"', '400 18px Hind', '700 18px Hind', '400 14px "IBM Plex Mono"'] as const;
+        const FONT_SPECS = ['400 18px "Rozha One"', '400 18px Hind', '700 18px Hind', '400 14px "IBM Plex Mono"', '400 18px Newsreader', 'italic 400 18px Newsreader'] as const;
         const FONT_FACES = [
-          { family: 'Rozha One', weight: 400 },
-          { family: 'Hind', weight: 400 },
-          { family: 'Hind', weight: 700 },
-          { family: 'IBM Plex Mono', weight: 400 },
+          { family: 'Rozha One', weight: 400, style: 'normal' },
+          { family: 'Hind', weight: 400, style: 'normal' },
+          { family: 'Hind', weight: 700, style: 'normal' },
+          { family: 'IBM Plex Mono', weight: 400, style: 'normal' },
+          { family: 'Newsreader', weight: 400, style: 'normal' },
+          { family: 'Newsreader', weight: 400, style: 'italic' },
         ] as const;
         const fontFamiliesLoaded = async (): Promise<string> => {
-          const seen = await page.ev<{ checks: { spec: string; ok: boolean }[]; faces: { family: string; weight: number; status: string; why: string }[] }>(
-            `(async()=>{await document.fonts.ready;const specs=${JSON.stringify(FONT_SPECS)};const checks=specs.map(spec=>({spec,ok:document.fonts.check(spec)}));const families=${JSON.stringify([...new Set(FONT_FACES.map((face) => face.family))])};const faces=[];for(const f of document.fonts){const family=f.family.replace(/["']/g,'');if(!families.includes(family))continue;const status=f.status;let why='';if(status!=='loaded'){try{await f.load();why='asking it to load afterwards gave status '+f.status}catch(e){why='asking it to load failed: '+String(e)}}faces.push({family,weight:Number(f.weight),status,why})}return {checks,faces}})()`,
+          const seen = await page.ev<{ checks: { spec: string; ok: boolean }[]; faces: { family: string; weight: number; style: string; status: string; why: string }[] }>(
+            `(async()=>{await document.fonts.ready;const specs=${JSON.stringify(FONT_SPECS)};for(const spec of specs){if(spec.startsWith('italic'))await document.fonts.load(spec)}const checks=specs.map(spec=>({spec,ok:document.fonts.check(spec)}));const families=${JSON.stringify([...new Set(FONT_FACES.map((face) => face.family))])};const faces=[];for(const f of document.fonts){const family=f.family.replace(/["']/g,'');if(!families.includes(family))continue;const status=f.status;let why='';if(status!=='loaded'){try{await f.load();why='asking it to load afterwards gave status '+f.status}catch(e){why='asking it to load failed: '+String(e)}}faces.push({family,weight:Number(f.weight),style:f.style==='italic'?'italic':'normal',status,why})}return {checks,faces}})()`,
           );
           const problems: string[] = [];
           for (const check of seen.checks) if (!check.ok) problems.push(`document.fonts.check(${check.spec}) is false`);
           for (const wanted of FONT_FACES) {
-            const face = seen.faces.find((candidate) => candidate.family === wanted.family && candidate.weight === wanted.weight);
-            if (face === undefined) problems.push(`no FontFace for ${wanted.family} ${wanted.weight} is in document.fonts`);
+            const face = seen.faces.find((candidate) => candidate.family === wanted.family && candidate.weight === wanted.weight && candidate.style === wanted.style);
+            if (face === undefined) problems.push(`no FontFace for ${wanted.family} ${wanted.weight} ${wanted.style} is in document.fonts`);
           }
-          for (const face of seen.faces) if (face.status !== 'loaded') problems.push(`${face.family} ${face.weight} has status ${face.status}${face.why === '' ? '' : `: ${face.why}`}`);
+          for (const face of seen.faces) if (face.status !== 'loaded') problems.push(`${face.family} ${face.weight} ${face.style} has status ${face.status}${face.why === '' ? '' : `: ${face.why}`}`);
           const failedFonts = failedRequests.filter((line) => line.includes('/fonts/'));
           if (failedFonts.length > 0) problems.push(`font requests failed: ${failedFonts.join(' | ')}`);
           expect(problems.length === 0, problems.join('; '));
-          return `document.fonts.check is true for ${FONT_SPECS.join(', ')}; ${seen.faces.length} FontFaces (${seen.faces.map((face) => `${face.family} ${face.weight}`).join(', ')}) all have status loaded`;
+          return `document.fonts.check is true for ${FONT_SPECS.join(', ')}; ${seen.faces.length} FontFaces (${seen.faces.map((face) => `${face.family} ${face.weight}${face.style === 'italic' ? ' italic' : ''}`).join(', ')}) all have status loaded`;
         };
         const groups: OfflineGroup[] = [];
         try {
@@ -1368,7 +1387,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
           keepChecks.push(await run('the first Code view open works offline', firstCodeViewOpen));
           keepChecks.push(await run('a BMP export works offline', exportOneBitBmp));
           keepChecks.push(await run('every font the shown Screens use is loaded', fontsLoaded));
-          keepChecks.push(await run('Rozha One, Hind and IBM Plex Mono are loaded', fontFamiliesLoaded));
+          keepChecks.push(await run('Rozha One, Hind, IBM Plex Mono and Newsreader are loaded', fontFamiliesLoaded));
           groups.push({ title: 'A. offline, no reload', checks: keepChecks });
 
           // B: reload with no network at all; everything must come from the worker's cache.
@@ -1410,7 +1429,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
             'a BMP export works offline',
             'language switching works',
             'every font the shown Screens use is loaded',
-            'Rozha One, Hind and IBM Plex Mono are loaded',
+            'Rozha One, Hind, IBM Plex Mono and Newsreader are loaded',
           ] as const;
           if (loaded.status === 'pass') {
             reloadChecks.push(await run(afterReload[0], confirmOffline));

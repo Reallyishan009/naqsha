@@ -1,0 +1,36 @@
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+.heading {
+  max-width: 20ch;
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: 400;
+  line-height: 1.15;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+/* One word in the tan accent. `em` is italic by default, so the Hindi heading turns that off; the accent word of every language is also a colour change. */
+.accent {
+  color: var(--accent);
+  font-style: normal;
+}
+.italic {
+  font-style: italic;
+}
+.subtitle {
+  max-width: 40rem;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--text-lead);
+  text-wrap: balance;
+}
+.heading:lang(hi) {
+  line-height: var(--leading-hindi);
+}

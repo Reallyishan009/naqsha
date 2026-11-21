@@ -30,7 +30,7 @@ export type FontEntry = {
   hasDevanagari: boolean;
 };
 
-/** The four Font_Files and the three licence texts of Requirement 1.1 and 2.3. */
+/** The six Font_Files and the four licence texts (design-and-ux-pass Requirements 1.1 and 2.3; Newsreader added by second-pass-run1 task 3.1). */
 export const FONTS: readonly FontEntry[] = [
   {
     family: 'Rozha One',
@@ -66,6 +66,24 @@ export const FONTS: readonly FontEntry[] = [
     sourceFile: 'IBMPlexMono-Regular.ttf',
     outputFile: 'IBMPlexMono-Regular.woff2',
     licenceFile: 'IBMPlexMono-OFL.txt',
+    hasDevanagari: false,
+  },
+  {
+    family: 'Newsreader',
+    weight: 400,
+    sourceDirectory: 'newsreader',
+    sourceFile: 'Newsreader-VF.ttf',
+    outputFile: 'Newsreader-Regular.woff2',
+    licenceFile: 'Newsreader-OFL.txt',
+    hasDevanagari: false,
+  },
+  {
+    family: 'Newsreader (italic)',
+    weight: 400,
+    sourceDirectory: 'newsreader',
+    sourceFile: 'Newsreader-Italic-VF.ttf',
+    outputFile: 'Newsreader-Italic.woff2',
+    licenceFile: 'Newsreader-OFL.txt',
     hasDevanagari: false,
   },
 ];

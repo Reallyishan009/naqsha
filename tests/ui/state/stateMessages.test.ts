@@ -114,6 +114,8 @@ export const ADDED_KEYS: readonly string[] = [
   'processLoop.desc.still',
   'processLoop.pause',
   'processLoop.play',
+  'nav.menu',
+  'nav.scanCard',
 ];
 
 /** The purpose and next-step key of each of the four screens (R10.1). */

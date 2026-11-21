@@ -17,9 +17,9 @@ function group(prefix: string): [string, string][] {
 }
 
 describe('tokens.css', () => {
-  it('R1.2 four @font-face rules set family, weight and font-display swap, with a relative woff2 src that exists', () => {
+  it('R1.2 six @font-face rules set family, weight and font-display swap, with a relative woff2 src that exists', () => {
     const faces = [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => m[1]!);
-    expect(faces).toHaveLength(4);
+    expect(faces).toHaveLength(6);
     const seen = faces.map((face) => {
       const family = /font-family:\s*'([^']+)'/.exec(face)?.[1];
       const weight = /font-weight:\s*(\d+)/.exec(face)?.[1];
@@ -29,18 +29,21 @@ describe('tokens.css', () => {
       expect(src, 'a woff2 src').toBeDefined();
       expect(src).not.toMatch(/^[a-z][a-z0-9+.-]*:|\/\//i);
       expect(existsSync(path.join(ROOT, 'public', src!)), `public${src}`).toBe(true);
-      return `${family} ${weight} ${path.basename(src!)}`;
+      const style = /font-style:\s*(\w+)/.exec(face)?.[1];
+      return `${family} ${weight}${style === 'italic' ? ' italic' : ''} ${path.basename(src!)}`;
     });
     expect(seen).toEqual([
       'Rozha One 400 RozhaOne-Regular.woff2',
       'Hind 400 Hind-Regular.woff2',
       'Hind 700 Hind-Bold.woff2',
       'IBM Plex Mono 400 IBMPlexMono-Regular.woff2',
+      'Newsreader 400 Newsreader-Regular.woff2',
+      'Newsreader 400 italic Newsreader-Italic.woff2',
     ]);
   });
 
   it('R1.3 the three font tokens are exactly the required stacks', () => {
-    expect(tokenValue('font-display')).toBe("'Rozha One', Georgia, serif");
+    expect(tokenValue('font-display')).toBe("'Newsreader', 'Rozha One', Georgia, serif");
     expect(tokenValue('font-body')).toBe('Hind, system-ui, sans-serif');
     expect(tokenValue('font-data')).toBe("'IBM Plex Mono', ui-monospace, monospace");
     expect(group('font-')).toHaveLength(3);
@@ -51,19 +54,35 @@ describe('tokens.css', () => {
     expect(/(?:^|\n)html\s*\{([^}]*)\}/.exec(css)?.[1]).toMatch(/font-size:\s*18px/);
   });
 
-  it('R3.2 there are exactly seven spacing tokens of 4, 8, 12, 16, 24, 32 and 48 px', () => {
-    expect(group('space-').map(([, v]) => v)).toEqual(['4px', '8px', '12px', '16px', '24px', '32px', '48px']);
+  it('R3.2 the spacing scale is 4, 8, 12, 16, 24, 32 and 48 px, and 64, 96 and 128 px for page sections (second pass)', () => {
+    expect(group('space-').map(([, v]) => v)).toEqual(['4px', '8px', '12px', '16px', '24px', '32px', '48px', '64px', '96px', '128px']);
   });
 
-  it('R3.3 there are exactly two radius tokens, 4 px for controls and 8 px for panels', () => {
+  it('R3.3 the radius scale is 4 px for controls, 8 px for panels, 16 px for media, 24 px for cards and a pill (second pass)', () => {
     expect(group('radius-')).toEqual([
       ['radius-control', '4px'],
       ['radius-panel', '8px'],
+      ['radius-media', '16px'],
+      ['radius-card', '24px'],
+      ['radius-pill', '999px'],
     ]);
   });
 
-  it('R3.5 there is exactly one shadow token', () => {
-    expect(group('shadow-')).toEqual([['shadow-card', '0 2px 6px rgb(0 0 0 / 0.25)']]);
+  it('R3.5 there are exactly three shadow tokens: the original card shadow, a lift and a float (second pass)', () => {
+    expect(group('shadow-')).toEqual([
+      ['shadow-card', '0 2px 6px rgb(0 0 0 / 0.25)'],
+      ['shadow-lift', expect.stringMatching(/^0 2px 6px rgb\([\d ]+ \/ [\d.]+\), 0 10px 24px rgb\(/)],
+      ['shadow-float', expect.stringMatching(/^0 4px 12px rgb\([\d ]+ \/ [\d.]+\), 0 24px 48px rgb\(/)],
+    ]);
+  });
+
+  it('second pass the palette tokens exist in both themes and the Night block overrides every one of them', () => {
+    const palette = ['primary', 'on-primary', 'accent', 'eyebrow', 'tint', 'band', 'on-band', 'band-accent', 'frost'];
+    const night = /\[data-theme='night'\]\s*\{([^}]*--on-zari[^}]*)\}/.exec(css)?.[1] ?? '';
+    for (const name of palette) {
+      expect(tokenValue(name), `:root --${name}`).toBeDefined();
+      expect(night, `night --${name}`).toMatch(new RegExp(`--${name}:`));
+    }
   });
 
   it('R3.7 there are exactly three motion tokens of 120, 200 and 320 ms', () => {

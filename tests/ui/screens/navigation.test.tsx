@@ -74,8 +74,8 @@ describe('navigation', () => {
     expect(current).toMatch(/font-weight:\s*700/);
     expect(current).toMatch(/text-decoration:\s*underline/);
     expect(current).toMatch(/text-decoration-thickness:\s*3px/);
-    expect(current).toMatch(/background:\s*var\(--zari\)/);
-    expect(current).toMatch(/color:\s*var\(--on-zari\)/);
+    expect(current).toMatch(/background:\s*var\(--primary\)/);
+    expect(current).toMatch(/color:\s*var\(--on-primary\)/);
     expect(rule('.navIcon')).toMatch(/order:\s*-1/);
     expect(rule('.navButton')).toMatch(/flex-direction:\s*column/);
     expect(rule('.navButton')).toMatch(/min-height:\s*var\(--touch-target\)/);

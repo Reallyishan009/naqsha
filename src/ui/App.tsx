@@ -1,5 +1,5 @@
 import { Component, lazy, Suspense, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
-import type { ComponentType, Dispatch, ErrorInfo, ReactNode } from 'react';
+import type { ComponentType, Dispatch, ErrorInfo, KeyboardEvent, ReactNode } from 'react';
 import { DICTIONARIES, profileFailureKey, translator } from './i18n/messages.ts';
 import type { Translate } from './i18n/messages.ts';
 import {
@@ -24,7 +24,8 @@ import { StateMessage } from './components/StateMessage.tsx';
 import { Selvedge } from './components/Selvedge.tsx';
 import { Tabs } from './components/Tabs.tsx';
 import { ThemeSwitch } from './components/ThemeSwitch.tsx';
-import { NavIcon } from './illustrations/NavIcons.tsx';
+import { BrandMark } from './illustrations/BrandMark.tsx';
+import { MenuIcon, NavIcon } from './illustrations/NavIcons.tsx';
 import styles from './Shell.module.css';
 import { KeepScreen } from './screens/keep/KeepScreen.tsx';
 import { WeaveScreen } from './screens/weave/WeaveScreen.tsx';
@@ -36,6 +37,9 @@ import type { AppAction, AppState, Language, Screen } from './types.ts';
 
 const SCREENS: ReadonlyArray<Screen> = ['weave', 'keep', 'scan', 'code'];
 const LANGUAGES: ReadonlyArray<Language> = ['hi', 'en'];
+
+/** The id the header menu button points at (`aria-controls`): the group of navigation, switches and the Scan pill. */
+const HEADER_MENU_ID = 'header-menu';
 
 type BoundaryProps = {
   message: string;
@@ -119,50 +123,95 @@ export function Shell({ state, dispatch, onLanguageChosen, theme = 'day', onThem
   const CodeViewScreen = useLazyScreen(importCodeViewScreen, screenAttempt);
   // The Landing shows the profile's loading and failure itself, with its own retry.
   const landingShowsProfile = state.screen === 'weave' && state.current.pattern.length === 0;
+  // At the narrowest width the navigation, the switches and the Scan pill sit behind the menu button; wider, they are always shown.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  /** Closes the menu after a choice made in it, and keeps keyboard focus on a control that is still shown. */
+  const closeMenuAfterChoice = (): void => {
+    if (!menuOpen) return;
+    setMenuOpen(false);
+    menuButton.current?.focus();
+  };
+  const onMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
+    if (event.key !== 'Escape' || !menuOpen) return;
+    event.stopPropagation();
+    menuButton.current?.focus();
+    setMenuOpen(false);
+  };
   return (
     <div className={styles.shell}>
       <header className={styles.header}>
         <Selvedge />
         <div className={styles.bar}>
-          <h1 className={styles.title}>{t('app.title')}</h1>
-          <div className={styles.switches}>
-            <Tabs
-              label={t('language.label')}
-              items={LANGUAGES.map((language) => ({
-                key: language,
-                lang: language,
-                label: translator(DICTIONARIES, language)(`language.${language}`),
-              }))}
-              current={state.language}
-              onChoose={(key) => {
-                const language: Language = key === 'en' ? 'en' : 'hi';
-                dispatch({ type: 'set-language', language });
-                onLanguageChosen?.(language);
-              }}
-            />
-            <ThemeSwitch
-              theme={theme}
-              label={t('theme.label')}
-              stateText={t(theme === 'night' ? 'theme.on' : 'theme.off')}
-              onChoose={(next) => onThemeChosen?.(next)}
-            />
+          <div className={styles.brand}>
+            <BrandMark className={styles.mark} />
+            <h1 className={styles.title}>{t('app.title')}</h1>
           </div>
-          <nav aria-label={t('nav.label')} className={styles.nav}>
-            {SCREENS.map((screen) => (
-              <button
-                key={screen}
-                type="button"
-                className={styles.navButton}
-                aria-current={state.screen === screen ? 'page' : undefined}
-                onClick={() => dispatch({ type: 'navigate', screen })}
-              >
-                {/* The label is the first text of the button; CSS `order: -1` puts the icon in front of it. */}
-                {t(`nav.${screen}`)}
-                <NavIcon screen={screen} className={styles.navIcon} />
-                {screen === 'code' ? <span className={styles.navAdvanced}>{t('nav.advanced')}</span> : null}
-              </button>
-            ))}
-          </nav>
+          <button
+            ref={menuButton}
+            type="button"
+            className={styles.menuButton}
+            aria-expanded={menuOpen}
+            aria-controls={HEADER_MENU_ID}
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            <MenuIcon className={styles.menuIcon} />
+            <span>{t('nav.menu')}</span>
+          </button>
+          <div id={HEADER_MENU_ID} className={styles.panel} data-open={menuOpen} onKeyDown={onMenuKeyDown}>
+            <nav aria-label={t('nav.label')} className={styles.nav}>
+              {SCREENS.map((screen) => (
+                <button
+                  key={screen}
+                  type="button"
+                  className={styles.navButton}
+                  aria-current={state.screen === screen ? 'page' : undefined}
+                  onClick={() => {
+                    dispatch({ type: 'navigate', screen });
+                    closeMenuAfterChoice();
+                  }}
+                >
+                  {/* The label is the first text of the button; CSS `order: -1` puts the icon in front of it. */}
+                  {t(`nav.${screen}`)}
+                  <NavIcon screen={screen} className={styles.navIcon} />
+                  {screen === 'code' ? <span className={styles.navAdvanced}>{t('nav.advanced')}</span> : null}
+                </button>
+              ))}
+            </nav>
+            <div className={styles.switches}>
+              <Tabs
+                label={t('language.label')}
+                items={LANGUAGES.map((language) => ({
+                  key: language,
+                  lang: language,
+                  label: translator(DICTIONARIES, language)(`language.${language}`),
+                }))}
+                current={state.language}
+                onChoose={(key) => {
+                  const language: Language = key === 'en' ? 'en' : 'hi';
+                  dispatch({ type: 'set-language', language });
+                  onLanguageChosen?.(language);
+                }}
+              />
+              <ThemeSwitch
+                theme={theme}
+                label={t('theme.label')}
+                stateText={t(theme === 'night' ? 'theme.on' : 'theme.off')}
+                onChoose={(next) => onThemeChosen?.(next)}
+              />
+            </div>
+            {/* The header's one primary Button. It belongs to the Shell, so it is outside every Screen and its one primary Button. */}
+            <Button
+              variant="primary"
+              className={styles.scanPill}
+              onClick={() => {
+                dispatch({ type: 'navigate', screen: 'scan' });
+                closeMenuAfterChoice();
+              }}
+            >
+              {t('nav.scanCard')}
+            </Button>
+          </div>
         </div>
       </header>
       {updateReady ? (

@@ -5,7 +5,8 @@
   color: var(--ink);
   background: var(--surface);
   border: 2px solid var(--notice-colour);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-media);
+  box-shadow: var(--shadow-lift);
 }
 
 .information {

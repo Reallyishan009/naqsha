@@ -82,10 +82,12 @@
   gap: var(--space-3);
 }
 
-/* The Button classes give the look; the tile only has to fill its place and hold three lines of content. */
-.tile {
+/* The Button classes give the look; the tile only has to fill its place and hold three lines of content. It holds a picture, so it takes the media radius, not the pill (the two class names beat the Button's one, whatever order the sheets load in). */
+.tiles .tile {
   width: 100%;
   min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-media);
 }
 
 .tileBody {

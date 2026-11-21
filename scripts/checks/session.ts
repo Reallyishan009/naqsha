@@ -146,6 +146,30 @@ export class Page {
 export const byText = (selector: string, text: string): string =>
   `[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>e.textContent.trim()===${JSON.stringify(text)})`;
 
+/**
+ * Opens the menu of the header, found by its accessible name (`nav.menu` in the language the page shows, so pass the
+ * name in each language), but only where the page draws it: at the narrowest width the navigation, the language
+ * switch, the theme switch and the Scan pill sit behind that button. Where the button is not drawn (display: none, as
+ * at 390 and 1280 px) or the menu is open already, nothing is clicked, so a control that is always shown is never
+ * reached through a menu. Call it before pressing any header control.
+ */
+export async function openHeaderMenu(page: Page, names: readonly string[]): Promise<void> {
+  const control = `[...document.querySelectorAll('header button[aria-expanded][aria-controls]')].find(b=>${JSON.stringify(names)}.includes((b.getAttribute('aria-label')||b.textContent).trim()))`;
+  const state = await page.ev<string>(`(()=>{const b=${control};if(!b||b.getClientRects().length===0)return 'absent';return b.getAttribute('aria-expanded')})()`);
+  if (state !== 'false') return;
+  await page.click(control, 'the header menu button');
+  await page.waitFor(`(${control}).getAttribute('aria-expanded')==='true'`, 'the header menu to open');
+}
+
+/** Closes the menu of the header when the page draws its button and it is open (a capture then shows the page, not the menu over it). */
+export async function closeHeaderMenu(page: Page, names: readonly string[]): Promise<void> {
+  const control = `[...document.querySelectorAll('header button[aria-expanded][aria-controls]')].find(b=>${JSON.stringify(names)}.includes((b.getAttribute('aria-label')||b.textContent).trim()))`;
+  const state = await page.ev<string>(`(()=>{const b=${control};if(!b||b.getClientRects().length===0)return 'absent';return b.getAttribute('aria-expanded')})()`);
+  if (state !== 'true') return;
+  await page.click(control, 'the header menu button');
+  await page.waitFor(`(${control}).getAttribute('aria-expanded')==='false'`, 'the header menu to close');
+}
+
 // ---------------------------------------------------------------- servers and Chrome
 
 export async function freePort(): Promise<number> {

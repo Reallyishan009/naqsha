@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Downloads the source fonts and subsets them into public/fonts/ (design-and-ux-pass, Requirements 1.1, 1.5, 1.6, 2.3 and 2.5).
+# Downloads the source fonts and subsets them into public/fonts/ (design-and-ux-pass, Requirements 1.1, 1.5, 1.6, 2.3 and 2.5;
+# second-pass-run1 task 3.1 adds the Newsreader serif, roman and italic).
 #
 # Dev only: nothing here is part of `npm run build`, and the woff2 files it writes are committed.
 # One-time setup (see scripts/fonts/README.md):
@@ -42,13 +43,17 @@ fetch rozhaone RozhaOne-Regular.ttf RozhaOne-Regular.ttf
 fetch hind Hind-Regular.ttf Hind-Regular.ttf
 fetch hind Hind-Bold.ttf Hind-Bold.ttf
 fetch ibmplexmono IBMPlexMono-Regular.ttf IBMPlexMono-Regular.ttf
+# Newsreader is a variable font with an optical size axis (opsz) and a weight axis (wght); google/fonts names the files with brackets.
+fetch newsreader 'Newsreader%5Bopsz,wght%5D.ttf' Newsreader-VF.ttf
+fetch newsreader 'Newsreader-Italic%5Bopsz,wght%5D.ttf' Newsreader-Italic-VF.ttf
 fetch rozhaone OFL.txt RozhaOne-OFL.txt
 fetch hind OFL.txt Hind-OFL.txt
 fetch ibmplexmono OFL.txt IBMPlexMono-OFL.txt
+fetch newsreader OFL.txt Newsreader-OFL.txt
 echo "${FONTS_REF}" > "${source_dir}/COMMIT"
 
 # A font whose licence text is not the SIL Open Font License 1.1 is not copied (Requirement 2.2).
-for licence in RozhaOne-OFL.txt Hind-OFL.txt IBMPlexMono-OFL.txt; do
+for licence in RozhaOne-OFL.txt Hind-OFL.txt IBMPlexMono-OFL.txt Newsreader-OFL.txt; do
   if ! grep -q "SIL OPEN FONT LICENSE Version 1.1" "${source_dir}/${licence}"; then
     echo "${licence} is not the SIL Open Font License 1.1. Nothing was written; record it and ask the user." >&2
     exit 1
@@ -68,12 +73,26 @@ subset() {
     --output-file="${output_dir}/$3"
 }
 
+# Newsreader is Latin only (Devanagari headings keep Rozha One), and one weight each: the variable axes are fixed first, which is
+# what keeps each file small. wght 400 is the weight the headings ask for; opsz 36 is the optical size for headings of 24 to 48 px.
+fonttools varLib.instancer "${source_dir}/Newsreader-VF.ttf" wght=400 opsz=36 --output "${work_dir}/Newsreader-Regular.ttf" --quiet
+fonttools varLib.instancer "${source_dir}/Newsreader-Italic-VF.ttf" wght=400 opsz=36 --output "${work_dir}/Newsreader-Italic.ttf" --quiet
+subset_from() {
+  pyftsubset "$1" \
+    --unicodes-file="$2" \
+    --flavor=woff2 \
+    --layout-features='*' \
+    --no-hinting \
+    --output-file="${output_dir}/$3"
+}
+subset_from "${work_dir}/Newsreader-Regular.ttf" "${work_dir}/latin-symbols.txt" Newsreader-Regular.woff2
+subset_from "${work_dir}/Newsreader-Italic.ttf" "${work_dir}/latin-symbols.txt" Newsreader-Italic.woff2
 # Rozha One and Hind hold the Devanagari list as well; IBM Plex Mono does not.
 subset RozhaOne-Regular.ttf "${work_dir}/latin-symbols-and-devanagari.txt" RozhaOne-Regular.woff2
 subset Hind-Regular.ttf "${work_dir}/latin-symbols-and-devanagari.txt" Hind-Regular.woff2
 subset Hind-Bold.ttf "${work_dir}/latin-symbols-and-devanagari.txt" Hind-Bold.woff2
 subset IBMPlexMono-Regular.ttf "${work_dir}/latin-symbols.txt" IBMPlexMono-Regular.woff2
 
-cp "${source_dir}/RozhaOne-OFL.txt" "${source_dir}/Hind-OFL.txt" "${source_dir}/IBMPlexMono-OFL.txt" "${output_dir}/"
+cp "${source_dir}/RozhaOne-OFL.txt" "${source_dir}/Hind-OFL.txt" "${source_dir}/IBMPlexMono-OFL.txt" "${source_dir}/Newsreader-OFL.txt" "${output_dir}/"
 
 node "${here}/report.ts"

@@ -68,6 +68,26 @@ export function CodeIcon({ className }: IconProps) {
   );
 }
 
+/** Three bars, on the button that opens the header menu at the narrowest widths. Decoration beside the visible word "Menu". */
+export function MenuIcon({ className }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      width={ICON_SIZE}
+      height={ICON_SIZE}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
+  );
+}
+
 const ICONS: Record<Screen, (props: IconProps) => ReactElement> = {
   weave: WeaveIcon,
   keep: KeepIcon,

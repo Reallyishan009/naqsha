@@ -53,11 +53,11 @@ describe('Button', () => {
     expect(disabled).toContain('background: none');
   });
 
-  it('R5.7 the primary Button is --on-zari text on --zari in every state', () => {
+  it('R5.7 the primary Button is --on-primary text on --primary in every state', () => {
     const source = css('Button');
     const primary = rule(source, '.primary');
-    expect(primary).toContain('color: var(--on-zari)');
-    expect(primary).toContain('background: var(--zari)');
+    expect(primary).toContain('color: var(--on-primary)');
+    expect(primary).toContain('background: var(--primary)');
     expect(source).not.toContain('data-theme');
     expect(source).not.toMatch(/\.primary:[a-z-]+/);
   });

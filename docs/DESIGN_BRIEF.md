@@ -16,6 +16,23 @@ Calm, premium, editorial, with real pictures.
 - Every pair meets WCAG AA. Large display text (24 px and up) may use 3:1. Small eyebrow labels and body text need 4.5:1, so eyebrows use a darker tan or the green.
 - Every pair is listed in `src/ui/theme/contrast.ts` for both themes. `tokens.css` holds the same values; a test compares them.
 
+| Token | Day | Night | Use |
+|---|---|---|---|
+| `--ground` | `#F6EFE0` | `#0E1511` | Page background |
+| `--surface` | `#FFFBF2` | `#16201A` | Cards and sheets |
+| `--ink` | `#183326` | `#EFE8D6` | Main text (forest green in Day) |
+| `--ink-soft` | `#566759` | `#A3B3A7` | Secondary text, control borders |
+| `--line` | `#E6DCC4` | `#1F2D24` | Hairlines and the Graph_Paper_Ground (soft, so the ground stays calm) |
+| `--primary`, `--on-primary` | `#1F4D36`, `#FFFBF2` | `#E3B341`, `#0B120E` | Primary Button, links |
+| `--accent` | `#8A6532` | `#E3B341` | Italic accent word in a display heading |
+| `--eyebrow` | `#6E4E22` | `#D9A83E` | Small letterspaced labels |
+| `--tint` | `#EDE3CB` | `#1E2B23` | Chips |
+| `--band`, `--on-band`, `--band-accent` | `#1F4D36`, `#F6EFE0`, `#E2C48F` | `#1B3A2A`, `#F1EBD9`, `#E3B341` | The deep-green band |
+| `--zari` | `#B0800A` | `#E3B341` | Focus ring (unchanged) |
+| `--frost` | `rgb(255 251 242 / 0.95)` | `rgb(22 32 26 / 0.95)` | Header glass, never below 0.85 alpha; contrast is checked at the worst-case backdrop |
+
+`--card`, `--hole`, `--madder`, `--indigo` and `--leaf` keep their meaning (Night `--hole` is `#070D09`). Scales: spacing 4 to 48 px plus 64, 96 and 128 px; radius control 4, panel 8, media 16, card 24 and pill; shadows `--shadow-card`, `--shadow-lift`, `--shadow-float`. The measured ratios are in `.kiro/specs/second-pass-run1/measurements.md`.
+
 ### Header
 
 - A floating pill: centred, rounded, sticky, frosted (`backdrop-filter` blur on a surface that is at least 85 percent opaque, so contrast holds over any photo).
@@ -90,7 +107,7 @@ Two themes:
 - **Day loom** (default): ivory silk background, for use in a bright workshop.
 - **Night loom**: deep indigo, for the Halloween theme and the demo video.
 
-**Replaced by the second pass:** the palette below (ivory and indigo become cream with forest green, and near-black green with amber). The first-pass values are kept here for reference until `tokens.css` and `contrast.ts` change in task 3.2.
+**Replaced by the second pass:** the palette below (ivory and indigo become cream with forest green, and near-black green with amber). The first-pass values are kept here for reference; `tokens.css` and `contrast.ts` now hold the second-pass values.
 
 ### Colour tokens (first pass)
 

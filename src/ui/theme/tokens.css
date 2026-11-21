@@ -31,12 +31,30 @@
   src: url('/fonts/IBMPlexMono-Regular.woff2') format('woff2');
 }
 
+/* Newsreader, the heading serif for Latin text: roman and italic, Latin only. Devanagari headings fall through to Rozha One. */
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/Newsreader-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Newsreader';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/Newsreader-Italic.woff2') format('woff2');
+}
+
 :root {
+  /* Day: cream ground, forest-green ink and primary, tan accent. */
   --ground: #F6EFE0;
   --surface: #FFFBF2;
-  --ink: #2A1F14;
-  --ink-soft: #6B5B48;
-  --line: #D9CBB0;
+  --ink: #183326;
+  --ink-soft: #566759;
+  --line: #E6DCC4;
   --card: #D8B67A;
   --hole: #1B140C;
   --zari: #B0800A;
@@ -45,8 +63,19 @@
   --leaf: #2F6B4F;
   --on-zari: #2A1F14;
   --on-hole: #F1E8D5;
+  --primary: #1F4D36;
+  --on-primary: #FFFBF2;
+  --accent: #8A6532;
+  --eyebrow: #6E4E22;
+  --tint: #EDE3CB;
+  --band: #1F4D36;
+  --on-band: #F6EFE0;
+  --band-accent: #E2C48F;
 
-  --font-display: 'Rozha One', Georgia, serif;
+  /* The frosted header surface: --surface at 95% (never below 85%; a test checks it and contrast.ts holds the worst case). */
+  --frost: rgb(255 251 242 / 0.95);
+
+  --font-display: 'Newsreader', 'Rozha One', Georgia, serif;
   --font-body: Hind, system-ui, sans-serif;
   --font-data: 'IBM Plex Mono', ui-monospace, monospace;
 
@@ -64,11 +93,19 @@
   --space-5: 24px;
   --space-6: 32px;
   --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;
 
   --radius-control: 4px;
   --radius-panel: 8px;
+  --radius-media: 16px;
+  --radius-card: 24px;
+  --radius-pill: 999px;
 
   --shadow-card: 0 2px 6px rgb(0 0 0 / 0.25);
+  --shadow-lift: 0 2px 6px rgb(24 51 38 / 0.08), 0 10px 24px rgb(24 51 38 / 0.12);
+  --shadow-float: 0 4px 12px rgb(24 51 38 / 0.1), 0 24px 48px rgb(24 51 38 / 0.2);
 
   --motion-short: 120ms;
   --motion-medium: 200ms;
@@ -79,20 +116,32 @@
   --leading-hindi: 1.7;
 }
 
+/* Night: near-black green ground, amber accent. */
 [data-theme='night'] {
-  --ground: #14122B;
-  --surface: #1E1B3D;
-  --ink: #F1E8D5;
-  --ink-soft: #B4A9C8;
-  --line: #35315E;
+  --ground: #0E1511;
+  --surface: #16201A;
+  --ink: #EFE8D6;
+  --ink-soft: #A3B3A7;
+  --line: #1F2D24;
   --card: #C9A461;
-  --hole: #07061A;
+  --hole: #070D09;
   --zari: #E3B341;
   --madder: #E0625A;
   --indigo: #8FA3FF;
   --leaf: #6FCF9B;
-  --on-zari: #07061A;
+  --on-zari: #070D09;
   --on-hole: #F1E8D5;
+  --primary: #E3B341;
+  --on-primary: #0B120E;
+  --accent: #E3B341;
+  --eyebrow: #D9A83E;
+  --tint: #1E2B23;
+  --band: #1B3A2A;
+  --on-band: #F1EBD9;
+  --band-accent: #E3B341;
+  --frost: rgb(22 32 26 / 0.95);
+  --shadow-lift: 0 2px 6px rgb(0 0 0 / 0.3), 0 10px 24px rgb(0 0 0 / 0.4);
+  --shadow-float: 0 4px 12px rgb(0 0 0 / 0.35), 0 24px 48px rgb(0 0 0 / 0.55);
 }
 
 [data-theme='night'] {
@@ -101,6 +150,8 @@
 
 html {
   font-size: 18px;
+  /* The sticky header may cover the top of the page; a control that takes focus or an anchor is scrolled clear of it. */
+  scroll-padding-top: 144px;
   /* The native radio, check box and slider take the accent instead of the browser's blue. */
   accent-color: var(--zari);
 }

@@ -117,6 +117,55 @@ function calcBodies(value: string): string[] {
     from = end + 1;
   }
 }
+/**
+ * The second pass allows two things the first pass forbade, each in named files only (brief.md, docs/DESIGN_BRIEF.md):
+ * a two-colour tonal gradient inside an illustration or a photo frame, and a frosted header surface.
+ */
+const GRADIENT_MODULES = [
+  'components/Photo.module.css',
+  'illustrations/CardDrawing.module.css',
+  'illustrations/Drawings.module.css',
+  'illustrations/HeroLoom.module.css',
+  'illustrations/ProcessLoop.module.css',
+];
+const FROST_MODULES = ['Shell.module.css'];
+/** The least alpha the frosted surface may have, as in contrast.ts (FROST_MIN_ALPHA). */
+const FROST_MIN_ALPHA = 0.85;
+
+/** The calls to a CSS function whose name ends in `gradient`, as name and the text between the brackets. */
+function gradientCalls(value: string): { name: string; inside: string }[] {
+  const calls: { name: string; inside: string }[] = [];
+  for (const match of value.matchAll(/([a-z-]*gradient)\(/gi)) {
+    let depth = 1;
+    let end = match.index! + match[0].length;
+    for (; end < value.length && depth > 0; end += 1) depth += value[end] === '(' ? 1 : value[end] === ')' ? -1 : 0;
+    calls.push({ name: match[1]!.toLowerCase(), inside: value.slice(match.index! + match[0].length, end - 1) });
+  }
+  return calls;
+}
+/** Why a gradient is not a two-colour linear tonal gradient of palette tokens, or `null` when it is one. */
+function notTwoStopTonal(call: { name: string; inside: string }): string | null {
+  if (call.name !== 'linear-gradient') return `${call.name}( is not linear-gradient(`;
+  const items = topLevelItems(call.inside);
+  if (items.length > 0 && /^(?:to\s+[a-z]+(?:\s+[a-z]+)?|-?\d+(?:\.\d+)?deg)$/i.test(items[0]!)) items.shift();
+  if (items.length !== 2) return `${items.length} colour stops, not 2`;
+  for (const stop of items) {
+    if (!/^(?:var\(--[a-z-]+\)|transparent)(?:\s+\d+%)?$/i.test(stop)) return `stop "${stop}" is not a palette token or transparent`;
+  }
+  return null;
+}
+/** Why a backdrop-filter value is not a plain blur, or `null`. */
+function notPlainBlur(value: string): string | null {
+  return /^blur\(\d+px\)$/.test(value) ? null : `"${value}" is not blur(Npx)`;
+}
+/** The alpha of an `rgb(R G B / A)` token value, or `null`. */
+function alphaOf(value: string): number | null {
+  const match = /^rgba?\(\s*\d+[\s,]+\d+[\s,]+\d+\s*[/,]\s*([\d.]+)\s*\)$/.exec(value.trim());
+  return match === null ? null : Number(match[1]);
+}
+/** Custom properties of tokens.css, by the block that holds them (`:root` or the Night block). */
+const TOKENS_CSS = stripCssComments(readFileSync(path.join(UI, 'theme/tokens.css'), 'utf8'));
+const SHADOW_TOKENS = [...(/:root\s*\{([^}]*)\}/.exec(TOKENS_CSS)?.[1] ?? '').matchAll(/--(shadow-[a-z]+):/g)].map((match) => match[1]!);
 const MOTION_VAR = /var\(--motion-[a-z-]+\)/g;
 const TIME_LITERAL = /(?<![\w-])\d*\.?\d+m?s\b/;
 
@@ -164,12 +213,75 @@ describe('the style sheets and component sources', () => {
     }
   });
 
-  it('R3.13 no CSS Module has a gradient function, a backdrop-filter property or a blur function', () => {
+  it('R3.13 a gradient function is only in the named illustration and photo modules, and there it is a two-colour linear gradient of tokens', () => {
+    for (const file of GRADIENT_MODULES) expect(MODULES, `${file} is a CSS Module (the allow-list is not stale)`).toContain(file);
+    for (const declaration of DECLARATIONS) {
+      const calls = gradientCalls(declaration.value);
+      if (calls.length === 0) continue;
+      expect(GRADIENT_MODULES, `${declaration.file} may not hold a gradient: ${where(declaration)}`).toContain(declaration.file);
+      expect(/^background(?:-image)?$/.test(declaration.property), `a gradient is only a background: ${where(declaration)}`).toBe(true);
+      for (const call of calls) expect(notTwoStopTonal(call), where(declaration)).toBeNull();
+    }
+  });
+
+  it('R3.13 the gradient rule is narrow: the check rejects three stops, a radial or conic gradient, a colour literal and a stop that is not a token', () => {
+    const call = (text: string) => gradientCalls(text)[0]!;
+    expect(notTwoStopTonal(call('linear-gradient(var(--tint), var(--surface))'))).toBeNull();
+    expect(notTwoStopTonal(call('linear-gradient(to bottom, var(--band) 0%, transparent 100%)'))).toBeNull();
+    expect(notTwoStopTonal(call('linear-gradient(180deg, var(--a), var(--b), var(--c))'))).not.toBeNull();
+    expect(notTwoStopTonal(call('radial-gradient(var(--a), var(--b))'))).not.toBeNull();
+    expect(notTwoStopTonal(call('conic-gradient(var(--a), var(--b))'))).not.toBeNull();
+    expect(notTwoStopTonal(call('repeating-linear-gradient(var(--a), var(--b))'))).not.toBeNull();
+    expect(notTwoStopTonal(call('linear-gradient(red, blue)'))).not.toBeNull();
+    expect(notTwoStopTonal(call('linear-gradient(#fff, var(--b))'))).not.toBeNull();
+    expect(notTwoStopTonal(call('linear-gradient(var(--a))'))).not.toBeNull();
+  });
+
+  it('R3.13 no gradient text: no CSS Module clips a background to text or makes the text fill transparent', () => {
+    for (const declaration of DECLARATIONS) {
+      if (/^(?:-webkit-)?background-clip$/.test(declaration.property)) expect(declaration.value, where(declaration)).not.toMatch(/\btext\b/i);
+      if (declaration.property === '-webkit-text-fill-color') expect(declaration.value, where(declaration)).not.toMatch(/transparent/i);
+      if (/^background(?:-clip)?$/.test(declaration.property)) expect(declaration.value, where(declaration)).not.toMatch(/\btext\b/i);
+    }
+  });
+
+  it('R3.13 backdrop-filter is only in the header module, as blur(Npx) on the --frost surface', () => {
+    for (const file of FROST_MODULES) expect(MODULES, `${file} is a CSS Module (the allow-list is not stale)`).toContain(file);
     for (const file of MODULES) {
       const css = stripCssComments(read(file));
-      expect(css, `${file} gradient(`).not.toMatch(/gradient\(/i);
-      expect(css, `${file} backdrop-filter`).not.toMatch(/backdrop-filter/i);
-      expect(css, `${file} blur(`).not.toMatch(/blur\(/i);
+      if (!FROST_MODULES.includes(file)) {
+        expect(css, `${file} backdrop-filter`).not.toMatch(/backdrop-filter/i);
+        expect(css, `${file} blur(`).not.toMatch(/blur\(/i);
+      }
+    }
+    const blurred = DECLARATIONS.filter((declaration) => /^(?:-webkit-)?backdrop-filter$/.test(declaration.property));
+    for (const declaration of blurred) {
+      expect(FROST_MODULES, where(declaration)).toContain(declaration.file);
+      expect(notPlainBlur(declaration.value), where(declaration)).toBeNull();
+      const sameRule = DECLARATIONS.filter((other) => other.file === declaration.file && other.selector === declaration.selector);
+      const background = sameRule.find((other) => other.property === 'background' || other.property === 'background-color');
+      expect(background?.value, `${where(declaration)} needs the frosted surface as its own background`).toBe('var(--frost)');
+    }
+    // No other property may use blur( (a `filter: blur()` would blur the content, not the glass).
+    for (const declaration of DECLARATIONS) {
+      if (/^(?:-webkit-)?backdrop-filter$/.test(declaration.property)) continue;
+      expect(declaration.value, where(declaration)).not.toMatch(/blur\(/i);
+    }
+  });
+
+  it('R3.13 the frosted surface is at least 85 percent opaque in both themes, and the check reads the alpha of --frost', () => {
+    expect(alphaOf('rgb(255 251 242 / 0.95)')).toBe(0.95);
+    expect(alphaOf('rgb(255 251 242 / 0.6)')).toBe(0.6);
+    expect(alphaOf('#FFFBF2')).toBeNull();
+    const day = /:root\s*\{([^}]*)\}/.exec(TOKENS_CSS)?.[1] ?? '';
+    const night = /\[data-theme='night'\]\s*\{([^}]*--frost[^}]*)\}/.exec(TOKENS_CSS)?.[1] ?? '';
+    for (const [theme, block] of [['day', day], ['night', night]] as const) {
+      const value = /--frost:\s*([^;]+);/.exec(block)?.[1];
+      expect(value, `${theme} --frost`).toBeDefined();
+      const alpha = alphaOf(value!);
+      expect(alpha, `${theme} --frost is rgb(R G B / alpha)`).not.toBeNull();
+      expect(alpha!, `${theme} --frost alpha`).toBeGreaterThanOrEqual(FROST_MIN_ALPHA);
+      expect(alpha!).toBeLessThanOrEqual(1);
     }
   });
 
@@ -184,16 +296,27 @@ describe('the style sheets and component sources', () => {
     }
   });
 
-  it('R3.6 every box-shadow, text-shadow and drop-shadow( value in a CSS Module is var(--shadow-card)', () => {
+  it('R3.6 every box-shadow, text-shadow and drop-shadow( value in a CSS Module is a var(--shadow-*) token that tokens.css defines', () => {
+    expect(SHADOW_TOKENS).toEqual(['shadow-card', 'shadow-lift', 'shadow-float']);
+    const shadowVar = new RegExp(`^var\\(--(?:${SHADOW_TOKENS.join('|')})\\)$`);
     for (const declaration of DECLARATIONS) {
       if (declaration.property === 'box-shadow' || declaration.property === 'text-shadow') {
-        expect(declaration.value, where(declaration)).toBe('var(--shadow-card)');
+        expect(declaration.value, where(declaration)).toMatch(shadowVar);
       }
       for (const drop of declaration.value.matchAll(/drop-shadow\(/g)) {
         const inside = declaration.value.slice(drop.index! + drop[0].length);
-        expect(inside.startsWith('var(--shadow-card))'), where(declaration)).toBe(true);
+        expect(inside, where(declaration)).toMatch(new RegExp(`^var\\(--(?:${SHADOW_TOKENS.join('|')})\\)\\)`));
       }
     }
+  });
+
+  it('R3.6 the shadow rule stays narrow: a shadow written out, or a token that does not exist, does not match', () => {
+    const shadowVar = new RegExp(`^var\\(--(?:${SHADOW_TOKENS.join('|')})\\)$`);
+    expect('var(--shadow-lift)').toMatch(shadowVar);
+    expect('var(--shadow-float)').toMatch(shadowVar);
+    expect('0 2px 6px rgb(0 0 0 / 0.25)').not.toMatch(shadowVar);
+    expect('var(--shadow-glow)').not.toMatch(shadowVar);
+    expect('var(--shadow-card), 0 0 4px var(--ink)').not.toMatch(shadowVar);
   });
 
   it('R3.6 no component source sets a shadow of its own', () => {

@@ -24,7 +24,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { findChrome } from './checks/chrome.ts';
 import { SCREENSHOT_THEMES, SCREENSHOT_VIEWS, SCREENSHOT_WIDTHS, screenshotNames, setProblems } from './checks/screenshots.ts';
-import { Page, byText, openPage, startChrome, startPreview } from './checks/session.ts';
+import { Page, byText, closeHeaderMenu, openHeaderMenu, openPage, startChrome, startPreview } from './checks/session.ts';
 import type { Cleanup } from './checks/session.ts';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
@@ -40,6 +40,8 @@ type Design = 'diamond' | 'border' | 'floral';
 const WINDOW_HEIGHT = 800;
 /** The accessible name of the Theme_Switch (the visible label `theme.label`); the state is `aria-checked`. */
 const THEME_SWITCH_NAME = 'Night loom';
+/** The accessible name of the header menu button, in both languages: only the narrowest width draws it, and it holds the header controls. */
+const MENU_NAMES: readonly string[] = [EN['nav.menu']!, JSON.parse(readFileSync(path.join(repoRoot, 'src', 'ui', 'i18n', 'hi.json'), 'utf8'))['nav.menu'].text as string];
 /** The accessible names of the Disclosures that may hold a control, in the screens that have them. */
 const MORE_NAME = 'More';
 /** Names of the two designs saved for the Keep and Code views. */
@@ -153,6 +155,7 @@ async function fillShownField(page: Page, label: string, value: string, disclosu
 }
 
 async function goTo(page: Page, screen: Screen): Promise<void> {
+  await openHeaderMenu(page, MENU_NAMES);
   await page.click(
     `[...document.querySelectorAll('nav button')].find(b=>b.textContent.trim().startsWith(${q(NAV_TEXT[screen])}))`,
     `the ${screen} navigation item`,
@@ -167,11 +170,15 @@ async function freshPage(page: Page, baseUrl: string): Promise<void> {
   await page.navigate(baseUrl);
   const english = `[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===${q(EN['language.en'])})`;
   await page.waitFor(`!!(${english})`, 'the English language control');
-  if (!(await page.ev<boolean>(`(${english}).getAttribute('aria-pressed')==='true'`))) await page.click(english, 'the English language control');
+  if (!(await page.ev<boolean>(`(${english}).getAttribute('aria-pressed')==='true'`))) {
+    await openHeaderMenu(page, MENU_NAMES);
+    await page.click(english, 'the English language control');
+  }
   await page.waitFor(
     `document.documentElement.lang==='en'&&(${english}).getAttribute('aria-pressed')==='true'&&document.querySelector('#screen-title')?.textContent.trim()===${q(EN['nav.weave'])}`,
     'the Weave screen in English',
   );
+  await closeHeaderMenu(page, MENU_NAMES);
 }
 
 /** Starts a sample from the Weave screen and waits for the finished cloth (the pick counter at its last pick). */
@@ -288,12 +295,14 @@ async function chooseTheme(page: Page, mode: Mode, theme: Theme): Promise<void> 
   await page.waitFor(`!!(${control})`, `the "${THEME_SWITCH_NAME}" switch`);
   const wantNight = theme === 'night';
   if ((await page.ev<boolean>(`(${control}).getAttribute('aria-checked')==='true'`)) !== wantNight) {
+    await openHeaderMenu(page, MENU_NAMES);
     await page.click(control, `the "${THEME_SWITCH_NAME}" switch`);
   }
   await page.waitFor(
     `document.documentElement.getAttribute('data-theme')===${q(theme)}&&(${control}).getAttribute('aria-checked')===${q(String(wantNight))}`,
     `the ${theme} theme to be applied`,
   );
+  await closeHeaderMenu(page, MENU_NAMES);
 }
 
 type LayoutMetrics = { cssContentSize?: { height: number }; contentSize: { height: number } };

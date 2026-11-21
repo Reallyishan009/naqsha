@@ -3,21 +3,20 @@
  * (never rounded up) to two decimals. A pair below its minimum is flagged and the exit status is 1.
  * Run: node scripts/contrast_report.ts
  */
-import { THEME_TOKENS, TOKEN_PAIRS, contrastRatio, truncateRatio } from '../src/ui/theme/contrast.ts';
+import { TOKEN_PAIRS, contrastRatio, tokenColour, truncateRatio } from '../src/ui/theme/contrast.ts';
 import type { ThemeName } from '../src/ui/theme/contrast.ts';
 
 let below = 0;
 for (const theme of ['day', 'night'] as ThemeName[]) {
   console.log(`\n${theme}`);
   for (const pair of TOKEN_PAIRS.filter((candidate) => candidate.theme === theme)) {
-    const tokens = THEME_TOKENS[theme];
-    const foreground = tokens[pair.foreground];
-    const background = tokens[pair.background];
+    const foreground = tokenColour(theme, pair.foreground);
+    const background = tokenColour(theme, pair.background);
     const ratio = contrastRatio(foreground, background);
     const fails = ratio < pair.minimum;
     if (fails) below += 1;
     console.log(
-      `${fails ? 'BELOW' : 'ok   '} ${pair.foreground} ${foreground} on ${pair.background} ${background}: ${truncateRatio(ratio)} (minimum ${pair.minimum})`,
+      `${fails ? 'BELOW' : 'ok   '} ${pair.foreground} ${foreground} on ${pair.background}${pair.background === 'frost' ? ' (worst case)' : ''} ${background}: ${truncateRatio(ratio)} (minimum ${pair.minimum})`,
     );
   }
 }

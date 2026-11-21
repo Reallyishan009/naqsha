@@ -20,7 +20,7 @@
   font: inherit;
   background: var(--surface);
   border: 1px solid var(--ink-soft);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-media);
 }
 
 /* A disabled control differs by more than colour: a dashed border. */
@@ -44,16 +44,16 @@
   font: inherit;
   font-weight: 700;
   background: var(--surface);
-  border: 2px solid var(--ink-soft);
-  border-radius: var(--radius-control);
+  border: 1px solid var(--ink-soft);
+  border-radius: var(--radius-pill);
   cursor: pointer;
 }
 
 /* The file chooser of the one primary action of a Screen takes the primary Button look. */
 .field[data-emphasis='primary'] input[type='file']::file-selector-button {
-  color: var(--on-zari);
-  background: var(--zari);
-  border-color: var(--zari);
+  color: var(--on-primary);
+  background: var(--primary);
+  border-color: var(--primary);
 }
 
 /* Disabled looks like a disabled Button: a dashed border, no fill. */
