@@ -1,0 +1,156 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Write the missing R11.3 accessible-name property": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636438
+      },
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280641472
+      },
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280822056
+      }
+    ],
+    "1.2 README count, media move, BUILD_LOG decisions": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636486
+      },
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280642054
+      },
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280822214
+      }
+    ],
+    "1.3 Gate and commit \"cleanup before second pass\"": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636536
+      },
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280822285
+      }
+    ],
+    "2.1 Record the licence verification and the look brief": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636563
+      }
+    ],
+    "2.2 Photo components and credits list": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636595
+      }
+    ],
+    "2.3 App-made art: scripts/make_art.ts": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636679
+      }
+    ],
+    "2.4 ProcessLoop component": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636713
+      }
+    ],
+    "2.5 Part A gate and commit \"imagery: photos wired in, app-made pictures, process loop\"": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636742
+      }
+    ],
+    "3.1 Fonts: serif for headings": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636770
+      }
+    ],
+    "3.2 Tokens and palette": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636798
+      }
+    ],
+    "3.3 Pill header": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636828
+      }
+    ],
+    "3.4 Button, Card, Chip, SectionHeader, Eyebrow": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636854
+      }
+    ],
+    "3.5 Part 1 gate and commit \"design system: tokens, header, buttons, cards, section header\"": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636882
+      }
+    ],
+    "4.1 Landing hero and the curved divider": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636912
+      }
+    ],
+    "4.2 Sections 2 to 4: how it works, what you can do, try a sample": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636939
+      }
+    ],
+    "4.3 Sections 5 to 7 and the credits": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636966
+      }
+    ],
+    "4.4 Scroll reveal, lazy sections, bundle and precache": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280636996
+      }
+    ],
+    "4.5 Part 2 gate and commit \"Landing: hero and sections\"": [
+      {
+        "executionId": "9a25ab75-7faa-4193-b9ba-2e1f8dfa5c7e",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795280637027
+      }
+    ]
+  }
+}

@@ -1,7 +1,12 @@
+import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { GROUP_SEPARATOR } from '../../../src/codec-view/index.ts';
-import type { BitsLine, DamagedLine, DiffEntry } from '../../../src/codec-view/index.ts';
+import { encodeCardGrid } from '../../../src/codec/index.ts';
+import type { CardProfile } from '../../../src/codec/types.ts';
+import { cardToBits, GROUP_SEPARATOR } from '../../../src/codec-view/index.ts';
+import type { BitsLine, DamagedLine, DiffEntry, Line } from '../../../src/codec-view/index.ts';
+import type { Language } from '../../../src/ui/types.ts';
 import { DICTIONARIES, translator } from '../../../src/ui/i18n/messages.ts';
+import { cardGridArbitrary, profileArbitrary } from '../../support/profiles.ts';
 import {
   diffEntryAccessibleName,
   lineAccessibleName,
@@ -378,5 +383,105 @@ describe('accessible names (task 2.6)', () => {
         expect(new Set(names).size).toBe(4);
       }
     });
+  });
+});
+
+describe('accessible names, property (task 2.6)', () => {
+  /** Fixed seed and run count for the R11.3 property (R12.4). */
+  const NAME_SEED = 211103;
+  const NAME_RUNS = 300;
+  const hasLatinLetter = /[A-Za-z]/;
+  const digitRuns = /\d+/g;
+
+  /**
+   * A card for the profile that is valid, all punched, none punched, or damaged in one of four ways: a missing
+   * hook row, a hook row one hook column too long, a hook position that is not a boolean, or no card at all.
+   * Every dimension comes from the generated profile.
+   */
+  function cardOrDamageArbitrary(profile: CardProfile): fc.Arbitrary<unknown> {
+    const valid = cardGridArbitrary(profile);
+    const filled = (punched: boolean): boolean[][] =>
+      Array.from({ length: profile.hookRows }, () => Array.from({ length: profile.hookColumns }, () => punched));
+    return fc.oneof(
+      { weight: 4, arbitrary: valid },
+      { weight: 1, arbitrary: fc.constant(filled(true)) },
+      { weight: 1, arbitrary: fc.constant(filled(false)) },
+      { weight: 1, arbitrary: valid.map((card) => card.slice(1)) },
+      { weight: 1, arbitrary: valid.map((card) => card.map((row, hookRow) => (hookRow === 0 ? [...row, true] : row))) },
+      {
+        weight: 1,
+        arbitrary: fc
+          .tuple(valid, fc.nat({ max: profile.hookRows - 1 }), fc.nat({ max: profile.hookColumns - 1 }))
+          .map(([card, hookRow, hookColumn]) =>
+            card.map((row, rowIndex) =>
+              rowIndex === hookRow ? row.map((cell, columnIndex): unknown => (columnIndex === hookColumn ? 'yes' : cell)) : row,
+            ),
+          ),
+      },
+      { weight: 1, arbitrary: fc.constant(null) },
+    );
+  }
+
+  /**
+   * One Line of either kind at any pick index, built the only way the app builds one: a card through `cardToBits`,
+   * which gives a `bits` Line for a valid card and a `damaged` Line carrying the violations for any other. The
+   * expected punched ends of a `bits` Line come from `encodeCardGrid`, the one hook-position-to-end mapping.
+   */
+  function lineArbitrary(profile: CardProfile): fc.Arbitrary<{ line: Line; punchedEnds: number[] }> {
+    return fc.tuple(cardOrDamageArbitrary(profile), fc.integer({ min: 0, max: 100_000 })).map(([card, pick]) => {
+      const bits = cardToBits(profile, card);
+      if (!bits.ok) return { line: { kind: 'damaged', pick, violations: bits.violations }, punchedEnds: [] };
+      const ends = encodeCardGrid(profile, card);
+      if (!ends.ok) throw new Error('encodeCardGrid refused a card that cardToBits read');
+      const punchedEnds = ends.value.flatMap((punched, end) => (punched ? [end] : []));
+      return { line: { kind: 'bits', pick, bits: bits.bits }, punchedEnds };
+    });
+  }
+
+  it('R11.3 a Line accessible name names its pick and its punched ends', () => {
+    // **Validates: Requirements R10.8, R11.3, R11.4, R11.12**
+    fc.assert(
+      fc.property(
+        profileArbitrary.chain((profile) => fc.tuple(fc.constant(profile), lineArbitrary(profile))),
+        fc.constantFrom<Language>('en', 'hi'),
+        ([profile, { line, punchedEnds }], language) => {
+          const t = translator(DICTIONARIES, language);
+          const name = lineAccessibleName(t, line);
+
+          // The Line was built from the generated profile: a `bits` Line has one character per end.
+          if (line.kind === 'bits') expect(line.bits).toHaveLength(profile.hookRows * profile.hookColumns);
+
+          // Never a Group_Separator, and in Hindi never a Latin letter (R11.3, R10.8).
+          expect(name).not.toContain(GROUP_SEPARATOR);
+          if (language === 'hi') expect(name).not.toMatch(hasLatinLetter);
+
+          // The pick number as digits, then exactly the punched ends, ascending, and no other number (R11.3, R11.12).
+          const numbers = (name.match(digitRuns) ?? []).map(Number);
+          expect(numbers).toEqual([line.pick, ...punchedEnds]);
+          expect(name.startsWith(language === 'hi' ? 'पिक' : 'Pick')).toBe(true);
+
+          if (line.kind === 'damaged') {
+            // The damaged-card text, and no end index and no word for an end (R11.12).
+            expect(name).toBe(t('codeview.line.nameDamaged', { pick: line.pick }));
+            if (language === 'en') expect(name).toBe(`Pick ${line.pick}: damaged card`);
+            if (language === 'hi') expect(name).not.toContain('एंड');
+          } else if (punchedEnds.length === 0) {
+            // The no-end-punched text (R11.4).
+            expect(name).toBe(t('codeview.line.nameEmpty', { pick: line.pick }));
+            if (language === 'en') expect(name).toBe(`Pick ${line.pick}: no end punched`);
+          } else {
+            // The ends joined by a comma and a space, in the text each language fixes (R11.3).
+            const list = punchedEnds.join(', ');
+            expect(name).toContain(list);
+            if (language === 'en') expect(name).toBe(`Pick ${line.pick}: punched at ends ${list}`);
+            if (language === 'hi') expect(name).toContain('एंड');
+          }
+
+          // Hindi is its own text, not the English text (R10.8).
+          if (language === 'hi') expect(name).not.toBe(lineAccessibleName(translator(DICTIONARIES, 'en'), line));
+        },
+      ),
+      { seed: NAME_SEED, numRuns: NAME_RUNS },
+    );
   });
 });

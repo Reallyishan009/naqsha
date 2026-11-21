@@ -14,7 +14,7 @@ The GIFs below were captured from the built site (`npm run preview`) with the de
 
 Public URL: https://naqsha-ashen.vercel.app/ (opens with no login; deployed by hand on Vercel, see "Deploy to Vercel").
 
-**Status:** the app is built and deployed at https://naqsha-ashen.vercel.app/ , with three screens (Weave, Scan, Keep). Weave has a Try it button and printable sample cards. Keep exports a bitmap and saves designs in the IndexedDB archive. Scan reads a card from an uploaded photo, lets you tap to correct a hole, reads cards in a batch, and uses the live camera on HTTPS. Not verified: the Hindi text has not been reviewed (see `docs/HINDI_REVIEW.md`), the live camera has not been tested on real devices, and the card profile values are illustrative and unverified.
+**Status:** the app is built and deployed at https://naqsha-ashen.vercel.app/ , with four screens (Weave, Keep, Scan, Code view). Weave has a Try it button and printable sample cards. Keep exports a bitmap and saves designs in the IndexedDB archive. Scan reads a card from an uploaded photo, lets you tap to correct a hole, reads cards in a batch, and uses the live camera on HTTPS. Code view shows a naksha as one line of bits per pick (see "What it does"). Not verified: the Hindi text has not been reviewed (see `docs/HINDI_REVIEW.md`), the live camera has not been tested on real devices, and the card profile values are illustrative and unverified.
 
 ## Try it in 60 seconds
 
