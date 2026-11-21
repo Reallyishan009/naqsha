@@ -378,7 +378,7 @@ Task 1.1 runs **before any code of this feature is written**, because it records
     - Run `npm run check:browser` and report the real step 12 and step 13 output. Do not weaken what the step asserts; if something does not work offline, report exactly what fails.
     - _Requirements: R9.7, R9.8, R11.8_
 
-  - [~] 4.4 The bundle numbers and the documentation
+  - [x] 4.4 The bundle numbers and the documentation
     - **[demo-essential]**
     - Files: `docs/BUILD_LOG.md`, `docs/KIRO_USAGE.md`, `README.md`.
     - `docs/BUILD_LOG.md`: fill in the entry started by task 1.1 with the four byte counts R9.4 names, all measured by `check-bundle` — the gzipped entry chunk **before** this feature (recorded in task 1.1), the gzipped entry chunk **after**, the gzipped size of the Code view chunk, and the 204,800-byte limit. Add what was built, the measured 2,000 × 2,000 diff time from task 1.21, the listing timings from task 3.10, every existing Weave test changed by task 2.1, any cuttable task dropped, and the manual checks left open. Confirm that `package.json` `dependencies` holds exactly the entries it held before this feature (R8.10).

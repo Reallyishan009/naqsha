@@ -911,10 +911,10 @@ Nothing failed, so nothing was fixed and no check was touched.
 | Row | Chunk | Gzipped bytes | Limit |
 |---|---|---|---|
 | **before** (this task) | `./assets/index-BxQUVtbs.js` | **94191** | 204800 |
-| after (task 4.4) | — | — | 204800 |
-| Code view chunk (task 4.4) | — | — | — |
+| **after** (task 4.4, includes the design pass) | `./assets/index-Czo1BVeg.js` | **109570** | 204800 |
+| **Code view chunk** (task 4.4) | `assets/CodeViewScreen-DUaaI3MN.js` | **10042** | none (not limited) |
 
-The **after** row and the **Code view chunk** row are filled in by **task 4.4**, which measures them the same way once the feature is built, and which also records the 204,800-byte limit beside them.
+The **after** row and the **Code view chunk** row were filled in by **task 4.4**; see the entry "cards-as-code phase 4, task 4.4" below for how they were measured, what the 15,379-byte difference holds, and the rest of the R9.4 record.
 
 **The real output, quoted.** `npm run build`, from the size table onward (vite's `transforming...`, `✓ 94 modules transformed.`, `rendering chunks...` and `computing gzip size...` progress lines are left out; vite reported itself as v8.3.8):
 ```
@@ -1369,3 +1369,110 @@ The Hindi word "पिक" does not change with the count, so no separate Hindi 
 **Kiro features used:** spec (requirements, design, tasks for `design-and-ux-pass`), steering (glossary, structure, testing), sub-agent task execution, property-test and example-test rules, the screenshot and `check:browser` scripts.
 **Commits (five, in this order):** `63578cf` Stage 0 (screenshot tooling and the "before" screenshots, taken before any Stage A change, R24.1); `a9883e8` Stage A (fonts, tokens, theme switch, base components); `a56dac5` Stage B (Landing, navigation, Disclosures, friendly states); `6c80a79` Stage C (card drawing, Hero_Loom, Step_Icons, Spot_Illustrations, "after" screenshots); `559da00` Stage D (version labels, singular picks, finished cloth on return, steady benchmark, loom-mcp design fix). The documents of tasks 6.1 to 6.3 are folded into the Stage D commit (task 6.6).
 ---
+
+## 2026-11-21 (cards-as-code phase 4, task 4.4: the bundle numbers, what was cut, and the documentation)
+**Goal:** Close the R9.4 record for Code view: the four byte counts, the precache total, what was built, what was measured, what was cut, what stays open, and the R8.10 dependency check. Measured on this machine (Node v24.5.0, darwin arm64) on branch `auto/build` at `32ec32b` (the 4.3 commit) with only spec status files (`.kiro/specs/cards-as-code/tasks.md`, `tasks.meta.json`) modified. Nothing was committed.
+
+### The four R9.4 byte counts (`npm run build`, then `npm run check-bundle`, both exit 0)
+| R9.4 number | Value | Source |
+|---|---|---|
+| Gzipped entry chunk **before** this feature | **94,191 bytes** (`./assets/index-BxQUVtbs.js`) | Task 1.1 (entry above), measured on the working tree at `28ed91b`, the last commit before the first cards-as-code commit `493055e` |
+| Gzipped entry chunk **after** this feature | **109,570 bytes** (`./assets/index-Czo1BVeg.js`) | `check-bundle` today. **It includes the design pass**, which landed after the feature was built (see the split below) |
+| Gzipped size of the Code view chunk | **10,042 bytes** (`assets/CodeViewScreen-DUaaI3MN.js`) | `check-bundle`, line `Code view chunk:` |
+| Limit | **204,800 bytes** (unchanged; not raised) | `ENTRY_CHUNK_LIMIT_BYTES = 200 * 1024` in `scripts/check_bundle.ts`; the line reads `(limit 204800)` |
+
+The real output of today's `npm run check-bundle` (`npm run build` printed `✓ 170 modules transformed`, `index-Czo1BVeg.js 374.84 kB │ gzip: 111.04 kB`, `precache: 26 entries in cache naqsha-v1-44056bb4531a`; vite's `gzip:` figure differs from the check's because the check gzips at level 9 and counts bytes):
+```
+entry chunk: ./assets/index-Czo1BVeg.js, 109570 bytes gzipped (limit 204800)
+chunk: assets/CodeViewScreen-DUaaI3MN.js, 10042 bytes gzipped
+chunk: assets/Panel-ChUTrmoB.js, 3908 bytes gzipped
+chunk: assets/RepairPanel-Bq05uOIJ.js, 3026 bytes gzipped
+chunk: assets/ScanScreen-BkuXnqtG.js, 9078 bytes gzipped
+chunk: assets/bits-Dgmg86ll.js, 508 bytes gzipped
+chunk: assets/download-KT2praNC.js, 2279 bytes gzipped
+chunk: assets/index-Czo1BVeg.js, 109570 bytes gzipped
+chunk: assets/validateCardGrid-ClOvHDqy.js, 2978 bytes gzipped
+Scan chunk: assets/ScanScreen-BkuXnqtG.js, 9078 bytes gzipped
+Code view chunk: assets/CodeViewScreen-DUaaI3MN.js, 10042 bytes gzipped
+precache: 26 entries in cache naqsha-v1-44056bb4531a
+icon: ./icons/icon-192.png, 192x192
+icon: ./icons/icon-512.png, 512x512
+bundle check passed
+```
+**The "before" number was re-measured, not only quoted.** The tree at `28ed91b` was exported with `git archive` into a temporary directory (using this repository's `node_modules`), built and checked: `entry chunk: ./assets/index-BxQUVtbs.js, 94191 bytes gzipped (limit 204800)`, `precache: 13 entries in cache naqsha-v1-be994549d044`, the same file name hash and cache name as task 1.1 recorded. The directory was deleted afterwards.
+
+**What the 15,379 bytes between "before" and "after" hold. This is not the cost of Code view alone.**
+| State | Entry chunk, gzipped | Step | Where it is recorded |
+|---|---|---|---|
+| `28ed91b`, before the feature | 94,191 | | task 1.1 |
+| Phases 1 to 3 of this feature (`aee11b9`) | 97,686 | **+3,495** | the phases 2 and 3 entry; Code view chunk 9,414 bytes then |
+| Before design pass Stage A (`63578cf`) | 101,075 | +3,389 | the design pass entry; the span holds version-history, repair-suggestions and loom-mcp work, none of it measured separately |
+| After the design pass (today) | 109,570 | **+8,495** | the design pass entry (fonts, tokens, Landing, Hero_Loom, illustrations, shared components) |
+Only the first step, +3,495 bytes, is measured as Code view's own cost on the entry chunk (the lazy `import()`, the fourth navigation entry, the `AppState` fields, the first 60 translation keys in two languages, the shared state code). The +3,389 between `aee11b9` and `63578cf` is not split between version-history, repair-suggestions and anything else; I did not measure at the commits between. The Code view chunk grew from 9,414 to 10,042 bytes (+628) over the same span, which holds the version-history and repair-suggestions Code view changes and the design pass. The entry chunk is 95,230 bytes under the limit.
+
+### Precache total (requested beyond R9.4)
+**Total precache size: 641,024 bytes** (raw file sizes, not gzipped) across the 25 files that the 26 entries of the precache list in `dist/sw.js` name (cache `naqsha-v1-44056bb4531a`).
+**How it was computed.** A throwaway script (`/tmp/precache_total.ts`, not committed) read `dist/sw.js` with the repository's own `readPrecacheBlock` (`scripts/checks/precache.ts`), took each entry, resolved it against `dist/`, and added up `fs.statSync(file).size`. The entry `./` is the start page and has no file of its own: the worker serves it from `./index.html`, which is already an entry (1,429 bytes), so `./` is skipped and counted once. No listed file was missing from `dist/`. Cross-check with another tool: `find dist -type f ! -name sw.js` and `stat -f %z` summed give **25 files, 641,024 bytes**, the same number; this also confirms that the list names every file of `dist/` except `sw.js` (R9.5). I did not change `scripts/check_bundle.ts` to print this, so no assertion changed.
+Largest entries:
+| Bytes | Entry |
+|---|---|
+| 374,840 | `./assets/index-Czo1BVeg.js` (gzipped: 109,570) |
+| 41,184 | `./fonts/RozhaOne-Regular.woff2` |
+| 39,468 | `./fonts/Hind-Regular.woff2` |
+| 36,576 | `./fonts/Hind-Bold.woff2` |
+| 30,405 | `./assets/CodeViewScreen-DUaaI3MN.js` (gzipped: 10,042) |
+| 26,179 | `./assets/ScanScreen-BkuXnqtG.js` |
+| 19,857 | `./assets/index-DhbMZ6pU.css` |
+| 10,469 | `./assets/Panel-ChUTrmoB.js` |
+The entry chunk gzipped size asked for beside it is **109,570 bytes**. The precache total is bytes on disk, which is what the worker stores; what a first visit downloads over the network is smaller if the host compresses. Code view's share of the precache: its chunk and its stylesheet (`CodeViewScreen-BLTQXRjR.css`) are two of the 25 files. At `28ed91b` the precache held 13 entries; its byte total was not measured then.
+
+### R8.10: `package.json` `dependencies`
+**Unchanged.** `git show 28ed91b:package.json` and `git show HEAD:package.json` both give `"dependencies": {"react": "^19.3.1", "react-dom": "^19.3.1"}`, and the working-tree `package.json` equals `HEAD`. `devDependencies` are also identical (8 entries, same names and ranges). `git diff 28ed91b HEAD -- package.json` shows three added `scripts` lines only (`typecheck:loom-mcp`, `test:loom-mcp`, `screenshots`, added by the loom-mcp work and the design pass, not by Code view) and no change to a dependency list; `package-lock.json` has no commit in that range. `28ed91b` is the commit before the first cards-as-code commit `493055e`, found with `git log`.
+
+### What was built
+`src/codec-view` (six files, 1,156 lines): Bit_Lines (`cardToBits`, `patternToLines`, `groupBits`), the alignment (`lineKey`, `alignLines`), the Diff (`diffPatterns`, `applyDiff`) and the Diff_Text (`diffToText`), with 7 test files in `tests/codec-view/` holding properties P1 to P8 and P10 and the boundary test. In `src/ui`: `AppState.selectedPick` and `breakpoints` shared by Weave and Code view, `src/ui/state/codeView.ts` (Window, breakpoints, jump parse, accessible names, focus helper), the lazy fourth Screen `src/ui/screens/code/` (listing, step, jump, run to the next breakpoint, the cloth beside the current card, the diff panel with the plain-text export), 66 `codeview.*` keys in English and Hindi today (60 were added by task 2.3; all 66 Hindi strings, and `error.codeview.load`, are `reviewed: false`). In `scripts/` and `tests/`: `check_bundle.ts` parameterised over `CHUNK_MARKERS` (Scan and Code view), the precache test for the Code view chunk, and `check:browser` steps for the Code view at three widths and offline. Details of each phase are in the three earlier cards-as-code entries.
+
+### The 2,000 x 2,000 diff (task 1.21), and the benchmark after the design pass
+Task 1.21 measured (entry above): **25.59 to 27.36 ms in four standalone runs and 49.61 ms inside the full suite**, against a fixed 1,000 ms ceiling, on 10 x 10 hook positions, `DIFF_PICK_LIMIT` picks a side. A Phase 2 full run had read 520 ms for the same alignment. The design pass then replaced the fixed ceiling with a **ratio test** (alignment time over a baseline measured in the same run, bound **2.2**, nine repetitions each, CPU time; numbers in the design pass entry: ratios 1.07 to 1.40 over eleven full suite runs, 0.93 to 0.96 standalone). Re-run today, standalone, `npx vitest run tests/codec-view/benchmark.test.ts`: alignment **22.05 ms** (best of nine), baseline 23.81 ms, **ratio 0.93**, bound 2.2; smaller sizes 11.53 ms (250), 4.03 ms (500), 13.16 ms (1000). A standalone run cannot show a 2.0 times slowdown (0.93 times 2.0 is 1.9, under the bound); only the full suite run can, as the design pass entry says. This is a laptop number, not a phone number: the 100 to 300 ms estimate for a phone is still unmeasured.
+
+### The listing timings of task 3.10: not done, there are none
+Task 3.10 (listing timing at 10,000 picks, R2.6 and R2.10) is unticked and was **not written**: `grep` finds no `performance.now`, no timing and no ceiling in `tests/ui/screens/code.test.tsx`, so **no listing timing exists to report**. What it leaves unchecked: that a 10,000-pick listing renders its Window inside a stated time, and that moving the Selected_Pick renders the moved Window inside a stated time, in jsdom. What does exist instead is structural: `code.test.tsx` renders 10,000-pick patterns and asserts at most `WINDOW_SIZE` (80) `li.line` elements, a full-height spacer, and that the Window moves to the Selected_Pick; no time is read. Still unmeasured anywhere: R2.10's 1,000 ms and 100 ms on a phone. `check:browser` step 13 opens Code view on a 36-pick sample only.
+
+### Existing tests changed by task 2.1 (commit `fa04deb`)
+The task named four files; `git diff fa04deb~1 fa04deb -- tests` shows what really happened:
+- `tests/ui/state/playback.test.ts` is the **only file in which an existing line was changed**. `PlaybackState` lost its `pick`, so `stateArbitrary` no longer has a `pick` field, `entryPlayback` and `displayedPlayback` gained a `selectedPick` argument, and the expectations in "R2.8 R3.6 R14.9 each entry gets its own position", "R2.10 the player's own report is shown while it is about the cloth on screen" and the property "R2.10 R3.6 the position shown for a cloth is one of that cloth's own positions and carries nothing of the design shown before" were rewritten to the new signatures. One assertion moved: the property used to check that `displayed.pick` is an integer between 0 and the pick count; it now checks that on `entryPlayback(...)`, and the next line still asserts `displayed` equals that entry, so the same fact holds. The "keep" check went from `previous.pick` to the `selectedPick` argument; the "a design not shown before takes nothing from the previous position" check is kept with a second generated `selectedPick`. The property still runs on its own seed and `numRuns`; no `numRuns`, seed or arbitrary range was narrowed. New in the same file: five example tests for arriving on Weave after Code view moved the Selected_Pick (R4.2).
+- `tests/ui/state/appState.test.ts` (+78 lines), `tests/ui/screens/weave.test.tsx` (+6 lines: one new test, "R4.1 the cloth choices shown are the ones held in the app state") and `tests/ui/state/cloth.test.ts` (+12 lines: two tests of `buildReadyCloth`) **only gained tests**; no line of an existing test changed.
+- `tests/ui/screens/weaveWiring.test.ts` is named by the task and was **not changed** by it (its last commit is `390524a`).
+The task's own note lists `cloth.test.ts` and not `appState.test.ts`; the diff has both. Later changes to Weave tests came from other tasks and are recorded where they happened: the Phase 3 entry (shell and accessibility tests) and the design pass entry (Landing: `weave.test.tsx` R2.1, R2.8, R3.8, R4.1, R2.12 re-aimed).
+
+### Cuttable tasks dropped, checked against the repository
+Marked `[~]` and unticked: 2.7, 2.8, 2.9, 3.9, 3.10. Each was checked in the code and tests, not taken from the earlier log.
+| Task | In the repo? | Dropped | What it leaves unchecked |
+|---|---|---|---|
+| 2.7 `focusTargetAfterWindowMove` | **Built.** The function is `src/ui/state/codeView.ts:283`, used at `src/ui/screens/code/Listing.tsx:194` (written for task 3.8). Its example tests are in `tests/ui/screens/code.test.tsx` (about lines 1865 to 1891), covering a breakpoint control whose Line left the Window, a Bit_Line region still in the Window and a damaged Selected_Pick, plus the `null` and `step-forward` cases | Only its place: the task names `tests/ui/state/codeView.test.ts`, the tests are in `code.test.tsx`. The tick was never set. No property was required by the task | Nothing beyond the task's own example list. Whether focus really lands where the helper says in a browser is **not checked** by anything (R11.13); `check:browser` does not press a control and scroll the Window |
+| 2.8 P9, the Window holds at most Window_Size Lines and always holds the Selected_Pick | **Not written.** `tests/ui/state/codeView.test.ts` has no fast-check at all. Examples instead: `windowFor` at 0, 1, fewer than 80 and 10,000 picks and clamping (`codeView.test.ts` lines 47 to 132), and `code.test.tsx` R2.11 over four hand-picked scroll positions | P9 | The invariant over any pick count from 0 to 10,000, any Selected_Pick, any scroll position and any `visiblePicks` from 1 to `WINDOW_SIZE`. Note the decision still open from the Phase 3 entry: `listingWindow` lets the viewport win over the Selected_Pick, a literal departure from R2.4's "always holds the Selected_Pick"; P9 as worded would have tested that, and nothing does now |
+| 2.9 reducer property (R3.1) | **Not written.** Examples exist in `tests/ui/state/appState.test.ts`: "R3.1 R3.2 select-pick leaves the Current_Pattern and the breakpoints unchanged", "R3.10 toggle-breakpoint adds and removes ...", "R3.10 the breakpoints and the pick survive navigating away and back", "R3.10 R4.6 every action that replaces the Current_Pattern sets pick 0 and discards the breakpoints" | The property over action sequences | That the Selected_Pick stays within `0..lastPick` and the breakpoints stay ascending without repeats across any mix of `select-pick`, `toggle-breakpoint`, `navigate` and the pattern-replacing actions |
+| 3.9 R4.7 one `renderFrame` image on both screens | **Not written.** No test in `code.test.tsx` mentions R4.7. By structure only: `CodeViewScreen.tsx:14` and `WeavePlayer.tsx:44` import `ClothCanvas` and `createClothPlayer` from the same file `weave/ClothCanvas.tsx` | The test | That both screens paint the image of one `renderFrame` call for the same PreparedCloth, RenderSettings and pick. `check:browser` hashes the canvas only on Weave (`CANVAS_STATS`), so what the Code view canvas holds is **not checked by any run** |
+| 3.10 listing timing at 10,000 picks | **Not written** (section above) | The two timing tests | The jsdom times of the first render and of a Window move at 10,000 picks |
+**A finding about a ticked task.** Task 2.6 is ticked `[x]` and is demo-essential, but its property (`it('R11.3 a Line accessible name names its pick and its punched ends', …)` over `lineArbitrary(profile)`, both Line kinds and both dictionaries) **does not exist**: `tests/ui/state/codeView.test.ts` imports no fast-check, and `lineAccessibleName` and `diffEntryAccessibleName` have only example tests (`codeView.test.ts` from line 258) plus an example in `tests/ui/i18n/messages.test.ts:238`. The Phase 3 entry lists it among the skipped properties; the tick does not say so. It leaves unchecked: that the accessible name of any generated Line lists exactly the punched ends in ascending order with no Group_Separator, in English and in Hindi, and that the Hindi name holds no English word (R10.8). P1 to P8 and P10, the eight demo-essential properties, all exist; this one is a ninth property that the task asked for and did not get. `src/ui` is outside the modules `testing.md` requires a property for, so no structure test flags it.
+The properties P1 to P8 and P10 were not weakened by anything in this task; this task changed no test.
+
+### Browser run, today
+`npm run check:browser` on the build above: **19 of 19 steps passed, exit 0**. Step 12 measured the Code view at 320, 390 and 1280 px, in English and Hindi, Day and Night, with `scrollWidth` equal to `innerWidth` each time (for example `code at 320 (en, day): scrollWidth 320, innerWidth 320`). Step 18 put the Code view's primary Button ("Compare") at 716 px (English) and 765 px (Hindi) of the 844 px viewport. Step 19, group A and group B, both passed `the first Code view open works offline: listing arrived with no network; "36 picks" shown, 36 of at most 80 Lines in the document, Selected_Pick 0 then 1 after one step forward`, with the service worker's cache `naqsha-v1-44056bb4531a` holding 26 precached responses and the preview server stopped. That is headless Chrome on this laptop only.
+
+### Manual checks left open
+Nothing of Code view is in `scripts/checks/manualSteps.ts` (`check:manual` has no Code view step), so none of these is walked through by a script. Not checked by any script or by me:
+- **Real devices.** Code view on a phone, in Safari, in Firefox. R2.10's 1,000 ms and 100 ms, and the 100 to 300 ms diff estimate, are laptop numbers only.
+- **Keyboard and screen reader.** Tab order, the focus ring and its contrast, focus after the Window moves, the live-region announcements, a screen reader reading a Line (R11.3) or a Diff_Entry (R11.5) aloud. Only the markup is tested, in Node.
+- **Clipboard and download.** Copy of the Diff_Text and its file download in a real browser.
+- **The `1lh` sizing of the Diff_Text box** (the glossary-driven replacement of `rows`): the design pass screenshots of the Code view (`code-diff-*`) were opened by a sub-agent only, and I did not check that they show the Diff_Text box; no person has looked.
+- **The lazy chunk's failure path** (`error.codeview.load`) with a real failed `import()`: tested through `screenErrorKey` only.
+- **Hindi.** Every Code view string is `reviewed: false`; `docs/HINDI_REVIEW.md` lists them for a native speaker (`npm run review-list` run today wrote the same file: no change, because it was already current; 67 rows name Code view: the 66 `codeview.*` keys and `error.codeview.load`).
+- **The deployed site.** It is an older build; `check:deployed` was not run, so nothing says Code view is live there.
+- **The open decision from Phase 3**: `listingWindow` (`src/ui/screens/code/Listing.tsx:63`) still lets the viewport win over the Selected_Pick, a departure from R2.4's "always holds the Selected_Pick"; I read the function today and it is unchanged, and no decision is recorded. (The other Phase 3 item, a finished cloth re-entered from Code view arriving one pick short, was changed by the design pass, Stage D "the finished cloth on return to Weave"; I did not re-test it here.)
+
+### Documents written in this task
+`docs/BUILD_LOG.md` (the task 1.1 table rows and this entry), `docs/KIRO_USAGE.md` (section 10, Code view), `README.md` (one line for Code view in the table "What it does"), and `npm run review-list` run for `docs/HINDI_REVIEW.md` (the file came out unchanged, so it has no diff). The README line was not checked against a live site. The README status paragraph still says "three screens (Weave, Scan, Keep)" and the architecture paragraph lists six modules; neither was changed, because the task asked for one line.
+
+**Kiro features used:** spec (`cards-as-code`: requirements, design, tasks), steering (`structure.md`, `weaving-glossary.md`, `testing.md`), property tests with fast-check, sub-agent task execution.
+**Evidence saved:** the quoted output above; `dist/` is not committed.

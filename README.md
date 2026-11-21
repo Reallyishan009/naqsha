@@ -33,6 +33,7 @@ To run it yourself, see "Run it locally". Developer-only photo trial tools are l
 | Read one card from an image into a grid of punched and unpunched hook positions | Built (`src/reader`), synthetic images only |
 | Convert a card grid to a list of ends and back, through the profile's end order | Built (`src/codec`) |
 | Scan a card from an uploaded photo or the live camera, correct a hole by tap, read cards in a batch | Built (`src/ui/screens/scan`). The live camera needs HTTPS and has not been tested on real devices |
+| Read a naksha as one line of bits per pick (Code view), step through it with breakpoints, and diff it against a saved design with a plain-text export | Built (`src/codec-view`, `src/ui/screens/code`), the fourth screen, loaded only when opened. Tested in Node and in headless Chrome; not tried on a phone. The Hindi text has not been reviewed |
 | Simulate the cloth pick by pick | Built (`src/simulator`), shown on the Weave screen with play, pause, step, scrub, speed and cloth colours |
 | Export a bitmap for an electronic Jacquard loom | Built (`src/exporter`), offered on the Keep screen: uncompressed BMP, 1-bit and 8-bit, one pixel per end and one row per pick; reads its own files back. No loom controller has been tested with it |
 | Archive designs in the browser | Built (`src/archive`), on the Keep screen: save, list, reopen and delete in IndexedDB. Tested with a fake store in Node; not yet checked in a real browser |
