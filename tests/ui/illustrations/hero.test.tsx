@@ -148,21 +148,26 @@ describe('HeroLoom', () => {
 
 describe('Landing hero slot', () => {
   const state = { ...initialAppState, profile: { status: 'ready', profile } } as typeof initialAppState;
-  it('R13.1 the slot holds the Hero_Loom in the first Sample_Design, with its own shape and nothing to focus', () => {
+  // The slot holds the Process_Loop (which runs the Hero_Loom's pose logic) since the second design pass; the checks keep their aim:
+  // the slot is there from the first paint, holds the first Sample_Design drawn with nothing to focus but its pause control,
+  // is empty with no profile, and follows the reduced motion setting.
+  it('R13.1 the slot holds the live loom picture of the first Sample_Design, with a name and nothing to focus but its pause button', () => {
     const html = renderToStaticMarkup(<Landing state={state} dispatch={() => undefined} t={en} />);
-    const slot = /<div class="[^"]*heroSlot[^"]*" data-hero-slot=""[^>]*>(.*?)<\/svg><\/div>/s.exec(html);
+    const slot = /<div class="[^"]*mediaSlot[^"]*" data-hero-slot=""[^>]*>(.*?)<\/figure><\/div><\/div>/s.exec(html);
     expect(slot).not.toBeNull();
-    expect(slot?.[1]).toContain('role="img"');
-    expect(slot?.[0]).toMatch(/aspect-ratio:\s*[\d.]+/);
-    expect(slot?.[0]).not.toMatch(/<(a|button|input)\b|tabindex/);
-    const first = raisedAndLifted(slot?.[0] ?? '').lifted;
-    const pose = heroPose(profile, generateSample(profile, 'diamond'));
-    expect(pose.kind === 'lifted' ? pose.liftedEnds : null).toEqual(first);
+    expect(slot?.[1]).toContain('data-process-loop=""');
+    expect(slot?.[1]).toMatch(/<canvas\b[^>]*role="img"[^>]*aria-labelledby="processTitle/);
+    expect(slot?.[1]).toContain(en('processLoop.title'));
+    const focusable = [...(slot?.[0] ?? '').matchAll(/<(a|button|input)\b[^>]*>(.*?)<\/\1>|tabindex/g)];
+    expect(focusable.map((match) => match[2])).toEqual([en('processLoop.pause')]);
+    // The first Sample_Design is Diamond: the picture woves its first picks (at most MAX_SHOWN_PICKS of them).
+    const picks = generateSample(profile, 'diamond').length;
+    expect(slot?.[1]).toContain(en('processLoop.desc', { picks: Math.min(picks, 20) }));
   });
 
   it('R13.1 with no profile the slot is empty, and it follows the reduced motion setting', () => {
     const empty = renderToStaticMarkup(<Landing state={initialAppState} dispatch={() => undefined} t={en} />);
-    expect(empty).toMatch(/data-hero-slot=""[^>]*><\/div>/);
+    expect(empty).toMatch(/data-hero-slot=""[^>]*><div class="[^"]*mediaCard[^"]*"><\/div><\/div>/);
     const still = renderToStaticMarkup(<Landing state={{ ...state, prefersReducedMotion: true }} dispatch={() => undefined} t={en} />);
     expect(still).toContain('data-motion="still"');
   });

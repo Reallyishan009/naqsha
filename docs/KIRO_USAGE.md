@@ -250,6 +250,24 @@ Sources for this section: `.kiro/specs/cards-as-code/` (`requirements.md`, `desi
 
 **What Kiro did not do well here (from the log).** The Phase 2 and 3 sub-agents did not run `npm run typecheck` or the full suite while they worked, so the first run of both at the Phase 3 checkpoint found two type errors and two failing tests (the glossary test and the review-list test), which were then fixed in the code (BUILD_LOG, Phase 3 entry).
 
+## 11. The second design pass, run 1 (work list `second-pass-run1`)
+
+Sources: `.kiro/specs/second-pass-run1/` (`brief.md`, `tasks.md`, `tasks.meta.json`, `measurements.md`), the `git log` of `auto/build` and the 2026-11-22 entry of `docs/BUILD_LOG.md`.
+
+**What it is.** A work list, not a spec workflow: it has `brief.md` (the hard rules) and `tasks.md`, and no `requirements.md` or `design.md`. `tasks.md` has four groups: cleanup (1), imagery (2), design system (3) and the Landing (4). Each group ends with a gate task and one commit with a message fixed by the user; the four messages are in the Notes of `tasks.md`. Run 2 was not started.
+
+**Sub-agents, one per task.** The orchestrator gave each task to a sub-agent and kept the task status itself, as in the earlier specs. A sub-agent wrote the code and tests of its task, ran the checks, and wrote what it changed into `measurements.md`; `tasks.meta.json` records the executions.
+
+**Two jobs the orchestrator kept for itself.**
+- **The licence check.** The orchestrator checked the licence and author of each of the five source photos through the Wikimedia Commons API (2026-11-21) and compared them with `media/photos-source/manifest.json` and `docs/IMAGE_CREDITS.md`. A sub-agent did not do this. The result is in `measurements.md`, "Licence verification".
+- **Looking at screenshots.** The sub-agents only captured them (`npm run screenshots`); the orchestrator opened the files and judged them. Its review of the four `landing-full` captures led to the follow-up in `measurements.md` (the strip under the footer, the link colour, the picture in the "Bring a card" band, and the reduced-motion capture).
+
+**Steering used.** The glossary test flagged the word "row" in the new Landing code, so the How it works rows are called steps in code. The testing steering is why no property was weakened and why the only new property of the run is R11.3 from task 1.1. `tech.md` fixed the stack (no new dependency, CSS Modules), and its 200 KB limit stayed, with a stricter 150,000 B entry limit for the Landing added beside it.
+
+**Checks that caught real problems** (details in `docs/BUILD_LOG.md`, 2026-11-22): `check:browser` found a header that was too tall at 390 by 844 (twice) and a screen that stayed scrolled down after leaving the long Landing. Looking at the screenshots found an eyebrow that wrapped, a double full stop, footer links that wrapped and a strip of page below the footer.
+
+**Not verified.** Hindi full-page views, 320 px views of the new sections, the animated ProcessLoop, AVIF in browsers other than headless Chrome, real devices and the deployed site (list in `measurements.md`, "Not checked by eye").
+
 ## Checks run for this file
 
 First written after `npm run test:run` (91 files, 730 tests), `npm run typecheck`, `npm run build` and `npm run check-bundle` (entry chunk 93,203 bytes gzipped, limit 204,800) all passed, with `npm run check:hooks` output in section 3.
@@ -257,3 +275,5 @@ First written after `npm run test:run` (91 files, 730 tests), `npm run typecheck
 Updated in task 8.5 after these real runs, all passing: `npm run test:run` (**97 files, 804 tests**), `npm run typecheck`, `npm run build` (`precache: 13 entries in cache naqsha-v1-be994549d044`), `npm run check-bundle` (**entry chunk 94,191 bytes gzipped, limit 204,800**), `npm run check:all` (9 PASS, 0 FAIL, 1 SKIPPED because the repo has no spec format validator command, 1 INFO about the dirty working tree), `npm run check:browser` (13 of 13 steps), `npm run check:deployed` (4 of 4, against the older deployed build) and `npm run check:hooks` (output in section 3). Full output in `docs/BUILD_LOG.md`, task 8.5.
 
 Updated in cards-as-code task 4.4 (2026-11-21), for section 10: `npm run build` and `npm run check-bundle` (entry chunk 109,570 bytes gzipped, Code view chunk 10,042 bytes, limit 204,800), `npm run check:browser` (19 of 19 steps) and `npx vitest run tests/codec-view/boundaries.test.ts` (23 tests) all passed. The full suite, `check:all`, `check:deployed` and `check:everything` were not run for that update.
+
+Updated for section 11 (second design pass, run 1, task 4.5, 2026-11-22), all exit 0: `npm run review-list`, `npm run typecheck`, `npm run test:run` (144 files, 1,947 tests), `npm run build`, `npm run check-bundle` (entry chunk 126,022 bytes gzipped), `npm run check:browser` (19 of 19 steps), `node scripts/contrast_report.ts` (84 pairs), `tests/scripts/precache.test.ts` (15 tests) and `npm run check:all` (9 PASS, 0 FAIL, 1 SKIPPED, 1 INFO). `check:deployed` and `check:hooks` were not run.

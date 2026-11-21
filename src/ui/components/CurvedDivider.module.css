@@ -1,0 +1,10 @@
+/* The wave takes the width of its place and a height that grows a little with the width. It overlaps its section's last pixel row, so no hairline of the section's colour shows under it. */
+.divider {
+  display: block;
+  width: 100%;
+  height: clamp(32px, 6vw, 72px);
+}
+
+.fill {
+  fill: var(--divider-fill, var(--ground));
+}

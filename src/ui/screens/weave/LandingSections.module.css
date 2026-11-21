@@ -1,0 +1,203 @@
+/*
+ * The sections of the Landing under the hero: how it works and what you can do. Each is a full-width band on the
+ * ground or the tint (they alternate), with its content in the one container of the page (--land-width, set on the
+ * Landing), so every left edge, the hero's included, falls on the header pill's inner edge.
+ */
+.section {
+  /* The Shell's main pads its sides by --space-4; a band takes that back to reach the window's edges. */
+  margin-inline: calc(var(--space-4) * -1);
+  padding-block: var(--space-8);
+  color: var(--ink);
+}
+
+.ground {
+  background: var(--ground);
+}
+
+.tint {
+  background: var(--tint);
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+  width: var(--land-width);
+  margin-inline: auto;
+}
+
+/* ---------------------------------------------------------------- how it works */
+
+.steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-7);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+/* The picture's rounded frame; the picture fills it and is cropped to its 4 by 3. */
+.frame {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-float);
+}
+
+.frame > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.badge {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+  display: grid;
+  place-items: center;
+  width: var(--space-7);
+  height: var(--space-7);
+  color: var(--on-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-lead);
+  line-height: 1;
+  background: var(--primary);
+  border: 2px solid var(--surface);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-lift);
+}
+
+/* The chips lie on the picture: they are opaque (Chip's picture tone), so their text keeps its contrast on any photo. */
+.frameChips {
+  position: absolute;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  left: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stepText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  max-width: 32rem;
+}
+
+.stepTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: 400;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.stepTitle:lang(hi) {
+  line-height: var(--leading-hindi);
+}
+
+.stepBody {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--text-body);
+}
+
+/* ---------------------------------------------------------------- what you can do */
+
+.features {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feature {
+  display: grid;
+  min-width: 0;
+}
+
+/* The drawing card has no picture file: the drawing stands on the picture slot's own colour. */
+.drawing {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--line);
+}
+
+.drawing svg {
+  width: 70%;
+  max-width: none;
+  color: var(--ink);
+}
+
+@container (min-width: 40rem) {
+  .features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Seven cards in two columns: the last one has the line to itself, at the width of a column and in the middle. */
+  .feature:last-child {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: calc(50% - var(--space-5) / 2);
+  }
+}
+
+@container (min-width: 48rem) {
+  .section {
+    padding-block: var(--space-9);
+  }
+
+  .step {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    align-items: center;
+    gap: var(--space-8);
+  }
+
+  /* Every second step has its picture on the right. */
+  .step:nth-child(even) .frame {
+    order: 2;
+  }
+}
+
+@container (min-width: 64rem) {
+  /* Seven cards in twelve columns: three of four, then four of three, so no line of cards is left with a single card. */
+  .features {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .feature {
+    grid-column: span 4;
+  }
+
+  .feature:nth-child(n + 4) {
+    grid-column: span 3;
+  }
+
+  .feature:last-child {
+    justify-self: stretch;
+    width: auto;
+  }
+}

@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  LANDING_FULL_FOLDER,
+  LANDING_FULL_WIDTHS,
   SCREENSHOT_THEMES,
   SCREENSHOT_VIEWS,
   SCREENSHOT_WIDTHS,
+  landingFullNames,
+  landingFullProblems,
   screenshotNames,
   setProblems,
 } from '../../scripts/checks/screenshots.ts';
@@ -72,5 +76,63 @@ describe('screenshot helpers', () => {
     const files = validSet();
     files.set('code-diff-day-320.png', pngOfWidth(1280));
     expect(setProblems(files)).toEqual(['code-diff-day-320.png is 1280 pixels wide, expected 320']);
+  });
+});
+
+function validLandingFullSet(): Map<string, Uint8Array> {
+  const files = new Map<string, Uint8Array>();
+  for (const name of landingFullNames()) files.set(name, pngOfWidth(Number(/-(\d+)\.png$/.exec(name)![1])));
+  return files;
+}
+
+describe('full-page Landing screenshot set', () => {
+  it('the set goes to its own folder, media/design/after-run1, apart from the 24-file sets', () => {
+    expect(LANDING_FULL_FOLDER).toBe('after-run1');
+    expect([...LANDING_FULL_WIDTHS]).toEqual([390, 1280]);
+  });
+
+  it('landingFullNames gives exactly the 4 names landing-full-<theme>-<width>.png, theme then width', () => {
+    expect(landingFullNames()).toEqual([
+      'landing-full-day-390.png',
+      'landing-full-day-1280.png',
+      'landing-full-night-390.png',
+      'landing-full-night-1280.png',
+    ]);
+  });
+
+  it('a valid set of 4 files has no problem, and none of its names is one of the 24', () => {
+    expect(landingFullProblems(validLandingFullSet())).toEqual([]);
+    const first = new Set(screenshotNames());
+    for (const name of landingFullNames()) expect(first.has(name), name).toBe(false);
+  });
+
+  it('a missing file is named', () => {
+    const files = validLandingFullSet();
+    files.delete('landing-full-night-390.png');
+    expect(landingFullProblems(files)).toEqual(['landing-full-night-390.png is missing']);
+  });
+
+  it('a fifth file is named, so a set is exactly 4 files', () => {
+    const files = validLandingFullSet();
+    files.set('landing-full-day-320.png', pngOfWidth(320));
+    expect(landingFullProblems(files)).toEqual(['landing-full-day-320.png is not one of the 4 landing-full screenshot names']);
+  });
+
+  it('a file that is not a PNG is named', () => {
+    const files = validLandingFullSet();
+    files.set('landing-full-day-1280.png', new TextEncoder().encode('this is not a picture at all, just text'));
+    expect(landingFullProblems(files)).toEqual(['landing-full-day-1280.png is not a PNG file']);
+  });
+
+  it('a file whose width differs from its name is named', () => {
+    const files = validLandingFullSet();
+    files.set('landing-full-night-390.png', pngOfWidth(1280));
+    expect(landingFullProblems(files)).toEqual(['landing-full-night-390.png is 1280 pixels wide, expected 390']);
+  });
+
+  it('the 24-file check still refuses the 4 landing-full files as extras', () => {
+    const files = validSet();
+    for (const [name, bytes] of validLandingFullSet()) files.set(name, bytes);
+    expect(setProblems(files)).toHaveLength(4);
   });
 });

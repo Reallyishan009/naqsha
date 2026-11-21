@@ -1,4 +1,4 @@
-/** Pure parts of the screenshot command: the 24 file names and the checks on a saved set. No I/O. */
+/** Pure parts of the screenshot command: the 24 file names and the checks on a saved set, and the 4 names of the full-page Landing set. No I/O. */
 
 export const SCREENSHOT_VIEWS = ['weave-landing', 'weave-sample', 'weave-lost', 'keep-versions', 'scan', 'code-diff'] as const;
 export const SCREENSHOT_THEMES = ['day', 'night'] as const;
@@ -31,10 +31,9 @@ function ihdrWidth(bytes: Uint8Array): number | null {
   return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(16);
 }
 
-/** One text for each missing file, extra file, file that is not a PNG, and file whose width differs from its name. */
-export function setProblems(files: ReadonlyMap<string, Uint8Array>): string[] {
+/** One text for each missing file, extra file, file that is not a PNG, and file whose width differs from its name. `setName` finishes the text of an extra file. */
+function problemsOf(expected: readonly string[], files: ReadonlyMap<string, Uint8Array>, setName: string): string[] {
   const problems: string[] = [];
-  const expected = screenshotNames();
   for (const name of expected) {
     const bytes = files.get(name);
     if (bytes === undefined) {
@@ -52,7 +51,35 @@ export function setProblems(files: ReadonlyMap<string, Uint8Array>): string[] {
   }
   const known = new Set(expected);
   for (const name of files.keys()) {
-    if (!known.has(name)) problems.push(`${name} is not one of the 24 screenshot names`);
+    if (!known.has(name)) problems.push(`${name} is not one of the ${setName}`);
   }
   return problems;
+}
+
+/** One text for each missing file, extra file, file that is not a PNG, and file whose width differs from its name. */
+export function setProblems(files: ReadonlyMap<string, Uint8Array>): string[] {
+  return problemsOf(screenshotNames(), files, '24 screenshot names');
+}
+
+// ---------------------------------------------------------------- the full-page Landing set (second design pass, run 1)
+
+/** The one view of the second set: the whole Landing page, top to bottom. */
+export const LANDING_FULL_VIEW = 'landing-full';
+/** The widths of the second set: a phone and a desktop window. */
+export const LANDING_FULL_WIDTHS = [390, 1280] as const;
+/** The folder under media/design/ that holds the second set; the first two sets keep `before` and `after`. */
+export const LANDING_FULL_FOLDER = 'after-run1';
+
+/** The 4 names `landing-full-<theme>-<width>.png`, in theme, then width order. */
+export function landingFullNames(): string[] {
+  const names: string[] = [];
+  for (const theme of SCREENSHOT_THEMES) {
+    for (const width of LANDING_FULL_WIDTHS) names.push(`${LANDING_FULL_VIEW}-${theme}-${width}.png`);
+  }
+  return names;
+}
+
+/** The same checks as `setProblems`, on the 4 files of the full-page Landing set: exactly these names, each a PNG as wide as its name says. */
+export function landingFullProblems(files: ReadonlyMap<string, Uint8Array>): string[] {
+  return problemsOf(landingFullNames(), files, '4 landing-full screenshot names');
 }

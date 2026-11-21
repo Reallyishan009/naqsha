@@ -1,6 +1,7 @@
 /**
  * Checks the built site in dist/ (run after `npm run build`):
  * - the gzipped entry chunk is under 200 KB (R16.1),
+ * - and, as a separate check of the command (landingEntryProblem), under 150,000 bytes (second design pass: ProcessLoop and the hero art count),
  * - dist/index.html has no URL that starts with `/` or `http` (R23.3, R13).
  * - each marker string of CHUNK_MARKERS (Scan, Code view) is absent from the entry chunk and present in another chunk (R16.10, cards-as-code R9.3).
  * - the web app manifest and its icons are there, relative and the size they declare (R24.7).
@@ -17,6 +18,16 @@ import { precacheProblems, readPrecacheBlock } from './checks/precache.ts';
 import type { DistFile } from './checks/precache.ts';
 
 export const ENTRY_CHUNK_LIMIT_BYTES = 200 * 1024;
+
+/** The stricter limit of the second design pass, checked in addition to ENTRY_CHUNK_LIMIT_BYTES, which stays as it is. */
+export const LANDING_ENTRY_LIMIT_BYTES = 150_000;
+
+/** The problem when the entry chunk is not below the stricter Landing limit, or null when it is. */
+export function landingEntryProblem(entryChunk: string, gzippedBytes: number): string | null {
+  return gzippedBytes >= LANDING_ENTRY_LIMIT_BYTES
+    ? `entry chunk ${entryChunk} is ${gzippedBytes} bytes gzipped, the Landing limit is ${LANDING_ENTRY_LIMIT_BYTES} (move the sections below the first screen into one lazy chunk)`
+    : null;
+}
 
 export type ChunkMarker = { name: string; marker: string };
 
@@ -249,7 +260,12 @@ export function checkBundle(distDir: string): BundleReport {
 if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === import.meta.filename) {
   const distDir = path.resolve(import.meta.dirname, '../dist');
   const report = checkBundle(distDir);
+  // The stricter Landing limit is a separate check of the command, run on the production build `npm run build` makes.
+  // checkBundle itself is also run by tests on a build made under the test mode (development React, larger), where only the 204,800 limit applies.
+  const landingProblem = report.entryChunk === '' ? null : landingEntryProblem(report.entryChunk, report.gzippedBytes);
+  if (landingProblem !== null) report.problems.push(landingProblem);
   console.log(`entry chunk: ${report.entryChunk}, ${report.gzippedBytes} bytes gzipped (limit ${ENTRY_CHUNK_LIMIT_BYTES})`);
+  console.log(`entry chunk below the Landing limit of ${LANDING_ENTRY_LIMIT_BYTES}: ${report.gzippedBytes < LANDING_ENTRY_LIMIT_BYTES ? 'yes' : 'NO'}`);
   for (const chunk of report.chunks) console.log(formatChunkLine(chunk.file, chunk.gzippedBytes));
   for (const chunk of report.markerChunks) {
     console.log(`${chunk.name} chunk: assets/${chunk.file}, ${chunk.gzippedBytes} bytes gzipped`);

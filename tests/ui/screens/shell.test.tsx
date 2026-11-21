@@ -26,7 +26,8 @@ describe('shell', () => {
       const ready = { ...initialAppState, language, profile: { status: 'ready' as const, profile: demoProfile() } };
       const weave = render({ ...ready, screen: 'weave' });
       expect(weave).toContain(`>${navLabel(language, 'weave')}</h2>`);
-      expect(weave).toContain(t('weave.empty').replaceAll('"', '&quot;'));
+      // The Landing's own words come first; the old one-line intro (weave.empty) is no longer on it.
+      expect(weave).toContain(t('landing.lead'));
       const keep = render({ ...ready, screen: 'keep' });
       expect(keep).toContain(`>${navLabel(language, 'keep')}</h2>`);
       expect(keep).toContain(t('keep.export.button'));
@@ -96,7 +97,9 @@ describe('shell', () => {
       expect(group).toContain('role="group"');
       expect(group).toContain('role="switch"');
       expect(group).toContain(`>${t('nav.scanCard')}</button>`);
-      expect(html.split(`>${t('nav.scanCard')}</button>`)).toHaveLength(2);
+      // One Scan pill in the header. (The Weave Landing's hero has its own "Scan a card" in main, outside the header.)
+      const header = /<header\b.*?<\/header>/s.exec(html)?.[0] ?? '';
+      expect(header.split(`>${t('nav.scanCard')}</button>`)).toHaveLength(2);
     }
   });
 

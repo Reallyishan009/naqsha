@@ -194,6 +194,10 @@
   padding: var(--space-2) var(--space-4) var(--space-4);
 }
 
+/* The Landing ends in its own footer, which must reach the bottom of the page: no padding under it. */
+.mainLanding {
+  padding-bottom: 0;
+}
 .screen {
   max-width: 60rem;
 }
@@ -208,6 +212,18 @@
   min-height: 1.5em;
   margin: 0 16px 16px;
   color: var(--ink);
+}
+/* On the Landing the live region takes no room under the footer; it stays in the page for assistive technology. */
+.liveRegionLanding {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /*

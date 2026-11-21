@@ -3,6 +3,13 @@
  * pass (six views, Day and Night, 320 and 1280 CSS pixels wide) with headless Chrome over the DevTools protocol, from
  * the built `dist/` served by `vite preview`. Files go to `media/design/before/` or `media/design/after/`.
  *
+ * `npm run screenshots -- after-run1` takes the second set: four full-page views of the Landing (`landing-full-<theme>-<width>.png`,
+ * Day and Night, 390 and 1280 CSS pixels wide) into `media/design/after-run1/`, with the Theme_Switch like `after`. Like the other
+ * modes it emulates prefers-reduced-motion: reduce, so the Process_Loop in the hero shows its one still frame (the finished cloth,
+ * the punched holes lit, the hooks lifted) and every capture is the same each time, and the scroll reveal shows every block at once. The
+ * reveal itself is covered by its unit tests (tests/ui/components/reveal.test.tsx). The script still scrolls from the top to the bottom of
+ * the page and back, waits until every picture is decoded and no block is waiting to be revealed, and only then takes the picture.
+ *
  * Options for working on the script itself: `--out <directory>` writes somewhere else, `--view <name>` (repeatable)
  * takes only that view and ignores the missing files of the others when it checks the set.
  *
@@ -23,14 +30,25 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, 
 import os from 'node:os';
 import path from 'node:path';
 import { findChrome } from './checks/chrome.ts';
-import { SCREENSHOT_THEMES, SCREENSHOT_VIEWS, SCREENSHOT_WIDTHS, screenshotNames, setProblems } from './checks/screenshots.ts';
+import {
+  LANDING_FULL_FOLDER,
+  LANDING_FULL_VIEW,
+  LANDING_FULL_WIDTHS,
+  SCREENSHOT_THEMES,
+  SCREENSHOT_VIEWS,
+  SCREENSHOT_WIDTHS,
+  landingFullNames,
+  landingFullProblems,
+  screenshotNames,
+  setProblems,
+} from './checks/screenshots.ts';
 import { Page, byText, closeHeaderMenu, openHeaderMenu, openPage, startChrome, startPreview } from './checks/session.ts';
 import type { Cleanup } from './checks/session.ts';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const EN = JSON.parse(readFileSync(path.join(repoRoot, 'src', 'ui', 'i18n', 'en.json'), 'utf8')) as Record<string, string>;
 
-type Mode = 'before' | 'after';
+type Mode = 'before' | 'after' | 'after-run1';
 type View = (typeof SCREENSHOT_VIEWS)[number];
 type Theme = (typeof SCREENSHOT_THEMES)[number];
 type Screen = 'weave' | 'keep' | 'scan' | 'code';
@@ -63,13 +81,13 @@ const escapeRegex = (text: string): string => text.replace(/[.*+?^$()|[\]\\]/g, 
 type Options = { mode: Mode; outDir: string; views: readonly View[] };
 
 function parseArguments(argv: readonly string[]): Options | string {
-  const usage = 'usage: npm run screenshots -- before|after [--out <directory>] [--view <name>]...';
+  const usage = 'usage: npm run screenshots -- before|after|after-run1 [--out <directory>] [--view <name>]...';
   let mode: Mode | null = null;
   let outDir: string | null = null;
   const views: View[] = [];
   for (let i = 0; i < argv.length; i++) {
     const argument = argv[i]!;
-    if (argument === 'before' || argument === 'after') {
+    if (argument === 'before' || argument === 'after' || argument === 'after-run1') {
       if (mode !== null) return `${usage}\nthe mode was given twice`;
       mode = argument;
     } else if (argument === '--out') {
@@ -86,9 +104,10 @@ function parseArguments(argv: readonly string[]): Options | string {
     }
   }
   if (mode === null) return usage;
+  if (mode === 'after-run1' && views.length > 0) return `${usage}\n--view does not apply to after-run1, which takes only the Landing`;
   return {
     mode,
-    outDir: outDir ?? path.join(repoRoot, 'media', 'design', mode),
+    outDir: outDir ?? path.join(repoRoot, 'media', 'design', mode === 'after-run1' ? LANDING_FULL_FOLDER : mode),
     views: views.length === 0 ? SCREENSHOT_VIEWS : SCREENSHOT_VIEWS.filter((view) => views.includes(view)),
   };
 }
@@ -327,6 +346,7 @@ async function capture(page: Page, width: number, file: string): Promise<void> {
 
 // ---------------------------------------------------------------- hints
 
+
 /** Page expression: the sideways overflow and the overlapping text boxes, as plain data. */
 const HINTS_EXPRESSION = `(()=>{
   const root=document.documentElement;
@@ -368,6 +388,63 @@ async function printHints(page: Page, name: string): Promise<void> {
   const fits = hints.scrollWidth <= hints.clientWidth;
   console.log(`hint  ${name}: scrollWidth ${hints.scrollWidth} ${fits ? '<=' : '>'} clientWidth ${hints.clientWidth}; ${hints.clashes.length} overlapping text box pair(s)`);
   for (const pair of hints.clashes.slice(0, 10)) console.log(`hint  ${name}:   overlap ${pair}`);
+}
+
+// ---------------------------------------------------------------- the full-page Landing set
+
+/** True once every picture of the page has loaded and has a size (a lazy picture only loads when it is near the screen). */
+const PICTURES_DECODED = `[...document.images].every(i=>i.complete&&i.naturalWidth>0)`;
+/** True when no block waits to be revealed, and no CSS transition or animation of finite length is still running. */
+const REVEALS_FINAL = `document.querySelectorAll('[data-reveal="pending"]').length===0&&document.getAnimations().every(a=>a.playState!=='running'||a.effect?.getComputedTiming().iterations===Infinity)`;
+
+/**
+ * Scrolls from the top to the bottom of the page, a little less than a window at a time, a frame or two between steps so the
+ * browser can start the lazy pictures and tell the page which blocks came into view, then back to the top. It only scrolls: the
+ * page is not touched.
+ */
+async function scrollThrough(page: Page): Promise<void> {
+  await page.ev(
+    `(async()=>{const frames=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const step=Math.max(200,Math.floor(innerHeight*0.6));for(let y=0;;y+=step){window.scrollTo(0,y);await frames();if(window.scrollY+innerHeight>=document.documentElement.scrollHeight-1)break}window.scrollTo(0,0);await frames();return true})()`,
+  );
+  await page.waitFor(`window.scrollY===0`, 'the page to be back at the top');
+  await page.waitFor(PICTURES_DECODED, 'every picture of the page to be decoded', 30_000);
+  await page.waitFor(REVEALS_FINAL, 'every block to be revealed and no transition to be running', 30_000);
+}
+
+/** The four files of the second set, with motion left on; returns the failures. */
+async function captureLandingFull(page: Page, baseUrl: string, outDir: string): Promise<string[]> {
+  const failures: string[] = [];
+  await page.cdp.call('Emulation.setEmulatedMedia', {
+    features: [
+      { name: 'prefers-reduced-motion', value: 'reduce' },
+      { name: 'prefers-color-scheme', value: 'light' },
+    ],
+  });
+  for (const width of LANDING_FULL_WIDTHS) {
+    const names = SCREENSHOT_THEMES.map((theme) => `${LANDING_FULL_VIEW}-${theme}-${width}.png`);
+    try {
+      await page.setViewport(width, WINDOW_HEIGHT);
+      await freshPage(page, baseUrl);
+      await prepareLanding(page);
+      await scrollThrough(page);
+      for (const theme of SCREENSHOT_THEMES) {
+        await chooseTheme(page, 'after', theme);
+        const name = `${LANDING_FULL_VIEW}-${theme}-${width}.png`;
+        await capture(page, width, path.join(outDir, name));
+        console.log(`saved ${name}`);
+        try {
+          await printHints(page, name);
+        } catch (error) {
+          console.log(`hint  ${name}: could not be computed: ${messageOf(error)}`);
+        }
+      }
+    } catch (error) {
+      const lost = names.filter((name) => !existsSync(path.join(outDir, name)));
+      failures.push(`${LANDING_FULL_VIEW} at ${width} failed: ${messageOf(error)} (not saved: ${lost.join(', ') || 'none'})`);
+      console.error(failures[failures.length - 1]);
+    }
+  }
+  return failures;
 }
 
 // ---------------------------------------------------------------- main
@@ -424,7 +501,12 @@ async function main(): Promise<number> {
       ],
     });
 
-    for (const width of SCREENSHOT_WIDTHS) {
+    if (mode === 'after-run1') {
+      // A file of an earlier run must not stand in for one that fails now.
+      for (const name of landingFullNames()) rmSync(path.join(outDir, name), { force: true });
+      failures.push(...(await captureLandingFull(page, baseUrl, outDir)));
+    }
+    for (const width of mode === 'after-run1' ? [] : SCREENSHOT_WIDTHS) {
       for (const view of views) {
         const names = SCREENSHOT_THEMES.map((theme) => `${view}-${theme}-${width}.png`);
         // A file of an earlier run must not stand in for one that fails now.
@@ -464,12 +546,13 @@ async function main(): Promise<number> {
       if (!name.startsWith('.')) files.set(name, new Uint8Array(readFileSync(path.join(outDir, name))));
     }
   }
-  const skipped = screenshotNames().filter((name) => !views.some((view) => name.startsWith(`${view}-`)));
-  const problems = setProblems(files).filter((problem) => !skipped.some((name) => problem.startsWith(`${name} `)));
+  const landing = mode === 'after-run1';
+  const skipped = landing ? [] : screenshotNames().filter((name) => !views.some((view) => name.startsWith(`${view}-`)));
+  const problems = (landing ? landingFullProblems(files) : setProblems(files)).filter((problem) => !skipped.some((name) => problem.startsWith(`${name} `)));
   for (const failure of failures) console.error(`FAIL  ${failure}`);
   for (const problem of problems) console.error(`FAIL  ${problem}`);
   if (failures.length === 0 && problems.length === 0) {
-    console.log(`OK    ${screenshotNames().length - skipped.length} files in ${outDir} are valid PNG files of the right width`);
+    console.log(`OK    ${(landing ? landingFullNames() : screenshotNames()).length - skipped.length} files in ${outDir} are valid PNG files of the right width`);
     return 0;
   }
   return 1;

@@ -21,7 +21,8 @@ export type TokenName =
   | 'tint'
   | 'band'
   | 'on-band'
-  | 'band-accent';
+  | 'band-accent'
+  | 'hero-tint';
 
 /**
  * The colour tokens of docs/DESIGN_BRIEF.md (second pass). `tokens.css` must hold the same values (a test checks it).
@@ -50,6 +51,7 @@ export const THEME_TOKENS: Readonly<Record<ThemeName, Readonly<Record<TokenName,
     band: '#1F4D36', // the deep-green band
     'on-band': '#F6EFE0',
     'band-accent': '#E2C48F', // light tan on the band
+    'hero-tint': '#0F2A1E', // the deep-green tint over the Landing hero photo
   },
   night: {
     ground: '#0E1511',
@@ -73,6 +75,7 @@ export const THEME_TOKENS: Readonly<Record<ThemeName, Readonly<Record<TokenName,
     band: '#1B3A2A',
     'on-band': '#F1EBD9',
     'band-accent': '#E3B341',
+    'hero-tint': '#060D09',
   },
 };
 
@@ -108,8 +111,38 @@ export function frostWorstCase(theme: ThemeName): string {
   return compositeOver(THEME_TOKENS[theme].surface, FROST[theme].alpha, FROST[theme].worstBackdrop);
 }
 
-/** A background that is a token, or the frosted header surface in its worst case. */
-export type PairBackground = TokenName | 'frost';
+/**
+ * The Landing hero: a photo under a layer of `hero-tint` at `alpha` (`--hero-tint-alpha` in tokens.css; a test compares
+ * them). The text of the hero lies on that layer, so its worst case is the photo's brightest pixel, white, under the
+ * tint. A second layer in Landing.module.css darkens the text side further; it only adds darkness, so it is not counted.
+ */
+export const HERO_TINT: Readonly<Record<ThemeName, { alpha: number; worstBackdrop: string }>> = {
+  day: { alpha: 0.8, worstBackdrop: '#FFFFFF' },
+  night: { alpha: 0.8, worstBackdrop: '#FFFFFF' },
+};
+
+/** The opaque colour of the hero text's ground in the worst case (see HERO_TINT). */
+export function heroWorstCase(theme: ThemeName): string {
+  return compositeOver(THEME_TOKENS[theme]['hero-tint'], HERO_TINT[theme].alpha, HERO_TINT[theme].worstBackdrop);
+}
+
+/**
+ * The Landing's Night section: the Kanchipuram photo under a layer of `hero-tint` at `alpha` (`--night-photo-alpha` in
+ * tokens.css; a test compares them), darker than the hero's. Its text lies on that layer, so its worst case is a white
+ * photo pixel under the tint.
+ */
+export const NIGHT_PHOTO_TINT: Readonly<Record<ThemeName, { alpha: number; worstBackdrop: string }>> = {
+  day: { alpha: 0.86, worstBackdrop: '#FFFFFF' },
+  night: { alpha: 0.86, worstBackdrop: '#FFFFFF' },
+};
+
+/** The opaque colour of the Night section's text ground in the worst case (see NIGHT_PHOTO_TINT). */
+export function nightPhotoWorstCase(theme: ThemeName): string {
+  return compositeOver(THEME_TOKENS[theme]['hero-tint'], NIGHT_PHOTO_TINT[theme].alpha, NIGHT_PHOTO_TINT[theme].worstBackdrop);
+}
+
+/** A background that is a token, the frosted header surface, the Landing hero's ground or the Night section's ground (each in its worst case). */
+export type PairBackground = TokenName | 'frost' | 'hero' | 'night-photo';
 
 export type TokenPair = {
   theme: ThemeName;
@@ -121,7 +154,10 @@ export type TokenPair = {
 
 /** The `#RRGGBB` colour a pair side stands for in a theme. */
 export function tokenColour(theme: ThemeName, name: PairBackground): string {
-  return name === 'frost' ? frostWorstCase(theme) : THEME_TOKENS[theme][name];
+  if (name === 'frost') return frostWorstCase(theme);
+  if (name === 'hero') return heroWorstCase(theme);
+  if (name === 'night-photo') return nightPhotoWorstCase(theme);
+  return THEME_TOKENS[theme][name];
 }
 
 const TEXT_ON_GROUND_AND_SURFACE: ReadonlyArray<TokenName> = [
@@ -146,6 +182,8 @@ function pairsFor(theme: ThemeName): TokenPair[] {
     pairs.push({ theme, foreground, background: 'surface', minimum: 4.5 });
   }
   for (const foreground of TEXT_ON_TINT) pairs.push({ theme, foreground, background: 'tint', minimum: 4.5 });
+  // The accent word of a section heading on the tinted band of the Landing (display text, 24 px and up).
+  pairs.push({ theme, foreground: 'accent', background: 'tint', minimum: 3 });
   // Text on a zari fill, a primary Button, the deep-green band, and on the dark Code view panel.
   pairs.push({ theme, foreground: 'on-zari', background: 'zari', minimum: 4.5 });
   pairs.push({ theme, foreground: 'on-primary', background: 'primary', minimum: 4.5 });
@@ -155,6 +193,15 @@ function pairsFor(theme: ThemeName): TokenPair[] {
   // The frosted header, at its worst case (FROST): text, and the focus ring drawn over it.
   for (const foreground of TEXT_ON_FROST) pairs.push({ theme, foreground, background: 'frost', minimum: 4.5 });
   pairs.push({ theme, foreground: 'zari', background: 'frost', minimum: 3 });
+  // The Landing hero text, on the tinted photo at its worst case (HERO_TINT): light text, the tan accent word, and the
+  // tan focus ring the hero uses in place of zari (3:1 is enough for the ring; the pair keeps 4.5).
+  pairs.push({ theme, foreground: 'on-band', background: 'hero', minimum: 4.5 });
+  pairs.push({ theme, foreground: 'band-accent', background: 'hero', minimum: 4.5 });
+  // The Night section's text on its darker tinted photo at the worst case (NIGHT_PHOTO_TINT): light text, the tan eyebrow
+  // and accent word, and the tan focus ring the section uses.
+  pairs.push({ theme, foreground: 'on-band', background: 'night-photo', minimum: 4.5 });
+  pairs.push({ theme, foreground: 'band-accent', background: 'night-photo', minimum: 4.5 });
+  // The "Bring a card" band uses on-band and band-accent on band (listed above), and its secondary Buttons are their own surface.
   // Focus indicator against the page and the Panel.
   pairs.push({ theme, foreground: 'zari', background: 'ground', minimum: 3 });
   pairs.push({ theme, foreground: 'zari', background: 'surface', minimum: 3 });

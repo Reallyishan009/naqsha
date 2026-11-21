@@ -339,8 +339,13 @@ function clearDownloads(dir: string): void {
 
 /** The size of the phone the Landing, the Disclosures and the primary Button are measured at (R8.10, R10.7, R23.7). */
 const PHONE = { width: 390, height: 844 } as const;
-/** The Landing's headline, Step_Strip and first Sample_Tile end within this many CSS pixels from the top (R8.10). */
-const LANDING_LIMIT_PX = 700;
+/**
+ * The Landing's headline, its primary "Scan a card" button and its "Try a sample" button are fully inside the first screen
+ * (end within this many CSS pixels from the top, with no scrolling) at the phone size. This replaced the first pass's rule that the
+ * headline, the Step_Strip and the first Sample_Tile end within 700 px (R8.10): with a full hero the steps and tiles
+ * are below the fold by design (second design pass, task 4.1).
+ */
+const LANDING_LIMIT_PX = PHONE.height;
 
 type KeyName = 'Enter' | 'Space' | 'Tab' | 'Escape';
 const KEYS: Record<KeyName, { key: string; code: string; windowsVirtualKeyCode: number; text?: string }> = {
@@ -469,6 +474,49 @@ async function updateNoticeFinderWorks(page: Page): Promise<boolean> {
 }
 
 const KEEP_LIST_TEXT = `(()=>{const h=document.getElementById('keep-list-title');const s=h?h.closest('section'):null;return s?s.innerText:null})()`;
+
+/** The sections of the Landing, top to bottom, by their `data-landing-section` attribute. All seven are in the entry chunk, so there is no lazy section to wait for. */
+const LANDING_SECTIONS = ['hero', 'how', 'what', 'samples', 'night', 'band', 'footer'] as const;
+/** A picture counts as shown when it has finished loading and has a size: the cache gave the browser a file it could decode. */
+const DECODED = `(i=>i.complete&&i.naturalWidth>0)`;
+
+/**
+ * The Landing's pictures with the network off: the hero photo is decoded where the page starts; then each section is scrolled
+ * to in turn (a picture below the first screen is only fetched once it is near the screen), and every picture inside it is decoded.
+ * The "how it works" section must hold the card photo, so at least one photo below the fold is proven. The page ends back at the top.
+ */
+async function landingPicturesDecoded(page: Page): Promise<string> {
+  const sections = await page.ev<string[]>(`[...document.querySelectorAll('[data-landing-section]')].map(e=>e.getAttribute('data-landing-section'))`);
+  expect(
+    JSON.stringify(sections) === JSON.stringify(LANDING_SECTIONS),
+    `the Landing has the sections ${JSON.stringify(sections)}, expected ${JSON.stringify(LANDING_SECTIONS)}`,
+  );
+  const heroPhoto = `document.querySelector('[data-landing-section="hero"] img[data-photo="loom-hero"]')`;
+  await page.waitFor(`(()=>{const i=${heroPhoto};return !!i&&${DECODED}(i)})()`, 'the hero photo (img[data-photo="loom-hero"]) to be decoded', 20_000).catch(async (error: unknown) => {
+    const state = await page.ev<string>(`(()=>{const i=${heroPhoto};return i?JSON.stringify({complete:i.complete,naturalWidth:i.naturalWidth,src:i.currentSrc}):'no hero photo'})()`);
+    throw new Error(`${error instanceof Error ? error.message : String(error)}; hero photo: ${state}`);
+  });
+  const heroSize = await page.ev<string>(`(()=>{const i=${heroPhoto};return i.naturalWidth+'x'+i.naturalHeight})()`);
+  let pictures = 1;
+  for (const section of LANDING_SECTIONS.slice(1)) {
+    const area = `document.querySelector('[data-landing-section="${section}"]')`;
+    await page.ev(`${area}.scrollIntoView({block:'start',behavior:'instant'})`);
+    await page
+      .waitFor(`[...${area}.querySelectorAll('img')].every(${DECODED})`, `every picture of the "${section}" section to be decoded`, 20_000)
+      .catch(async (error: unknown) => {
+        const broken = await page.ev<string>(`JSON.stringify([...${area}.querySelectorAll('img')].filter(i=>!${DECODED}(i)).map(i=>i.currentSrc||i.src))`);
+        throw new Error(`${error instanceof Error ? error.message : String(error)}; not decoded: ${broken}`);
+      });
+    pictures += await page.ev<number>(`${area}.querySelectorAll('img').length`);
+  }
+  // The card photo of the "how it works" section is the one photo that proves a lazy photo below the fold comes from the cache.
+  const card = `document.querySelector('[data-landing-section="how"] img[data-photo="sari-pattern-cards"]')`;
+  const cardSize = await page.ev<string | null>(`(()=>{const i=${card};return i&&${DECODED}(i)?i.naturalWidth+'x'+i.naturalHeight:null})()`);
+  expect(cardSize !== null, 'the card photo (img[data-photo="sari-pattern-cards"]) of the "how it works" section is not decoded after scrolling to it');
+  await page.ev(`window.scrollTo({top:0,behavior:'instant'})`);
+  await page.waitFor(`window.scrollY===0`, 'the page to be back at the top');
+  return `hero photo ${heroSize} decoded, card photo ${cardSize} decoded after scrolling to it, ${pictures} pictures in ${LANDING_SECTIONS.length} sections all decoded`;
+}
 
 function buildSteps(ctx: Context): BrowserStep[] {
   const { page } = ctx;
@@ -880,13 +928,15 @@ function buildSteps(ctx: Context): BrowserStep[] {
       },
     },
     {
-      name: 'network log: own origin only, and no image request but the favicon and manifest icons',
+      name: 'network log: own origin only, and no image request but the favicon, the manifest icons and the files of public/photos and public/art',
       async run() {
         const { cdp } = page;
         const base = new URL(ctx.baseUrl);
         const manifest = readJson('public/manifest.webmanifest') as { icons?: { src: string }[] };
+        // The pictures of the second design pass are files of this site: each file of public/photos and public/art, by its exact address.
+        const pictureFiles = ['photos', 'art'].flatMap((folder) => readdirSync(path.join(repoRoot, 'public', folder)).map((name) => `./${folder}/${name}`));
         const allowedImages = new Set(
-          ['./favicon.svg', ...(manifest.icons ?? []).map((icon) => icon.src)].map((file) => new URL(file, base).href),
+          ['./favicon.svg', ...(manifest.icons ?? []).map((icon) => icon.src), ...pictureFiles].map((file) => new URL(file, base).href),
         );
         const imageName = /\.(svg|png|jpe?g|gif|webp|ico)$/i;
         const requests: { url: string; type: string }[] = [];
@@ -938,16 +988,16 @@ function buildSteps(ctx: Context): BrowserStep[] {
           if (type === 'Font') fonts++;
           if (type === 'Image' || imageName.test(parsed.pathname)) {
             images++;
-            if (!allowedImages.has(parsed.href)) problems.push(`an image request that is neither the favicon nor a manifest icon: ${url}`);
+            if (!allowedImages.has(parsed.href)) problems.push(`an image request that is neither the favicon, a manifest icon nor a file of public/photos or public/art: ${url}`);
           }
         }
         expect(requests.length > 0 && fonts > 0, `the log holds ${requests.length} requests and ${fonts} font requests, so it did not see the page load`);
         expect(problems.length === 0, [...new Set(problems)].join('\n'));
-        return `${requests.length} requests over ${combinations.join(', ')} on all four Screens; origins: ${[...origins].join(', ')}; ${fonts} font requests; ${images} image requests, all the favicon or a manifest icon`;
+        return `${requests.length} requests over ${combinations.join(', ')} on all four Screens; origins: ${[...origins].join(', ')}; ${fonts} font requests; ${images} image requests, all the favicon, a manifest icon or a file of public/photos or public/art`;
       },
     },
     {
-      name: 'Landing: headline, steps and first tile within 700 px at 390 by 844, one primary Button, a tile starts a sample',
+      name: 'Landing: headline, "Scan a card" and "Try a sample" inside 844 px at 390 by 844, one primary Button, a tile starts a sample',
       async run() {
         const lines: string[] = [];
         try {
@@ -960,18 +1010,19 @@ function buildSteps(ctx: Context): BrowserStep[] {
             await page.waitFor(`!!document.querySelector('[data-hero-slot]')&&document.querySelectorAll('main [data-sample]').length===3`, `the Landing with its three Sample_Tiles in ${language}`);
             await settleLayout(page);
             const words = WORDS[language];
-            const seen = await page.ev<{ scrollY: number; headline: Box | null; strip: Box | null; tile: Box | null; primaries: string[]; secondaries: number; firstIsPrimary: boolean }>(
-              `(()=>{window.scrollTo(0,0);const box=${BOX};const m=document.querySelector('main');const heading=[...m.querySelectorAll('h1,h2,h3')].find(e=>e.textContent.trim()===${JSON.stringify(words['landing.headline'])});const strip=m.querySelector('ol[aria-label='+${JSON.stringify(JSON.stringify(words['landing.steps.name']))}+']');const tiles=[...m.querySelectorAll('[data-sample]')];const primaries=[...m.querySelectorAll('[class*="_primary_"]')];return {scrollY:window.scrollY,headline:box(heading),strip:box(strip),tile:box(tiles[0]),primaries:primaries.map(e=>e.tagName.toLowerCase()+(e.dataset.sample?'[data-sample='+e.dataset.sample+']':'')),secondaries:tiles.slice(1).filter(e=>/_secondary_/.test(e.className)).length,firstIsPrimary:primaries.length===1&&primaries[0]===tiles[0]}})()`,
+            const seen = await page.ev<{ scrollY: number; headline: Box | null; scan: Box | null; sample: Box | null; primaries: string[]; tiles: number; secondaryTiles: number }>(
+              `(()=>{window.scrollTo(0,0);const box=${BOX};const m=document.querySelector('main');const heading=[...m.querySelectorAll('h1,h2,h3')].find(e=>e.textContent.trim()===${JSON.stringify(words['landing.headline'])});const named=text=>[...m.querySelectorAll('button')].find(e=>e.textContent.trim()===text);const tiles=[...m.querySelectorAll('[data-sample]')];const primaries=[...m.querySelectorAll('[class*="_primary_"]')];return {scrollY:window.scrollY,headline:box(heading),scan:box(named(${JSON.stringify(words['nav.scanCard'])})),sample:box(named(${JSON.stringify(words['landing.trySample'])})),primaries:primaries.map(e=>e.tagName.toLowerCase()+':'+e.textContent.trim()),tiles:tiles.length,secondaryTiles:tiles.filter(e=>/_secondary_/.test(e.className)).length}})()`,
             );
-            for (const [label, box] of [['headline', seen.headline], ['Step_Strip', seen.strip], ['first Sample_Tile', seen.tile]] as const) {
+            expect(seen.scrollY === 0, `${language}: the page is scrolled to ${seen.scrollY} px, not 0`);
+            for (const [label, box] of [['headline', seen.headline], ['"Scan a card" button', seen.scan], ['"Try a sample" button', seen.sample]] as const) {
               expect(box !== null && box.height > 0, `${language}: the Landing ${label} is not on the page`);
-              expect(box.top >= 0 && box.bottom <= LANDING_LIMIT_PX, `${language}: the Landing ${label} spans ${Math.round(box.top)} to ${Math.round(box.bottom)} px, expected to end within ${LANDING_LIMIT_PX} px at ${PHONE.width} by ${PHONE.height}`);
+              expect(box.top >= 0 && box.bottom <= LANDING_LIMIT_PX, `${language}: the Landing ${label} spans ${Math.round(box.top)} to ${Math.round(box.bottom)} px, expected to be inside ${LANDING_LIMIT_PX} px at ${PHONE.width} by ${PHONE.height}`);
             }
             expect(seen.primaries.length === 1, `${language}: the Landing has ${seen.primaries.length} primary Buttons (${seen.primaries.join(', ') || 'none'}), expected exactly 1`);
-            expect(seen.firstIsPrimary, `${language}: the one primary Button of the Landing is ${seen.primaries[0]}, expected the first Sample_Tile`);
-            expect(seen.secondaries === 2, `${language}: ${seen.secondaries} of the other two Sample_Tiles are styled secondary, expected 2`);
+            expect(seen.primaries[0] === `button:${words['nav.scanCard']}`, `${language}: the one primary Button of the Landing is ${seen.primaries[0]}, expected the "${words['nav.scanCard']}" button`);
+            expect(seen.tiles === 3 && seen.secondaryTiles === 3, `${language}: ${seen.secondaryTiles} of ${seen.tiles} Sample_Tiles are styled secondary, expected 3 of 3`);
             lines.push(
-              `${language}: headline ends at ${Math.round(seen.headline!.bottom)}, Step_Strip at ${Math.round(seen.strip!.bottom)}, first tile at ${Math.round(seen.tile!.bottom)} px (limit ${LANDING_LIMIT_PX}); one primary Button, the first tile`,
+              `${language}: headline ends at ${Math.round(seen.headline!.bottom)}, "Scan a card" at ${Math.round(seen.scan!.bottom)}, "Try a sample" at ${Math.round(seen.sample!.bottom)} px (limit ${LANDING_LIMIT_PX}); one primary Button, "Scan a card"; three secondary tiles`,
             );
           }
           // A tile starts its sample: the Landing goes and the first pick plays.
@@ -1234,16 +1285,18 @@ function buildSteps(ctx: Context): BrowserStep[] {
           return `${note}; no font request failed`;
         };
         /**
-         * The Landing is on screen with the network off, with its Hero_Loom drawn: the svg is found by its role "img" and its accessible
-         * name (the `hero.title` text, from its `<title>` through `aria-labelledby`) inside the hero slot, and has a size and shapes.
+         * The Landing is on screen with the network off, with its loom picture drawn: the canvas is found by its role "img" and its
+         * accessible name (the `processLoop.title` text, through `aria-labelledby`) inside the hero slot, has a size, and has painted
+         * pixels (some pixel of its 2D context is not fully transparent, and not all of them are the same colour). This replaced the
+         * check of the Hero_Loom svg and its shapes (second design pass, task 4.1: the hero now holds the live Process_Loop).
          */
         const landingLoads = async (): Promise<string> => {
           const language: Language = (await page.ev<string>('document.documentElement.lang')) === 'hi' ? 'hi' : 'en';
           const words = WORDS[language];
           const seen = await page
-            .waitFor<{ name: string; width: number; height: number; shapes: number; headline: string; tiles: number; navigation: string }>(
-              `(()=>{const slot=document.querySelector('[data-hero-slot]');const svg=slot?slot.querySelector('svg[role="img"]'):null;if(!svg)return null;const ids=(svg.getAttribute('aria-labelledby')||'').split(/\\s+/).filter(Boolean);const name=ids.map(id=>{const e=document.getElementById(id);return e?e.textContent.trim():''}).join(' ').trim();const r=svg.getBoundingClientRect();const h=document.querySelector('main h3');const nav=performance.getEntriesByType('navigation')[0];return {name,width:r.width,height:r.height,shapes:svg.querySelectorAll('path,rect,circle,line,polygon,polyline,ellipse').length,headline:h?h.textContent.trim():'',tiles:document.querySelectorAll('[data-sample]').length,navigation:nav?nav.type:'unknown'}})()`,
-              'the hero loom drawing (an svg with role "img" in the hero slot) on the Landing',
+            .waitFor<{ name: string; width: number; height: number; colours: number; headline: string; tiles: number; navigation: string }>(
+              `(()=>{const slot=document.querySelector('[data-hero-slot]');const canvas=slot?slot.querySelector('canvas[role="img"]'):null;if(!canvas)return null;const ids=(canvas.getAttribute('aria-labelledby')||'').split(/\\s+/).filter(Boolean);const name=ids.map(id=>{const e=document.getElementById(id);return e?e.textContent.trim():''}).join(' ').trim();const r=canvas.getBoundingClientRect();const ctx=canvas.getContext('2d');const data=ctx&&canvas.width>0&&canvas.height>0?new Uint32Array(ctx.getImageData(0,0,canvas.width,canvas.height).data.buffer):new Uint32Array(0);const colours=new Set();for(let i=0;i<data.length&&colours.size<4;i+=7){if((data[i]>>>24)!==0)colours.add(data[i])}const h=document.querySelector('main h3');const nav=performance.getEntriesByType('navigation')[0];return {name,width:r.width,height:r.height,colours:colours.size,headline:h?h.textContent.trim():'',tiles:document.querySelectorAll('[data-sample]').length,navigation:nav?nav.type:'unknown'}})()`,
+              'the loom picture (a canvas with role "img" in the hero slot) on the Landing',
               20_000,
             )
             .catch(async (error: unknown) => {
@@ -1252,11 +1305,12 @@ function buildSteps(ctx: Context): BrowserStep[] {
               );
               throw new Error(`${error instanceof Error ? error.message : String(error)}; page: ${state}`);
             });
-          expect(seen.name.startsWith(words['hero.title']!), `the hero loom's accessible name is "${seen.name.slice(0, 60)}", expected it to start with "${words['hero.title']}"`);
-          expect(seen.width > 0 && seen.height > 0 && seen.shapes > 0, `the hero loom is ${Math.round(seen.width)}x${Math.round(seen.height)} px with ${seen.shapes} shapes`);
+          expect(seen.name.startsWith(words['processLoop.title']!), `the loom picture's accessible name is "${seen.name.slice(0, 60)}", expected it to start with "${words['processLoop.title']}"`);
+          expect(seen.width > 0 && seen.height > 0 && seen.colours >= 2, `the loom picture is ${Math.round(seen.width)}x${Math.round(seen.height)} px with ${seen.colours} painted colours (at least 2 expected)`);
           expect(seen.headline === words['landing.headline'], `the Landing headline is "${seen.headline}", expected "${words['landing.headline']}"`);
           expect(seen.tiles >= DESIGNS.length, `the Landing shows ${seen.tiles} sample controls, expected ${DESIGNS.length}`);
-          return `Landing on screen offline (document loaded by ${seen.navigation}): headline "${seen.headline}", hero loom "${words['hero.title']}" ${Math.round(seen.width)}x${Math.round(seen.height)} px with ${seen.shapes} shapes, ${seen.tiles} sample controls`;
+          const pictures = await landingPicturesDecoded(page);
+          return `Landing on screen offline (document loaded by ${seen.navigation}): headline "${seen.headline}", loom picture "${words['processLoop.title']}" ${Math.round(seen.width)}x${Math.round(seen.height)} px with painted pixels, ${seen.tiles} sample controls; ${pictures}`;
         };
         /**
          * R9.7: the first open of Code view in this page session, with Chrome offline and the preview server stopped. The listing is

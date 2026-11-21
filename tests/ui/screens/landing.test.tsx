@@ -26,9 +26,21 @@ function ready(language: Language): AppState {
   return { ...initialAppState, language, profile: { status: 'ready', profile: demoProfile() } };
 }
 
+/** The text of the headline (the first h3, with the accent word's tags taken out), as the markup writes it. */
+function headlineText(html: string): string {
+  return (/<h3 class="[^"]*headline[^"]*">(.*?)<\/h3>/s.exec(html)?.[1] ?? '').replace(/<[^>]*>/g, '');
+}
+
 function renderLanding(state: AppState, onRetryProfile?: () => void): string {
   const t = translator(DICTIONARIES, state.language);
   return renderToStaticMarkup(<Landing state={state} dispatch={() => undefined} t={t} onRetryProfile={onRetryProfile} />);
+}
+
+/** The markup of the card of one sample: from the `article` whose button carries data-sample to its end. */
+function tileOf(html: string, design: SampleDesign): string {
+  const at = html.indexOf(`data-sample="${design}"`);
+  const start = html.lastIndexOf('<article', at);
+  return html.slice(start, html.indexOf('</article>', at));
 }
 
 /** The visible text and the accessible names (aria-label, alt, title) of a piece of markup. */
@@ -42,7 +54,7 @@ describe('Landing', () => {
     const t = translator(DICTIONARIES, 'en');
     const empty = renderToStaticMarkup(<WeaveScreen state={ready('en')} dispatch={() => undefined} t={t} />);
     const headline = (EN['landing.headline'] as string).replaceAll("'", '&#x27;');
-    expect(empty).toContain(headline);
+    expect(headlineText(empty)).toBe(headline);
     expect(initialAppState.screen).toBe('weave');
     const profile = demoProfile();
     const arrived: AppState = {
@@ -50,7 +62,8 @@ describe('Landing', () => {
       current: { pattern: generateSample(profile, 'diamond'), origin: { kind: 'sample', design: 'diamond' } },
     };
     const player = renderToStaticMarkup(<WeaveScreen state={arrived} dispatch={() => undefined} t={t} />);
-    expect(player).not.toContain(headline);
+    expect(player).not.toContain('landing.headline');
+    expect(headlineText(player)).toBe('');
   });
 
   it('R8.2 the headline is a heading in the display font, in both languages from the translation files', () => {
@@ -58,28 +71,47 @@ describe('Landing', () => {
     expect(HI['landing.headline']?.reviewed).toBe(false);
     for (const language of LANGUAGES) {
       const html = renderLanding(ready(language));
-      const text = translator(DICTIONARIES, language)('landing.headline').replaceAll("'", '&#x27;');
-      expect(html).toMatch(new RegExp(`<h3 class="[^"]*headline[^"]*">${text}</h3>`));
+      const t = translator(DICTIONARIES, language);
+      const text = t('landing.headline').replaceAll("'", '&#x27;');
+      const inner = new RegExp(`<h3 class="[^"]*headline[^"]*">(.*?)</h3>`, 's').exec(html)?.[1] ?? '';
+      // The headline is one sentence pair with one accent word in an em: with the tags taken out it is the translation, whole.
+      expect(inner.replace(/<[^>]*>/g, '')).toBe(text);
+      const accents = [...inner.matchAll(/<em class="([^"]*)">(.*?)<\/em>/g)];
+      expect(accents, `${language} headline has one accent word`).toHaveLength(1);
+      expect(accents[0]![2]).toBe(t('landing.headline.accent'));
+      // Italic in Latin only; in Hindi the accent word changes colour and nothing else.
+      expect(/(?:^|\s)(?:\S*_)?italic(?:_\S*)?(?:\s|$)/.test(accents[0]![1]!)).toBe(language === 'en');
     }
     const css = readFileSync('src/ui/screens/weave/Landing.module.css', 'utf8');
     expect(/\.headline\s*\{[^}]*font-family:\s*var\(--font-display\)/.test(css)).toBe(true);
   });
 
-  it('R8.3 the Step_Strip has three steps in order, each labelled in the current language', () => {
+  it('R8.3 How it works has three steps in order (the card, the design, the cloth), each titled in the current language and numbered', () => {
     for (const language of LANGUAGES) {
       const t = translator(DICTIONARIES, language);
       const html = renderLanding(ready(language));
       const list = /<ol [^>]*>(.*?)<\/ol>/s.exec(html)?.[1] ?? '';
-      const labels = [...list.matchAll(/<li [^>]*>.*?<span class="[^"]*stepLabel[^"]*">(.*?)<\/span><\/li>/gs)].map((match) => match[1]);
-      expect(labels).toEqual([t('landing.step.scan'), t('landing.step.weave'), t('landing.step.keep')]);
+      const titles = [...list.matchAll(/<li [^>]*data-step="[a-z]+"[^>]*>.*?<h4 class="[^"]*stepTitle[^"]*">(.*?)<\/h4>/gs)].map((match) => match[1]);
+      expect(titles).toEqual([t('landing.how.card.title'), t('landing.how.pattern.title'), t('landing.how.cloth.title')]);
       expect(html).toContain(`aria-label="${t('landing.steps.name')}"`);
     }
-    for (const key of ['landing.step.scan', 'landing.step.weave', 'landing.step.keep']) {
+    for (const key of [
+      'landing.step.scan',
+      'landing.step.weave',
+      'landing.step.keep',
+      'landing.headline.accent',
+      'landing.eyebrow',
+      'landing.lead',
+      'landing.trySample',
+      'landing.how.card.title',
+      'landing.how.pattern.title',
+      'landing.how.cloth.title',
+    ]) {
       expect(HI[key]?.reviewed, key).toBe(false);
     }
   });
 
-  it('R8.4 R8.5 there is one tile for each Sample_Design, the first primary and the other two secondary', () => {
+  it('R8.4 R8.5 there is one tile for each Sample_Design, all secondary; the one primary Button of the Landing is the hero\'s "Scan a card"', () => {
     for (const language of LANGUAGES) {
       const t = translator(DICTIONARIES, language);
       const html = renderLanding(ready(language));
@@ -89,20 +121,30 @@ describe('Landing', () => {
         const classes = /class="([^"]*)"/.exec(match[0])?.[1] ?? '';
         return /(?:^|_)primary(?:_|$)/.test(classes.split(/\s+/).join('_')) ? 'primary' : 'secondary';
       });
-      expect(kinds).toEqual(['primary', 'secondary', 'secondary']);
+      expect(kinds).toEqual(['secondary', 'secondary', 'secondary']);
       for (const tile of tiles) expect(tile[0]).toContain('type="button"');
-      // Each tile holds the name, a picture and the label, and the whole of it is the one button.
+      // Each tile is a card with the name, the pictures of its cloth and its punch card and the label "Try it"; its one button starts the design.
       for (const design of DESIGNS) {
-        const body = new RegExp(`<button\\b[^>]*data-sample="${design}"[^>]*>(.*?)</button>`, 's').exec(html)?.[1] ?? '';
+        const body = tileOf(html, design);
         expect(body).toContain(t(`tryit.${design}`));
-        expect(body).toContain('<canvas');
-        expect(body).toContain(t('landing.tile.try'));
+        expect(body).toContain(`/art/cloth-${design}.avif`);
+        expect(body).toContain(`/art/card-${design}.avif`);
+        expect(body).toContain(`>${t('landing.tile.try')}</button>`);
+        expect(body.match(/<button\b/g)).toHaveLength(1);
+        // The button's name says which design it starts.
+        expect(body).toContain(`aria-label="${t('landing.tile.try.name', { design: t(`tryit.${design}`) })}"`);
       }
       // No other primary Button on the Landing.
       const primaries = [...html.matchAll(/<(?:button|a)\b[^>]*class="([^"]*)"[^>]*>/g)].filter((match) =>
         match[1]!.split(/\s+/).some((name) => /(?:^|_)primary(?:_|$)/.test(name)),
       );
       expect(primaries).toHaveLength(1);
+      // That one primary is the hero's Scan button, it is not a tile, and "Try a sample" beside it is secondary.
+      expect(primaries[0]![0]).not.toContain('data-sample');
+      const hero = new RegExp(`<button\\b[^>]*class="([^"]*)"[^>]*>${t('nav.scanCard')}</button>`).exec(html);
+      expect(hero?.[1]).toMatch(/(?:^|_)primary(?:_|$)/);
+      const trySample = new RegExp(`<button\\b[^>]*class="([^"]*)"[^>]*>${t('landing.trySample')}</button>`).exec(html);
+      expect(trySample?.[1]).toMatch(/(?:^|_)secondary(?:_|$)/);
     }
   });
 
@@ -136,7 +178,7 @@ describe('Landing', () => {
     }
   });
 
-  it('R8.8 the previews are drawn by the simulator from each design and use no image file', () => {
+  it('R8.8 the previews are drawn by the simulator from each design, and a tile shows only the pictures the app made for it', () => {
     const profile = demoProfile();
     for (const design of DESIGNS) {
       const pattern = generateSample(profile, design);
@@ -150,7 +192,14 @@ describe('Landing', () => {
       expect(colours.size, design).toBeGreaterThan(1);
     }
     const html = renderLanding(ready('en'));
-    expect(html).not.toMatch(/<img|<picture|\bsrc=|url\(/);
+    // A tile's pictures are the two files the app made for its design with its own renderer (scripts/make_art.ts), nothing else:
+    // no photograph, no address on another site, no CSS url().
+    for (const design of DESIGNS) {
+      const body = tileOf(html, design);
+      const sources = [...body.matchAll(/\bsrc="([^"]*)"/g)].map((match) => match[1]);
+      expect(sources, design).toEqual([`/art/cloth-${design}.avif`, `/art/card-${design}.avif`]);
+      expect(body).not.toMatch(/<picture|url\(|data-photo=/);
+    }
   });
 
   it('R8.9 the Landing shows no forbidden word in its text or accessible names, in either language', () => {
@@ -173,7 +222,7 @@ describe('Landing', () => {
       expect(html).toContain(t('status.loading'));
       expect(html).toMatch(/<div role="status">/);
       expect(html).not.toContain('data-sample=');
-      expect(html).toContain(t('landing.headline').replaceAll("'", '&#x27;'));
+      expect(headlineText(html)).toBe(t('landing.headline').replaceAll("'", '&#x27;'));
     }
   });
 

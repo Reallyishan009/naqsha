@@ -4,7 +4,7 @@ import path from 'node:path';
 import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { NoCardsScannedIllustration, NoSavedDesignsIllustration, NothingToCompareIllustration } from '../../../src/ui/illustrations/SpotIllustrations.tsx';
+import { NoCardsScannedIllustration, NoSavedDesignsIllustration, NothingToCompareIllustration, WorksOfflineIllustration } from '../../../src/ui/illustrations/SpotIllustrations.tsx';
 import { KeepStepIcon, ScanStepIcon, WeaveStepIcon } from '../../../src/ui/illustrations/StepIcons.tsx';
 import { STROKE } from '../../../src/ui/illustrations/strokes.ts';
 import { DICTIONARIES, translator } from '../../../src/ui/i18n/messages.ts';
@@ -21,15 +21,15 @@ const STAGE_0 = '63578cf';
 const en = translator(DICTIONARIES, 'en');
 
 const STEP_ICONS = [ScanStepIcon, WeaveStepIcon, KeepStepIcon];
-const SPOTS = [NoSavedDesignsIllustration, NoCardsScannedIllustration, NothingToCompareIllustration];
+const SPOTS = [NoSavedDesignsIllustration, NoCardsScannedIllustration, NothingToCompareIllustration, WorksOfflineIllustration];
 const html = (draw: (props: { decorative?: true }) => ReactElement) => renderToStaticMarkup(draw({}));
 
 describe('Step_Icons and Spot_Illustrations', () => {
   it('R14.1 the three Step_Icons draw different content', () => {
     expect(new Set(STEP_ICONS.map(html)).size).toBe(3);
   });
-  it('R14.2 the three Spot_Illustrations draw different content', () => {
-    expect(new Set(SPOTS.map(html)).size).toBe(3);
+  it('R14.2 the Spot_Illustrations (the three of the empty states and the Works offline drawing) draw different content', () => {
+    expect(new Set(SPOTS.map(html)).size).toBe(SPOTS.length);
   });
   it('R14.9 each has a viewBox, no fixed width or height attribute and is hidden from assistive technology', () => {
     for (const draw of [...STEP_ICONS, ...SPOTS]) {
@@ -67,14 +67,15 @@ describe('Step_Icons and Spot_Illustrations', () => {
     }
     expect(STROKE.fine).toBeLessThan(STROKE.line);
   });
-  it('R14.3 the Landing draws one Step_Icon in each of its three steps, beside the label', () => {
+  it('R14.3 the Landing draws one Spot_Illustration, in its Works offline card, and no Step_Icon; each How it works step has its number', () => {
     const state = { ...initialAppState, profile: { status: 'ready' as const, profile: demoProfile() } };
     const markup = renderToStaticMarkup(<Landing state={state} dispatch={() => undefined} t={en} />);
+    expect([...markup.matchAll(/data-drawing="(spot-[a-z-]+)"/g)].map((match) => match[1])).toEqual(['spot-works-offline']);
+    expect(markup).not.toMatch(/data-drawing="step-/);
     const list = /<ol [^>]*>(.*?)<\/ol>/s.exec(markup)?.[1] ?? '';
-    const items = [...list.matchAll(/<li [^>]*>(.*?)<\/li>/gs)].map((match) => match[1] ?? '');
+    const items = [...list.matchAll(/<li [^>]*data-step="[a-z]+"[^>]*>(.*?)<\/h4>/gs)].map((match) => match[1] ?? '');
     expect(items).toHaveLength(3);
-    expect(items.map((item) => /data-drawing="(step-[a-z]+)"/.exec(item)?.[1])).toEqual(['step-scan', 'step-weave', 'step-keep']);
-    for (const item of items) expect(item.match(/<svg/g)).toHaveLength(1);
+    expect(items.map((item) => /<span class="[^"]*badge[^"]*" aria-hidden="true">(\d)<\/span>/.exec(item)?.[1])).toEqual(['1', '2', '3']);
   });
   it('R14.3 an empty state shows the Spot_Illustration beside its message and next step', () => {
     for (const Spot of SPOTS) {

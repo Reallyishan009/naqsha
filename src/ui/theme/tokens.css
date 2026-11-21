@@ -71,6 +71,11 @@
   --band: #1F4D36;
   --on-band: #F6EFE0;
   --band-accent: #E2C48F;
+  /* The Landing hero: this colour over the photo at this alpha (HERO_TINT in contrast.ts holds the same alpha). */
+  --hero-tint: #0F2A1E;
+  --hero-tint-alpha: 0.8;
+  /* The Landing's Night section: the same tint, darker (NIGHT_PHOTO_TINT in contrast.ts holds the same alpha). */
+  --night-photo-alpha: 0.86;
 
   /* The frosted header surface: --surface at 95% (never below 85%; a test checks it and contrast.ts holds the worst case). */
   --frost: rgb(255 251 242 / 0.95);
@@ -110,6 +115,8 @@
   --motion-short: 120ms;
   --motion-medium: 200ms;
   --motion-long: 320ms;
+  /* How far a block rises while it fades in (the scroll reveal of the Landing). */
+  --reveal-rise: 12px;
 
   --touch-target: 48px;
   --leading-body: 1.5;
@@ -139,6 +146,7 @@
   --band: #1B3A2A;
   --on-band: #F1EBD9;
   --band-accent: #E3B341;
+  --hero-tint: #060D09;
   --frost: rgb(22 32 26 / 0.95);
   --shadow-lift: 0 2px 6px rgb(0 0 0 / 0.3), 0 10px 24px rgb(0 0 0 / 0.4);
   --shadow-float: 0 4px 12px rgb(0 0 0 / 0.35), 0 24px 48px rgb(0 0 0 / 0.55);

@@ -14,6 +14,8 @@ The GIFs below were captured from the built site (`npm run preview`) with the de
 
 Public URL: https://naqsha-ashen.vercel.app/ (opens with no login; deployed by hand on Vercel, see "Deploy to Vercel").
 
+**New look (second design pass, run 1):** the Weave screen now opens on a scrolling Landing page: a loom photo behind the headline, a live picture of a card being woven into cloth, how it works, what you can do, three samples to try, a Night section and a footer with the photo and font credits. It has a floating header, a cream, forest-green and tan palette (near-black green and amber at night) and Newsreader headings. The numbers and the checks that changed are in `.kiro/specs/second-pass-run1/measurements.md`. The GIFs above were captured before this change and show the earlier look. Not yet checked: the animated picture by eye, Hindi full-page views, and AVIF pictures in browsers other than headless Chrome.
+
 **Status:** the app is built and deployed at https://naqsha-ashen.vercel.app/ , with four screens (Weave, Keep, Scan, Code view). Weave has a Try it button and printable sample cards. Keep exports a bitmap and saves designs in the IndexedDB archive. Scan reads a card from an uploaded photo, lets you tap to correct a hole, reads cards in a batch, and uses the live camera on HTTPS. Code view shows a naksha as one line of bits per pick (see "What it does"). Not verified: the Hindi text has not been reviewed (see `docs/HINDI_REVIEW.md`), the live camera has not been tested on real devices, and the card profile values are illustrative and unverified.
 
 ## Try it in 60 seconds
@@ -195,7 +197,11 @@ Naqsha ships four font families, and all four are listed here. Each is licensed 
 | IBM Plex Mono (data text, weight 400) | IBM Corp. | SIL OFL 1.1 | [google/fonts, `ofl/ibmplexmono`](https://github.com/google/fonts/tree/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/ibmplexmono) |
 | Newsreader (headings in Latin text, roman and italic, weight 400) | Production Type | SIL OFL 1.1 | [google/fonts, `ofl/newsreader`](https://github.com/google/fonts/tree/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/newsreader) |
 
-No other credits are listed beyond the research and the fonts above.
+### Photos
+
+The Landing shows five photographs from Wikimedia Commons (six AVIF files in `public/photos/`), each under a Creative Commons Attribution licence (CC BY 2.0 or CC BY 3.0) and resized and converted to AVIF by us. The author, title, licence and source link of each one are in [`docs/IMAGE_CREDITS.md`](docs/IMAGE_CREDITS.md), and the footer of the Landing lists the same credits, generated from that file. The authors did not endorse Naqsha. The other pictures (`public/art/`) are drawn by `scripts/make_art.ts` with the app's own card renderer and cloth code.
+
+No other credits are listed beyond the research, the fonts and the photos above.
 
 ## License
 

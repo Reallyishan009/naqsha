@@ -7,6 +7,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseCardProfile } from '../../src/codec/index.ts';
 import { buildPrecache } from '../../scripts/build_precache.ts';
 import { CHUNK_MARKERS, SCAN_ONLY_MARKER, checkBundle, findAbsoluteUrls, findEntryChunk } from '../../scripts/check_bundle.ts';
+import { IMAGE_CREDITS } from '../../src/ui/state/imageCredits.ts';
+import { REPOSITORY_URL } from '../../src/ui/state/siteCredits.ts';
 import viteConfig from '../../vite.config.ts';
 import { stripComments } from '../support/source.ts';
 
@@ -185,13 +187,22 @@ describe('built site', () => {
         build: { outDir: productionDir, emptyOutDir: true },
       });
       const allowedUrl = /^https?:\/\/(www\.w3\.org\/|react\.dev\/errors)/;
+      // The links the footer shows: the licence and source page of each photo (read from docs/IMAGE_CREDITS.md, the exact
+      // addresses and nothing else) and the app's own repository. They are links a visitor may follow, never requests the page makes.
+      const creditLinks = IMAGE_CREDITS.flatMap((credit) => [credit.licenceUrl, credit.sourceUrl]);
+      expect(creditLinks.length).toBeGreaterThan(0);
+      const allowedLink = (url: string): boolean =>
+        // The address pattern below stops at a closing parenthesis, so a link that holds one is seen up to it.
+        creditLinks.some((link) => link === url || link.startsWith(`${url})`)) ||
+        url === REPOSITORY_URL ||
+        url.startsWith(`${REPOSITORY_URL}/`);
       const files = filesUnder(productionDir, /\.(js|css|html)$/);
       expect(files.length).toBeGreaterThan(0);
       const offenders: string[] = [];
       for (const file of files) {
         const text = readFileSync(file, 'utf8');
         for (const url of text.match(/https?:\/\/[^\s"'`)\\]+/g) ?? []) {
-          if (!allowedUrl.test(url)) offenders.push(`${path.relative(productionDir, file)}: ${url}`);
+          if (!allowedUrl.test(url) && !allowedLink(url)) offenders.push(`${path.relative(productionDir, file)}: ${url}`);
         }
         if (/analytics|gtag|googletagmanager|plausible|hotjar|mixpanel|sentry|XMLHttpRequest|sendBeacon|WebSocket|EventSource/i.test(text)) {
           offenders.push(`${path.relative(productionDir, file)}: analytics or network API`);

@@ -15,6 +15,7 @@ import {
   START_PAGE_ENTRY,
 } from '../../scripts/checks/precache.ts';
 import type { DistFile } from '../../scripts/checks/precache.ts';
+import { FONT_CREDITS } from '../../src/ui/state/siteCredits.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const WORKER_SOURCE = readFileSync(path.join(ROOT, 'public/sw.js'), 'utf8');
@@ -241,6 +242,12 @@ describe('precache list of the built site in dist/sw.js', () => {
     expect(missingFromPrecache(fonts, entries, 'font file')).toEqual([]);
   });
 
+  it('the font licence text each footer link of the Landing points at (fonts/<licenceFile>) is a file of dist/ and is precached', () => {
+    expect(FONT_CREDITS.length, 'the footer lists no font').toBeGreaterThan(0);
+    const licences = FONT_CREDITS.map((font) => `fonts/${font.licenceFile}`);
+    for (const licence of licences) expect(files, `${licence} is not a file of dist/`).toContain(licence);
+    expect(missingFromPrecache(licences, entries, 'font licence file')).toEqual([]);
+  });
   it('every file of public/photos and public/art is built into dist and named by an entry of the precache list', () => {
     for (const folder of ['photos', 'art']) {
       const sources = filesUnder(path.join(ROOT, 'public', folder)).map((file) => `${folder}/${file}`);

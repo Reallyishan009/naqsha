@@ -1,5 +1,7 @@
 .eyebrow {
   display: flex;
+  /* The whole line: a flex line sized to its content leaves the hairlines no room and the label wraps. */
+  width: 100%;
   align-items: center;
   justify-content: center;
   gap: var(--space-3);

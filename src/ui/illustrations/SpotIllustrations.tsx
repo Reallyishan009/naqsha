@@ -38,6 +38,20 @@ export function NoCardsScannedIllustration(props: DrawingProps) {
   );
 }
 
+/** Works offline: a screen showing a woven diamond, and the signal arcs beside it struck through. */
+export function WorksOfflineIllustration(props: DrawingProps) {
+  return (
+    <Frame kind="spot" viewBox={VIEW_BOX} props={props} name="spot-works-offline">
+      <path d="M18 18H64Q68 18 68 22V68Q68 72 64 72H18Q14 72 14 68V22Q14 18 18 18Z" />
+      <path d="M41 28L58 45L41 62L24 45Z" />
+      <path className={styles.accent} d="M41 36L50 45L41 54L32 45Z" />
+      <path d="M82 38Q96 26 110 38M88 45Q96 38 104 45" />
+      <path className={styles.accentFill} d="M99 53A3 3 0 1 1 93 53A3 3 0 1 1 99 53Z" />
+      <path className={styles.accent} d="M80 24L112 62" />
+    </Frame>
+  );
+}
+
 /** Nothing to compare: two ruled sheets with a gap between them and a two-way arrow across the gap. */
 export function NothingToCompareIllustration(props: DrawingProps) {
   return (

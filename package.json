@@ -4,6 +4,10 @@
   "private": true,
   "description": "Browser app that reads Jacquard loom punch cards, rebuilds the weave pattern, simulates the cloth and exports a bitmap for electronic Jacquard looms.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Reallyishan009/naqsha.git"
+  },
   "type": "module",
   "engines": {
     "node": ">=22.18"

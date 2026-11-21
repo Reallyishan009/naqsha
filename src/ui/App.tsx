@@ -244,7 +244,7 @@ export function Shell({ state, dispatch, onLanguageChosen, theme = 'day', onThem
           <LoadingState text={t('status.loading')} />
         </div>
       ) : null}
-      <main className={styles.main}>
+      <main className={landingShowsProfile ? `${styles.main} ${styles.mainLanding}` : styles.main}>
         <ScreenBoundary
           key={`${state.screen}:${screenAttempt}`}
           message={t(screenErrorKey(state.screen))}
@@ -252,7 +252,7 @@ export function Shell({ state, dispatch, onLanguageChosen, theme = 'day', onThem
           onRetry={() => setScreenAttempt((attempt) => attempt + 1)}
         >
           {state.screen === 'weave' ? (
-            <WeaveScreen state={state} dispatch={dispatch} t={t} onRetryProfile={onRetryProfile} />
+            <WeaveScreen state={state} dispatch={dispatch} t={t} onRetryProfile={onRetryProfile} theme={theme} onThemeChosen={onThemeChosen} />
           ) : state.screen === 'keep' ? (
             <KeepScreen state={state} dispatch={dispatch} t={t} />
           ) : state.screen === 'scan' ? (
@@ -266,7 +266,7 @@ export function Shell({ state, dispatch, onLanguageChosen, theme = 'day', onThem
           )}
         </ScreenBoundary>
       </main>
-      <div role="status" aria-live="polite" className={styles.liveRegion}>
+      <div role="status" aria-live="polite" className={landingShowsProfile ? `${styles.liveRegion} ${styles.liveRegionLanding}` : styles.liveRegion}>
         {announcement === null ? '' : t(announcement.messageKey, announcement.params)}
       </div>
     </div>
@@ -312,6 +312,17 @@ export function App({ fetchText = defaultFetchText, storage, prefersReducedMotio
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileAttempt]);
 
+  // A new Screen, or the player taking the Landing's place, starts at the top: the Landing is a long page, and a
+  // sample chosen far down it must not leave the next Screen scrolled to the same depth.
+  const showsLanding = state.screen === 'weave' && state.current.pattern.length === 0;
+  const firstView = useRef(true);
+  useLayoutEffect(() => {
+    if (firstView.current) {
+      firstView.current = false;
+      return;
+    }
+    if (typeof window.scrollTo === 'function') window.scrollTo(0, 0);
+  }, [state.screen, showsLanding]);
   useEffect(() => {
     setDocumentLanguage(state.language);
   }, [state.language]);

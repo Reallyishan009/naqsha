@@ -1554,5 +1554,341 @@
   "nav.scanCard": {
     "text": "कार्ड स्कैन करें",
     "reviewed": false
+  },
+  "landing.eyebrow": {
+    "text": "जैकार्ड कार्ड रीडर",
+    "reviewed": false
+  },
+  "landing.headline.accent": {
+    "text": "फिर से",
+    "reviewed": false
+  },
+  "landing.lead": {
+    "text": "पंच कार्ड की फ़ोटो लें। नक्शा उसके छेद पढ़ता है, दिखाता है कि उनसे कैसा कपड़ा बुना जाएगा, और डिज़ाइन आपके करघे के लिए सहेज लेता है।",
+    "reviewed": false
+  },
+  "landing.trySample": {
+    "text": "नमूना आज़माएँ",
+    "reviewed": false
+  },
+  "landing.facts.name": {
+    "text": "नक्शा के बारे में तीन बातें",
+    "reviewed": false
+  },
+  "landing.fact.uploads.value": {
+    "text": "0",
+    "reviewed": false
+  },
+  "landing.fact.uploads.label": {
+    "text": "अपलोड: आपकी फ़ोटो आपके डिवाइस पर ही रहती हैं",
+    "reviewed": false
+  },
+  "landing.fact.offline.value": {
+    "text": "ऑफ़लाइन",
+    "reviewed": false
+  },
+  "landing.fact.offline.label": {
+    "text": "पहली बार खोलने के बाद बिना नेटवर्क के भी चलता है",
+    "reviewed": false
+  },
+  "landing.fact.picks.label": {
+    "text": "पिक हीरा नमूने में",
+    "reviewed": false
+  },
+  "landing.samples.name": {
+    "text": "नमूना डिज़ाइन",
+    "reviewed": false
+  },
+  "landing.how.eyebrow": {
+    "text": "यह कैसे काम करता है",
+    "reviewed": false
+  },
+  "landing.how.heading": {
+    "text": "कार्ड से कपड़े तक तीन कदम",
+    "reviewed": false
+  },
+  "landing.how.heading.accent": {
+    "text": "कपड़े",
+    "reviewed": false
+  },
+  "landing.how.subtitle": {
+    "text": "कार्ड पढ़ें, डिज़ाइन देखें, कपड़ा बुनते देखें।",
+    "reviewed": false
+  },
+  "landing.how.card.title": {
+    "text": "कार्ड पढ़ें",
+    "reviewed": false
+  },
+  "landing.how.card.text": {
+    "text": "पंच कार्ड की फ़ोटो लें और उसे खोलें। नक्शा हर छेद पढ़ता है: छेद हो तो धागा उठता है, न हो तो नीचे रहता है।",
+    "reviewed": false
+  },
+  "landing.how.card.chip.holes": {
+    "text": "गोल छेद",
+    "reviewed": false
+  },
+  "landing.how.card.chip.pick": {
+    "text": "एक कार्ड, एक पिक",
+    "reviewed": false
+  },
+  "landing.how.pattern.title": {
+    "text": "डिज़ाइन देखें",
+    "reviewed": false
+  },
+  "landing.how.pattern.text": {
+    "text": "सारे कार्ड मिलकर डिज़ाइन बनाते हैं, हर पिक की एक पंक्ति। गहरा खाना उठने वाला धागा है, हल्का खाना नीचे रहने वाला।",
+    "reviewed": false
+  },
+  "landing.how.pattern.chip.dark": {
+    "text": "गहरा: उठता है",
+    "reviewed": false
+  },
+  "landing.how.pattern.chip.pale": {
+    "text": "हल्का: नीचे रहता है",
+    "reviewed": false
+  },
+  "landing.how.cloth.title": {
+    "text": "कपड़ा देखें",
+    "reviewed": false
+  },
+  "landing.how.cloth.text": {
+    "text": "कपड़ा एक-एक पिक करके बुना जाता है, जैसे करघे पर बुना जाएगा। करघे में धागा डालने से पहले धागों के रंग बदलकर देखें।",
+    "reviewed": false
+  },
+  "landing.how.cloth.chip.pick": {
+    "text": "पिक-दर-पिक",
+    "reviewed": false
+  },
+  "landing.how.cloth.chip.colours": {
+    "text": "आपके रंग",
+    "reviewed": false
+  },
+  "landing.can.eyebrow": {
+    "text": "आप क्या कर सकते हैं",
+    "reviewed": false
+  },
+  "landing.can.heading": {
+    "text": "अपने पुराने कार्डों को काम में लाएँ",
+    "reviewed": false
+  },
+  "landing.can.heading.accent": {
+    "text": "काम",
+    "reviewed": false
+  },
+  "landing.can.subtitle": {
+    "text": "सब कुछ इसी डिवाइस पर चलता है, पंजीकरण की ज़रूरत नहीं।",
+    "reviewed": false
+  },
+  "landing.can.read.title": {
+    "text": "कार्ड पढ़ें",
+    "reviewed": false
+  },
+  "landing.can.read.text": {
+    "text": "पंच कार्ड की फ़ोटो खोलें, नक्शा हर छेद ढूँढ लेता है। हर कार्ड एक पिक बन जाता है।",
+    "reviewed": false
+  },
+  "landing.can.read.chip": {
+    "text": "फ़ोटो से",
+    "reviewed": false
+  },
+  "landing.can.read.action": {
+    "text": "स्कैन खोलें",
+    "reviewed": false
+  },
+  "landing.can.weave.title": {
+    "text": "बुनाई का पूर्वावलोकन",
+    "reviewed": false
+  },
+  "landing.can.weave.text": {
+    "text": "करघे में धागा डालने से पहले कपड़े को पिक-दर-पिक बुनते देखें, और धागों के दूसरे रंग आज़माएँ।",
+    "reviewed": false
+  },
+  "landing.can.weave.action": {
+    "text": "नमूना बुनें",
+    "reviewed": false
+  },
+  "landing.can.export.title": {
+    "text": "BMP निर्यात करें",
+    "reviewed": false
+  },
+  "landing.can.export.text": {
+    "text": "इलेक्ट्रॉनिक करघे के लिए BMP फ़ाइल बनाएँ: हर एंड का एक खाना, हर पिक की एक पंक्ति।",
+    "reviewed": false
+  },
+  "landing.can.export.chip.one": {
+    "text": "1-बिट",
+    "reviewed": false
+  },
+  "landing.can.export.chip.eight": {
+    "text": "8-बिट",
+    "reviewed": false
+  },
+  "landing.can.export.action": {
+    "text": "BMP फ़ाइल बनाएँ",
+    "reviewed": false
+  },
+  "landing.can.keep.title": {
+    "text": "संस्करण सहेजें",
+    "reviewed": false
+  },
+  "landing.can.keep.text": {
+    "text": "डिज़ाइन इसी डिवाइस पर सहेजें। बदलाव को नए संस्करण के रूप में सहेजें, तो पहले वाला डिज़ाइन वैसा ही रहता है।",
+    "reviewed": false
+  },
+  "landing.can.keep.chip": {
+    "text": "इसी डिवाइस पर",
+    "reviewed": false
+  },
+  "landing.can.keep.action": {
+    "text": "सहेजें खोलें",
+    "reviewed": false
+  },
+  "landing.can.code.title": {
+    "text": "कोड दृश्य",
+    "reviewed": false
+  },
+  "landing.can.code.text": {
+    "text": "हर कार्ड को 1 और 0 की एक पंक्ति में देखें, और दो डिज़ाइनों की तुलना करके बदले हुए छेद ढूँढें।",
+    "reviewed": false
+  },
+  "landing.can.code.action": {
+    "text": "कोड दृश्य खोलें",
+    "reviewed": false
+  },
+  "landing.can.repair.title": {
+    "text": "मरम्मत के अनुमान",
+    "reviewed": false
+  },
+  "landing.can.repair.text": {
+    "text": "कोई कार्ड खो जाए या खराब हो जाए, तो नक्शा आसपास के कार्डों से अंदाज़ा लगाता है कि वह कैसा था, और कारण भी दिखाता है। अनुमान सिर्फ़ अनुमान है।",
+    "reviewed": false
+  },
+  "landing.can.repair.chip": {
+    "text": "अनुमान, पक्की बात नहीं",
+    "reviewed": false
+  },
+  "landing.can.repair.action": {
+    "text": "मरम्मत के अनुमान देखें",
+    "reviewed": false
+  },
+  "landing.can.offline.title": {
+    "text": "बिना नेटवर्क भी चलता है",
+    "reviewed": false
+  },
+  "landing.can.offline.text": {
+    "text": "पहली बार खोलने के बाद नक्शा को नेटवर्क नहीं चाहिए। आपकी फ़ोटो और डिज़ाइन इसी डिवाइस पर रहते हैं।",
+    "reviewed": false
+  },
+  "landing.can.offline.chip": {
+    "text": "पंजीकरण नहीं",
+    "reviewed": false
+  },
+  "landing.try.eyebrow": {
+    "text": "नमूना आज़माएँ",
+    "reviewed": false
+  },
+  "landing.try.heading": {
+    "text": "अपना कार्ड स्कैन करने से पहले एक नमूना बुनें",
+    "reviewed": false
+  },
+  "landing.try.heading.accent": {
+    "text": "नमूना",
+    "reviewed": false
+  },
+  "landing.try.subtitle": {
+    "text": "एक चुनें और उसे पिक-दर-पिक बुनते देखें।",
+    "reviewed": false
+  },
+  "landing.sample.diamond": {
+    "text": "गोल छल्ले और भरे केंद्र: एक हीरा, जो पूरे कपड़े पर दोहराया गया है।",
+    "reviewed": false
+  },
+  "landing.sample.border": {
+    "text": "हर किनारे पर टेढ़ी-मेढ़ी रेखा और एक सीधी रेखा, बीच में सादा कपड़ा।",
+    "reviewed": false
+  },
+  "landing.sample.floral": {
+    "text": "पंक्तियों में छोटे फूल, और हर कुछ पंक्तियों के बाद एक पतली सुनहरी रेखा।",
+    "reviewed": false
+  },
+  "landing.tile.try.name": {
+    "text": "आज़माएँ: {design}",
+    "reviewed": false
+  },
+  "landing.sample.ends.one": {
+    "text": "{count} एंड",
+    "reviewed": false
+  },
+  "landing.sample.ends.other": {
+    "text": "{count} एंड",
+    "reviewed": false
+  },
+  "landing.night.eyebrow": {
+    "text": "रात का करघा",
+    "reviewed": false
+  },
+  "landing.night.heading": {
+    "text": "अँधेरे में आँखों को आराम",
+    "reviewed": false
+  },
+  "landing.night.heading.accent": {
+    "text": "अँधेरे में",
+    "reviewed": false
+  },
+  "landing.night.text": {
+    "text": "देर तक काम कर रहे हैं? रात का करघा पन्ने को गहरा कर देता है और शब्द साफ़ रखता है, ताकि एक दीये की रोशनी में भी कार्ड आसानी से पढ़ा जाए। नक्शा आपकी पसंद इसी डिवाइस पर याद रखता है।",
+    "reviewed": false
+  },
+  "landing.night.action": {
+    "text": "रात पर जाएँ",
+    "reviewed": false
+  },
+  "landing.night.actionBack": {
+    "text": "दिन पर लौटें",
+    "reviewed": false
+  },
+  "landing.band.heading": {
+    "text": "एक कार्ड लाइए",
+    "reviewed": false
+  },
+  "landing.band.heading.accent": {
+    "text": "कार्ड",
+    "reviewed": false
+  },
+  "landing.band.text": {
+    "text": "एक छेददार कार्ड की फ़ोटो लें, या किसी नमूने से शुरू करें। करघा लगाने से पहले नक्शा आपको कपड़ा दिखा देता है।",
+    "reviewed": false
+  },
+  "landing.band.privacy": {
+    "text": "आपकी फ़ोटो इसी डिवाइस पर पढ़ी जाती हैं। कुछ भी अपलोड नहीं होता।",
+    "reviewed": false
+  },
+  "landing.footer.line": {
+    "text": "नक्शा करघे के पंच कार्ड पढ़ता है और डिज़ाइन को फिर से बुनता है, आपके ब्राउज़र में ही।",
+    "reviewed": false
+  },
+  "landing.footer.links": {
+    "text": "नक्शा के पन्ने",
+    "reviewed": false
+  },
+  "landing.footer.licence": {
+    "text": "नक्शा {licence} के तहत जारी किया गया है।",
+    "reviewed": false
+  },
+  "landing.footer.github": {
+    "text": "GitHub पर सोर्स कोड",
+    "reviewed": false
+  },
+  "landing.footer.built": {
+    "text": "Kiro से बनाया गया; योजना और प्रॉम्प्ट का मसौदा Claude के साथ",
+    "reviewed": false
+  },
+  "landing.footer.fonts.heading": {
+    "text": "फ़ॉन्ट के श्रेय",
+    "reviewed": false
+  },
+  "landing.footer.fonts.item": {
+    "text": "{family}, {foundry} द्वारा",
+    "reviewed": false
   }
 }

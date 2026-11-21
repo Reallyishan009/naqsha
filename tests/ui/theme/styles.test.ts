@@ -119,7 +119,7 @@ function calcBodies(value: string): string[] {
 }
 /**
  * The second pass allows two things the first pass forbade, each in named files only (brief.md, docs/DESIGN_BRIEF.md):
- * a two-colour tonal gradient inside an illustration or a photo frame, and a frosted header surface.
+ * a two-colour tonal gradient inside an illustration, a photo frame or the tinted overlay of the Landing hero photo, and a frosted header surface.
  */
 const GRADIENT_MODULES = [
   'components/Photo.module.css',
@@ -127,6 +127,8 @@ const GRADIENT_MODULES = [
   'illustrations/Drawings.module.css',
   'illustrations/HeroLoom.module.css',
   'illustrations/ProcessLoop.module.css',
+  // The Landing hero's text-side shade over its photo: a two-token tinted overlay (brief.md allows tinted photo overlays).
+  'screens/weave/Landing.module.css',
 ];
 const FROST_MODULES = ['Shell.module.css'];
 /** The least alpha the frosted surface may have, as in contrast.ts (FROST_MIN_ALPHA). */

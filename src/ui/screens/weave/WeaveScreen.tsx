@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Dispatch } from 'react';
 import type { Scheduler } from '../../../simulator/index.ts';
 import type { Translate } from '../../i18n/messages.ts';
+import type { ThemeName } from '../../theme/contrast.ts';
 import type { AppAction, AppState } from '../../types.ts';
 import { Landing } from './Landing.tsx';
 import { WeavePlayer } from './WeavePlayer.tsx';
@@ -18,6 +19,9 @@ export type WeaveScreenProps = {
   scheduler?: Scheduler;
   /** Loads the card profile again after it failed; the Landing offers it beside the failure message. */
   onRetryProfile?: () => void;
+  /** The theme in use and the handler of the Night loom switch; the Landing's Night section uses both. */
+  theme?: ThemeName;
+  onThemeChosen?: (theme: ThemeName) => void;
 };
 
 /**
@@ -25,14 +29,14 @@ export type WeaveScreenProps = {
  * already loaded and the pick the other screen left) is taken here, once, so a design chosen on the Landing is a new
  * design for the player and starts playing (R8.6).
  */
-export function WeaveScreen({ state, dispatch, t, scheduler, onRetryProfile }: WeaveScreenProps) {
+export function WeaveScreen({ state, dispatch, t, scheduler, onRetryProfile, theme, onThemeChosen }: WeaveScreenProps) {
   const [arrival] = useState<Arrival>(() => ({
     pattern: state.current.pattern,
     pick: state.selectedPick,
     finished: state.finishedPattern === state.current.pattern,
   }));
   if (state.current.pattern.length === 0) {
-    return <Landing state={state} dispatch={dispatch} t={t} onRetryProfile={onRetryProfile} />;
+    return <Landing state={state} dispatch={dispatch} t={t} onRetryProfile={onRetryProfile} theme={theme} onThemeChosen={onThemeChosen} />;
   }
   return <WeavePlayer state={state} dispatch={dispatch} t={t} arrival={arrival} scheduler={scheduler} />;
 }

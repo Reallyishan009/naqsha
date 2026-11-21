@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { FROST, FROST_MIN_ALPHA, THEME_TOKENS, TOKEN_PAIRS, compositeOver, contrastRatio, frostWorstCase, tokenColour } from '../../../src/ui/theme/contrast.ts';
+import { FROST, FROST_MIN_ALPHA, HERO_TINT, NIGHT_PHOTO_TINT, THEME_TOKENS, TOKEN_PAIRS, compositeOver, contrastRatio, frostWorstCase, heroWorstCase, nightPhotoWorstCase, tokenColour } from '../../../src/ui/theme/contrast.ts';
 import type { ThemeName } from '../../../src/ui/theme/contrast.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../../..');
@@ -101,6 +101,35 @@ describe('contrast', () => {
       }
       expect(has('on-primary', 'primary', 4.5)).toBe(true);
       expect(has('on-band', 'band', 4.5)).toBe(true);
+    }
+  });
+
+  it('R14.7 the Landing Night section text is checked on its photo at its worst case, at the alpha tokens.css uses, in both themes', () => {
+    const css = readFileSync(path.join(ROOT, 'src/ui/theme/tokens.css'), 'utf8');
+    const alpha = /:root\s*{[^}]*--night-photo-alpha:\s*([\d.]+)\s*;/.exec(css)?.[1];
+    for (const theme of ['day', 'night'] as const) {
+      expect(Number(alpha), `--night-photo-alpha is the alpha contrast.ts checks (${theme})`).toBe(NIGHT_PHOTO_TINT[theme].alpha);
+      expect(nightPhotoWorstCase(theme)).toBe(compositeOver(THEME_TOKENS[theme]['hero-tint'], NIGHT_PHOTO_TINT[theme].alpha, '#FFFFFF'));
+      const onPhoto = TOKEN_PAIRS.filter((pair) => pair.theme === theme && pair.background === 'night-photo');
+      expect(onPhoto.map((pair) => pair.foreground).sort(), `${theme} pairs on the Night section`).toEqual(['band-accent', 'on-band']);
+      for (const pair of onPhoto) {
+        expect(contrastRatio(tokenColour(theme, pair.foreground), nightPhotoWorstCase(theme)), `${theme} ${pair.foreground} on the Night section`).toBeGreaterThanOrEqual(4.5);
+      }
+      // It is darker than the hero's, so the section reads as night.
+      expect(NIGHT_PHOTO_TINT[theme].alpha).toBeGreaterThan(HERO_TINT[theme].alpha);
+    }
+  });
+  it('R14.7 the Landing hero text is checked on the photo at its worst case: a white pixel under the tint, at the alpha tokens.css uses', () => {
+    const css = readFileSync(path.join(ROOT, 'src/ui/theme/tokens.css'), 'utf8');
+    const alpha = /:root\s*{[^}]*--hero-tint-alpha:\s*([\d.]+)\s*;/.exec(css)?.[1];
+    for (const theme of ['day', 'night'] as const) {
+      expect(Number(alpha), `--hero-tint-alpha is the alpha contrast.ts checks (${theme})`).toBe(HERO_TINT[theme].alpha);
+      expect(heroWorstCase(theme)).toBe(compositeOver(THEME_TOKENS[theme]['hero-tint'], HERO_TINT[theme].alpha, '#FFFFFF'));
+      const onHero = TOKEN_PAIRS.filter((pair) => pair.theme === theme && pair.background === 'hero');
+      expect(onHero.map((pair) => pair.foreground).sort(), `${theme} pairs on the hero`).toEqual(['band-accent', 'on-band']);
+      for (const pair of onHero) {
+        expect(contrastRatio(tokenColour(theme, pair.foreground), heroWorstCase(theme)), `${theme} ${pair.foreground} on the hero`).toBeGreaterThanOrEqual(4.5);
+      }
     }
   });
 });

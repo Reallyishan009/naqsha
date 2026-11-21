@@ -1497,3 +1497,56 @@ All four are unticked in `.kiro/specs/cards-as-code/tasks.md`. None was written.
 | 2.9 reducer invariant (R3.1) | Examples in `tests/ui/state/appState.test.ts` (select-pick clamping, toggle-breakpoint keeping the list ascending without repeats, breakpoints surviving navigation, pattern-replacing actions resetting pick and breakpoints). The one action-sequence property in that file checks only that navigation keeps the Current_Pattern | That one Selected_Pick and one breakpoint set exist and stay valid (pick within 0 to last pick, breakpoints ascending without repeats) over generated sequences of `select-pick`, `toggle-breakpoint`, `navigate` and the pattern-replacing actions |
 | 3.9 R4.7, both screens paint the same image | By structure only: `CodeViewScreen.tsx:14` and `WeavePlayer.tsx:44` both import `ClothCanvas` and `createClothPlayer` from `weave/ClothCanvas.tsx`. No test in `code.test.tsx` mentions R4.7 | R4.7 has no test: nothing compares the image the Code view paints with the image Weave paints for the same PreparedCloth, RenderSettings and Selected_Pick. `check:browser` hashes the canvas on Weave only (`CANVAS_STATS`) |
 | 3.10 listing timing at 10,000 picks | Structural tests only: at most `WINDOW_SIZE` `li.line` elements and a full-height spacer for a 10,000-pick pattern. `code.test.tsx` does not read `performance` | R2.10's 1,000 ms (first render) and 100 ms (moved Window) at 10,000 picks are not measured anywhere, in jsdom or on a phone |
+
+## 2026-11-22 (second design pass, run 1: cleanup, imagery, design system, Landing)
+
+One entry for the whole run. The work list is `.kiro/specs/second-pass-run1/tasks.md`, the rules are in `brief.md` beside it, and every number and every changed check is in `measurements.md` there. Four commits on `auto/build`: `cleanup before second pass` (`d598e0e`), `imagery: photos wired in, app-made pictures, process loop` (`63befcb`), `design system: tokens, header, buttons, cards, section header` (`c799a01`) and `Landing: hero and sections` (this gate, task 4.5). Run 2 (the other screens and motion) was not started.
+
+### Cleanup (task 1)
+- The R11.3 accessible-name property was written in `tests/ui/state/codeView.test.ts` (seed 211103, 300 runs, no counterexample found). See the update line in the task 4.4 entry above.
+- README count of screens (four), the loom-mcp screenshots moved to `media/kiro/`, and the entry of 2026-11-21 above record the `listingWindow` decision and the four dropped cuttable tasks (2.8, 2.9, 3.9, 3.10).
+
+### Imagery (task 2)
+- Six licensed AVIF photos in `public/photos/` (335,824 bytes); originals and `manifest.json` stay in `media/photos-source/`, outside `public/`, and are not in `dist/`. The orchestrator re-checked every licence through the Wikimedia Commons API on 2026-11-21: all five sources match `manifest.json` and `docs/IMAGE_CREDITS.md` (CC BY 2.0 and CC BY 3.0), none flagged NonFree. The footer credit list is generated from `docs/IMAGE_CREDITS.md` at build time (`?raw` import and the parser in `src/ui/state/imageCredits.ts`); a test checks that it covers every file in `public/photos`.
+- Nine app-made AVIF pictures in `public/art/` (239,239 bytes), drawn by `scripts/make_art.ts` with the real card renderer, `prepareCloth` and `renderFrame`: the demo card for three samples, the pattern grid, the cloth for four samples and a chain of eight laced cards. Photos and art together are 575,063 bytes (limit 600,000).
+- `ProcessLoop` (`src/ui/illustrations/ProcessLoop.tsx`): a Canvas component that runs the real pipeline in a cycle of six to eight seconds, with a still finished frame under reduced motion, a pause button, a pause when off screen and a text alternative. It is used on the Landing hero. The optional use in the Weave player was not done; Weave is unchanged.
+
+### Design system (task 3)
+- Heading serif: Newsreader, roman and italic, Latin only, 29,108 bytes of new font (limit 80,000), licence text and README credit added; Devanagari headings keep Rozha One. The README now names four font families.
+- New palette (cream and forest green by day, near-black green and amber at night), spacing, radius and shadow tokens, a frosted header surface at alpha 0.95 (floor 0.85 is a test). Pill header with a menu Disclosure below 360 px, built with container queries so the "no `@media`" style rule still holds. Shared `Button` as a pill with a 2 px lift, new `Card`, `Chip`, `Eyebrow` and `SectionHeader`.
+- To allow exactly what the brief allows, `tests/ui/theme/styles.test.ts` and `tests/ui/deploy.test.ts` were relaxed only as far as needed, each with its own narrowness test; every edit is listed with its reason in `measurements.md`, "Changed checks".
+
+### Landing (task 4)
+- Seven sections in one entry chunk: hero (tinted loom photo, headline with one accent word, "Scan a card" and "Try a sample", three facts, the tilted Process_Loop, an inline-SVG curved divider), How it works, What you can do, Try a sample, Night (a button that switches the theme), the green "Bring a card" band and the cream footer with licence, repository link, the Kiro and Claude line, font credits and the photo credits. The hero's pick count is the length of the Diamond sample, computed, not typed. No ratings, guest counts, prices or testimonials.
+- Scroll reveal (fade and 12 px rise, once, none under reduced motion, nothing hidden when IntersectionObserver is missing). A screen change scrolls to the top (a defect found by `check:browser`, below).
+- `npm run screenshots` has a second set: four full-page Landing views (390 and 1280, day and night) in `media/design/after-run1/`. The orchestrator opened them.
+
+### Numbers (verified on 2026-11-22; details in `measurements.md`)
+- Entry chunk **126,022 bytes** gzipped (limit 204,800; Landing limit 150,000). Lazy chunks: Code view 10,037, Scan 9,074, Panel 3,909, RepairPanel 3,026, validateCardGrid 2,978, download 2,279, bits 506. The Landing sections are in the entry chunk; no lazy section chunk was needed.
+- Images: photos 335,824 + art 239,239 = **575,063 bytes**. Fonts: 29,108 bytes new, 153,028 bytes in all six files.
+- Contrast: 84 pairs (42 per theme), all meet their minimum. Tightest: Day zari on the frosted header 3.05 (minimum 3), Day on-zari on zari 4.55 (4.5), Day zari on ground 3.08 (3), Day accent on ground 4.59 (4.5), Day ink-soft on tint 4.72 (4.5).
+- Runs, all exit 0: `review-list`, `typecheck`, `test:run` (144 files, 1,947 tests; the benchmark ratio was 1.30 against a bound of 2.2, no rerun needed), `build` (precache 44 entries), `check-bundle`, `check:browser` (19 of 19 steps), `node scripts/contrast_report.ts`, `tests/scripts/precache.test.ts` (15 tests), `check:all` (9 PASS, 0 FAIL, 1 SKIPPED, 1 INFO).
+
+### Changed checks
+None was lowered. They are listed one by one in `measurements.md`, "Changed checks", with the reason. The short version: the gradient, backdrop-filter and shadow style rules were relaxed to the brief's allowed effects only; the token scales tests list the extended scales; two button tests follow the token rename from zari to primary; the Landing tests and `check:browser` steps 14 and 15 and the offline Landing check were re-aimed at the same claims (named by accessible name) because the hero, the step strip and the sample tiles changed; `deploy.test.ts` R23.7 allows exactly the footer's credit and repository links; `check:browser` and `screenshots` open the header menu by its accessible name below 360 px; the stricter 150,000 B entry limit and the picture-decoded offline checks were added. New example tests only; no property test was written except the R11.3 property of task 1.1.
+
+### Defects found by looking at screenshots
+- "HOW IT WORKS" wrapped onto two lines at 1280 px, because the eyebrow line was as wide as its content and left the hairlines no room. Fixed in `Eyebrow.module.css`.
+- A double full stop after "IBM Corp." in the footer font credits; the font credit lines were 56 px apart (an inline-block link); the footer links wrapped "Code" onto a second line at 390 px. All three fixed in `LandingEnd`.
+- A 60 px strip of page ground under the footer (main's bottom padding plus the live region). On the Landing only, the padding is removed and the live region is visually hidden but kept.
+- Landing links used `--indigo`; they now use `--primary` with an underline (pair already in the contrast table).
+- The "Bring a card" band had text only; it now holds the chain-of-eight picture too (no new bytes).
+
+### Defects found by checks, not by looking
+- The first pill header was 248 px tall in English, and `check:browser` steps 15, 16 and 18 (390 by 844) failed; the final header is 198 px. The same steps failed again at the Part 1 gate when Tabs padding grew to 16 px; the header Tabs got their 12 px back. No limit was changed.
+- On Keep, `check:browser` step 8 timed out in 3 of 4 runs because the long Landing left the next screen scrolled down. `App.tsx` now scrolls to the top on a screen change; after that the step passed 19 of 19 in three runs.
+- When Button became a pill, the Sample tiles (which wear the Button classes) turned into large ovals; they got their own radius.
+
+### Not checked by eye
+- Hindi full-page views: Hindi captures were opened during tasks 4.2 and 4.3, but the final set holds only the four English files.
+- The 320 px views of the new Landing sections were checked by metrics only (no horizontal scroll, every picture decoded), not by a capture someone opened.
+- The ProcessLoop animation was seen only as still frames; the cycle, pause and off-screen pause are tested with a fake scheduler.
+- AVIF only, no JPEG fallback. Headless Chrome decodes every file; no other browser was tried.
+- No real device, no screen reader, no redeploy (`check:deployed` was not run). The new Hindi strings are `reviewed: false` in `docs/HINDI_REVIEW.md`.
+
+**Kiro features used:** a work list in `.kiro/specs/second-pass-run1/` run task by task by sub-agents, steering (glossary, testing, tech, structure, product).

@@ -1,0 +1,313 @@
+/*
+ * The last three bands of the Landing: the Night section (a photo under a dark tint), the deep-green "Bring a card"
+ * band and the cream footer. Each is full width (it takes back the Shell main's side padding) and holds its content in
+ * the page's one container (--land-width, set on the Landing), so every left edge is the header pill's inner edge.
+ * Every piece of running text is left-aligned.
+ */
+.night,
+.band,
+.footer {
+  margin-inline: calc(var(--space-4) * -1);
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  width: var(--land-width);
+  margin-inline: auto;
+}
+
+/* ---------------------------------------------------------------- the Night section */
+
+.night {
+  position: relative;
+  isolation: isolate;
+  padding-block: var(--space-9);
+  overflow: hidden;
+  color: var(--on-band);
+  /* The dark shows at once, before the photo has loaded. */
+  background: var(--hero-tint);
+}
+
+/* The light tan ring: the zari ring is too faint on the dark tint (see contrast.ts, NIGHT_PHOTO_TINT). */
+.night :focus-visible,
+.band :focus-visible {
+  outline-color: var(--band-accent);
+}
+
+.nightMedia {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.nightMedia .nightPhoto {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 40%;
+}
+
+/* The tint: every pixel of text is on at least this much of --hero-tint, which is what contrast.ts checks at its worst case, a white pixel. */
+.nightTint {
+  position: absolute;
+  inset: 0;
+  background: var(--hero-tint);
+  opacity: var(--night-photo-alpha);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--band-accent);
+  font-size: var(--text-small);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.eyebrow:lang(hi) {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.heading {
+  max-width: 24ch;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(var(--text-title), calc(var(--text-body) + 3vw), 48px);
+  font-weight: 400;
+  line-height: 1.15;
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+.heading:lang(hi) {
+  line-height: 1.4;
+}
+
+/* One word in the light tan, italic except in Hindi (Devanagari has no italic), where it is a change of colour only. */
+.accent {
+  color: var(--band-accent);
+  font-style: normal;
+}
+
+.italic {
+  font-style: italic;
+}
+
+.text {
+  max-width: 34rem;
+  margin: 0;
+  font-size: var(--text-body);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+/* ---------------------------------------------------------------- the "Bring a card" band */
+
+.band {
+  padding-block: var(--space-8);
+  color: var(--on-band);
+  background: var(--band);
+}
+
+.bandInner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  width: var(--land-width);
+  margin-inline: auto;
+}
+.bandText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.bandPicture {
+  min-width: 0;
+}
+/* The picture in a rounded 24 px frame (the width and height attributes keep its shape before it loads). */
+.bandPicture .bandArt {
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-float);
+}
+.privacy {
+  margin: var(--space-2) 0 0;
+  padding-top: var(--space-3);
+  max-width: 34rem;
+  font-size: var(--text-meta);
+  border-top: 1px solid var(--band-accent);
+}
+
+/* ---------------------------------------------------------------- the footer */
+
+.footer {
+  padding-block: var(--space-8);
+  color: var(--ink);
+  background: var(--surface);
+  text-align: left;
+}
+
+.footerInner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: var(--land-width);
+  margin-inline: auto;
+}
+
+.footerTop {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--primary);
+}
+
+.mark {
+  flex: none;
+  width: var(--space-7);
+  height: var(--space-7);
+}
+
+.brandName {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  line-height: 1.2;
+}
+
+.footerLine {
+  max-width: 34rem;
+  margin: 0;
+  font-size: var(--text-body);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The quiet link's own padding is the space between links; the first one sits on the left edge of the text above it. */
+.links a {
+  padding-inline: var(--space-3);
+  /* The primary ink, underlined, in place of the global indigo; --primary on --surface is in contrast.ts at 4.5. */
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.links li:first-child a {
+  padding-left: 0;
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-5) 0 0;
+  font-size: var(--text-meta);
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.link {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.credits,
+.photoCredits {
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+  line-height: 1.5;
+}
+
+.creditsHeading {
+  margin: 0 0 var(--space-3);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-lead);
+}
+
+.creditList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.creditList li {
+  margin: 0 0 var(--space-2);
+}
+
+/* The photo credits are generated by the PhotoCredits list, which has its own heading and links; here they take the footer's colours. */
+.photoCredits h3 {
+  color: var(--ink);
+}
+
+.photoCredits a,
+.credits a {
+  color: var(--primary);
+}
+
+@container (min-width: 40rem) {
+  .night {
+    padding-block: calc(var(--space-9) + var(--space-5));
+  }
+
+  .band {
+    padding-block: var(--space-9);
+  }
+  .bandInner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-7);
+  }
+
+  .footerTop {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--space-7);
+    row-gap: var(--space-3);
+    align-items: start;
+  }
+
+  .footerLine {
+    grid-column: 1;
+  }
+
+  .footerTop .links {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .facts {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-6);
+  }
+}

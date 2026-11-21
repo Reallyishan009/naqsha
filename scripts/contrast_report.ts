@@ -16,7 +16,7 @@ for (const theme of ['day', 'night'] as ThemeName[]) {
     const fails = ratio < pair.minimum;
     if (fails) below += 1;
     console.log(
-      `${fails ? 'BELOW' : 'ok   '} ${pair.foreground} ${foreground} on ${pair.background}${pair.background === 'frost' ? ' (worst case)' : ''} ${background}: ${truncateRatio(ratio)} (minimum ${pair.minimum})`,
+      `${fails ? 'BELOW' : 'ok   '} ${pair.foreground} ${foreground} on ${pair.background}${pair.background === 'frost' || pair.background === 'hero' || pair.background === 'night-photo' ? ' (worst case)' : ''} ${background}: ${truncateRatio(ratio)} (minimum ${pair.minimum})`,
     );
   }
 }
