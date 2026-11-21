@@ -1204,3 +1204,168 @@ What this shows and does not show: Kiro called three real tool calls against the
 **Kiro features used:** MCP (a custom server, called from this chat), spec (requirements, design, tasks for `loom-mcp`), requirement detailing sub-agents, steering (a manual steering file).
 **Commits:** `40d06af` (job 1); spec; group 1 (foundation); group 2 (tools); group 3 (tests and wiring); group 4 (this entry).
 ---
+## 2026-11-21 (design-and-ux-pass: one unattended run, Stage 0 and Stages A to D)
+**What was built.** A design and UX pass over the App, with no change to the codec, reader, repair, exporter or archive modules and no new entry in `dependencies` or `devDependencies`. Stage A: three self-hosted fonts, the Token_File (`src/ui/theme/tokens.css`), the Theme_Switch (Day and Night) and the shared components (`Button`, `Field`, `Panel`, `Tabs`, `Notice`, `Disclosure`, `StateMessage`, `LoadingState`, `WeftProgress`). Stage B: the Landing, the navigation with icons and the word "Advanced" for Code view, "More" and "Settings" Disclosures, friendly states. Stage C: the card drawing, the Hero_Loom, Step_Icons and Spot_Illustrations, and the "after" screenshots. Stage D: version labels, singular and plural pick texts, the finished cloth on return to Weave, the steady benchmark and the loom-mcp design fix. Every number below is copied from `.kiro/specs/design-and-ux-pass/measurements.md`.
+
+### Licence record and Font_Weight_Report
+Checked 2026-11-21 at the google/fonts commit `06bfe0d62a98375cb09c942fa18e68bd32cff057` (`FONTS_REF` in `scripts/fonts/subset.sh`). Each licence text was downloaded from that commit and the script confirmed that it contains "SIL OPEN FONT LICENSE Version 1.1". All three are SIL OFL 1.1, so all four font files were copied.
+
+| Font (files) | Licence | Source URL | Licence text |
+|---|---|---|---|
+| Rozha One (`RozhaOne-Regular.woff2`) | SIL Open Font License 1.1 | https://raw.githubusercontent.com/google/fonts/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/rozhaone/ | `RozhaOne-OFL.txt` (copyright Indian Type Foundry, no Reserved Font Name) |
+| Hind (`Hind-Regular.woff2`, `Hind-Bold.woff2`) | SIL Open Font License 1.1 | https://raw.githubusercontent.com/google/fonts/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/hind/ | `Hind-OFL.txt` (copyright Indian Type Foundry, no Reserved Font Name) |
+| IBM Plex Mono (`IBMPlexMono-Regular.woff2`) | SIL Open Font License 1.1 | https://raw.githubusercontent.com/google/fonts/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/ibmplexmono/ | `IBMPlexMono-OFL.txt` (copyright IBM Corp., Reserved Font Name "Plex") |
+
+The IBM Plex Mono licence reserves the name "Plex". The subset keeps the font's original family name table, as google/fonts distributes it; the file is not renamed or presented as a different font.
+
+Font_Weight_Report (output of `node scripts/fonts/report.ts`; before is the source `.ttf`, after is the subsetted `.woff2`):
+
+| File | Bytes before | Bytes after |
+|---|---|---|
+| RozhaOne-Regular.woff2 | 322828 | 41180 |
+| Hind-Regular.woff2 | 299532 | 39500 |
+| Hind-Bold.woff2 | 286604 | 36572 |
+| IBMPlexMono-Regular.woff2 | 135580 | 6660 |
+| Sum after subsetting | | 123912 |
+
+The sum 123,912 is below the 307,200-byte limit and no file is above 51,200 bytes, so no range or weight had to go and the user did not have to be asked (R2.6). Code points used in `en.json` and `hi.json` that a source font lacks: only U+25CF `●` and U+25CB `○` (in `repair.legend`), which all four source fonts lack; the browser draws them from the fallback family. Every Devanagari code point used in `hi.json` is in Rozha One, Hind Regular and Hind Bold. The list of unused code points the fonts lack is in `scripts/fonts/missing-glyphs.json`.
+
+### Bundle sizes (gzipped, level 9, from `npm run check-bundle` after `npm run build`)
+Entry_Chunk: before Stage A `./assets/index-Cge58eUK.js`, **101,075 bytes**; after Stage C `./assets/index-DrddQ7uj.js`, **109,126 bytes** (+8,051); the final Entry_Chunk after Stage D is **109,570 bytes**. The limit is 204,800. No Illustration was moved into a lazy chunk (`HeroLoom.tsx` keeps its static import) and no fallback or error boundary was added for it.
+
+| File | Before Stage A | After Stage C | Change |
+|---|---|---|---|
+| assets/CodeViewScreen-CGYejRHN.js | 9321 | 9504 | +183 |
+| assets/Panel-ChUTrmoB.js | (not present) | 3908 | +3908 |
+| assets/RepairPanel-CoxnrWd3.js | 3119 | 3026 | -93 |
+| assets/ScanScreen-CcvgxDeV.js | 9152 | 9064 | -88 |
+| assets/bits-DtHZV-gD.js | 510 | 507 | -3 |
+| assets/download-BjoTNPCU.js | 2227 | 2279 | +52 |
+| assets/index-DrddQ7uj.js (Entry_Chunk) | 101075 | 109126 | +8051 |
+| assets/style-*.js | 538 | (not present) | -538 |
+| assets/validateCardGrid-ClOvHDqy.js | 2975 | 2978 | +3 |
+| Sum of all JavaScript chunks | 128917 | 140392 | +11475 |
+
+Before-Stage-A file names: `CodeViewScreen-D-CiFXEJ.js`, `RepairPanel-BB_TRwHZ.js`, `ScanScreen-02MsZOA5.js`, `bits-DYr9iaPj.js`, `download-C1mhc7Cf.js`, `style-iZjlxjtF.js`, `validateCardGrid-Kwe0StTt.js`. The Scan chunk went from 9,152 to 9,064 bytes. The `style` chunk of the baseline is no longer a separate file and a new shared `Panel` chunk (with its own `Panel-*.css`) appeared, so the rows for those two do not compare like for like; the sum row does.
+
+### Contrast table
+Printed by `npm run build && node scripts/contrast_report.ts`; ratios truncated by `truncateRatio`, never rounded up. All 17 pairs meet their minimum in both themes, so **no pair is below AA** and no token value had to change. Day `--zari` stays **`#B0800A`**, not the brief's `#B8860B`, which gives only 2.84:1 on the ground. `--on-zari` and `--on-hole` were added to `THEME_TOKENS` and `tokens.css` together. `design.md` quotes `hole` on `card` as 9.46 (Day) and 8.54 (Night); those are rounded, the truncated ratios are 9.45 and 8.53.
+
+| Pair (foreground on background) | Minimum | Day | Night |
+|---|---|---|---|
+| ink on ground | 4.5 | 14.05 | 14.97 |
+| ink on surface | 4.5 | 15.58 | 13.47 |
+| ink-soft on ground | 4.5 | 5.70 | 8.20 |
+| ink-soft on surface | 4.5 | 6.32 | 7.38 |
+| madder on ground | 4.5 | 6.56 | 5.26 |
+| madder on surface | 4.5 | 7.27 | 4.73 |
+| indigo on ground | 4.5 | 10.65 | 7.68 |
+| indigo on surface | 4.5 | 11.81 | 6.91 |
+| leaf on ground | 4.5 | 5.49 | 9.62 |
+| leaf on surface | 4.5 | 6.09 | 8.65 |
+| on-zari on zari | 4.5 | 4.55 | 10.27 |
+| on-hole on hole | 4.5 | 14.96 | 16.42 |
+| zari on ground | 3 | 3.08 | 9.37 |
+| zari on surface | 3 | 3.42 | 8.43 |
+| hole on card | 3 | 9.45 | 8.53 |
+| ink-soft on ground | 3 | 5.70 | 8.20 |
+| ink-soft on surface | 3 | 6.32 | 7.38 |
+
+### Benchmark decision (R19)
+**Approach: the ratio of the alignment time to a baseline measured in the same run** (R19.2, second approach), bound **2.2**. A fixed ceiling cannot work: the first alignment of a worker is slow in about one full suite run in three (about 570 ms against 30 to 60 ms for later ones), so no ceiling above 570 ms can fail on a 2.0 times slowdown of the fast mode, and one below it fails on the slow first alignment. The slowness is compute (JIT tiering of the 4-million-cell loop), not waiting for a core: the CPU time shows the same 449 to 642 ms. Allocating the two tables is 2 to 3 ms and is not the cause.
+
+Before the change (`tests/codec-view/benchmark.test.ts` unchanged, ceiling 1000 ms; three consecutive `npm run test:run` runs, alignment of 2000 x 2000 picks, 10 x 10 hook positions):
+
+| Run | Alignment time | Smaller sizes (250 / 500 / 1000 picks) |
+|---|---|---|
+| 1 | 32.66 ms | 4.38 / 6.59 / 8.00 ms |
+| 2 | 568.85 ms | 8.18 / 2.18 / 20.84 ms |
+| 3 | 569.01 ms | 4.80 / 2.98 / 11.09 ms |
+
+Each run had 135 of 136 test files and 1611 of 1612 tests passing; the one failure each time was `tests/scripts/fonts.test.ts` "R1.6" (U+00B7 missing from `RozhaOne-Regular.woff2`), fixed in Stage D (see the defects below).
+
+Variants tried, measured in full suite runs with a placeholder bound of 1000:
+
+| Variant | Full suite ratios |
+|---|---|
+| two-row baseline, one timed alignment | 28.49, 47.78, 1.94 (alignment 545 / 497 / 45 ms; baseline 10 to 19 ms) |
+| two-row baseline, best of 5 | 4.17, 3.58, 5.95, 4.19, 4.26 |
+| full `Int32Array` table, best of 5 | 2.91, 1.79, 2.54, 2.74, 2.61, 3.49, 2.96, 2.77 |
+| two tables as the alignment keeps, best of 5, wall clock | 0.77, 1.02, 1.30, 1.57, 0.99, 0.77, 2.08, 1.13, 1.26, 1.10 |
+| same, best of 9, CPU time (final) | 1.07 to 1.40 over eleven runs |
+
+The final test times the alignment and the baseline 9 times each, alternating, and uses the least of each. The baseline fills a `Uint16Array` and a `Uint32Array` of (picks + 1) x (picks + 1) cells with the same recurrence as the alignment, over the same two interned key arrays; it calls neither `diffPatterns` nor `alignLines`. A smaller baseline did not slow down with the memory traffic of the other test files, so the ratio moved with the load. It fails with `expect(ratio, message).toBeLessThan(2.2)`; the message carries the alignment time, the baseline time, the ratio and the bound, and all nine times of each. Kept: `DIFF_PICK_LIMIT` against `DIFF_PICK_LIMIT`, the smaller sizes (one run each, not asserted), the seed 20_931, and every check of before.
+
+Setting the bound, three consecutive full suite runs (alignment / baseline / ratio): 28.99 ms / 23.27 ms / 1.25; 31.62 ms / 24.50 ms / 1.29; 30.05 ms / 21.42 ms / 1.40. Highest ratio 1.40; 1.5 times it is 2.10; rounded up to one decimal, **2.2**. Today's ratio is 1.25 to 1.40, so 2.0 times it is 2.5 to 2.8 and the bound is below it (R19.3).
+
+After the change, three consecutive full suite runs with the bound 2.2 (the test passed in each; the only failure was `tests/scripts/fonts.test.ts` "R1.6"):
+
+| Run | Alignment | Baseline | Ratio |
+|---|---|---|---|
+| 1 | 25.60 ms | 23.18 ms | 1.10 |
+| 2 | 29.68 ms | 22.09 ms | 1.34 |
+| 3 | 29.91 ms | 26.08 ms | 1.15 |
+
+**Slowdown check (R19.8).** `alignLines` temporarily ran `alignCanonical` twice and `npm run test:run` ran three times. The Benchmark_Test failed in all three: ratio 2.38, 2.86 and 2.92 against the bound 2.2 (alignment 53.41 / 59.13 / 65.62 ms, baseline 22.42 / 20.67 / 22.46 ms; message "alignment 53.41 ms, baseline 22.42 ms, ratio 2.38, bound 2.2"). `src/codec-view/align.ts` was then restored from a copy; `git diff --stat src/codec-view` and `git status --short src/codec-view` print nothing.
+
+**Departures from the requirement, on purpose, for the user to accept or reverse.**
+1. R19.6 says to keep the timed repetitions at their present value. They went from 1 to **9**, because the data above show that one timed alignment is bimodal and cannot be steady.
+2. The time is the **CPU time** of the process (`process.cpuUsage`), not the wall clock, so another test file taking the core does not count. The baseline is the two-table one above, not two `Int32Array` rows.
+3. **Weakness when run alone:** the test run on its own has a ratio of 0.93 to 0.96 (CPU time on a quiet machine), so the bound 2.2 is meant for the full suite and would not catch a 2.0 times slowdown of a standalone run (about 1.9 against 2.2).
+
+### "After" inspection (R24)
+Three rounds (build, `npm run screenshots -- after`, look at the files). All 24 files in `media/design/after/` were opened; the files of the last round are kept. Defects found and fixed:
+- `code-diff-day-1280.png`, `code-diff-night-1280.png`: the Bit_Lines of the diff entries and of the pick list were cut at the right edge (they scroll sideways, R11.8) with nothing that says so. Fix: a visible line "A line cut off at the edge scrolls sideways." (`codeview.scrollHint`, en and hi) above the diff entries (`DiffPanel.tsx`) and above the pick list (`CodeViewScreen.tsx`), and an always-drawn scroll bar in theme colours on `.entries`, `.textArea` and `.bits`. Headless Chrome does not paint the bars in the captures, so the sentence is what the files show.
+- `code-diff-day-320.png`, `code-diff-night-320.png`: a diff entry showed only about 20 characters of its Bit_Line, because the marker, the word "Changed" and the pick number took the line before it. Fix: in a container no wider than 40rem (`@container` on `.entries`) the entry is a block, so the Bit_Line and its ^ row take the line below the label (`DiffPanel.module.css`).
+- `keep-versions-day-1280.png`, `keep-versions-night-1280.png`, `keep-versions-day-320.png`, `keep-versions-night-320.png`: the contents of "More" (colour choices, Metadata fields, note, save mode) sat on the bare page between two panels. Fix: the "More" Disclosure is inside a `Panel` (`KeepScreen.tsx`).
+- `code-diff-*`: the Code view empty state had no Spot_Illustration in one path. `NothingToCompareIllustration` is passed (`CodeViewScreen.tsx`).
+- `scripts/screenshots.ts` overlap hint (not a defect in `src/`): it reported 3 pairs on `weave-lost-*-1280.png` (text of a closed `<details>` that the capture's `content-visibility: visible` made measurable) and 307 pairs on `code-diff-*-1280.png` (Bit_Lines scrolled out of their scroll region). The hint now ignores closed `<details>` content and cuts each box by the scroll or clip box of its ancestors. Result: 0 overlapping pairs and no sideways overflow in all 24 files.
+- Hindi string `codeview.nextStep` held a hyphen ("एक-एक"), which the Diff_Entry marker rule (R10.6, R10.7; `tests/ui/i18n/messages.test.ts`) forbids. It was found when the new key changed the order of that property's sample. It now reads "…उसकी पिकें एक के बाद एक देखें।" (`hi.json` and `HINDI_REVIEW.md`, still unreviewed). No property was changed.
+
+Seen and left as it is (a choice, not a defect): on the Landing at 1280 the text block is centred in the height of the Hero_Loom (an empty band above "Weave", by design); the cloth canvas on Weave shows an unwoven band above the cloth; the repair panel on Weave 1280 spans the cloth column only. Text and graphic contrast and the gap between adjacent controls looked right in all 24 files (every gap seen is 8 px or more). **Unfixed: none.**
+
+### Changed selectors and checks (old selector, new selector, reason)
+Strength was kept in every row: the same text, element or property is asserted, in the element that now carries it.
+- `tests/ui/deploy.test.ts` "R13.5": old, no `@font-face` or `@import` in any `src/**/*.css`; new, `@import` is still banned everywhere and `@font-face` is banned in every file except `src/ui/theme/tokens.css`, where each `src` must be a `fonts/*.woff2` path with no scheme or host; the `font-family` check (generic family or `var(--font-*)`) runs on the CSS with the `@font-face` blocks removed. Reason: R1.2 requires four `@font-face` rules in the Token_File. A font declared anywhere else still fails.
+- Notice (task 2.10): old `<p role="alert" class=...>TEXT</p>`; new a Notice, `<div role="alert" data-variant="error"><p>icon and word</p><div>TEXT</div></div>`. A new helper `tests/support/notices.ts` (`alertTexts`, `noticeTexts`) returns the text blocks, so the tests (`accessibility.test.tsx` R14.6, `keep.test.tsx` R15.7, `repair.test.tsx` R1.2, five in `code.test.tsx`) assert the same text inside the same role. `scripts/check_browser.ts` (three places): old `[role="alert"]`; first `[role="alert"] > div`, then in task 3.6 `[data-variant="error"] > div` (the Scan read failure no longer has a role of its own, because `read-failed` already dispatches `announce`). Same text block, same equality with `EN['error.read.peg-holes-not-found']`.
+- Field (task 2.10): old `<label for=ID>TEXT</label><input id=ID>`; new `<label><span>TEXT</span>CONTROL</label>` (`code.test.tsx` R3.4 R3.5, R6.16, R7.1; `components.test.tsx` R6.8, where the span lost its class). The label names the control by wrapping it.
+- Style tests that read a Screen module for a button or field rule now read the shared module (`accessibility.test.tsx` R14.11 and R11.10, `keep.test.tsx` R14, `repair.test.tsx` R6.1): old `.button`, `.input`, `.select` in the Screen modules; new `Button.module.css` `.button` and the control rule in `Field.module.css`, plus a check that the Screens use `<Button` (and `<Field`) and contain no raw `<button`.
+- Card drawing (task 4.4): `repair.test.tsx` R3.2, old `fill="currentColor"` and `fill="none"` found once each; new exact counts of `<circle>` with class `punchedHole` and `unpunchedMark` per suggested card (stricter). `accessibility.test.tsx` R14.4: an `<svg>` is also named by a non-empty first-child `<title>`. `accessibility.test.tsx` R14.11: a `(min-width: Npx)` query is also allowed when its block holds no `font` text (R12.4 puts the card beside the cloth from 720 px).
+- `src/ui/screens/code/LineRow.module.css` `.line` (task 2.11): old `box-shadow: inset 0 -1px 0 var(--line)` (R3.6 allows only `var(--shadow-card)`); new a 1px `.line::after` strip. `LineRow.tsx` `SELECTED_MARK`: old `▶` (U+25B6, Extended_Pictographic, an emoji under R7.6); new `►` (U+25BA). Three expectations in `code.test.tsx` re-aimed from `▶` to `►`.
+- Navigation (task 3.2): `scripts/check_browser.ts` `goTo` and `showScreen`, old `clickText('nav button', LABEL)` (exact text); new `clickNavItem`, the `nav button` whose `textContent.trim()` starts with LABEL, because the Code view item now reads "CodeAdvanced". The next step still waits for the Screen heading to equal the same text.
+- Landing (task 3.3): the Weave screen with no pick is the Landing. `weave.test.tsx` R2.8, R3.8 (two) now render `arrivedWith('diamond', ...)`; R2.1 renders the player alone (`renderPlayer`); R4.1 and R2.12 render the `<TryIt>` section alone (`renderTryIt`). `shell.test.tsx` R14.10, `themeSwitch.test.tsx` R4.9 and `announce.test.tsx` use a ready profile, because a loading profile adds a transient `role="status"`. `check_browser.ts` `chooseSample`, "app loads" and the offline "online load": old a `button` whose text is the sample name; new `[data-sample="<design>"]`, because the tile also holds "Try it".
+- Code view panel order (task 3.7): `code.test.tsx` R6.6 R6.16, old the panel heading after the pick list; new before the step-back control, the first `data-pick=` and the cloth heading. R11.1: `<select` now comes before the first `data-pick=`. Same number of order checks.
+- Shell (task 3.8): `code.test.tsx` R9.10, only the constructor call of `ScreenBoundary` (it takes `t` and `onRetry`). `scan.test.tsx` R13.1 R16.10: old `lazy(() => import('./screens/scan/ScanScreen.tsx'))`; new `importScanScreen = () => import(...)` plus `useLazyScreen(importScanScreen, ...)`, the same fact (a dynamic import, no static import); the `not.toMatch(/^import .*screens\/scan/m)` line is unchanged.
+- Plural pick texts (task 5.2): `messages.test.ts` `DESIGN_TABLE_KEYS`, old `codeview.pickCount`; new `codeview.pickCount.one` and `.other`. `check_browser.ts` step 4, old `EN['keep.list.picks']`; new `EN['keep.list.picks.other']`. `stateMessages.test.ts` `ADDED_KEYS` gained the eight new keys.
+- Other selectors the scripts use are unchanged: `#screen-title`, `#scan-file`, `#keep-saved`, `keep-delete-ID`, `button[data-shape]`, `button[data-corrected]`, `button[aria-label=...]`, `label span`, `#scan-batch-title ~ ol > li`.
+- **The existing R13.5 deploy test was re-aimed to allow `@font-face` in `tokens.css` only** (first row above).
+
+### Disclosure check changes
+- `scripts/check_browser.ts`: new `openDisclosure(page, name)`; `openMore` calls it. Old: a `button[aria-expanded][aria-controls]` whose text equals `disclosure.more`; new: the same button found by its accessible name given by the caller. It waits, clicks only when `aria-expanded` is `false`, waits for `true`, and fails with `the Disclosure "<name>" was not found`. `openMore` is called in step 4 (Keep save, before the place field is filled), step 8 (BMP export) and the offline BMP step. No Weave step changes colours, zari or repeat, so none opens "Settings".
+- No test in `tests/` had to open a Disclosure: the unit tests render server markup, where collapsed content is still present (`hidden`). The input count in `keep.test.tsx` R7.1 (six text inputs and one textarea) is unchanged.
+- `ProfileNotice` (Keep and Scan): the one-line notice stays visible; the status text is inside a Disclosure named by the profile name, not "More", so a script that opens "More" never opens it by mistake.
+- Scan "More" is controlled by the screen: collapsed on arrival, opened by `ScanScreen` when a read completes, never moving focus. No `openMore` call is needed on Scan.
+- New `check_browser.ts` steps after step 14 (the offline step moves from 15 to 19): 15 Landing, 16 Disclosures (collapsed on arrival, `hidden` panel, real Tab does not enter it, Enter and Space toggle, Escape collapses and returns focus, opening leaves the scroll position unchanged), 17 navigation (`aria-current="page"` on exactly one of 4 items; at 320 px in both languages and themes no overflow or overlap), 18 the primary Button of each Screen is within the first 844 px at 390 by 844.
+- `scripts/checks/manualSteps.ts` still says the profile status text is visible on every Scan and Keep frame. It describes the GIFs recorded before this pass and was not edited.
+
+### Hindi wrapping fixes
+None. No Hindi file is among the 24 screenshots; the Hindi strings that grow their controls at 320 px are covered by `check:browser` step 17. `codeview.nextStep` and `codeview.scrollHint` wrap in their paragraphs.
+
+### Keys whose Hindi one and other texts are the same
+The Hindi word "पिक" does not change with the count, so no separate Hindi singular is needed; both entries are kept so that `hi.json` and `en.json` have the same keys: `keep.list.picks` ("{count} पिक" for 1 and for every other count), `codeview.pickCount` (same), `codeview.diff.option` ("{name} ({count} पिक)" for 1 and for every other count).
+
+### Defects found along the way
+- **First-visit "A newer Naqsha is ready" notice** (found in task 3.8, fixed in `src/ui/serviceWorker.ts`). `registerServiceWorker` treated every worker that reached `installed` as an update waiting. On a first visit the first worker also fires `updatefound` and `installed`, so the Shell showed the notice and pushed the content down. The cache name is a content hash and does not change between loads, so that was ruled out. Fix: `ContainerLike` has `controller`; the `updatefound` handler reads `container.controller !== null` before the worker installs, and only an update of a controlled page reaches `new-worker-waiting`. The R24.5 tests pass unchanged; one test was added for a first install followed by a genuine update.
+- **Keep primary button pushed below the fold** (found by `check:browser` steps 16 and 18). The one-line profile notice, the "Card profile:" label and the profile Disclosure sat above the export button; opening the Disclosure moved the button from 776 to 824 px to 842 to 890 px, out of the 844 px viewport (R10.7), and in Hindi it ended at 860 px (R23.7). Fix: `ProfileNotice` takes `part` (`all`, `notice`, `details`); the export panel draws the one-line notice above the button and the name and Disclosure at the end of the panel. The Code view compare panel had the same problem (Compare ended at 886 px en and 945 px hi); after moving the hint into the result and the notices below the choosers it ends at 728 px and 777 px.
+- **The ▶ pictograph replaced by ►** (task 2.11, see the changed selectors): `▶` is Extended_Pictographic, an emoji under R7.6.
+- **Fonts re-subset for the middle dot** (task 5.8). The new key `codeview.diff.separator` uses U+00B7. All four source `.ttf` files have it, but the `.woff2` files were subset before the key existed, so `tests/scripts/fonts.test.ts` R1.6 failed in every full suite run from task 5.4 on. `scripts/fonts/subset.sh` was run again; the four `.woff2` files changed and now hold U+00B7; `missing-glyphs.json` and the test are unchanged.
+- Step icon too big (task 4.6): with a 56 px icon the Landing's first tile ended at 713 px (en) and 705 px (hi) against the 700 px limit. Fixed by a 32 px icon and a 0 gap; all 19 `check:browser` steps passed.
+- Two violations of the style test in `src/ui` (task 2.11): the `box-shadow` and the `▶` above. The source was fixed, not the test.
+
+### Other decisions
+- Behaviour change in Keep export: `onExport` now waits one `setTimeout(0)` before it builds and downloads the file, so the browser can paint the delayed Thread_Progress. `runExport` is unchanged; `check:browser` steps 8 and 19 (BMP export, online and offline) still pass.
+- No width media query is allowed in a module style sheet (`accessibility.test.tsx` R14.11), so the Landing asks its own width with a container query (`@container (min-width: 40rem)`) and sizes the headline with `clamp()`.
+
+**Kiro features used:** spec (requirements, design, tasks for `design-and-ux-pass`), steering (glossary, structure, testing), sub-agent task execution, property-test and example-test rules, the screenshot and `check:browser` scripts.
+**Commits (five, in this order):** `63578cf` Stage 0 (screenshot tooling and the "before" screenshots, taken before any Stage A change, R24.1); `a9883e8` Stage A (fonts, tokens, theme switch, base components); `a56dac5` Stage B (Landing, navigation, Disclosures, friendly states); `6c80a79` Stage C (card drawing, Hero_Loom, Step_Icons, Spot_Illustrations, "after" screenshots); `559da00` Stage D (version labels, singular picks, finished cloth on return, steady benchmark, loom-mcp design fix). The documents of tasks 6.1 to 6.3 are folded into the Stage D commit (task 6.6).
+---

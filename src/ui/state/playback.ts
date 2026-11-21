@@ -100,11 +100,20 @@ export type EntryMode = 'show-finished' | 'show-selected' | 'autoplay' | 'keep';
  * Which entry a cloth gets. `entered` is the design the player was last entered with, null before the first one,
  * and `mounted` is the design that was already loaded when the screen arrived, with `mountedPick` the
  * `AppState.selectedPick` at that moment. At pick 0 the arrival shows the finished cloth; past it, that pick (R4.2).
+ * `mountedFinished` says the cloth of the mounted design was finished when the screen arrived; that shows the finished
+ * cloth even though `mountedPick` is then the last pick index, as a paused cloth would also have.
  * Designs are told apart by identity, as the application state replaces the whole Pattern for a new design.
  */
-export function entryModeFor(pattern: Pattern, entered: Pattern | null, mounted: Pattern, mountedPick = 0): EntryMode {
+export function entryModeFor(
+  pattern: Pattern,
+  entered: Pattern | null,
+  mounted: Pattern,
+  mountedPick = 0,
+  mountedFinished = false,
+): EntryMode {
   if (entered === null) {
     if (pattern !== mounted) return 'autoplay';
+    if (mountedFinished) return 'show-finished';
     return mountedPick > 0 ? 'show-selected' : 'show-finished';
   }
   return pattern === entered ? 'keep' : 'autoplay';

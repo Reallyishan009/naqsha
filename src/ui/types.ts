@@ -77,6 +77,11 @@ export type AppState = {
   compare: CompareRequest | null;
   /** Suggested repairs the weaver accepted into the Current_Pattern. Cleared whenever another design is loaded. */
   repairs: RepairState;
+  /**
+   * The Pattern whose cloth was last seen finished (every pick woven), compared by identity, or null. The player
+   * reports its last frame as pick `pickCount`, which `selectedPick` cannot hold, so Weave keeps the fact here.
+   */
+  finishedPattern: Pattern | null;
 };
 
 export type AppAction =
@@ -102,7 +107,9 @@ export type AppAction =
   | { type: 'announce'; kind: Announcement['kind']; messageKey: string; params?: AnnouncementParams }
   | { type: 'select-pick'; pick: number }
   | { type: 'toggle-breakpoint'; pick: number }
-  | { type: 'set-cloth-choices'; choices: ClothChoices };
+  | { type: 'set-cloth-choices'; choices: ClothChoices }
+  | { type: 'cloth-finished' }
+  | { type: 'cloth-unfinished' };
 
 export type ClothChoices = {
   warpColour: string;

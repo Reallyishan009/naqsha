@@ -535,7 +535,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
         const saved = await page.waitFor<string>(`document.getElementById('keep-saved')?.textContent.trim()`, 'the "Saved" message');
         expect(saved === format(EN['keep.saved']!, { name }), `saved message is "${saved}", expected "${format(EN['keep.saved']!, { name })}"`);
         const list = await page.waitFor<string>(`(()=>{const t=${KEEP_LIST_TEXT};return t&&t.includes(${JSON.stringify(name)})?t:null})()`, 'the design in the list');
-        expect(list.includes(place) && list.includes(format(EN['keep.list.picks']!, { count: picks })), `the list row lacks the place or "${picks} picks":\n${list}`);
+        expect(list.includes(place) && list.includes(format(EN['keep.list.picks.other']!, { count: picks })), `the list row lacks the place or "${picks} picks":\n${list}`);
         ctx.saved = { name, place, picks };
         return `saved "${name}" at ${place}, ${picks} picks; the list shows it`;
       },

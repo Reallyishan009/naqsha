@@ -183,7 +183,17 @@ Naqsha is not the first project to read Jacquard punch cards with a camera. It b
 - *Visual system for punched card reading in textile industry*, 2018. A camera-based system for reading the punched cards of mechanical Jacquard looms. [doi:10.1080/00051144.2018.1456097](https://www.tandfonline.com/doi/full/10.1080/00051144.2018.1456097)
 - *Digitization and recognition of Jacquard cards for textile design preservation*, Multimedia Tools and Applications, 2025. A multi-step computer vision method that extracts design information from photos of Jacquard cards. [doi:10.1007/s11042-025-20917-9](https://link.springer.com/article/10.1007/s11042-025-20917-9). Its dataset is published at [ELiRF/telers](https://github.com/ELiRF/telers).
 
-No other credits are listed.
+### Fonts
+
+Naqsha ships three font families, and all three are listed here. Each is licensed under the SIL Open Font License 1.1 (SIL OFL 1.1). The fonts are self-hosted: the app loads them from its own site and makes no request to a font service. They are subset to the characters the app uses (Basic Latin, the symbols in the app text, and for Rozha One and Hind the Devanagari block) and saved as woff2 files in `public/fonts/`. The full licence text and copyright notice of each font is in `public/fonts/` next to its woff2 files (`RozhaOne-OFL.txt`, `Hind-OFL.txt` and `IBMPlexMono-OFL.txt`). The source files were taken from the [google/fonts](https://github.com/google/fonts) repository at commit `06bfe0d62a98375cb09c942fa18e68bd32cff057`.
+
+| Font | Designer or foundry | Licence | Obtained from |
+|---|---|---|---|
+| Rozha One (display text, weight 400) | Indian Type Foundry | SIL OFL 1.1 | [google/fonts, `ofl/rozhaone`](https://github.com/google/fonts/tree/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/rozhaone) |
+| Hind (body text, weights 400 and 700) | Indian Type Foundry | SIL OFL 1.1 | [google/fonts, `ofl/hind`](https://github.com/google/fonts/tree/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/hind) |
+| IBM Plex Mono (data text, weight 400) | IBM Corp. | SIL OFL 1.1 | [google/fonts, `ofl/ibmplexmono`](https://github.com/google/fonts/tree/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/ibmplexmono) |
+
+No other credits are listed beyond the research and the fonts above.
 
 ## License
 

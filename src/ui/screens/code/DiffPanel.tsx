@@ -2,7 +2,7 @@ import { memo, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { getDesign, listDesigns } from '../../../archive/index.ts';
 import type { ArchiveDeps, ArchiveFailure, DesignSummary } from '../../../archive/index.ts';
-import type { CompareRequest } from '../../types.ts';
+import type { CompareRequest, Language } from '../../types.ts';
 import type { CardProfile } from '../../../codec/index.ts';
 import { DIFF_MARKERS, diffPatterns, diffToText, groupBits, patternToLines } from '../../../codec-view/index.ts';
 import type { BitLine, Diff, DiffEntry, DiffRefusal, Line, LineSet } from '../../../codec-view/index.ts';
@@ -10,6 +10,7 @@ import { archiveFailureKey } from '../../i18n/messages.ts';
 import type { Translate } from '../../i18n/messages.ts';
 import { diffEntryAccessibleName, pickNumberWidth } from '../../state/codeView.ts';
 import { savedLabel } from '../../state/keep.ts';
+import { versionLabels } from '../../state/versionLabels.ts';
 import {
   browserDiffTextDeps,
   copyDiffText,
@@ -479,13 +480,15 @@ type ChoiceSelectProps = {
   disabled: boolean;
   /** False while the Current_Pattern has no Line_Set, so it is no option. */
   currentAvailable: boolean;
+  language: Language;
   t: Translate;
   onChange: (choice: SideChoice | null) => void;
 };
 
 /** One chooser: a labelled `<select>` of the Current_Pattern and every Saved_Design the Archive returned (R6.6). */
-function ChoiceSelect({ label, value, list, disabled, currentAvailable, t, onChange }: ChoiceSelectProps) {
-  const untitled = t('keep.untitled');
+function ChoiceSelect({ label, value, list, disabled, currentAvailable, language, t, onChange }: ChoiceSelectProps) {
+  // One call for the whole list: the labels are made distinct together (R16.7).
+  const labels = versionLabels(list, language, t);
   return (
     <Field label={label} className={styles.field}>
       <select
@@ -497,7 +500,7 @@ function ChoiceSelect({ label, value, list, disabled, currentAvailable, t, onCha
         {currentAvailable ? <option value="current">{t('codeview.diff.current')}</option> : null}
         {list.map((summary) => (
           <option key={summary.id} value={`saved:${summary.id}`}>
-            {t('codeview.diff.option', { name: savedLabel(summary.metadata, untitled), count: summary.pickCount })}
+            {labels.get(summary.id)}
           </option>
         ))}
       </select>
@@ -512,6 +515,8 @@ export type DiffPanelViewProps = {
   comparison: Comparison;
   /** True while there is a Card_Profile and a Line_Set for the Current_Pattern. */
   currentAvailable: boolean;
+  /** The document language, for the saved date in each Version_Label (R16.4). */
+  language: Language;
   t: Translate;
   onFirstChange: (choice: SideChoice | null) => void;
   onSecondChange: (choice: SideChoice | null) => void;
@@ -524,7 +529,7 @@ export type DiffPanelViewProps = {
 
 /** What the panel draws. No state of its own, so tests can render every case. */
 export function DiffPanelView(props: DiffPanelViewProps) {
-  const { summaries, first, second, comparison, currentAvailable, t } = props;
+  const { summaries, first, second, comparison, currentAvailable, language, t } = props;
   const headingId = useId();
   const list = summaries.status === 'ready' ? summaries.list : [];
   // No Saved_Design, no Current_Pattern with picks, no Card_Profile or no Archive: the choosers and the compare
@@ -545,6 +550,7 @@ export function DiffPanelView(props: DiffPanelViewProps) {
           list={list}
           disabled={!choosable}
           currentAvailable={currentAvailable}
+          language={language}
           t={t}
           onChange={props.onFirstChange}
         />
@@ -554,6 +560,7 @@ export function DiffPanelView(props: DiffPanelViewProps) {
           list={list}
           disabled={!choosable}
           currentAvailable={currentAvailable}
+          language={language}
           t={t}
           onChange={props.onSecondChange}
         />
@@ -600,6 +607,7 @@ export type DiffPanelProps = {
   profile: CardProfile | null;
   /** The Current_Pattern's Line_Set, from the screen's one `patternToLines` call; null when there is none. */
   currentLineSet: LineSet | null;
+  language: Language;
   t: Translate;
   /** Injected so tests use a fake store, as the Keep screen already does. */
   archiveDeps?: ArchiveDeps;
@@ -610,7 +618,7 @@ export type DiffPanelProps = {
 };
 
 /** The diff panel: two choosers, a compare control, and the counts and entries of one comparison (R6.6, R6.7, R6.16). */
-export function DiffPanel({ profile, currentLineSet, t, archiveDeps, diffTextDeps, request = null }: DiffPanelProps) {
+export function DiffPanel({ profile, currentLineSet, language, t, archiveDeps, diffTextDeps, request = null }: DiffPanelProps) {
   const [summaries, setSummaries] = useState<Summaries>({ status: 'loading' });
   const [first, setFirst] = useState<SideChoice | null>(null);
   const [second, setSecond] = useState<SideChoice | null>(null);
@@ -689,6 +697,7 @@ export function DiffPanel({ profile, currentLineSet, t, archiveDeps, diffTextDep
       second={second}
       comparison={comparison}
       currentAvailable={profile !== null && currentLineSet !== null}
+      language={language}
       t={t}
       onFirstChange={setFirst}
       onSecondChange={setSecond}

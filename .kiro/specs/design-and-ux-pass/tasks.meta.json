@@ -718,6 +718,11 @@
         "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795263235334
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795263581513
       }
     ],
     "5.1 Build the Version_Labels and use them in the Version_Chooser": [
@@ -725,6 +730,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229215896
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795263587788
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795263981107
       }
     ],
     "5.2 Choose singular and plural pick texts": [
@@ -732,6 +747,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229215943
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795264004144
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795264683395
       }
     ],
     "5.3 Fix the finished cloth on return to Weave": [
@@ -739,6 +764,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229215988
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795264004300
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795264684262
       }
     ],
     "5.4 Record the benchmark times before the change": [
@@ -746,6 +781,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229216033
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795264691009
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795264852523
       }
     ],
     "5.5 Make the benchmark steady": [
@@ -753,6 +798,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229216078
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795264852767
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267414181
       }
     ],
     "5.6 Correct the Tool_Error entry in `.kiro/specs/loom-mcp/design.md`": [
@@ -760,6 +815,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229216125
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267418667
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267467637
       }
     ],
     "5.7 Handle the loom-mcp screenshots in `media/kiro/`": [
@@ -767,6 +832,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229216173
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267419443
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267467723
       }
     ],
     "5.8 Stage D gate and commit": [
@@ -774,6 +849,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229216223
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267467863
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267981328
       }
     ],
     "6.1 Write the one Build_Log entry in `docs/BUILD_LOG.md`": [
@@ -781,6 +866,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229216273
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267985826
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268180848
       }
     ],
     "6.2 Update `docs/KIRO_USAGE.md`": [
@@ -788,6 +883,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229216311
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267987448
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268181069
       }
     ],
     "6.3 Add the font credits to `README.md` and the new directories to the structure steering": [
@@ -795,6 +900,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229216360
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267987678
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268182066
       }
     ],
     "6.4 Run `npm run check:browser` once": [
@@ -802,6 +917,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229216409
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268186169
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268340749
       }
     ],
     "6.5 Run `npm run check:all` once": [
@@ -809,6 +934,16 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229216453
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268341216
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268591498
       }
     ],
     "6.6 Fold the documents into the Stage D commit": [
@@ -816,6 +951,11 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795229216517
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268591675
       }
     ],
     "6.7 Push `auto/build`": [
@@ -851,6 +991,20 @@
         "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795246065671
+      }
+    ],
+    "4. Stage C: illustrations, bundle numbers, \"after\" screenshots and inspection": [
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795263581578
+      }
+    ],
+    "5. Stage D: small fixes (version labels, plurals, finished cloth, benchmark, loom-mcp design, media)": [
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267981419
       }
     ]
   }

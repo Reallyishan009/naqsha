@@ -180,7 +180,7 @@ Rules that apply to every task:
     - Commit with the message `Stage B: landing, navigation, disclosure and states`, adding the changed files by name.
     - _Requirements: 22.6, 22.7, 22.8, 25.1, 25.2_
 
-- [ ] 4. Stage C: illustrations, bundle numbers, "after" screenshots and inspection
+- [x] 4. Stage C: illustrations, bundle numbers, "after" screenshots and inspection
   - [x] 4.1 Add `cardGeometry` in `src/ui/illustrations/cardGeometry.ts`
     - Export the `CardGeometry` type and `cardGeometry(profile)`, which calls `validateCardProfile` from `src/codec` and returns `{ ok: false }` for an invalid profile. Build the hook centres with the exported `hookCentreMm` from `printable/layout.ts`. The punched positions come from `validateCardGrid(profile, grid)` returning no violation. No card dimension is written as a literal.
     - Add `tests/ui/illustrations/cardGeometry.test.ts`: the demo profile's size, hook centres, hole diameter, the two peg holes with their own diameters and the lacing holes come from the profile; a second profile with other values gives other numbers; an invalid profile returns `{ ok: false }`.
@@ -224,67 +224,67 @@ Rules that apply to every task:
     - Open each of the 24 files with the file reader and look for these defects: overlapping text or control boxes, text cut off by its container, a horizontal scrollbar, text below 4.5:1 or a meaningful graphic below 3:1, and two adjacent controls less than 8 px apart. Fix each defect in `src/ui` (a Hindi string that cannot fit at 320 px wraps and grows its control; record its key and the fix under "Hindi wrapping fixes"), rebuild, and retake each file that changed with `npm run screenshots -- after`. Do at most 3 rounds.
     - Under "After inspection" in `measurements.md` list each defect with its file name and how it was fixed, or state that none were found. List any defect left after round 3 as unfixed with its file name.
     - _Requirements: 5.3, 23.2, 23.9, 23.10, 24.7, 24.8_
-  - [-] 4.10 Stage C gate and commit
+  - [x] 4.10 Stage C gate and commit
     - Run `npm run review-list`, `npm run typecheck`, `npm run test:run`, `npm run build`, `npm run check-bundle`, `npm run check:browser` and `node scripts/contrast_report.ts` (update the "Contrast table" notes if a value changed); all commands must exit 0 with no test newly skipped.
     - Commit with the message `Stage C: card drawing, hero loom and illustrations`, adding the changed files by name, including `media/design/after/`.
     - _Requirements: 22.6, 22.7, 22.8, 25.1, 25.2_
 
-- [ ] 5. Stage D: small fixes (version labels, plurals, finished cloth, benchmark, loom-mcp design, media)
-  - [~] 5.1 Build the Version_Labels and use them in the Version_Chooser
+- [x] 5. Stage D: small fixes (version labels, plurals, finished cloth, benchmark, loom-mcp design, media)
+  - [x] 5.1 Build the Version_Labels and use them in the Version_Chooser
     - Add `src/ui/state/versionLabels.ts` (types only imported) with `NOTE_EXCERPT_MAX = 40`, `noteExcerpt(note, ellipsis)` and `versionLabels(summaries, language, t)`. The excerpt trims, collapses each run of whitespace (line breaks included) to one space, counts Unicode code points with `Array.from`, shows 40 or fewer in full, otherwise cuts at the last space within the first 40 (or at exactly 40 without a space) and appends one "…" that does not count. A label is `t('codeview.diff.option', { name, count })`, then the separator and `formatSavedAt(createdAt, language)` when it is not empty, then the separator and the excerpt when there is one. The name comes from `savedLabel(metadata, t('keep.untitled'))`. Equal labels get `t('codeview.diff.duplicate', { k })` in order of `createdAt` then archive id.
     - In `DiffPanel.tsx` call `versionLabels` once per list in `ChoiceSelect` and read each option text from the map; the `<label>` and `<select>` accessible names do not change. Add `codeview.diff.separator`, `codeview.diff.duplicate` and `codeview.diff.ellipsis` to both files (Hindi `reviewed: false`).
     - Add `tests/ui/state/versionLabels.test.ts` with example tests: a note of exactly 40, of 41 with a space and without a space, with line breaks, empty, whitespace-only, and a code point above U+FFFF; no empty brackets and no doubled or trailing separator; a missing or invalid date; an untitled name; two equal labels get `#1` and `#2` in saved-time then id order and no two labels are equal afterwards. Use pick counts of 2 or more in these tests, so they do not depend on task 5.2.
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7, 16.8, 16.9_
-  - [~] 5.2 Choose singular and plural pick texts
+  - [x] 5.2 Choose singular and plural pick texts
     - In `src/ui/i18n/messages.ts` add `pluralKey(en, key, params)` (`key.one` for a count of 1 and `key.other` otherwise, only when the English file has `key.one` and no `key`; the count is `params.count`, or `params.period` for the repeat evidence) and call it first in `translator`. Callers keep passing the base keys.
     - In `en.json` and `hi.json` replace `keep.list.picks`, `codeview.pickCount` and `codeview.diff.option` by their `.one` and `.other` forms, and add `repair.evidence.repeat.one` and `.other` (keeping the placeholders). English count 1 reads "1 pick" and "{name} (1 pick)"; counts 0 and 2 or more read "picks". Hindi has a one and an other text for each; where they are the same word, add the key under "Keys with equal Hindi one and other text" in `measurements.md`.
     - Re-aim `tests/ui/i18n/messages.test.ts` `DESIGN_TABLE_KEYS` from `codeview.pickCount` to `codeview.pickCount.one` and `.other`, and `scripts/check_browser.ts` from `EN['keep.list.picks']` to `EN['keep.list.picks.other']`, at the same strength. Log both under "Changed selectors".
     - Add `tests/ui/i18n/plural.test.ts` with example tests for the exact English text of each of the three keys for counts 0, 1 and 2 ("1 pick", "0 picks", "2 picks", "{name} (1 pick)", "{name} (0 picks)", "{name} (2 picks)"), each of which fails against the old "1 picks"; `repair.evidence.repeat` for 1 and 12; both files have the same keys.
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6, 17.7, 22.2_
-  - [~] 5.3 Fix the finished cloth on return to Weave
+  - [x] 5.3 Fix the finished cloth on return to Weave
     - In `src/ui/types.ts` add `finishedPattern: Pattern | null` to `AppState` and the actions `{ type: 'cloth-finished' }` and `{ type: 'cloth-unfinished' }`. In `state/appState.ts` set `finishedPattern: null` in `initialAppState`, make `cloth-finished` set it to `state.current.pattern` when that has at least one pick, make `cloth-unfinished` set it to `null`, return the same state object when nothing changes, and set it to `null` in `withNewPattern`, `accept-repairs` and `undo-repair`.
     - In `state/playback.ts` give `entryModeFor(pattern, entered, mounted, mountedPick = 0, mountedFinished = false)` a fifth parameter: for `entered === null` and the same Pattern it returns `show-finished` when `mountedFinished`, before the `mountedPick > 0` test. Every other branch is unchanged.
     - In `WeaveScreen.tsx` read `{ pattern, pick: state.selectedPick, finished: state.finishedPattern === pattern }` once on mount and pass it to `WeavePlayer` as `arrival`. In `WeavePlayer.tsx` make `onFrame` dispatch `cloth-finished` when `report.atEnd` and `cloth-unfinished` otherwise, at most once per change. `selectedPick` stays between 0 and the pick count minus 1.
     - Add one example test in `tests/ui/state/finishedCloth.test.ts` of the sequence: weave to the end, navigate to Code view, navigate back to Weave, then render `WeaveScreen` and check that the finished status text shows, the paused status text does not show, and the number of picks woven and the current pick shown equal the number of picks of the Current_Pattern. The existing playback and Weave tests must pass unchanged.
     - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5, 18.6, 18.7_
-  - [~] 5.4 Record the benchmark times before the change
+  - [x] 5.4 Record the benchmark times before the change
     - Without changing `tests/codec-view/benchmark.test.ts`, run `npm run test:run` three times in a row and write, under "Benchmark" in `measurements.md`, the alignment time of each run as the test prints it or as measured with a temporary log line that is removed afterwards.
     - _Requirements: 19.5_
-  - [~] 5.5 Make the benchmark steady
+  - [x] 5.5 Make the benchmark steady
     - In `tests/codec-view/benchmark.test.ts` decide by the ratio of the alignment time to a baseline measured in the same run: a plain integer LCS length table (two `Int32Array` lines) over the same two interned key arrays, which calls neither `diffPatterns` nor `alignLines`. Run the baseline before and after the timed alignment and use the larger one. Keep `DIFF_PICK_LIMIT` against `DIFF_PICK_LIMIT`, the smaller warm-up sizes, the seed `20_931`, the number of timed repetitions and every case the test checks today.
     - Set the bound to 1.5 times the highest ratio of three consecutive full-suite runs, rounded up to one decimal, and keep it under 2.0 times today's ratio. Fail with `expect(ratio, message).toBeLessThan(bound)` where the message prints the alignment time, the baseline time, the ratio and the bound. Add a comment with the decision.
     - Run `npm run test:run` three times in a row and record the three ratios and times under "Benchmark". Then temporarily make `alignLines` run its dynamic program twice, confirm the benchmark fails, restore `alignLines` exactly (check with `git diff` that no change is left in `src/codec-view`), and record both facts and the reason for the choice.
     - _Requirements: 19.1, 19.2, 19.3, 19.5, 19.6, 19.7, 19.8_
-  - [~] 5.6 Correct the Tool_Error entry in `.kiro/specs/loom-mcp/design.md`
+  - [x] 5.6 Correct the Tool_Error entry in `.kiro/specs/loom-mcp/design.md`
     - Replace the Tool_Error entry in Data Models (the line that says an error carries `structuredContent: {ok: false, ...}`) with the text in the design: `{isError: true, content: [text "reason: message. Hint: hint"], _meta: {reason, hint}}`, exactly one text block, `_meta` with exactly the two keys, no `structuredContent` and no `ok`, the reason an MCP client checks `structuredContent` against `outputSchema`, `message` and `hint` each one sentence, the reason in `_meta.reason`, the hint in `_meta.hint`, and `message` only in the text block. Do not change the success-result entry.
     - Search the file for any other sentence that says or implies an error carries `structuredContent` or `{ok: false, ...}` and correct it. Check that a search for `ok: false` returns nothing and that `git diff --name-only` for this step lists only `.kiro/specs/loom-mcp/design.md`. No file under `tools/loom-mcp` or `src` changes in this task.
     - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5, 20.6_
-  - [~] 5.7 Handle the loom-mcp screenshots in `media/kiro/`
+  - [x] 5.7 Handle the loom-mcp screenshots in `media/kiro/`
     - Check whether `media/kiro/` exists and holds `.png` files. If it does, stage exactly its `.png` files and nothing else from that directory, and write each path under "Notes for the final report". If it does not (it is absent today), leave `media/loom-mcp-connected.png` and `media/loom-mcp-validate-profile.png` untracked, and write under "Notes for the final report": no screenshots were found in `media/kiro/`, and the two named files are present in `media/` (or name each one that is absent). The commit adds no loom-mcp screenshot in that case.
     - _Requirements: 21.1, 21.2, 21.4, 21.5_
-  - [~] 5.8 Stage D gate and commit
+  - [x] 5.8 Stage D gate and commit
     - Run `npm run review-list`, `npm run typecheck`, `npm run test:run`, `npm run build`, `npm run check-bundle` and `npm run check:browser`; all must exit 0 with no test newly skipped.
     - Commit with the message `Stage D: version labels, plurals, finished cloth, benchmark and loom-mcp design`, adding by name only the fixes of this stage, `.kiro/specs/loom-mcp/design.md`, `.kiro/specs/design-and-ux-pass/measurements.md`, `docs/HINDI_REVIEW.md` and any `media/kiro/*.png` from task 5.7.
     - _Requirements: 21.3, 22.6, 22.7, 22.8, 25.1, 25.2_
 
 - [ ] 6. Final tasks: documents, last checks, push and report
-  - [~] 6.1 Write the one Build_Log entry in `docs/BUILD_LOG.md`
+  - [x] 6.1 Write the one Build_Log entry in `docs/BUILD_LOG.md`
     - Add exactly one new entry for this pass, built from `measurements.md`: the licence record and Font_Weight_Report; the bundle sizes before Stage A and after Stage C (every chunk, with file names); the contrast table of every pair in both themes (ratios from `truncateRatio`) and any pair below its minimum with its proposed value; the benchmark decision, the three before and three after runs and the 2.0 times slowdown check; the "after" inspection; each changed selector and check (old selector, new selector, reason); each Hindi wrapping fix; the keys whose Hindi one and other texts are the same; the Disclosure check changes; the Day `--zari` `#B0800A` note; the five-commit order including Stage 0.
     - _Requirements: 2.1, 2.5, 2.6, 5.3, 5.5, 5.6, 10.8, 15.3, 17.5, 19.5, 22.2, 23.10, 24.8, 25.7_
-  - [~] 6.2 Update `docs/KIRO_USAGE.md`
+  - [x] 6.2 Update `docs/KIRO_USAGE.md`
     - Add at least one sentence for each of Stages A, B, C and D on how Kiro was used in this pass.
     - _Requirements: 25.8_
-  - [~] 6.3 Add the font credits to `README.md` and the new directories to the structure steering
+  - [x] 6.3 Add the font credits to `README.md` and the new directories to the structure steering
     - In the "Prior work and credits" part of `README.md` list Rozha One, Hind and IBM Plex Mono, each with its designer or foundry, its licence name and the URL it was obtained from, and reword "No other credits are listed." so it stays true. The number of listed fonts equals the number of font families in `public/fonts` (three). `tests/ui/readme.test.ts` must pass.
     - In `.kiro/steering/structure.md` add one line under `src/ui` that names `components/` and `illustrations/`.
     - _Requirements: 2.4, 25.9_
-  - [~] 6.4 Run `npm run check:browser` once
+  - [x] 6.4 Run `npm run check:browser` once
     - Run it once on the final tree (documents written, nothing else changed since Stage D). Write its exit status and the names of any failing checks under "Notes for the final report" in `measurements.md`. If a check fails, list it with its fix or under "anything not done"; do not edit a check to make it pass.
     - _Requirements: 25.5, 25.6_
-  - [~] 6.5 Run `npm run check:all` once
+  - [x] 6.5 Run `npm run check:all` once
     - Run it once. Write its exit status and the names of any failing checks under "Notes for the final report". Do not edit a check to make it pass.
     - _Requirements: 25.5, 25.6_
-  - [~] 6.6 Fold the documents into the Stage D commit
+  - [-] 6.6 Fold the documents into the Stage D commit
     - The branch must hold five commits (Stage 0, A, B, C, D). Check with `git log` that the Stage D commit is `HEAD`, that it is not on the remote (`git status -sb` shows `ahead`), and that only `docs/BUILD_LOG.md`, `docs/KIRO_USAGE.md`, `README.md`, `.kiro/steering/structure.md` and `.kiro/specs/design-and-ux-pass/measurements.md` have changed. Stage those files by name and run `git commit --amend --no-edit`. Do not rewrite any commit that has been pushed, and do not force-push.
     - _Requirements: 25.1, 25.4_
   - [~] 6.7 Push `auto/build`

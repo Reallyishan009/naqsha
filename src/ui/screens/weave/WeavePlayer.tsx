@@ -77,8 +77,11 @@ export function RiseSkipControl({ running, t, onSkip }: { running: boolean; t: T
   );
 }
 
-/** What the Weave screen showed when it arrived: the design already loaded, and the pick the other screen left. */
-export type Arrival = { pattern: Pattern; pick: number };
+/**
+ * What the Weave screen showed when it arrived: the design already loaded, the pick the other screen left, and
+ * whether that design's cloth had been woven to the end.
+ */
+export type Arrival = { pattern: Pattern; pick: number; finished: boolean };
 
 export type WeavePlayerProps = {
   state: AppState;
@@ -114,6 +117,8 @@ export function WeavePlayer({ state, dispatch, t, arrival, scheduler = browserSc
   const mountPatternRef = useRef<Pattern>(arrival.pattern);
   /** The pick the other screen left in `AppState.selectedPick` when this screen arrived (R4.2). */
   const mountPickRef = useRef<number>(arrival.pick);
+  /** Whether the cloth of the design already loaded had been woven to the end when this screen arrived (R18.1). */
+  const mountFinishedRef = useRef<boolean>(arrival.finished);
   const enteredPatternRef = useRef<Pattern | null>(null);
   const patternRef = useRef<Pattern>(pattern);
   patternRef.current = pattern;
@@ -165,7 +170,13 @@ export function WeavePlayer({ state, dispatch, t, arrival, scheduler = browserSc
 
   const shown = shownCloth(view);
   const pickCount = shown === null ? 0 : shown.cloth.picks.length;
-  const mode = entryModeFor(pattern, enteredPatternRef.current, mountPatternRef.current, mountPickRef.current);
+  const mode = entryModeFor(
+    pattern,
+    enteredPatternRef.current,
+    mountPatternRef.current,
+    mountPickRef.current,
+    mountFinishedRef.current,
+  );
   const autoplays = autoplay(state.prefersReducedMotion);
   // The status shown: the player's own last word while it is about the cloth on screen, and otherwise the entry
   // status that the effect below puts the player in. The pick shown is `state.selectedPick`, or the last pick woven
@@ -190,13 +201,20 @@ export function WeavePlayer({ state, dispatch, t, arrival, scheduler = browserSc
       return;
     }
     const cloth = shown;
+    // The last finished fact sent for this player, so each change is sent once (R18.1, R18.3).
+    let reportedFinished: boolean | null = null;
     const player = createClothPlayer({
       ready: cloth,
       paint: paintToCanvas(context),
       scheduler,
       onFrame: (report) => {
-        // Every frame shown is one `select-pick`; the reducer clamps the finished frame to the last pick index.
+        // Every frame shown is one `select-pick`; the reducer clamps the finished frame to the last pick index, so
+        // `finishedPattern` is what remembers that the cloth ended (R18.7).
         dispatch({ type: 'select-pick', pick: report.frame.pick });
+        if (reportedFinished !== report.atEnd) {
+          reportedFinished = report.atEnd;
+          dispatch({ type: report.atEnd ? 'cloth-finished' : 'cloth-unfinished' });
+        }
         if (report.atEnd) {
           dispatchRise({ type: 'finished' });
           setPlayback({ cloth, state: { status: 'finished' } });

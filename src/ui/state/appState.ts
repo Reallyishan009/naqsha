@@ -28,6 +28,7 @@ export const initialAppState: AppState = {
   clothChoices: DEFAULT_CLOTH_CHOICES,
   compare: null,
   repairs: NO_REPAIRS,
+  finishedPattern: null,
 };
 
 /**
@@ -35,7 +36,7 @@ export const initialAppState: AppState = {
  * breakpoints are discarded together with the design they were set on (R3.10, R4.6).
  */
 function withNewPattern(state: AppState, current: CurrentPattern): AppState {
-  return { ...state, current, selectedPick: 0, breakpoints: [], compare: null, repairs: NO_REPAIRS };
+  return { ...state, current, selectedPick: 0, breakpoints: [], compare: null, repairs: NO_REPAIRS, finishedPattern: null };
 }
 
 function lastPickIndex(state: AppState): number {
@@ -113,6 +114,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         current: { ...state.current, pattern },
         repairs: { picks, history: [...state.repairs.history, before] },
+        finishedPattern: null,
       };
     }
     case 'undo-repair': {
@@ -125,6 +127,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         current: { ...state.current, pattern },
         repairs: { picks: state.repairs.picks.filter((pick) => !undone.has(pick)), history: state.repairs.history.slice(0, -1) },
+        finishedPattern: null,
       };
     }
     case 'compare-versions':
@@ -176,6 +179,13 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     }
     case 'set-cloth-choices':
       return { ...state, clothChoices: action.choices };
+    case 'cloth-finished': {
+      const { pattern } = state.current;
+      if (pattern.length === 0 || state.finishedPattern === pattern) return state;
+      return { ...state, finishedPattern: pattern };
+    }
+    case 'cloth-unfinished':
+      return state.finishedPattern === null ? state : { ...state, finishedPattern: null };
     case 'read-failed':
       // The batch stays as it is (R9.1, R11.10). Task 3.2 adds readFailureKey with these same keys.
       return appReducer(state, { type: 'announce', kind: 'error', messageKey: `error.read.${action.failure.reason}` });

@@ -211,6 +211,7 @@ export function CodeViewScreen({
       <DiffPanel
         profile={profile}
         currentLineSet={currentLineSet}
+        language={state.language}
         t={t}
         archiveDeps={archiveDeps}
         diffTextDeps={diffTextDeps}

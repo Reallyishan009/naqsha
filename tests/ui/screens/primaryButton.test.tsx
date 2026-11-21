@@ -170,6 +170,7 @@ function codeStates(language: Language): StateMarkup[] {
         second={null}
         comparison={{ status: 'idle' }}
         currentAvailable
+        language={language}
         t={t}
         onFirstChange={noop}
         onSecondChange={noop}

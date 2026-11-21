@@ -61,7 +61,7 @@ import {
 } from '../../../src/ui/screens/code/diffText.ts';
 import type { DiffTextDeps } from '../../../src/ui/screens/code/diffText.ts';
 import { diffEntryAccessibleName } from '../../../src/ui/state/codeView.ts';
-import { EMPTY_METADATA } from '../../../src/ui/state/keep.ts';
+import { EMPTY_METADATA, formatSavedAt } from '../../../src/ui/state/keep.ts';
 import type { SimFailure, SimImage } from '../../../src/simulator/index.ts';
 import { appReducer, initialAppState } from '../../../src/ui/state/appState.ts';
 import { buildReadyCloth } from '../../../src/ui/state/cloth.ts';
@@ -779,6 +779,7 @@ function panelHtml(overrides: Partial<DiffPanelViewProps> = {}, translate = en):
     second: null,
     comparison: { status: 'idle' },
     currentAvailable: true,
+    language: 'en',
     t: translate,
     onFirstChange: () => undefined,
     onSecondChange: () => undefined,
@@ -944,13 +945,15 @@ describe('Code view diff panel', () => {
     const html = panelHtml();
     expect(html).not.toMatch(/<select[^>]*disabled/);
     expect(html).not.toContain(en('codeview.diff.noSaved'));
-    for (const text of [en('codeview.diff.current'), 'Kota (7 picks)', 'Banarasi (7 picks)', en('codeview.diff.choose')]) {
+    // Each Version_Label adds the saved date after the name and the pick count (R16.1).
+    const savedAt = formatSavedAt(1, 'en');
+    for (const text of [en('codeview.diff.current'), `Kota (7 picks) · ${savedAt}`, `Banarasi (7 picks) · ${savedAt}`, en('codeview.diff.choose')]) {
       expect(html.split(`>${text}</option>`).length - 1, text).toBe(2);
     }
     expect(buttonTag(html, en('codeview.diff.compare'))).toContain('disabled=""');
     const chosen = panelHtml({ first: { kind: 'saved', id: 'a' }, second: { kind: 'current' } });
     expect(buttonTag(chosen, en('codeview.diff.compare'))).not.toContain('disabled');
-    expect(chosen).toContain('<option value="saved:a" selected="">Kota (7 picks)</option>');
+    expect(chosen).toContain(`<option value="saved:a" selected="">Kota (7 picks) · ${formatSavedAt(1, 'en')}</option>`);
     expect(chosen).toContain('<option value="current" selected="">');
     // While a comparison runs the control is disabled and says so.
     const running = panelHtml({ first: { kind: 'current' }, second: { kind: 'current' }, comparison: { status: 'loading' } });

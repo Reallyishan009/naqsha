@@ -72,7 +72,7 @@ flowchart LR
 ## Data Models
 
 - **Success result:** `{content: [text summary, plus an image block for render_cloth], structuredContent}`, validated by a per-tool zod `outputSchema`.
-- **Tool_Error:** `{isError: true, content: [text "reason: message. Hint: hint"], structuredContent: {ok: false, reason, message, hint}}`.
+- **Tool_Error:** `{isError: true, content: [text "reason: message. Hint: hint"], _meta: {reason, hint}}`, as built by `failure()` in `tools/loom-mcp/src/result.ts`. `content` holds exactly one text block. `_meta` holds exactly the two keys `reason` and `hint`. A Tool_Error has no `structuredContent` and no `ok` key. The reason: an MCP client checks any `structuredContent` against the tool's `outputSchema`, and an error does not have the shape of a success. `message` is one sentence that states what went wrong. `hint` is one sentence that states what the caller should do next. The reason code is in `_meta.reason` and the hint is in `_meta.hint`. The text block repeats the reason, the message and the hint, and `message` appears only in the text block.
 - **Reason codes:** `path_not_allowed`, `too_large`, `not_found`, `not_json`, `not_png`, `invalid_profile`, `invalid_pattern`, `invalid_option`, `unsupported_png`, `internal_error`, plus the reader's and the codec-view refusal reasons verbatim.
 
 ## Correctness Properties

@@ -26,7 +26,11 @@ export type WeaveScreenProps = {
  * design for the player and starts playing (R8.6).
  */
 export function WeaveScreen({ state, dispatch, t, scheduler, onRetryProfile }: WeaveScreenProps) {
-  const [arrival] = useState<Arrival>(() => ({ pattern: state.current.pattern, pick: state.selectedPick }));
+  const [arrival] = useState<Arrival>(() => ({
+    pattern: state.current.pattern,
+    pick: state.selectedPick,
+    finished: state.finishedPattern === state.current.pattern,
+  }));
   if (state.current.pattern.length === 0) {
     return <Landing state={state} dispatch={dispatch} t={t} onRetryProfile={onRetryProfile} />;
   }

@@ -459,7 +459,11 @@
     "text": "अभी कोई सहेजा हुआ डिज़ाइन नहीं है।",
     "reviewed": false
   },
-  "keep.list.picks": {
+  "keep.list.picks.one": {
+    "text": "{count} पिक",
+    "reviewed": false
+  },
+  "keep.list.picks.other": {
     "text": "{count} पिक",
     "reviewed": false
   },
@@ -651,7 +655,11 @@
     "text": "भरोसा: कम",
     "reviewed": false
   },
-  "repair.evidence.repeat": {
+  "repair.evidence.repeat.one": {
+    "text": "कार्ड हर पिक पर दोहराते हैं ({compared} में से {agreeing} जोड़े मिलते हैं)। पिक {picks} से लिया गया।",
+    "reviewed": false
+  },
+  "repair.evidence.repeat.other": {
     "text": "कार्ड हर {period} पिक पर दोहराते हैं ({compared} में से {agreeing} जोड़े मिलते हैं)। पिक {picks} से लिया गया।",
     "reviewed": false
   },
@@ -1055,7 +1063,11 @@
     "text": "पिक {pick} पर रुकने का निशान",
     "reviewed": false
   },
-  "codeview.pickCount": {
+  "codeview.pickCount.one": {
+    "text": "{count} पिक",
+    "reviewed": false
+  },
+  "codeview.pickCount.other": {
     "text": "{count} पिक",
     "reviewed": false
   },
@@ -1147,8 +1159,24 @@
     "text": "अभी खुला डिज़ाइन",
     "reviewed": false
   },
-  "codeview.diff.option": {
+  "codeview.diff.option.one": {
     "text": "{name} ({count} पिक)",
+    "reviewed": false
+  },
+  "codeview.diff.option.other": {
+    "text": "{name} ({count} पिक)",
+    "reviewed": false
+  },
+  "codeview.diff.separator": {
+    "text": " · ",
+    "reviewed": false
+  },
+  "codeview.diff.duplicate": {
+    "text": " #{k}",
+    "reviewed": false
+  },
+  "codeview.diff.ellipsis": {
+    "text": "…",
     "reviewed": false
   },
   "codeview.diff.loading": {

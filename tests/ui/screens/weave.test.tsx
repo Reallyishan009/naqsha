@@ -25,7 +25,7 @@ function renderPlayer(state: AppState): string {
       state={state}
       dispatch={() => undefined}
       t={t}
-      arrival={{ pattern: state.current.pattern, pick: state.selectedPick }}
+      arrival={{ pattern: state.current.pattern, pick: state.selectedPick, finished: state.finishedPattern === state.current.pattern }}
     />,
   );
 }

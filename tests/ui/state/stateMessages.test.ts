@@ -80,6 +80,17 @@ export const ADDED_KEYS: readonly string[] = [
   'hero.title',
   'hero.desc',
   'hero.desc.plain',
+  'codeview.diff.separator',
+  'codeview.diff.duplicate',
+  'codeview.diff.ellipsis',
+  'keep.list.picks.one',
+  'keep.list.picks.other',
+  'codeview.pickCount.one',
+  'codeview.pickCount.other',
+  'codeview.diff.option.one',
+  'codeview.diff.option.other',
+  'repair.evidence.repeat.one',
+  'repair.evidence.repeat.other',
 ];
 
 /** The purpose and next-step key of each of the four screens (R10.1). */

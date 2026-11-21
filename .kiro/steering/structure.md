@@ -14,7 +14,9 @@ Naqsha/
 │   ├── archive/     # IndexedDB persistence and retrieval
 │   └── ui/          # React components and pages
 ├── tests/           # All test files, mirroring src/ structure
-├── public/          # Static assets served as-is
+├── public/          # Static assets served as-is (profiles/, fonts/: woff2 files and their OFL licence texts)
+├── scripts/         # Dev and check tools; fonts/ (font subsetting), screenshots.ts (design-pass screenshots)
+├── media/           # README images; design/before and design/after hold the design-pass screenshots
 ├── index.html       # Vite entry point
 ├── vite.config.ts
 ├── tsconfig.json
@@ -64,6 +66,8 @@ Key exports: saveDesign (optional `continues` and `note`), getDesign, listDesign
 
 ### src/ui
 All React components, pages, and hooks. Composes the other modules into user-facing flows. Screens live in ui/screens/ (weave, keep), with state logic in ui/state/, the Card_Profile notice in ui/ProfileNotice.tsx, the printable card in ui/printable/, and translations in ui/i18n/. Each component has a .tsx file and a .module.css beside it.
+
+Shared controls live in ui/components/ (Button, ButtonLink, Notice, Tabs, Field, Panel, Disclosure, ThemeSwitch, ScreenIntro, EmptyState, StateMessage, LoadingState, WeftProgress, Selvedge, each with a .module.css beside it), and the drawn SVG art in ui/illustrations/ (HeroLoom, CardDrawing, NavIcons, StepIcons, SpotIllustrations). `ui/theme/tokens.css` holds the design tokens, `ui/theme/contrast.ts` the Contrast_Table, and `ui/theme/theme.ts` the theme choice (`chooseTheme`, stored under `THEME_STORAGE_KEY`). `ui/state/versionLabels.ts` builds the text that names a saved version in a list.
 
 Keep lists designs grouped by version (ui/screens/keep/DesignEntry.tsx); Compare hands two sides to the Code view through `AppState.compare`.
 
