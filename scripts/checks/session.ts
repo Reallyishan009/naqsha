@@ -57,8 +57,19 @@ export class Page {
     await this.setViewport(900, 1000);
   }
 
-  setViewport(width: number, height: number): Promise<unknown> {
-    return this.cdp.call('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
+  /**
+   * Sets the window size, then waits until the header has drawn the layout of that width. The header switches between its two
+   * layouts in React, after the browser reports the media query, so for a moment the page still draws the old one: a Menu button
+   * that is about to go (or one that is about to come) looks present (or absent) to the next step, which then clicks a button
+   * that disappears or skips a menu it needed. A page with no header yet (a blank page, the first call) is not waited for.
+   */
+  async setViewport(width: number, height: number): Promise<void> {
+    await this.cdp.call('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
+    await this.waitFor(
+      `(()=>{const h=document.querySelector('header[data-narrow]');return !h||h.getAttribute('data-narrow')===${JSON.stringify(String(width < HEADER_WIDE_FROM_PX))}})()`,
+      `the header to draw its ${width < HEADER_WIDE_FROM_PX ? 'narrow' : 'wide'} layout at ${width} px`,
+      5_000,
+    );
   }
 
   async ev<T>(expression: string): Promise<T> {
@@ -106,10 +117,15 @@ export class Page {
     await loaded;
   }
 
-  /** A real mouse click at the centre of the element the expression returns. */
+  /**
+   * A real mouse click at the centre of the element the expression returns, once the element has held still: its box must be
+   * the same at three reads 40 ms apart. The header changes size while the page scrolls or the width and language change (its
+   * padding and the fonts move the Menu button), so a box read at one instant can be a few pixels from where the button is
+   * when the mouse goes down.
+   */
   async click(elementExpression: string, what: string): Promise<void> {
     const point = await this.waitFor<{ x: number; y: number }>(
-      `(()=>{const e=${elementExpression};if(!e)return null;e.scrollIntoView({block:'center'});const r=e.getBoundingClientRect();return r.width>0&&r.height>0?{x:r.x+r.width/2,y:r.y+r.height/2}:null})()`,
+      `new Promise(done=>{const e=${elementExpression};if(!e){done(null);return}e.scrollIntoView({block:'center'});let last='';let same=0;let reads=0;const read=()=>{const r=e.getBoundingClientRect();const key=[r.x,r.y,r.width,r.height].join();same=key===last?same+1:0;last=key;reads++;if(same>=2)done(r.width>0&&r.height>0?{x:r.x+r.width/2,y:r.y+r.height/2}:null);else if(reads>=25)done(null);else setTimeout(read,40)};read()})`,
       what,
       10_000,
     );
@@ -117,7 +133,6 @@ export class Page {
     await this.cdp.call('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 });
     await this.cdp.call('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 });
   }
-
   clickText(selector: string, text: string): Promise<void> {
     return this.click(byText(selector, text), `${selector} "${text}"`);
   }
@@ -148,6 +163,8 @@ export class Page {
   }
 }
 
+/** The width from which the header draws its wide layout: the same number as `WIDE_QUERY` in src/ui/App.tsx (a test keeps the two equal). */
+export const HEADER_WIDE_FROM_PX = 1024;
 /** The element whose accessible name is `name`: its `aria-label`, else its text (the language segments are named in full and show "EN"). */
 export const byName = (selector: string, name: string): string =>
   `[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>(e.getAttribute('aria-label')||e.textContent).trim()===${JSON.stringify(name)})`;
@@ -166,7 +183,15 @@ export async function openHeaderMenu(page: Page, names: readonly string[]): Prom
   const state = await page.ev<string>(`(()=>{const b=${control};if(!b||b.getClientRects().length===0)return 'absent';return b.getAttribute('aria-expanded')})()`);
   if (state !== 'false') return;
   await page.click(control, 'the header menu button');
-  await page.waitFor(`(${control}).getAttribute('aria-expanded')==='true'`, 'the header menu to open');
+  try {
+    await page.waitFor(`(${control}).getAttribute('aria-expanded')==='true'`, 'the header menu to open');
+  } catch (error) {
+    // Say what the page looked like, so a miss of the click is told from a menu that closed itself.
+    const seen = await page.ev<string>(
+      `(()=>{const b=${control};if(!b)return 'no menu button';const r=b.getBoundingClientRect();const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return JSON.stringify({scrollY:Math.round(scrollY),innerWidth,expanded:b.getAttribute('aria-expanded'),box:[r.x,r.y,r.width,r.height].map(Math.round),hit:hit?hit.tagName.toLowerCase()+(hit.className&&typeof hit.className==='string'?'.'+hit.className.split(' ')[0]:''):null,onButton:!!hit&&b.contains(hit)})})()`,
+    ).catch(() => 'the page could not be read');
+    throw new Error(`${error instanceof Error ? error.message : String(error)}; the page then: ${seen}`);
+  }
 }
 
 /** Closes the menu of the header when the page draws its button and it is open (a capture then shows the page, not the menu over it). */

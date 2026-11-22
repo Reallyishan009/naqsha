@@ -94,7 +94,7 @@ export type Run2View = { name: string; widths: readonly number[] };
 
 /**
  * The header: closed in English and Hindi at five widths; the menu sheet open at the three widths under 1024 px.
- * The Weave views (a sample woven, a sample with lost cards and the repair panel open) and the Keep view (a design of two versions, history open) are full-page at 390 and 1280 px.
+ * The Weave views (a sample woven, a sample with lost cards and the repair panel open) the Keep view (a design of two versions, history open), the Scan views (empty, and with a card read from a fixture photo) and the Code view (a diff of two designs) are full-page at 390 and 1280 px.
  */
 export const RUN2_VIEWS: readonly Run2View[] = [
   { name: 'header-closed', widths: [1280, 1024, 768, 390, 320] },
@@ -104,6 +104,9 @@ export const RUN2_VIEWS: readonly Run2View[] = [
   { name: 'weave-sample', widths: [1280, 390] },
   { name: 'weave-lost', widths: [1280, 390] },
   { name: 'keep-versions', widths: [1280, 390] },
+  { name: 'scan', widths: [1280, 390] },
+  { name: 'scan-read', widths: [1280, 390] },
+  { name: 'code-diff', widths: [1280, 390] },
 ];
 
 /** The names `<view>-<theme>-<width>.png` of the given run 2 views (all of them when none is given), in view, theme, width order. */

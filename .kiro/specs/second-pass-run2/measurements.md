@@ -42,7 +42,30 @@ Layout changes made to keep check 19 (primary Button inside the first 844 px at 
 
 Shadow: the brief asked for a softer shadow once scrolled. tests/ui/theme/styles.test.ts pins the three shadow tokens and bans literals, so the header uses `--shadow-float` at the top and `--shadow-lift` once scrolled (smaller, softer). No test was changed for this.
 
+Part 3 (Scan and Code, and the check:browser flake).
+
+| Check | Change | Why |
+|---|---|---|
+| tests/ui/state/stateMessages.test.ts | ADDED_KEYS: scan.steps.label, scan.step.photograph, scan.step.check, scan.step.weave. | New Hindi keys. |
+| tests/scripts/screenshots.test.ts | New test names scan, scan-read and code-diff (1280 and 390, both themes). | New run 2 views. |
+| scripts/screenshots.ts `parseArguments` | A view name the run 2 set shares with the old 24-file set (keep-versions, scan, code-diff) now goes to the old set in the older modes instead of being refused. | `--view scan` with `before` or `after` had become an error. |
+| scripts/check_browser.ts, the Code view open offline (steps 20, groups A and B) | Was: the one marked Line has data-pick "0", then "1" after a step. Now: exactly one marked Line, a pick of the design (0 to length - 2), and one step forward moves it to the next pick. | The sample plays on Weave and the Selected_Pick moves with each frame, so the pick Code view opens at depends on how long the page took to get there. It showed "1" once clicks took about 80 ms longer (see below). Not a weaker claim about Code view: still one Line, in range, and the step moves it by exactly one. |
+| scripts/checks/session.ts `Page.click` | Waits until the box of the target is the same at three reads 40 ms apart before the mouse goes down. | See the flake below. |
+| scripts/checks/session.ts `Page.setViewport` | After the size is set it waits until `header[data-narrow]` matches the width (under 1024 px narrow). A page with no header is not waited for. HEADER_WIDE_FROM_PX is tested equal to WIDE_QUERY in App.tsx. | The flake below. |
+| scripts/checks/session.ts `openHeaderMenu` | On a menu that does not open, the error adds scrollY, width, aria-expanded, the button box and the element at its centre. | A future miss names itself. |
+| tests/scripts/session.test.ts, report.test.ts | Three example tests: click waits for a still box before pressing; setViewport waits for the header layout; the FAIL lines, the failed count and the exit code agree. | Tests for the fixes above. |
+| src/ui/components/Disclosure.module.css | The toggle is a pill with a hairline, the secondary Button look. Markup and names unchanged. | Orchestrator note (a). |
+
+The check:browser flake (step 12 "timed out waiting for the header menu to open", and a FAIL line above a summary of 20 passed 0 failed):
+
+- Cause of the timeout: a width change races React. The header chooses its layout in JS from a media query, so right after `setViewport` the page still draws the old layout for a moment. Going from 390 to 1280 (or 1280 to 900) the next step either saw the old Menu button, clicked it, and then watched it vanish when the wide layout arrived (menu "never opens"), or saw no button, skipped the menu, and found the language button hidden when the narrow layout arrived. Not a sticky or scroll race: 80 open and close rounds at 5 scroll depths did not miss once. Reproduced the second form on this run ("timed out waiting for button named English" after the width loop), fixed by waiting for `data-narrow` in `setViewport`; the full run then passed. The stable-box wait in `click` is extra hardening for the header changing size while it shrinks.
+- The FAIL line was not a failed step. The runner has no retry and counts its summary from the same results it prints (a new test checks the FAIL lines, the failed count and the exit code agree). The text is the PASS line of "the page reloads offline": its detail lists the probe request `never-cached-....txt -> net::ERR_FAILED`, which contains FAIL in capitals. Nothing was changed there.
+
+Layout notes: the Scan screen now sits its panels in rounded cards and the photo chooser in a dashed rounded zone with the drawn Diamond card; the Code view photo is a 3.4:1 crop (min height 8 rem). No `@media` in those modules (a test bans all but reduced-motion).
+
 ## Bytes
+
+Part 3: entry chunk 127,821 B gzipped (check-bundle), Scan chunk 9,351 B, Code view chunk 10,253 B.
 
 Part 2: entry chunk 127,720 B gzipped (limit for this run 150,000; 204,800 untouched).
 
@@ -53,6 +76,8 @@ Part 1: entry chunk 126,914 B gzipped (check-bundle). Part 0: entry chunk (gzip)
 New pair on-primary on accent (the current link): day 5.09:1, night 9.74:1 (minimum 4.5). The frost alpha stays 0.95 (test: at least 0.85). `node scripts/contrast_report.ts`: every pair meets its minimum.
 
 ## Screenshots
+
+Part 3: scan, scan-read (a card read from tests/fixtures/pick0-clean.png) and code-diff, day and night, 1280 and 390 (full page, reduced motion).
 
 Part 2: keep-versions, day and night, 1280 and 390 (full page, reduced motion, header made static for the capture).
 

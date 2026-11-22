@@ -211,6 +211,10 @@ export const ADDED_KEYS: readonly string[] = [
   'keep.heading',
   'keep.heading.accent',
   'keep.details.legend',
+  'scan.steps.label',
+  'scan.step.photograph',
+  'scan.step.check',
+  'scan.step.weave',
   'credits.photos.caption',
 ];
 

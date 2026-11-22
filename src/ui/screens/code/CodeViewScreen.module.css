@@ -96,3 +96,34 @@
   width: 100%;
   min-width: 0;
 }
+/* The photo on top: a wide crop of the tall photograph, in a rounded frame, with its credit under it. */
+.photoCard {
+  margin: 0 0 var(--space-4);
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lift);
+}
+.photo {
+  aspect-ratio: 3.4 / 1;
+  min-height: 8rem;
+  object-fit: cover;
+  object-position: 50% 30%;
+}
+/* The step, jump and breakpoint controls sit together in one rounded card. */
+.screen .controlsCard {
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lift);
+}
+/* The cloth is a rounded picture of the selected pick. */
+.clothArea canvas {
+  border-radius: var(--radius-media);
+}
+/* The credit line sits inside the frame, indented like the card's own text. */
+.photoCard [data-photo-caption] {
+  padding: 0 var(--space-4);
+}

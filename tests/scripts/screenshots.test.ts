@@ -176,6 +176,11 @@ describe('run 2 screenshot set', () => {
       'keep-versions-night-390.png',
     ]);
   });
+  it('names the Scan and Code views at 390 and 1280 px, in both themes', () => {
+    expect(run2Names(['scan', 'scan-read', 'code-diff'])).toEqual(
+      ['scan', 'scan-read', 'code-diff'].flatMap((view) => ['day', 'night'].flatMap((theme) => [`${view}-${theme}-1280.png`, `${view}-${theme}-390.png`])),
+    );
+  });
   it('run2Names takes the named views only', () => {
     const names = run2Names(['header-menu']);
     expect(names).toHaveLength(2 * RUN2_VIEWS.find((view) => view.name === 'header-menu')!.widths.length);

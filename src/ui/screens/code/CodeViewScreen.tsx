@@ -10,12 +10,15 @@ import type { Translate } from '../../i18n/messages.ts';
 import { pickControlOutcome } from '../../state/codeView.ts';
 import type { PickControl } from '../../state/codeView.ts';
 import { buildReadyCloth, viewportFor } from '../../state/cloth.ts';
+import { PHOTOS } from '../../state/photos.ts';
 import type { AppAction, AppState, ReadyCloth } from '../../types.ts';
 import { ClothCanvas, createClothPlayer } from '../weave/ClothCanvas.tsx';
 import { Button } from '../../components/Button.tsx';
 import { Field } from '../../components/Field.tsx';
 import { Notice } from '../../components/Notice.tsx';
 import { Chip } from '../../components/Chip.tsx';
+import { Photo } from '../../components/Photo.tsx';
+import { PhotoCaption } from '../../components/PhotoCaption.tsx';
 import { ScreenIntro } from '../../components/ScreenIntro.tsx';
 import { StateMessage } from '../../components/StateMessage.tsx';
 import { NothingToCompareIllustration } from '../../illustrations/SpotIllustrations.tsx';
@@ -210,6 +213,16 @@ export function CodeViewScreen({
       </div>
 
       <ScreenIntro purpose={t('codeview.purpose')} next={t('codeview.nextStep')} />
+      {/* A chain of punched cards at a Jacquard head: the lines below are these cards written out as bits. The credit is shown with it. */}
+      <figure className={styles.photoCard}>
+        <Photo
+          photo={PHOTOS['bradford-card-chain']}
+          alt={t(PHOTOS['bradford-card-chain'].altKey)}
+          sizes="(min-width: 960px) 60rem, 100vw"
+          className={styles.photo}
+        />
+        <PhotoCaption photo={PHOTOS['bradford-card-chain']} t={t} />
+      </figure>
 
       {/* The compare panel comes first so its one primary Button is in view without scrolling (R23.7). */}
       <DiffPanel
@@ -222,7 +235,7 @@ export function CodeViewScreen({
         request={state.compare}
       />
 
-      <div role="group" aria-label={t('codeview.controls.name')} className={styles.controls}>
+      <div role="group" aria-label={t('codeview.controls.name')} className={`${styles.controls} ${styles.controlsCard}`}>
         {pickCount === 0 ? null : (
           <p className={styles.selected}>{t('codeview.selected', { pick: selectedPick })}</p>
         )}

@@ -10,6 +10,69 @@
 .panel {
   margin: 16px 0;
 }
+/* Every sheet of the screen is a rounded card with a soft shadow; the selector is longer than the Panel's own, so it wins whatever the order. */
+.screen .panel {
+  border-radius: var(--radius-media);
+  box-shadow: var(--shadow-lift);
+}
+/* The three steps: pills in a row that wraps. The current one is bold with a filled dot; the others have an open dot (shape and weight, not colour alone). */
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  color: var(--ink);
+  font-size: var(--text-small);
+  line-height: 1.4;
+  background: var(--tint);
+  border-radius: var(--radius-pill);
+}
+.step[data-current='true'] {
+  font-weight: 700;
+  color: var(--on-primary);
+  background: var(--accent);
+}
+.stepDot {
+  flex: none;
+  width: 0.7em;
+  height: 0.7em;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+.step[data-current='true'] .stepDot {
+  background: currentColor;
+}
+/* The photo chooser is the big zone of the screen: a dashed rounded frame, the drawn card beside the controls (above them where the line is too short for both). */
+.screen .zone {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-5);
+  border: 2px dashed var(--ink-soft);
+  border-radius: var(--radius-card);
+}
+.zoneArt {
+  flex: 0 1 10rem;
+  width: 10rem;
+  max-width: 100%;
+  margin-inline: auto;
+  border-radius: var(--radius-media);
+  box-shadow: var(--shadow-lift);
+}
+.zoneBody {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
 .more {
   margin: 16px 0 0;
 }

@@ -1938,5 +1938,21 @@
   "credits.photos.caption": {
     "text": "फ़ोटो: {author}, {licence}",
     "reviewed": false
+  },
+  "scan.steps.label": {
+    "text": "कार्ड पढ़ने के चरण",
+    "reviewed": false
+  },
+  "scan.step.photograph": {
+    "text": "फ़ोटो खींचें",
+    "reviewed": false
+  },
+  "scan.step.check": {
+    "text": "छेद जाँचें",
+    "reviewed": false
+  },
+  "scan.step.weave": {
+    "text": "बुनें",
+    "reviewed": false
   }
 }

@@ -4,6 +4,7 @@ import type { CardProfile } from '../../../codec/index.ts';
 import type { PixelData, ReadFailure as CardReadFailure } from '../../../reader/index.ts';
 import { readFailureKey } from '../../i18n/messages.ts';
 import type { Translate } from '../../i18n/messages.ts';
+import { ART } from '../../state/art.ts';
 import { hookMarkers } from '../../state/corrections.ts';
 import {
   hookSpacingCssPx,
@@ -18,6 +19,7 @@ import {
 import type { LoadPixels } from '../../state/scan.ts';
 import { cameraControl } from '../../platform/browser.ts';
 import { ProfileNotice } from '../../ProfileNotice.tsx';
+import { ArtImage } from '../../components/ArtImage.tsx';
 import { Button } from '../../components/Button.tsx';
 import { useAfterDelay } from '../../components/delay.ts';
 import { Disclosure } from '../../components/Disclosure.tsx';
@@ -95,6 +97,13 @@ function FailureMessage({ failure, t }: { failure: CardReadFailure; t: Translate
   );
 }
 
+/** The three steps of the screen, in order: the first is the photo, the second the marks of a read card, the third the batch ready to weave. */
+const STEP_KEYS = ['scan.step.photograph', 'scan.step.check', 'scan.step.weave'] as const;
+/** The step the screen is at: checking the marks while a card is read, weaving once cards are accepted, else photographing. */
+export function currentStepIndex(readCard: boolean, batchLength: number): 0 | 1 | 2 {
+  if (readCard) return 1;
+  return batchLength > 0 ? 2 : 0;
+}
 /** What Scan draws. No state of its own, so tests can render every case (R8, R9, R10, R11, R22). */
 export function ScanView(props: ScanViewProps) {
   const { profile, scan, batch, t } = props;
@@ -110,6 +119,18 @@ export function ScanView(props: ScanViewProps) {
         {t('nav.scan')}
       </h2>
       <ScreenIntro purpose={t('scan.purpose')} next={t('scan.nextStep')} />
+      {/* The step the weaver is at is marked by a filled dot and bold text, and named to a screen reader by aria-current; the others have an open dot. */}
+      <ol className={styles.steps} aria-label={t('scan.steps.label')}>
+        {STEP_KEYS.map((key, index) => {
+          const current = index === currentStepIndex(readState !== null, batch.length);
+          return (
+            <li key={key} className={styles.step} data-current={current} aria-current={current ? 'step' : undefined}>
+              <span aria-hidden="true" className={styles.stepDot} />
+              {t(key)}
+            </li>
+          );
+        })}
+      </ol>
       {profile === null ? (
         <Panel>
           <p className={styles.emptyText}>{t('scan.needsProfile')}</p>
@@ -117,7 +138,10 @@ export function ScanView(props: ScanViewProps) {
       ) : (
         <>
           {/* Choose-a-photo is the first control, outside the Disclosure. */}
-          <Panel as="section" aria-labelledby="scan-choose-title" className={styles.panel}>
+          <Panel as="section" aria-labelledby="scan-choose-title" className={`${styles.panel} ${styles.zone}`}>
+            {/* A hint of what to photograph: a card drawn by the app. */}
+            <ArtImage art={ART['card-diamond']} alt={t(ART['card-diamond'].altKey)} className={styles.zoneArt} />
+            <div className={styles.zoneBody}>
             <h3 id="scan-choose-title" className={styles.sectionTitle}>
               {t('scan.choose.label')}
             </h3>
@@ -143,6 +167,7 @@ export function ScanView(props: ScanViewProps) {
             ) : null}
             {showReading ? <WeftProgress text={t('progress.reading')} /> : null}
             {scan.status === 'failed' ? <FailureMessage failure={scan.failure} t={t} /> : null}
+            </div>
           </Panel>
           <ProfileNotice profile={profile} t={t} />
           {batch.length === 0 ? (

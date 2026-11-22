@@ -483,5 +483,9 @@
   "keep.heading": "Keep the design, or take it to a loom",
   "keep.heading.accent": "loom",
   "keep.details.legend": "About this design",
-  "credits.photos.caption": "Photo: {author}, {licence}"
+  "credits.photos.caption": "Photo: {author}, {licence}",
+  "scan.steps.label": "Steps of reading a card",
+  "scan.step.photograph": "Photograph",
+  "scan.step.check": "Check holes",
+  "scan.step.weave": "Weave"
 }

@@ -120,6 +120,15 @@ function parseArguments(argv: readonly string[]): Options | string {
     }
   }
   if (mode === null) return usage;
+  if (mode !== 'after-run2') {
+    // A name both sets share (keep-versions, scan, code-diff) belongs to the 24-file set in the older modes.
+    for (const name of [...run2Views]) {
+      const shared = SCREENSHOT_VIEWS.find((view) => view === name);
+      if (shared === undefined) continue;
+      run2Views.splice(run2Views.indexOf(name), 1);
+      if (!views.includes(shared)) views.push(shared);
+    }
+  }
   if (mode === 'after-run2' && views.length > 0) return `${usage}\n--view for after-run2 must be one of: ${RUN2_VIEWS.map((v) => v.name).join(', ')}`;
   if (mode !== 'after-run2' && run2Views.length > 0) return `${usage}\n${run2Views.join(', ')} belongs to after-run2`;
   if (mode === 'after-run1' && views.length > 0) return `${usage}\n--view does not apply to after-run1, which takes only the Landing`;
@@ -318,6 +327,12 @@ async function prepareCodeDiff(page: Page): Promise<void> {
   );
 }
 
+/** The Scan screen with a card read from a synthetic fixture photo (clean, no tilt): the marks, Accept and Discard are open. */
+async function prepareScanRead(page: Page): Promise<void> {
+  await prepareScan(page);
+  await page.setFile('#scan-file', path.join(repoRoot, 'tests', 'fixtures', 'pick0-clean.png'));
+  await page.waitFor(`document.querySelectorAll('button[data-shape]').length>0`, 'the read card on Scan', 30_000);
+}
 const PREPARE: Record<View, (page: Page) => Promise<void>> = {
   'weave-landing': prepareLanding,
   'weave-sample': prepareSample,
@@ -538,6 +553,9 @@ const RUN2_SCREEN_VIEWS: Readonly<Record<string, (page: Page) => Promise<void>>>
   'weave-sample': prepareSample,
   'weave-lost': prepareLost,
   'keep-versions': prepareKeepVersionsOpen,
+  scan: prepareScan,
+  'scan-read': prepareScanRead,
+  'code-diff': prepareCodeDiff,
 };
 
 /** One view of a screen at each of its widths: a fresh page, the screen made ready, then both themes as full-page files. */

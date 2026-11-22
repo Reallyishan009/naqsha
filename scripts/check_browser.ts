@@ -1390,10 +1390,18 @@ function buildSteps(ctx: Context): BrowserStep[] {
           const count = await page.ev<number>(`${lines}.length`);
           expect(count >= 1 && count <= WINDOW_SIZE, `the listing holds ${count} Lines, expected 1 to ${WINDOW_SIZE} (WINDOW_SIZE)`);
           const before = await page.ev<(string | null)[]>(current);
-          expect(before.length === 1 && before[0] === '0', `before the step, the Lines marked aria-current="true" have data-pick ${JSON.stringify(before)}, expected ["0"]`);
+          // The sample starts playing on Weave and the Selected_Pick moves on with each frame shown, so the pick Code view opens
+          // at depends on how long the page took to get here (the first pick after a few frames at most). Exactly one Line must be
+          // marked, it must be a pick of the design, and one step forward must move it to the next pick.
+          const openedAt = Number(before[0]);
+          expect(
+            before.length === 1 && Number.isInteger(openedAt) && openedAt >= 0 && openedAt < expected - 1,
+            `before the step, the Lines marked aria-current="true" have data-pick ${JSON.stringify(before)}, expected exactly one pick from 0 to ${expected - 2}`,
+          );
+          const nextPick = String(openedAt + 1);
           await page.clickText('button', EN['codeview.step.forward']!);
           const after = await page
-            .waitFor<(string | null)[]>(`(()=>{const c=${current};return c.length===1&&c[0]==='1'?c:null})()`, 'the Selected_Pick to move to pick 1 after one step forward', 5_000)
+            .waitFor<(string | null)[]>(`(()=>{const c=${current};return c.length===1&&c[0]===${JSON.stringify(nextPick)}?c:null})()`, `the Selected_Pick to move to pick ${nextPick} after one step forward`, 5_000)
             .catch(async (error: unknown) => {
               const seen = await page.ev<(string | null)[]>(current);
               throw new Error(`${error instanceof Error ? error.message : String(error)}; the Lines marked aria-current="true" have data-pick ${JSON.stringify(seen)}`);
