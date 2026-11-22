@@ -2114,5 +2114,37 @@
   "keep.demo.loom.link": {
     "text": "{name} डाउनलोड करें",
     "reviewed": false
+  },
+  "codeview.demo.title": {
+    "text": "डेमो से कोड व्यू आज़माएँ",
+    "reviewed": false
+  },
+  "codeview.demo.intro": {
+    "text": "तीन बटन, जिनके लिए अपना कार्ड नहीं चाहिए।",
+    "reviewed": false
+  },
+  "codeview.demo.load": {
+    "text": "डायमंड कार्ड को कोड में खोलें",
+    "reviewed": false
+  },
+  "codeview.demo.breakpoint": {
+    "text": "पिक {pick} पर ब्रेकपॉइंट लगाएँ",
+    "reviewed": false
+  },
+  "codeview.demo.compare": {
+    "text": "बदले हुए संस्करण से तुलना करें",
+    "reviewed": false
+  },
+  "codeview.demo.needDesign": {
+    "text": "ब्रेकपॉइंट के लिए कम से कम {count} पिक का डिज़ाइन चाहिए। पहले डायमंड कार्ड खोलें।",
+    "reviewed": false
+  },
+  "codeview.demo.compareHint": {
+    "text": "तुलना करने पर एक डेमो डिज़ाइन और उसका बदला हुआ संस्करण सहेजे जाते हैं (सहेजें स्क्रीन की सूची में), फिर दोनों की तुलना होती है।",
+    "reviewed": false
+  },
+  "codeview.demo.breakpointSet": {
+    "text": "पिक {pick} पर ब्रेकपॉइंट लगा है।",
+    "reviewed": false
   }
 }

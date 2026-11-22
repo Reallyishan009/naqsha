@@ -1745,7 +1745,11 @@ function tabStops(html: string): string[] {
 describe('Code view keyboard order (R11.1)', () => {
   it('R11.1 Tab visits the diff panel, then the screen controls, then each Line breakpoint control and Bit_Line region', () => {
     const html = render(readyState(patternOf(3), { selectedPick: 1 }));
+    // The Demo card sits between the diff panel and the pick controls. Its breakpoint button is disabled for a design
+    // of 3 picks (pick 3 does not exist), so it is no tab stop here.
     expect(tabStops(html)).toEqual([
+      `button:${en('codeview.demo.load')}`,
+      `button:${en('codeview.demo.compare')}`,
       `button:${en('codeview.step.back')}`,
       `button:${en('codeview.step.forward')}`,
       `button:${en('codeview.run.next')}`,

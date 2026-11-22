@@ -527,5 +527,13 @@
   "keep.demo.editNote": "Demo edit {count}: a few holes changed",
   "keep.demo.loom.heading": "Download loom file",
   "keep.demo.loom.note": "Made with Naqsha's own export. Not tested on a physical loom.",
-  "keep.demo.loom.link": "Download {name}"
+  "keep.demo.loom.link": "Download {name}",
+  "codeview.demo.title": "Try the Code view with a demo",
+  "codeview.demo.intro": "Three buttons that need no card of your own.",
+  "codeview.demo.load": "Load the Diamond card as code",
+  "codeview.demo.breakpoint": "Add a breakpoint on pick {pick}",
+  "codeview.demo.compare": "Compare with an edited version",
+  "codeview.demo.needDesign": "A breakpoint needs a design with at least {count} picks. Load the Diamond card first.",
+  "codeview.demo.compareHint": "Compare saves a demo design and an edited version of it in the list on the Keep screen, then compares the two.",
+  "codeview.demo.breakpointSet": "A breakpoint is set on pick {pick}."
 }

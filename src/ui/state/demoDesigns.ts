@@ -2,6 +2,8 @@ import { getDesign, groupDesigns, listDesigns, saveDesign } from '../../archive/
 import type { ArchiveDeps, ArchiveFailure, DesignGroup, Metadata } from '../../archive/index.ts';
 import type { CardGrid, CardProfile, Pattern } from '../../codec/index.ts';
 import { generateSample } from '../samples/sampleDesigns.ts';
+import type { AppAction, AppState } from '../types.ts';
+import { hasUnsavedWork } from './appState.ts';
 
 /**
  * The saved demo design of the judges' kit: the Diamond sample under a fixed name, weaver and place. The words are
@@ -98,4 +100,59 @@ export async function saveDemoEdit(
     deps,
   );
   return saved.ok ? { ok: true, value: { id: saved.value, continues: group.newest.id, versionCount: count + 1 } } : saved;
+}
+
+/** The two versions of the demo design that Compare shows: the oldest, and the newest. */
+export type DemoPair = { first: string; second: string };
+
+/**
+ * Makes sure the demo design has an edited version, saving what is missing through the same functions as the Keep
+ * Demo card, and names the oldest and the newest version of it for a comparison. Never throws.
+ */
+export async function ensureDemoPair(
+  profile: CardProfile,
+  note: (count: number) => string,
+  deps?: ArchiveDeps,
+): Promise<DemoOutcome<DemoPair>> {
+  const find = async (): Promise<DemoOutcome<DesignGroup | null>> => {
+    const listed = await listDesigns(deps);
+    return listed.ok ? { ok: true, value: findDemoGroup(groupDesigns(listed.value)) } : listed;
+  };
+  let found = await find();
+  if (!found.ok) return found;
+  if (found.value === null || found.value.versionCount < 2) {
+    const saved = await saveDemoEdit(profile, note, deps);
+    if (!saved.ok) return saved;
+    found = await find();
+    if (!found.ok) return found;
+  }
+  const group = found.value;
+  const oldest = group?.versions[group.versions.length - 1];
+  const newest = group?.newest;
+  if (oldest === undefined || newest === undefined || oldest.id === newest.id) {
+    return { ok: false, failure: { reason: 'not-found', id: DEMO_METADATA.name } };
+  }
+  return { ok: true, value: { first: oldest.id, second: newest.id } };
+}
+
+/** The pick the Code Demo card puts a breakpoint on, as the Code view counts picks (from 0, as it shows them). */
+export const DEMO_BREAKPOINT_PICK = 3;
+
+/**
+ * What "Load the Diamond card as code" does: the Diamond sample becomes the Current_Pattern, and the Code view opens.
+ * Unsaved scanned cards raise the usual question first; it is drawn on Weave, so the screen goes there, and nothing is
+ * replaced without a yes.
+ */
+export function loadDiamondActions(state: AppState, profile: CardProfile): AppAction[] {
+  return [
+    { type: 'request-sample', design: 'diamond', pattern: generateSample(profile, 'diamond') },
+    { type: 'navigate', screen: hasUnsavedWork(state) ? 'weave' : 'code' },
+  ];
+}
+
+/** What "Add a breakpoint" does: set one on DEMO_BREAKPOINT_PICK unless it is set, so pressing twice never removes it. */
+export function demoBreakpointActions(state: AppState): AppAction[] {
+  const { pattern } = state.current;
+  if (pattern.length <= DEMO_BREAKPOINT_PICK || state.breakpoints.includes(DEMO_BREAKPOINT_PICK)) return [];
+  return [{ type: 'toggle-breakpoint', pick: DEMO_BREAKPOINT_PICK }];
 }

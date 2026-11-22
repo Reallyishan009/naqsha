@@ -59,4 +59,12 @@ None was read or partly read. All eight fail at the same step (the two large ali
 - Entry chunk after 3.1: 130,137 B gzipped by `check-bundle` (limit 150,000).
 - Demo name, weaver and place of the saved demo design are fixed English words (data of the saved design, not screen text), so the design can be found again in either language.
 
+## Code demo card (task 3.2)
+
+- Changed check: `tests/ui/screens/code.test.tsx` R11.1 (Tab order of the Code view). The expected list is still an exact `toEqual`; it now starts with the two enabled buttons of the new Demo card ("Load the Diamond card as code", "Compare with an edited version"), which sit between the diff panel and the pick controls. The breakpoint button of the card is disabled for the 3-pick design of that test (it needs 4 picks), so it is no tab stop there. Nothing removed from the list.
+- Pick numbering: the Code view counts picks from 0 (R2.2 of cards-as-code: "pick number is the pick index counted from 0"; the jump range reads "0 to last"). "Add a breakpoint on pick 3" sets the breakpoint the screen labels "Breakpoint on pick 3", the fourth card. It needs a design of at least 4 picks and says so when it has fewer; pressing it twice keeps the breakpoint (it never removes one).
+- "Compare with an edited version" saves nothing but the demo design and its edit(s) through the Keep demo functions (`saveDemoEdit`), then compares the oldest and the newest version of the demo design through the existing `compare-versions` state. The diff panel is drawn again (a new key) so its list holds them. Pressing it again saves nothing more.
+- "Load the Diamond card as code" uses `request-sample`, so unsaved scanned cards raise the usual question; the question is drawn on Weave, so in that one case the screen goes to Weave.
+- Entry chunk after 3.2: 130,955 B gzipped by `check-bundle` (limit 150,000).
+
 ## Skipped

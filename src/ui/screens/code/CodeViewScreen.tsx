@@ -5,11 +5,12 @@ import { patternToLines } from '../../../codec-view/index.ts';
 import type { Line, LineSet, LinesResult } from '../../../codec-view/index.ts';
 import { browserScheduler, paintToCanvas } from '../../../simulator/index.ts';
 import type { Player, Scheduler, SimFailure, SimImage, SimResult } from '../../../simulator/index.ts';
-import { simFailureKey } from '../../i18n/messages.ts';
+import { archiveFailureKey, simFailureKey } from '../../i18n/messages.ts';
 import type { Translate } from '../../i18n/messages.ts';
 import { pickControlOutcome } from '../../state/codeView.ts';
 import type { PickControl } from '../../state/codeView.ts';
 import { buildReadyCloth, viewportFor } from '../../state/cloth.ts';
+import { DEMO_BREAKPOINT_PICK, demoBreakpointActions, ensureDemoPair, loadDiamondActions } from '../../state/demoDesigns.ts';
 import { PHOTOS } from '../../state/photos.ts';
 import type { AppAction, AppState, ReadyCloth } from '../../types.ts';
 import { ClothCanvas, createClothPlayer } from '../weave/ClothCanvas.tsx';
@@ -23,6 +24,7 @@ import { ScreenIntro } from '../../components/ScreenIntro.tsx';
 import { StateMessage } from '../../components/StateMessage.tsx';
 import { NothingToCompareIllustration } from '../../illustrations/SpotIllustrations.tsx';
 import styles from './CodeViewScreen.module.css';
+import { DemoCard } from './DemoCard.tsx';
 import { DiffPanel } from './DiffPanel.tsx';
 import type { DiffTextDeps } from './diffText.ts';
 import { Listing } from './Listing.tsx';
@@ -197,6 +199,32 @@ export function CodeViewScreen({
     setStoppedAt(outcome.noFurtherBreakpoint ? lastPick : null);
   };
 
+  // The Demo card. "Compare with an edited version" saves what the comparison needs, then asks for it; the diff panel is
+  // drawn again (a new key) so its list of saved designs holds the two versions.
+  const [demoBusy, setDemoBusy] = useState(false);
+  const [demoRound, setDemoRound] = useState(0);
+  const onDemoLoad = (): void => {
+    if (profile === null) return;
+    for (const action of loadDiamondActions(state, profile)) dispatch(action);
+  };
+  const onDemoBreakpoint = (): void => {
+    for (const action of demoBreakpointActions(state)) dispatch(action);
+    dispatch({ type: 'announce', kind: 'confirmation', messageKey: 'codeview.demo.breakpointSet', params: { pick: DEMO_BREAKPOINT_PICK } });
+  };
+  const onDemoCompare = (): void => {
+    if (profile === null || demoBusy) return;
+    setDemoBusy(true);
+    void ensureDemoPair(profile, (count) => t('keep.demo.editNote', { count }), archiveDeps).then((outcome) => {
+      setDemoBusy(false);
+      if (!outcome.ok) {
+        dispatch({ type: 'announce', kind: 'error', messageKey: archiveFailureKey(outcome.failure) });
+        return;
+      }
+      setDemoRound((round) => round + 1);
+      dispatch({ type: 'compare-versions', first: { kind: 'saved', id: outcome.value.first }, second: { kind: 'saved', id: outcome.value.second } });
+    });
+  };
+
   const onJumpSubmit = (event: FormEvent<HTMLFormElement>): void => {
     // Enter applies the jump; it must not submit the page.
     event.preventDefault();
@@ -226,6 +254,7 @@ export function CodeViewScreen({
 
       {/* The compare panel comes first so its one primary Button is in view without scrolling (R23.7). */}
       <DiffPanel
+        key={demoRound}
         profile={profile}
         currentLineSet={currentLineSet}
         language={state.language}
@@ -233,6 +262,16 @@ export function CodeViewScreen({
         archiveDeps={archiveDeps}
         diffTextDeps={diffTextDeps}
         request={state.compare}
+      />
+
+      <DemoCard
+        t={t}
+        profileReady={profile !== null}
+        pickCount={pickCount}
+        busy={demoBusy}
+        onLoad={onDemoLoad}
+        onBreakpoint={onDemoBreakpoint}
+        onCompare={onDemoCompare}
       />
 
       <div role="group" aria-label={t('codeview.controls.name')} className={`${styles.controls} ${styles.controlsCard}`}>
