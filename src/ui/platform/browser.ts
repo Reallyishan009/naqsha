@@ -112,3 +112,16 @@ export function browserPrefersReducedMotion(): boolean {
 export function setDocumentLanguage(language: Language): void {
   if (typeof document !== 'undefined') document.documentElement.lang = language;
 }
+
+/**
+ * Fetches one of the app's own static demo images (a GET of a file served with the app; nothing of the user's is sent).
+ * It lives here with the other browser calls so the Scan screen's sources hold no network call (R13.1).
+ */
+export function fetchDemoImageFile(demoImageUrl: string): Promise<Response> {
+  return fetch(demoImageUrl);
+}
+
+/** Whether the browser thinks it is online. True when the browser cannot say. */
+export function browserIsOnline(): boolean {
+  return typeof navigator === 'undefined' || navigator.onLine !== false;
+}

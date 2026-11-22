@@ -1966,5 +1966,109 @@
   "scan.step.weave": {
     "text": "बुनें",
     "reviewed": false
+  },
+  "scan.demo.title": {
+    "text": "डेमो कार्ड",
+    "reviewed": false
+  },
+  "scan.demo.chip": {
+    "text": "डेमो",
+    "reviewed": false
+  },
+  "scan.demo.made.heading": {
+    "text": "हमारे बनाए कार्ड",
+    "reviewed": false
+  },
+  "scan.demo.made.note": {
+    "text": "डेमो कार्ड की बनावट पर हमने बनाए हैं। किसी असली करघे का कार्ड नहीं।",
+    "reviewed": false
+  },
+  "scan.demo.real.heading": {
+    "text": "असली कार्ड की फ़ोटो",
+    "reviewed": false
+  },
+  "scan.demo.real.note": {
+    "text": "असली फ़ोटो। नक्शा का रीडर डेमो कार्ड की बनावट के लिए बना है, इसलिए हो सकता है वह इन्हें ठीक न पढ़े।",
+    "reviewed": false
+  },
+  "scan.demo.credit": {
+    "text": "{author}, {licence}",
+    "reviewed": false
+  },
+  "scan.demo.downloadShort": {
+    "text": "डाउनलोड",
+    "reviewed": false
+  },
+  "scan.demo.download": {
+    "text": "{name} की मूल तस्वीर डाउनलोड करें",
+    "reviewed": false
+  },
+  "scan.demo.needsConnection": {
+    "text": "इस तस्वीर के लिए इंटरनेट चाहिए। इंटरनेट से जुड़ें और इसे फिर दबाएँ।",
+    "reviewed": false
+  },
+  "scan.demo.loadFailed": {
+    "text": "यह तस्वीर लोड नहीं हो सकी। इसे फिर दबाएँ।",
+    "reviewed": false
+  },
+  "scan.demo.name.clean1": {
+    "text": "साफ़ 1",
+    "reviewed": false
+  },
+  "scan.demo.name.clean2": {
+    "text": "साफ़ 2",
+    "reviewed": false
+  },
+  "scan.demo.name.clean3": {
+    "text": "साफ़ 3",
+    "reviewed": false
+  },
+  "scan.demo.name.tilted": {
+    "text": "तिरछा",
+    "reviewed": false
+  },
+  "scan.demo.name.noisy": {
+    "text": "धुंधला",
+    "reviewed": false
+  },
+  "scan.demo.name.noisyTilted": {
+    "text": "धुंधला और तिरछा",
+    "reviewed": false
+  },
+  "scan.demo.name.blank": {
+    "text": "कार्ड नहीं (पढ़ना विफल होना चाहिए)",
+    "reviewed": false
+  },
+  "scan.demo.name.single1": {
+    "text": "एक कार्ड 1",
+    "reviewed": false
+  },
+  "scan.demo.name.single2": {
+    "text": "एक कार्ड 2",
+    "reviewed": false
+  },
+  "scan.demo.name.single3": {
+    "text": "एक कार्ड 3",
+    "reviewed": false
+  },
+  "scan.demo.name.single4": {
+    "text": "एक कार्ड 4",
+    "reviewed": false
+  },
+  "scan.demo.name.chain": {
+    "text": "कार्डों की लड़ी",
+    "reviewed": false
+  },
+  "scan.demo.name.bradfordChain": {
+    "text": "ब्रैडफ़र्ड की लड़ी",
+    "reviewed": false
+  },
+  "scan.demo.name.bradfordStack": {
+    "text": "ब्रैडफ़र्ड का ढेर",
+    "reviewed": false
+  },
+  "scan.demo.name.sari": {
+    "text": "साड़ी के कार्ड",
+    "reviewed": false
   }
 }

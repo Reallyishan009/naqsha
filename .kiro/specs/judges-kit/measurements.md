@@ -22,8 +22,34 @@ Precache total = sum of the bytes of every listed file (sw.js excluded; "./" is 
 
 ## Real card reads
 
-(filled in task 2.1)
+Run with `node scripts/real_card_reads.ts` (headless Chrome, the built app at 1280 px, English): each real photo is pressed on Scan, so the real `loadPixelData` and `readCard` run, with the reader unchanged. Each result is the message the screen showed.
+
+| File | Reader returned |
+|---|---|
+| real-card-single-1-cc0.jpg | failed: `peg-holes-not-found`, "The two large alignment holes were not found. Place the whole card in the photo on a plain background and try again." |
+| real-card-single-2-cc0.jpg | failed: `peg-holes-not-found`, "The two large alignment holes were not found. Place the whole card in the photo on a plain background and try again." |
+| real-card-single-3-cc0.jpg | failed: `peg-holes-not-found`, "The two large alignment holes were not found. Place the whole card in the photo on a plain background and try again." |
+| real-card-single-4-cc0.jpg | failed: `peg-holes-not-found`, "The two large alignment holes were not found. Place the whole card in the photo on a plain background and try again." |
+| real-card-chain-cc0.jpg | failed: `peg-holes-not-found`, "The two large alignment holes were not found. Place the whole card in the photo on a plain background and try again." |
+| real-card-bradford-chain-ccby.jpg | failed: `peg-holes-not-found`, "The two large alignment holes were not found. Place the whole card in the photo on a plain background and try again." |
+| real-card-bradford-stack-ccby.jpg | failed: `peg-holes-not-found`, "The two large alignment holes were not found. Place the whole card in the photo on a plain background and try again." |
+| real-card-sari-pattern-ccby.jpg | failed: `peg-holes-not-found`, "The two large alignment holes were not found. Place the whole card in the photo on a plain background and try again." |
+
+None was read or partly read. All eight fail at the same step (the two large alignment holes of the demo card layout are not in a real card), which is what the screen says. The screen shows the message as it is and offers no result.
 
 ## Not checked by eye
+
+- Task 2.1: the Scan screen's Demo cards layout (beside the drop zone at 1280 px, below it at 390 px) and the thumbnail look were not looked at; the after-run3 screenshots of task 4.1 cover them.
+- Offline, the thumbnails of the two noisy cards and of the real photos show as broken images (they are not precached); pressing them shows the "needs a connection" message. check:browser step 21 still passes (it accepts failed requests for files that are not precached).
+
+## Changed checks (task 2.1)
+
+- `tests/ui/deploy.test.ts` R13.3 ("the only fetch in src/ui is the Card_Profile request"): now expects exactly two calls, `ui/App.tsx: profileUrl()` and `ui/platform/browser.ts: demoImageUrl)` (a GET of a demo image served with the app; nothing of the user's is sent). The call sits in `src/ui/platform/browser.ts` so the R13.1 check on the Scan screen sources (no network call in ScanScreen.tsx, CardOverlay.tsx, BatchList.tsx, scan.ts) stays unchanged and passes.
+- `tests/ui/deploy.test.ts` R23.7 (no third-party URL in the production build): the allowed links now also include exactly the addresses written in `public/demo/real-cards/CREDITS.md`, because that file is bundled whole to read the authors and licences (as docs/IMAGE_CREDITS.md already is). No other address is allowed.
+- `tests/ui/accessibility.test.tsx` is unchanged: each demo thumbnail image has the name of the card as its alt text.
+
+## Bytes (task 2.1)
+
+- Entry chunk: see the report of task 2.1 (limit 150,000 B gzipped).
 
 ## Skipped

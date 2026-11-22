@@ -34,7 +34,7 @@ describe('deploy configuration', () => {
     expect(viteConfig.base).toBe('./');
   });
 
-  it('R13.3 the only fetch in src/ui is the Card_Profile request, built from profileUrl()', () => {
+  it('R13.3 the only fetches in src/ui are the Card_Profile request, built from profileUrl(), and the demo images', () => {
     const calls: string[] = [];
     for (const file of filesUnder(SRC, /\.(ts|tsx)$/)) {
       const code = stripComments(readFileSync(file, 'utf8'), false);
@@ -42,7 +42,8 @@ describe('deploy configuration', () => {
         calls.push(`${path.relative(SRC, file).split(path.sep).join('/')}: ${match[1]!.trim()}`);
       }
     }
-    expect(calls).toEqual(['ui/App.tsx: profileUrl()']);
+    // The second is the Scan screen's demo images: a GET of a file served with the app (public/demo), nothing of the user's sent.
+    expect(calls).toEqual(['ui/App.tsx: profileUrl()', 'ui/platform/browser.ts: demoImageUrl)']);
   });
 
   it('R13.7 no analytics string in the app source or index.html', () => {
@@ -189,7 +190,9 @@ describe('built site', () => {
       const allowedUrl = /^https?:\/\/(www\.w3\.org\/|react\.dev\/errors)/;
       // The links the footer shows: the licence and source page of each photo (read from docs/IMAGE_CREDITS.md, the exact
       // addresses and nothing else) and the app's own repository. They are links a visitor may follow, never requests the page makes.
-      const creditLinks = IMAGE_CREDITS.flatMap((credit) => [credit.licenceUrl, credit.sourceUrl]);
+      // The real card photos' CREDITS.md is bundled whole to read its authors and licences; its addresses are links too.
+      const realCardLinks = (readFileSync(path.join(ROOT, 'public/demo/real-cards/CREDITS.md'), 'utf8').match(/https?:\/\/[^\s"'`)\\]+/g) ?? []);
+      const creditLinks = [...IMAGE_CREDITS.flatMap((credit) => [credit.licenceUrl, credit.sourceUrl]), ...realCardLinks];
       expect(creditLinks.length).toBeGreaterThan(0);
       const allowedLink = (url: string): boolean =>
         // The address pattern below stops at a closing parenthesis, so a link that holds one is seen up to it.

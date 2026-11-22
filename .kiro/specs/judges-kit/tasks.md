@@ -6,12 +6,12 @@ One task at a time, in order; each task follows brief.md in this folder (its rul
 
 ## Tasks
 
-- [ ] 1. Demo files and precache rules
-  - [-] 1.1 Commit public/demo, re-aim R14.7, precache exclusions
+- [x] 1. Demo files and precache rules
+  - [x] 1.1 Commit public/demo, re-aim R14.7, precache exclusions
     - Read brief.md sections 5 and the intro. Commit all of public/demo/ (explicit paths per subfolder), re-aim R14.7 in tests/ui/illustrations/illustrations.test.tsx to allow public/demo/ only (strict for everything else; say what changed), add the explicit precache exclusion list and tests (real-cards never precached; the noisy PNGs by the number decision), update the build, run the gate (typecheck, test:run, build, check-bundle, check:browser, contrast report), create measurements.md, commit `demo files: add public/demo, precache rules` including .kiro/specs/judges-kit/ and .kiro/specs/home-button/ status files, push.
 
 - [ ] 2. Scan demo
-  - [~] 2.1 Scan Demo cards
+  - [-] 2.1 Scan Demo cards
     - Implement brief.md section 1 and 5 for the Scan screen with tests. Run the gate. Commit `scan: demo cards and real card photos` and push. Record in measurements.md 'Real card reads' what the reader returned for each of the 8 real photos (read, partly read or failed, and the message) by running them through the real reader in headless Chrome or the reader in Node (readCard with loadPixelData; whichever is quicker), without altering the reader.
 
 - [ ] 3. Keep, Code, Weave demos

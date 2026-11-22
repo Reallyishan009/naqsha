@@ -982,7 +982,8 @@ function buildSteps(ctx: Context): BrowserStep[] {
         const base = new URL(ctx.baseUrl);
         const manifest = readJson('public/manifest.webmanifest') as { icons?: { src: string }[] };
         // The pictures of the second design pass are files of this site: each file of public/photos and public/art, by its exact address.
-        const pictureFiles = ['photos', 'art'].flatMap((folder) => readdirSync(path.join(repoRoot, 'public', folder)).map((name) => `./${folder}/${name}`));
+        // The Scan screen's Demo cards add the thumbnails of public/demo/cards and public/demo/real-cards (the real photos load lazily); exact addresses again.
+        const pictureFiles = ['photos', 'art', 'demo/cards', 'demo/real-cards'].flatMap((folder) => readdirSync(path.join(repoRoot, 'public', folder)).map((name) => `./${folder}/${name}`));
         const allowedImages = new Set(
           ['./favicon.svg', ...(manifest.icons ?? []).map((icon) => icon.src), ...pictureFiles].map((file) => new URL(file, base).href),
         );

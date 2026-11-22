@@ -17,7 +17,7 @@ import {
   ZOOM_STEP,
 } from '../../state/scan.ts';
 import type { LoadPixels } from '../../state/scan.ts';
-import { cameraControl } from '../../platform/browser.ts';
+import { browserIsOnline, cameraControl, fetchDemoImageFile } from '../../platform/browser.ts';
 import { ProfileNotice } from '../../ProfileNotice.tsx';
 import { ArtImage } from '../../components/ArtImage.tsx';
 import { Button } from '../../components/Button.tsx';
@@ -31,10 +31,16 @@ import { NoCardsScannedIllustration } from '../../illustrations/SpotIllustration
 import { WeftProgress } from '../../components/WeftProgress.tsx';
 import type { AppAction, AppState, HookPosition, ScanBatch, ScanState } from '../../types.ts';
 import { BatchList } from './BatchList.tsx';
+import { DemoCards } from './DemoCards.tsx';
+import type { DemoNotice } from './DemoCards.tsx';
+import { demoFileName, fetchDemoImage } from '../../state/demoCards.ts';
+import type { DemoImage } from '../../state/demoCards.ts';
 import { browserCameraDevice, browserCameraEnv } from './camera.ts';
 import { CardOverlay } from './CardOverlay.tsx';
 import { LiveCamera } from './LiveCamera.tsx';
 import styles from './ScanScreen.module.css';
+
+const noopDemo = (): void => undefined;
 
 /** Width in CSS pixels assumed for the photo before the real width is measured. */
 const DEFAULT_VIEW_WIDTH_PX = 320;
@@ -50,6 +56,10 @@ export type ScanViewProps = {
   viewWidthPx: number;
   t: Translate;
   onFile: (file: File) => void;
+  /** A demo card was pressed. Absent in tests that do not press one. */
+  onDemo?: (image: DemoImage) => void;
+  /** What the last demo press could not load, or null. */
+  demoNotice?: DemoNotice | null;
   onToggle: (position: HookPosition) => void;
   onUndo: () => void;
   onZoom: (zoom: number) => void;
@@ -137,7 +147,8 @@ export function ScanView(props: ScanViewProps) {
         </Panel>
       ) : (
         <>
-          {/* Choose-a-photo is the first control, outside the Disclosure. */}
+          {/* Choose-a-photo is the first control, outside the Disclosure. The Demo cards sit beside it, below it where the line is short. */}
+          <div className={styles.chooseBand}>
           <Panel as="section" aria-labelledby="scan-choose-title" className={`${styles.panel} ${styles.zone}`}>
             {/* A hint of what to photograph: a card drawn by the app. */}
             <ArtImage art={ART['card-diamond']} alt={t(ART['card-diamond'].altKey)} className={styles.zoneArt} />
@@ -169,6 +180,14 @@ export function ScanView(props: ScanViewProps) {
             {scan.status === 'failed' ? <FailureMessage failure={scan.failure} t={t} /> : null}
             </div>
           </Panel>
+          <DemoCards
+            t={t}
+            base={import.meta.env.BASE_URL}
+            busy={scan.status === 'reading'}
+            notice={props.demoNotice ?? null}
+            onDemo={props.onDemo ?? noopDemo}
+          />
+          </div>
           <ProfileNotice profile={profile} t={t} />
           {batch.length === 0 ? (
             <StateMessage variant="empty" illustration={<NoCardsScannedIllustration />} message={t('scan.batch.empty')} next={t('scan.batch.empty.next')} t={t} />
@@ -292,6 +311,7 @@ export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) 
   const [confirmingDone, setConfirmingDone] = useState(false);
   const [viewWidthPx, setViewWidthPx] = useState(DEFAULT_VIEW_WIDTH_PX);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [demoNotice, setDemoNotice] = useState<DemoNotice | null>(null);
   const counter = useRef(new RequestCounter());
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [cameraEnv] = useState(browserCameraEnv);
@@ -335,6 +355,27 @@ export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) 
   );
 
   const onFile = useCallback((file: File): void => startRead(file.name, file, loadPixels), [startRead, loadPixels]);
+
+  /**
+   * A demo card takes the path of a chosen photo: the image is fetched and wrapped in a File, then `onFile` reads it.
+   * An image that cannot be fetched (the noisy cards and the real photos are not kept for offline use) shows a message
+   * and starts no read.
+   */
+  const onDemo = useCallback(
+    (image: DemoImage): void => {
+      setDemoNotice(null);
+      void fetchDemoImage(
+        `${import.meta.env.BASE_URL}${image.path}`,
+        demoFileName(image.path),
+        fetchDemoImageFile,
+        browserIsOnline,
+      ).then((result) => {
+        if (result.kind === 'file') onFile(result.file);
+        else setDemoNotice(result.kind);
+      });
+    },
+    [onFile],
+  );
 
   /** A camera frame takes the same path as a photo: `readPhoto` with the frame as the pixels. */
   const onFrame = useCallback(
@@ -399,6 +440,8 @@ export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) 
         viewWidthPx={viewWidthPx}
         t={t}
         onFile={onFile}
+        onDemo={onDemo}
+        demoNotice={demoNotice}
         onToggle={(position) => dispatchScan({ type: 'toggle', position })}
         onUndo={() => dispatchScan({ type: 'undo' })}
         onZoom={(zoom) => dispatchScan({ type: 'set-zoom', zoom })}
