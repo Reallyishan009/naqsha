@@ -5,7 +5,7 @@
  * - dist/index.html has no URL that starts with `/` or `http` (R23.3, R13).
  * - each marker string of CHUNK_MARKERS (Scan, Code view) is absent from the entry chunk and present in another chunk (R16.10, cards-as-code R9.3).
  * - the web app manifest and its icons are there, relative and the size they declare (R24.7).
- * - the inline theme script comes before the module script and the stylesheet link (R4.12).
+ * - the theme script (public/theme-init.js, no inline script) comes before the module script and the stylesheet link (R4.12).
  * - dist/sw.js carries a generated precache list that covers the built site with a versioned cache name (R24.2, R24.6).
  * - the four Font_Files are in that precache list (design-and-ux-pass R1.7, R1.12).
  */
@@ -90,28 +90,36 @@ export function findEntryChunk(html: string): string | null {
   return match ? match[1]! : null;
 }
 
+/** The file that sets `data-theme` before the first paint; `script-src 'self'` allows no inline script, so it is a file (deploy headers). */
+export const THEME_SCRIPT_FILE = 'theme-init.js';
+
 /**
- * The inline theme script must come first in dist/index.html: before the module script and before the
- * stylesheet link, so `data-theme` is set before the first paint (R4.12). Returns a list of problems.
+ * The theme script must come first in dist/index.html: before the module script and before the
+ * stylesheet link, so `data-theme` is set before the first paint (R4.12). It is a classic script with a `src`
+ * (the page sends `script-src 'self'`), and no inline script may be left in the page. `readScript` returns the
+ * text of the file a `src` names, relative to dist/, or null when there is none. Returns a list of problems.
  */
-export function themeScriptProblems(html: string): string[] {
+export function themeScriptProblems(html: string, readScript: (src: string) => string | null): string[] {
   let themeAt = -1;
+  const problems: string[] = [];
   for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
     const attributes = match[1]!;
-    if (/\bsrc\s*=/i.test(attributes) || /\btype\s*=\s*["']module["']/i.test(attributes)) continue;
-    if (match[2]!.includes('naqsha.theme') && match[2]!.includes('data-theme')) {
-      themeAt = match.index!;
-      break;
+    if (/\btype\s*=\s*["']module["']/i.test(attributes)) continue;
+    const src = /\bsrc\s*=\s*["']([^"']+)["']/i.exec(attributes)?.[1];
+    if (src === undefined) {
+      problems.push('dist/index.html has an inline script, which script-src \'self\' blocks');
+      continue;
     }
+    const text = readScript(src);
+    if (text !== null && text.includes('naqsha.theme') && text.includes('data-theme') && themeAt < 0) themeAt = match.index!;
   }
-  if (themeAt < 0) return ['dist/index.html has no inline classic theme script'];
-  const problems: string[] = [];
+  if (themeAt < 0) return [...problems, 'dist/index.html has no classic theme script'];
   const moduleAt = html.search(/<script\b[^>]*\btype\s*=\s*["']module["']/i);
   if (moduleAt < 0) problems.push('dist/index.html has no module script, so the theme script cannot be checked against it');
-  else if (themeAt > moduleAt) problems.push('the inline theme script in dist/index.html comes after the module script');
+  else if (themeAt > moduleAt) problems.push('the theme script in dist/index.html comes after the module script');
   const sheetAt = html.search(/<link\b[^>]*\brel\s*=\s*["']stylesheet["']/i);
   if (sheetAt < 0) problems.push('dist/index.html has no stylesheet link, so the theme script cannot be checked against it');
-  else if (themeAt > sheetAt) problems.push('the inline theme script in dist/index.html comes after the stylesheet link');
+  else if (themeAt > sheetAt) problems.push('the theme script in dist/index.html comes after the stylesheet link');
   return problems;
 }
 
@@ -166,7 +174,15 @@ export function checkBundle(distDir: string): BundleReport {
   const absoluteUrls = findAbsoluteUrls(html);
   if (absoluteUrls.length > 0) problems.push(`dist/index.html has absolute URLs: ${absoluteUrls.join(', ')}`);
 
-  problems.push(...themeScriptProblems(html));
+  problems.push(
+    ...themeScriptProblems(html, (src) => {
+      try {
+        return readFileSync(path.join(distDir, src), 'utf8');
+      } catch {
+        return null;
+      }
+    }),
+  );
 
   const entryChunk = findEntryChunk(html);
   let gzippedBytes = 0;

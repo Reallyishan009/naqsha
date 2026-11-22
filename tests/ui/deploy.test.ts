@@ -26,7 +26,9 @@ function filesUnder(dir: string, pattern: RegExp): string[] {
 describe('deploy configuration', () => {
   it('R23.2 vercel.json names the Vite framework, build command npm run build, output dist and no rewrite', () => {
     const config = JSON.parse(readFileSync(path.join(ROOT, 'vercel.json'), 'utf8')) as Record<string, unknown>;
-    expect(config).toEqual({ framework: 'vite', buildCommand: 'npm run build', outputDirectory: 'dist' });
+    // `headers` is the one key added by the security headers fix (tests/scripts/headers.test.ts checks its content); every other key is still refused.
+    expect(config).toEqual({ framework: 'vite', buildCommand: 'npm run build', outputDirectory: 'dist', headers: config.headers });
+    expect(Array.isArray(config.headers)).toBe(true);
     expect(config).not.toHaveProperty('rewrites');
   });
 

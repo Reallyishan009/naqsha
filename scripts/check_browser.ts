@@ -17,6 +17,7 @@ import { generateSample } from '../src/ui/samples/sampleDesigns.ts';
 import { WINDOW_SIZE } from '../src/ui/state/codeView.ts';
 import { bmpMismatches, parseBmpHeader } from './checks/bmpHeader.ts';
 import { findChrome } from './checks/chrome.ts';
+import { readVercelHeaders } from './checks/headers.ts';
 import { parsePngInfo } from './checks/pngHeader.ts';
 import { decideOffline, formatOffline, offlineConditions } from './checks/offline.ts';
 import type { OfflineCheck, OfflineGroup } from './checks/offline.ts';
@@ -73,6 +74,8 @@ type Context = {
   cardPng: string | null;
   /** Index of the Diamond pick that was printed: the one with the most punched holes, so the read cannot pass on an empty card. */
   printedPickIndex: number;
+  /** The response headers the preview server sent for the start page, lower-case names. */
+  sentHeaders: Record<string, string>;
 };
 
 /** The accessible name of the header menu button in each language: pages under 1024 px draw it, and it holds the links and the two switches. */
@@ -1689,6 +1692,23 @@ function buildSteps(ctx: Context): BrowserStep[] {
         return text;
       },
     },
+    {
+      // The preview server sends the headers of vercel.json, so every step above ran under the deployed policy:
+      // the four Screens, the samples, the Landing, the downloads and the offline reload.
+      name: 'no Content-Security-Policy violation in the whole run',
+      async run() {
+        const expected = readVercelHeaders(repoRoot);
+        expect(
+          ctx.sentHeaders['content-security-policy'] === expected['Content-Security-Policy'],
+          `the preview server sent the policy ${JSON.stringify(ctx.sentHeaders['content-security-policy'])}, vercel.json has ${JSON.stringify(expected['Content-Security-Policy'])}`,
+        );
+        expect(
+          page.cspViolations.length === 0,
+          `the browser reported ${page.cspViolations.length} Content-Security-Policy violation(s):\n${page.cspViolations.join('\n')}`,
+        );
+        return 'every step ran under the Content-Security-Policy of vercel.json, and the browser reported no violation';
+      },
+    },
   ];
 }
 
@@ -1763,6 +1783,7 @@ async function main(): Promise<number> {
       saved: null,
       cardPng: null,
       printedPickIndex: 0,
+      sentHeaders: Object.fromEntries((await fetch(baseUrl)).headers.entries()),
     };
     const steps = buildSteps(ctx);
     const errorsAfterLoad: string[] = [];
