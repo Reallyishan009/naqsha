@@ -1172,6 +1172,34 @@ function buildSteps(ctx: Context): BrowserStep[] {
       },
     },
     {
+      name: 'Weave Try it: Diamond lands the cloth heading just below the sticky header, at 390 and 1280 px',
+      async run() {
+        const lines: string[] = [];
+        try {
+          await ensureLanguage(page, 'en');
+          for (const [width, height] of [[390, 844], [1280, 900]] as const) {
+            await page.setViewport(width, height);
+            await chooseSample(page, 'diamond');
+            await page.waitFor(`!!${byText('h3', EN['weave.card.cloth']!)}`, `the cloth card at ${width} px`);
+            await page.ev('window.scrollTo(0,document.body.scrollHeight)');
+            await page.click(`document.querySelector('section[aria-labelledby="tryit-title"] [data-sample="diamond"]')`, `the Try it Diamond button at ${width} px`);
+            await sleep(1500);
+            const m = await page.ev<{ head: number; headBottom: number; header: number; play: number | null; inner: number }>(
+              `(()=>{const h=${byText('h3', EN['weave.card.cloth']!)};const hd=document.querySelector('header').getBoundingClientRect();const p=[...document.querySelectorAll('button')].find(b=>[${JSON.stringify(EN['weave.play'])},${JSON.stringify(EN['weave.pause'])}].includes(b.textContent.trim()));return {head:h.getBoundingClientRect().top,headBottom:h.getBoundingClientRect().bottom,header:hd.bottom,play:p?p.getBoundingClientRect().bottom:null,inner:innerHeight}})()`,
+            );
+            expect(m.head >= m.header - 1, `at ${width} px the cloth heading top ${m.head} is above the header bottom ${m.header}`);
+            expect(m.headBottom <= m.inner, `at ${width} px the cloth heading is below the view (${m.headBottom} > ${m.inner})`);
+            if (width === 1280) expect(m.play !== null && m.play <= m.inner, `at 1280 px the Play row bottom ${m.play} is below the view ${m.inner}`);
+            if (process.env['NAQSHA_TRYIT_SHOTS'] !== undefined) await page.screenshot(path.join(repoRoot, 'media', 'design', 'after-run4', `weave-tryit-landing-day-${width}.png`));
+            lines.push(`${width} px: cloth heading top ${Math.round(m.head)} px, header bottom ${Math.round(m.header)} px, Play row bottom ${m.play === null ? 'n/a' : Math.round(m.play)} px of ${m.inner}`);
+          }
+        } finally {
+          await page.setViewport(900, 1000);
+        }
+        return lines.join('\n');
+      },
+    },
+    {
       name: 'Disclosures: collapsed on arrival, Enter and Space toggle, out of the Tab order, focus returns, primary Button stays in view',
       async run() {
         const lines: string[] = [];

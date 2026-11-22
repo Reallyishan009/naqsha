@@ -6,8 +6,8 @@ Two small fixes. Keep the gate green. Credit cap 15. Stop and write docs/STUCK.m
 
 ## Tasks
 
-- [ ] 1. Both fixes
-  - [-] 1.1 Default language (approved R12.2 change) and Scan scroll-into-view
+- [x] 1. Both fixes
+  - [x] 1.1 Default language (approved R12.2 change) and Scan scroll-into-view
     - FIX A, default language. The user approved changing requirement R12.2.
       - Edit `.kiro/specs/app/requirements.md` R12.2 (line 238) from "WHEN the App starts without a stored language choice, THE App SHALL use Hindi." to: "WHEN the App starts without a stored language choice, THE App SHALL use Hindi if `navigator.language` starts with \"hi\", and English otherwise." Also update the user story (line 232/233) from "in Hindi by default" to "in the browser's language when it is Hindi, and English otherwise" (keep "English on request"). Update `.kiro/specs/app/design.md` line 126 ("Hindi is the default") to match. If docs/STUCK.md holds the earlier "default language needs a decision" note, append a line that it is now resolved and implemented (do not delete the history).
       - Implement: add a pure function in `src/ui/platform/browser.ts` next to `readStoredLanguage`, e.g. `chooseLanguage(stored, navigatorLanguage)` or `preferredLanguage(navigatorLanguage)`: a stored 'hi' or 'en' wins; otherwise 'hi' when navigatorLanguage (string, may be undefined) starts with "hi" (case-insensitive), else 'en'. Never throws. A `browserLanguage()` reads navigator.language inside try/catch and returns undefined on throw/missing. Wire it where the app picks the initial language today (App.tsx reads readStoredLanguage and falls back to initialAppState.language): compute the initial language from chooseLanguage(readStoredLanguage(store), browserLanguage()) and pass it in, rather than relying on initialAppState.language. Keep initialAppState.language as a sane constant; if a test pins it to 'hi', keep it 'hi' (the runtime choice is what matters) OR change it and re-aim the test, logging it. Follow how the theme does chooseTheme/applyTheme for the shape.

@@ -17,15 +17,17 @@ export type CardProps = {
   action?: ReactNode;
   /** Layout only (margin, width). */
   className?: string;
+  /** The element id, for a scroll target. */
+  id?: string;
   /** The short text. */
   children?: ReactNode;
 };
 
 /** A rounded card: a picture on top, a serif title, a short text, small chips and an optional action. */
-export function Card({ picture, title, titleAs: Title = 'h3', chips, as: Element = 'article', action, className, children }: CardProps) {
+export function Card({ picture, title, titleAs: Title = 'h3', chips, as: Element = 'article', action, className, id, children }: CardProps) {
   const classes = className === undefined || className === '' ? styles.card : `${styles.card} ${className}`;
   return (
-    <Element className={classes}>
+    <Element id={id} className={classes}>
       {picture === undefined || picture === null ? null : <div className={styles.picture}>{picture}</div>}
       <div className={styles.body}>
         <Title className={styles.title}>{title}</Title>

@@ -159,7 +159,7 @@
 html {
   font-size: 18px;
   /* The sticky header may cover the top of the page; a control that takes focus or an anchor is scrolled clear of it. */
-  scroll-padding-top: 144px;
+  scroll-padding-top: var(--header-height, 144px);
   /* The native radio, check box and slider take the accent instead of the browser's blue. */
   accent-color: var(--zari);
 }

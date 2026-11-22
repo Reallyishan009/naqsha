@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Dispatch } from 'react';
 import type { CardProfile, Pattern } from '../../../codec/index.ts';
 import { printFailureKey } from '../../i18n/messages.ts';
@@ -10,6 +10,7 @@ import { Card } from '../../components/Card.tsx';
 import { Field } from '../../components/Field.tsx';
 import { Notice } from '../../components/Notice.tsx';
 import { Panel } from '../../components/Panel.tsx';
+import { scrollClothIntoView } from './scrollToCloth.ts';
 import styles from './WeaveScreen.module.css';
 
 export const SAMPLE_DESIGNS: ReadonlyArray<SampleDesign> = ['diamond', 'border', 'floral'];
@@ -56,6 +57,10 @@ export type TryItProps = {
   confirm: Confirm | null;
   dispatch: Dispatch<AppAction>;
   t: Translate;
+  /** True when the reader asked for reduced motion: the scroll to the cloth is then instant. */
+  prefersReducedMotion?: boolean;
+  /** Injected so a test can watch the scroll. The shared helper when absent. */
+  scrollToCloth?: (reducedMotion: boolean) => unknown;
   /** Injected so tests can avoid the real download module. */
   loadPrint?: () => Promise<PrintModule>;
 };
@@ -111,12 +116,23 @@ function PrintControls({ design, profile, pattern, t, loadPrint }: PrintControls
 }
 
 /** Three Sample_Designs. Choosing one replaces the Current_Pattern, after a question when scanned cards are unsaved (R4.7). */
-export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModule }: TryItProps) {
+export function TryIt({ profile, confirm, dispatch, t, prefersReducedMotion = false, scrollToCloth = scrollClothIntoView, loadPrint = loadPrintModule }: TryItProps) {
   const samples = useMemo(
     () => (profile === null ? null : SAMPLE_DESIGNS.map((design) => ({ design, pattern: generateSample(profile, design) }))),
     [profile],
   );
   const asking = confirm !== null && confirm.kind === 'replace-with-sample';
+  // Set by a press that loads a design; the scroll waits for the render that shows the design, and for the answer when the screen asks first.
+  const scrollPending = useRef(false);
+  useEffect(() => {
+    if (!scrollPending.current || asking) return;
+    scrollPending.current = false;
+    scrollToCloth(prefersReducedMotion);
+  });
+  const request = (design: SampleDesign, pattern: Pattern) => {
+    scrollPending.current = true;
+    dispatch({ type: 'request-sample', design, pattern });
+  };
   return (
     <section aria-labelledby="tryit-title" className={styles.tryIt}>
       <h3 id="tryit-title" className={styles.sectionTitle}>
@@ -131,7 +147,7 @@ export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModu
             disabled={profile === null}
             onClick={() => {
               if (profile === null) return;
-              dispatch({ type: 'request-sample', design, pattern: generateSample(profile, design) });
+              request(design, generateSample(profile, design));
             }}
           >
             {t(`tryit.${design}`)}
@@ -143,7 +159,7 @@ export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModu
           disabled={profile === null}
           onClick={() => {
             if (profile === null) return;
-            dispatch({ type: 'request-sample', design: 'diamond', pattern: sampleWithLostCards(profile) });
+            request('diamond', sampleWithLostCards(profile));
           }}
         >
           {t('tryit.lost')}
@@ -160,7 +176,7 @@ export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModu
               disabled={profile === null}
               onClick={() => {
                 if (profile === null) return;
-                dispatch({ type: 'request-sample', design: 'diamond', pattern: sampleWithOneGap(profile, kind) });
+                request('diamond', sampleWithOneGap(profile, kind));
               }}
             >
               {t(kind === 'missing' ? 'tryit.demo.lostCard' : 'tryit.demo.tornCard')}
@@ -178,7 +194,12 @@ export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModu
         <Panel role="group" aria-label={t('tryit.confirmReplace')} className={styles.confirm}>
           <p>{t('tryit.confirmReplace')}</p>
           <div className={styles.strip}>
-            <Button onClick={() => dispatch({ type: 'confirm-accepted' })}>{t('tryit.confirmYes')}</Button>
+            <Button
+              onClick={() => {
+                scrollPending.current = true;
+                dispatch({ type: 'confirm-accepted' });
+              }}
+            >{t('tryit.confirmYes')}</Button>
             <Button onClick={() => dispatch({ type: 'confirm-dismissed' })}>{t('tryit.confirmNo')}</Button>
           </div>
         </Panel>

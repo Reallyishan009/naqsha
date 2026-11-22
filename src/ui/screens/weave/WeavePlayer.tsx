@@ -49,6 +49,7 @@ import { splitAtAccent } from '../../state/headline.ts';
 import { ClothCanvas, createClothPlayer } from './ClothCanvas.tsx';
 import { GapChip } from './GapChip.tsx';
 import { RepairNotice } from './RepairNotice.tsx';
+import { CLOTH_CARD_ID } from './scrollToCloth.ts';
 import { TryIt } from './TryIt.tsx';
 import styles from './WeaveScreen.module.css';
 
@@ -329,7 +330,7 @@ export function WeavePlayer({ state, dispatch, t, arrival, scheduler = browserSc
           />
 
           <div className={styles.work}>
-            <Card title={t('weave.card.cloth')} className={styles.workCard}>
+            <Card id={CLOTH_CARD_ID} title={t('weave.card.cloth')} className={styles.workCard}>
               <div className={styles.stack}>
                 <div ref={wrapperRef} className={styles.clothArea}>
                   {empty ? (
@@ -497,7 +498,7 @@ export function WeavePlayer({ state, dispatch, t, arrival, scheduler = browserSc
             />
           </div>
 
-          <TryIt profile={profile} confirm={state.confirm} dispatch={dispatch} t={t} />
+          <TryIt profile={profile} confirm={state.confirm} dispatch={dispatch} t={t} prefersReducedMotion={state.prefersReducedMotion} />
         </div>
       </div>
     </section>
