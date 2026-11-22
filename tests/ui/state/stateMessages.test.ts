@@ -204,6 +204,10 @@ export const ADDED_KEYS: readonly string[] = [
   'theme.toDay',
   'language.short.en',
   'language.short.hi',
+  'weave.heading',
+  'weave.heading.accent',
+  'weave.card.cloth',
+  'weave.card.controls',
 ];
 
 /** The purpose and next-step key of each of the four screens (R10.1). */

@@ -475,5 +475,9 @@
   "theme.toNight": "Switch to night loom",
   "theme.toDay": "Switch to day loom",
   "language.short.en": "EN",
-  "language.short.hi": "हि"
+  "language.short.hi": "हि",
+  "weave.heading": "Watch the design become cloth",
+  "weave.heading.accent": "cloth",
+  "weave.card.cloth": "The cloth",
+  "weave.card.controls": "Controls"
 }

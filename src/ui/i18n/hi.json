@@ -1906,5 +1906,21 @@
   "language.short.hi": {
     "text": "हि",
     "reviewed": false
+  },
+  "weave.heading": {
+    "text": "डिज़ाइन को कपड़ा बनते देखें",
+    "reviewed": false
+  },
+  "weave.heading.accent": {
+    "text": "कपड़ा",
+    "reviewed": false
+  },
+  "weave.card.cloth": {
+    "text": "कपड़ा",
+    "reviewed": false
+  },
+  "weave.card.controls": {
+    "text": "नियंत्रण",
+    "reviewed": false
   }
 }

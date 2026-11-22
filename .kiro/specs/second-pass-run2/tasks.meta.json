@@ -11,6 +11,11 @@
         "executionId": "8dad67e8-09a1-4d18-a1d5-6e0d67df97da",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795312350992
+      },
+      {
+        "executionId": "8dad67e8-09a1-4d18-a1d5-6e0d67df97da",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795313574175
       }
     ],
     "2.1 Weave reskin and commit `weave: reskin with cards and sections`": [
@@ -18,6 +23,11 @@
         "executionId": "8dad67e8-09a1-4d18-a1d5-6e0d67df97da",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795312350194
+      },
+      {
+        "executionId": "8dad67e8-09a1-4d18-a1d5-6e0d67df97da",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795313574379
       }
     ],
     "3.1 Keep reskin and commit `keep: reskin with photo cards, timeline and segmented export`": [
@@ -39,6 +49,13 @@
         "executionId": "8dad67e8-09a1-4d18-a1d5-6e0d67df97da",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795312350297
+      }
+    ],
+    "1. Part 0: header": [
+      {
+        "executionId": "8dad67e8-09a1-4d18-a1d5-6e0d67df97da",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795313574235
       }
     ]
   }

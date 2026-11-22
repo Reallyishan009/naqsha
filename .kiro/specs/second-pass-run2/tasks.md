@@ -6,12 +6,12 @@ Work list for run 2 (header, Weave, Keep, Scan and Code, motion). See brief.md i
 
 ## Tasks
 
-- [ ] 1. Part 0: header
-  - [-] 1.1 Header layout, scroll shrink, menu sheet, screenshots, commit `header: calmer layout, menu sheet`
+- [x] 1. Part 0: header
+  - [x] 1.1 Header layout, scroll shrink, menu sheet, screenshots, commit `header: calmer layout, menu sheet`
     - Implement Part 0 of brief.md. Create measurements.md. Capture header screenshots into media/design/after-run2/. Run the gate. Commit with the message `header: calmer layout, menu sheet` and push. Report the file list of the new screenshots.
 
 - [ ] 2. Part 1: Weave
-  - [~] 2.1 Weave reskin and commit `weave: reskin with cards and sections`
+  - [-] 2.1 Weave reskin and commit `weave: reskin with cards and sections`
     - Implement Part 1 of brief.md. Capture Weave views (weave-sample with a design loaded, weave-lost with lost cards and repair panel, day and night, 390 and 1280) into media/design/after-run2/. Run the gate. Commit with the message `weave: reskin with cards and sections` and push.
 
 - [ ] 3. Part 2: Keep

@@ -1,5 +1,8 @@
 .notice {
-  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
 }
 .noticeText {
   margin: 0 0 8px;
@@ -13,7 +16,10 @@
   margin: 8px 0;
 }
 .panel {
-  margin: 12px 0;
+  margin: 0;
+  padding: var(--space-5);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lift);
 }
 .heading {
   margin: 0 0 8px;
@@ -45,8 +51,10 @@
 }
 .suggestion {
   margin: 8px 0;
-  padding: 8px 12px;
+  padding: var(--space-3) var(--space-4);
   border-left: 4px solid var(--ink);
+  border-radius: 0 var(--radius-panel) var(--radius-panel) 0;
+  background: var(--tint);
 }
 .kind {
   margin: 0;

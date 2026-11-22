@@ -92,12 +92,17 @@ export const RUN2_FOLDER = 'after-run2';
 /** One run 2 view: its name, and the widths it is captured at. A view is captured in both themes. */
 export type Run2View = { name: string; widths: readonly number[] };
 
-/** The header: closed in English and Hindi at five widths; the menu sheet open at the three widths under 1024 px. */
+/**
+ * The header: closed in English and Hindi at five widths; the menu sheet open at the three widths under 1024 px.
+ * The Weave views (a sample woven, a sample with lost cards and the repair panel open) are full-page at 390 and 1280 px.
+ */
 export const RUN2_VIEWS: readonly Run2View[] = [
   { name: 'header-closed', widths: [1280, 1024, 768, 390, 320] },
   { name: 'header-closed-hi', widths: [1280, 1024, 768, 390, 320] },
   { name: 'header-menu', widths: [768, 390, 320] },
   { name: 'header-menu-hi', widths: [768, 390, 320] },
+  { name: 'weave-sample', widths: [1280, 390] },
+  { name: 'weave-lost', widths: [1280, 390] },
 ];
 
 /** The names `<view>-<theme>-<width>.png` of the given run 2 views (all of them when none is given), in view, theme, width order. */

@@ -34,14 +34,20 @@ import {
 } from '../../state/playback.ts';
 import type { PlaybackAt } from '../../state/playback.ts';
 import type { AppAction, AppState, ClothChoices, ClothView, ReadyCloth } from '../../types.ts';
+import { ArtImage } from '../../components/ArtImage.tsx';
 import { Button } from '../../components/Button.tsx';
+import { Card } from '../../components/Card.tsx';
 import { CardDrawing } from '../../illustrations/CardDrawing.tsx';
 import { Disclosure } from '../../components/Disclosure.tsx';
+import { EmptyState } from '../../components/EmptyState.tsx';
 import { Field } from '../../components/Field.tsx';
 import { Notice } from '../../components/Notice.tsx';
-import { Panel } from '../../components/Panel.tsx';
-import { ScreenIntro } from '../../components/ScreenIntro.tsx';
+import { SectionHeader } from '../../components/SectionHeader.tsx';
+import { generateSample } from '../../samples/sampleDesigns.ts';
+import { ART } from '../../state/art.ts';
+import { splitAtAccent } from '../../state/headline.ts';
 import { ClothCanvas, createClothPlayer } from './ClothCanvas.tsx';
+import { GapChip } from './GapChip.tsx';
 import { RepairNotice } from './RepairNotice.tsx';
 import { TryIt } from './TryIt.tsx';
 import styles from './WeaveScreen.module.css';
@@ -300,159 +306,200 @@ export function WeavePlayer({ state, dispatch, t, arrival, scheduler = browserSc
   ));
   const zariValue = choices.zari.on ? choices.zari.tone : 'off';
 
+  const heading = t('weave.heading');
+  const headingParts = splitAtAccent(heading, t('weave.heading.accent'));
+  const clothArt = ART['cloth-diamond'];
+
   return (
     <section aria-labelledby="screen-title" className={styles.screen}>
+      {/* The Screen's heading is for assistive technology and the keyboard order; the section header below is what is read first. */}
       <h2 id="screen-title" className={styles.screenTitle}>
         {t('nav.weave')}
       </h2>
-      <ScreenIntro purpose={t('weave.purpose')} next={t('weave.nextStep')} />
-
-      <div className={styles.playArea}>
-      <div ref={wrapperRef} className={styles.clothArea}>
-        {empty ? (
-          <Panel>
-            <p className={styles.emptyText}>{t('weave.empty')}</p>
-          </Panel>
-        ) : null}
-        <div
-          className={empty ? styles.hidden : riseRunning ? styles.rise : undefined}
-          style={riseRunning ? { filter: `brightness(${level})` } : undefined}
-        >
-          <ClothCanvas
-            canvasRef={canvasRef}
-            width={canvasSize.width}
-            height={canvasSize.height}
-            altText={canvasAltText(t, pick, pickCount)}
+      <div className={styles.band}>
+        <div className={styles.container}>
+          <SectionHeader
+            language={state.language}
+            eyebrow={t('nav.weave')}
+            before={headingParts === null ? heading : headingParts.before}
+            accent={headingParts === null ? '' : headingParts.accent}
+            after={headingParts === null ? '' : headingParts.after}
+            subtitle={t('weave.purpose')}
+            as="h3"
           />
+
+          <div className={styles.work}>
+            <Card title={t('weave.card.cloth')} className={styles.workCard}>
+              <div className={styles.stack}>
+                <div ref={wrapperRef} className={styles.clothArea}>
+                  {empty ? (
+                    <EmptyState
+                      illustration={<ArtImage art={clothArt} alt="" className={styles.emptyArt} />}
+                      message={t('weave.empty')}
+                      next={t('tryit.intro')}
+                      action={
+                        <Button
+                          disabled={profile === null}
+                          onClick={() => {
+                            if (profile === null) return;
+                            dispatch({ type: 'request-sample', design: 'diamond', pattern: generateSample(profile, 'diamond') });
+                          }}
+                        >
+                          {t('landing.trySample')}
+                        </Button>
+                      }
+                    />
+                  ) : null}
+                  <div
+                    className={empty ? styles.hidden : riseRunning ? styles.rise : undefined}
+                    style={riseRunning ? { filter: `brightness(${level})` } : undefined}
+                  >
+                    <ClothCanvas
+                      canvasRef={canvasRef}
+                      width={canvasSize.width}
+                      height={canvasSize.height}
+                      altText={canvasAltText(t, pick, pickCount)}
+                    />
+                  </div>
+                  {view.status === 'failed' ? (
+                    <Notice variant="error" word={t('notice.error')}>
+                      {t(simFailureKey(view.failure))}
+                    </Notice>
+                  ) : null}
+                  {gapText === '' ? null : (
+                    <p className={styles.gaps}>
+                      <GapChip>{t('weave.gaps', { picks: gapText })}</GapChip>
+                    </p>
+                  )}
+                </div>
+                <p className={styles.position} data-tabular>
+                  {pickPositionText(t, pick, pickCount)}
+                </p>
+                <div className={styles.strip}>
+                  <Button ref={playButtonRef} variant="primary" disabled={disabled || playing} onClick={onPlay}>
+                    {playLabel}
+                  </Button>
+                  <Button ref={pauseButtonRef} disabled={disabled || !playing} onClick={onPause}>
+                    {t('weave.pause')}
+                  </Button>
+                  <Button disabled={disabled} onClick={() => seekTo(stepBack(pick, pickCount))}>
+                    {t('weave.stepBack')}
+                  </Button>
+                  <Button disabled={disabled} onClick={() => seekTo(stepForward(pick, pickCount))}>
+                    {t('weave.stepForward')}
+                  </Button>
+                  <RiseSkipControl running={riseRunning} t={t} onSkip={onSkip} />
+                </div>
+                <Field label={t('weave.scrubber')} className={styles.scrubberField}>
+                  <input
+                    type="range"
+                    className={styles.scrubber}
+                    min={0}
+                    max={pickCount}
+                    step={1}
+                    value={Math.min(pick, pickCount)}
+                    disabled={disabled}
+                    onChange={(event) => seekTo(scrubTo(Number(event.currentTarget.value), pickCount))}
+                  />
+                </Field>
+              </div>
+            </Card>
+
+            <Card title={t('weave.card.controls')} className={styles.workCard}>
+              <div className={styles.stack}>
+                <p className={styles.nextStep}>{t('weave.nextStep')}</p>
+                {empty ? null : (
+                  <div className={styles.card}>
+                    <CardDrawing
+                      profile={profile}
+                      grid={pattern[cardNumber - 1] ?? null}
+                      state={cardGap?.kind ?? 'ok'}
+                      pickNumber={cardNumber}
+                      t={t}
+                    />
+                  </div>
+                )}
+                <div className={styles.controls}>
+                  <Field label={t('weave.speed')} className={styles.field}>
+                    <select value={speedIndex} disabled={disabled} onChange={(event) => onSpeed(Number(event.currentTarget.value))}>
+                      <option value={0}>{t('weave.speed.slow')}</option>
+                      <option value={1}>{t('weave.speed.normal')}</option>
+                      <option value={2}>{t('weave.speed.fast')}</option>
+                    </select>
+                  </Field>
+                </div>
+                {/* Repeat count, warp and weft colours and zari: collapsed on arrival so the playback controls stay in view. */}
+                <Disclosure label={t('disclosure.settings')}>
+                  <div className={styles.controls}>
+                    <Field label={t('weave.warpColour')} className={styles.field}>
+                      <select
+                        value={choices.warpColour}
+                        disabled={disabled}
+                        onChange={(event) => setChoices({ ...choices, warpColour: event.currentTarget.value })}
+                      >
+                        {colourOptions}
+                      </select>
+                    </Field>
+                    <Field label={t('weave.weftColour')} className={styles.field}>
+                      <select
+                        value={choices.weftColour}
+                        disabled={disabled}
+                        onChange={(event) => setChoices({ ...choices, weftColour: event.currentTarget.value })}
+                      >
+                        {colourOptions}
+                      </select>
+                    </Field>
+                    <Field label={t('weave.zari')} className={styles.field}>
+                      <select
+                        value={zariValue}
+                        disabled={disabled}
+                        onChange={(event) => {
+                          const value = event.currentTarget.value;
+                          setChoices({
+                            ...choices,
+                            zari: value === 'gold' || value === 'silver' ? { on: true, tone: value } : { on: false },
+                          });
+                        }}
+                      >
+                        <option value="off">{t('weave.zari.off')}</option>
+                        <option value="gold">{t('weave.zari.gold')}</option>
+                        <option value="silver">{t('weave.zari.silver')}</option>
+                      </select>
+                    </Field>
+                    <Field label={t('weave.repeat')} className={styles.field}>
+                      <select
+                        value={choices.repeat}
+                        disabled={disabled}
+                        onChange={(event) => setChoices({ ...choices, repeat: Number(event.currentTarget.value) })}
+                      >
+                        {Array.from({ length: MAX_REPEAT - MIN_REPEAT + 1 }, (_, index) => MIN_REPEAT + index).map((value) => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  </div>
+                </Disclosure>
+              </div>
+            </Card>
+          </div>
+
+          <div className={styles.notice}>
+            <RepairNotice
+              gapCount={shown === null ? 0 : shown.cloth.gaps.length}
+              repairedPicks={state.repairs.picks}
+              canUndo={state.repairs.history.length > 0}
+              profile={profile}
+              pattern={state.current.pattern}
+              t={t}
+              dispatch={dispatch}
+            />
+          </div>
+
+          <TryIt profile={profile} confirm={state.confirm} dispatch={dispatch} t={t} />
         </div>
-        {view.status === 'failed' ? (
-          <Notice variant="error" word={t('notice.error')}>
-            {t(simFailureKey(view.failure))}
-          </Notice>
-        ) : null}
-        {gapText === '' ? null : <p className={styles.gaps}>{t('weave.gaps', { picks: gapText })}</p>}
       </div>
-
-      <div className={styles.notice}>
-      <RepairNotice
-        gapCount={shown === null ? 0 : shown.cloth.gaps.length}
-        repairedPicks={state.repairs.picks}
-        canUndo={state.repairs.history.length > 0}
-        profile={profile}
-        pattern={state.current.pattern}
-        t={t}
-        dispatch={dispatch}
-      />
-      </div>
-      <p className={styles.position} data-tabular>
-        {pickPositionText(t, pick, pickCount)}
-      </p>
-
-      <div className={styles.strip}>
-        <Button ref={playButtonRef} variant="primary" disabled={disabled || playing} onClick={onPlay}>
-          {playLabel}
-        </Button>
-        <Button ref={pauseButtonRef} disabled={disabled || !playing} onClick={onPause}>
-          {t('weave.pause')}
-        </Button>
-        <Button disabled={disabled} onClick={() => seekTo(stepBack(pick, pickCount))}>
-          {t('weave.stepBack')}
-        </Button>
-        <Button disabled={disabled} onClick={() => seekTo(stepForward(pick, pickCount))}>
-          {t('weave.stepForward')}
-        </Button>
-        <RiseSkipControl running={riseRunning} t={t} onSkip={onSkip} />
-      </div>
-      {empty ? null : (
-        <div className={styles.card}>
-          <CardDrawing
-            profile={profile}
-            grid={pattern[cardNumber - 1] ?? null}
-            state={cardGap?.kind ?? 'ok'}
-            pickNumber={cardNumber}
-            t={t}
-          />
-        </div>
-      )}
-      </div>
-
-      <Field label={t('weave.scrubber')} className={styles.scrubberField}>
-        <input
-          type="range"
-          className={styles.scrubber}
-          min={0}
-          max={pickCount}
-          step={1}
-          value={Math.min(pick, pickCount)}
-          disabled={disabled}
-          onChange={(event) => seekTo(scrubTo(Number(event.currentTarget.value), pickCount))}
-        />
-      </Field>
-
-      <div className={styles.controls}>
-        <Field label={t('weave.speed')} className={styles.field}>
-          <select value={speedIndex} disabled={disabled} onChange={(event) => onSpeed(Number(event.currentTarget.value))}>
-            <option value={0}>{t('weave.speed.slow')}</option>
-            <option value={1}>{t('weave.speed.normal')}</option>
-            <option value={2}>{t('weave.speed.fast')}</option>
-          </select>
-        </Field>
-      </div>
-      {/* Repeat count, warp and weft colours and zari: collapsed on arrival so the playback controls stay in view. */}
-      <Disclosure label={t('disclosure.settings')}>
-        <div className={styles.controls}>
-          <Field label={t('weave.warpColour')} className={styles.field}>
-            <select
-              value={choices.warpColour}
-              disabled={disabled}
-              onChange={(event) => setChoices({ ...choices, warpColour: event.currentTarget.value })}
-            >
-              {colourOptions}
-            </select>
-          </Field>
-          <Field label={t('weave.weftColour')} className={styles.field}>
-            <select
-              value={choices.weftColour}
-              disabled={disabled}
-              onChange={(event) => setChoices({ ...choices, weftColour: event.currentTarget.value })}
-            >
-              {colourOptions}
-            </select>
-          </Field>
-          <Field label={t('weave.zari')} className={styles.field}>
-            <select
-              value={zariValue}
-              disabled={disabled}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
-                setChoices({
-                  ...choices,
-                  zari: value === 'gold' || value === 'silver' ? { on: true, tone: value } : { on: false },
-                });
-              }}
-            >
-              <option value="off">{t('weave.zari.off')}</option>
-              <option value="gold">{t('weave.zari.gold')}</option>
-              <option value="silver">{t('weave.zari.silver')}</option>
-            </select>
-          </Field>
-          <Field label={t('weave.repeat')} className={styles.field}>
-            <select
-              value={choices.repeat}
-              disabled={disabled}
-              onChange={(event) => setChoices({ ...choices, repeat: Number(event.currentTarget.value) })}
-            >
-              {Array.from({ length: MAX_REPEAT - MIN_REPEAT + 1 }, (_, index) => MIN_REPEAT + index).map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-      </Disclosure>
-
-      <TryIt profile={profile} confirm={state.confirm} dispatch={dispatch} t={t} />
     </section>
   );
 }

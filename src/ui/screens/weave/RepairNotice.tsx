@@ -6,6 +6,7 @@ import type { AppAction } from '../../types.ts';
 import type { RepairPanelProps } from './RepairPanel.tsx';
 import { Button } from '../../components/Button.tsx';
 import { Notice } from '../../components/Notice.tsx';
+import { GapChip } from './GapChip.tsx';
 import styles from './Repair.module.css';
 /** The panel and src/repair come in one separate chunk, requested the first time the weaver asks for suggestions. */
 export type PanelModule = { RepairPanel: ComponentType<RepairPanelProps> };
@@ -53,7 +54,9 @@ export function RepairNotice({ gapCount, repairedPicks, canUndo, profile, patter
       <Notice variant={gapCount === 0 ? 'information' : 'warning'} word={t(gapCount === 0 ? 'notice.information' : 'notice.warning')}>
         {gapCount === 0 ? null : (
           <>
-            <p className={styles.noticeText}>{t(gapCount === 1 ? 'weave.repair.notice.one' : 'weave.repair.notice.other', { count: gapCount })}</p>
+            <p className={styles.noticeText}>
+              <GapChip>{t(gapCount === 1 ? 'weave.repair.notice.one' : 'weave.repair.notice.other', { count: gapCount })}</GapChip>
+            </p>
             <div className={styles.actions}>
               <Button aria-expanded={expanded} disabled={profile === null || panel.status === 'loading'} onClick={onToggle}>
                 {t(expanded ? 'weave.repair.hide' : 'weave.repair.suggest')}

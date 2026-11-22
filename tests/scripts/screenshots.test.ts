@@ -154,6 +154,20 @@ describe('run 2 screenshot set', () => {
     expect(names.filter((name) => name.startsWith('header-menu')).every((name) => widthOf(name) < 1024)).toBe(true);
   });
 
+  it('names the Weave views at 390 and 1280 px, in both themes', () => {
+    const names = run2Names(['weave-sample', 'weave-lost']);
+    expect(names).toEqual([
+      'weave-sample-day-1280.png',
+      'weave-sample-day-390.png',
+      'weave-sample-night-1280.png',
+      'weave-sample-night-390.png',
+      'weave-lost-day-1280.png',
+      'weave-lost-day-390.png',
+      'weave-lost-night-1280.png',
+      'weave-lost-night-390.png',
+    ]);
+  });
+
   it('run2Names takes the named views only', () => {
     const names = run2Names(['header-menu']);
     expect(names).toHaveLength(2 * RUN2_VIEWS.find((view) => view.name === 'header-menu')!.widths.length);
@@ -166,12 +180,12 @@ describe('run 2 screenshot set', () => {
     files.delete('header-closed-day-320.png');
     files.set('header-closed-night-390.png', pngOfWidth(391));
     files.set('header-menu-day-768.png', new TextEncoder().encode('this is not a picture at all, just text'));
-    files.set('weave-sample-day-1280.png', pngOfWidth(1280));
+    files.set('stranger-day-1280.png', pngOfWidth(1280));
     expect(run2Problems(files)).toEqual([
       'header-closed-day-320.png is missing',
       'header-closed-night-390.png is 391 pixels wide, expected 390',
       'header-menu-day-768.png is not a PNG file',
-      'weave-sample-day-1280.png is not one of the run 2 screenshot names',
+      'stranger-day-1280.png is not one of the run 2 screenshot names',
     ]);
   });
 

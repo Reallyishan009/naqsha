@@ -11,7 +11,8 @@
  * the page and back, waits until every picture is decoded and no block is waiting to be revealed, and only then takes the picture.
  *
  * `npm run screenshots -- after-run2` takes the run 2 set into `media/design/after-run2/`, part by part: the header views
- * (`header-closed`, `header-closed-hi`, `header-menu`, `header-menu-hi`, each `<view>-<theme>-<width>.png`, cropped to the top 700 px),
+ * (`header-closed`, `header-closed-hi`, `header-menu`, `header-menu-hi`, each `<view>-<theme>-<width>.png`, cropped to the top 700 px)
+ * and the full-page Weave views (`weave-sample`, `weave-lost`) at 390 and 1280 px,
  * with `--view <name>` to take one view. The theme, the language and the menu are all pressed by accessible name, and motion is reduced.
  *
  * Options for working on the script itself: `--out <directory>` writes somewhere else, `--view <name>` (repeatable)
@@ -136,7 +137,7 @@ const PICK_PATTERN = format(escapeRegex(EN['weave.pickPosition']!), { pick: '(\\
 
 /** The first element with no child element whose text matches the pattern (an expression, null when none). */
 const leafMatching = (pattern: string): string =>
-  `[...document.querySelectorAll('body *')].find(e=>e.children.length===0&&new RegExp(${q(`^${pattern}$`)}).test(e.textContent.trim()))`;
+  `[...document.querySelectorAll('body *')].find(e=>[...e.children].every(c=>c.localName==='svg')&&new RegExp(${q(`^${pattern}$`)}).test(e.textContent.trim()))`;
 
 /** True once the pick counter reads the last pick of a design with picks. */
 const FINISHED_COUNTER = `(()=>{const e=${leafMatching(PICK_PATTERN)};if(!e)return false;const m=new RegExp(${q(`^${PICK_PATTERN}$`)}).exec(e.textContent.trim());return Number(m[1])===Number(m[2])&&Number(m[2])>0})()`;
@@ -482,7 +483,7 @@ async function chooseLanguage(page: Page, language: 'en' | 'hi'): Promise<void> 
 /** The header views of run 2: each width on a fresh page; English, then Hindi; each theme; the sheet closed, and where the page has one, open. */
 async function captureHeader(page: Page, baseUrl: string, outDir: string, wanted: readonly string[]): Promise<string[]> {
   const failures: string[] = [];
-  const widths = [...new Set(RUN2_VIEWS.filter((view) => wanted.includes(view.name)).flatMap((view) => view.widths))].sort((a, b) => b - a);
+  const widths = [...new Set(RUN2_VIEWS.filter((view) => view.name.startsWith('header-') && wanted.includes(view.name)).flatMap((view) => view.widths))].sort((a, b) => b - a);
   for (const width of widths) {
     try {
       await page.setViewport(width, WINDOW_HEIGHT);
@@ -512,6 +513,45 @@ async function captureHeader(page: Page, baseUrl: string, outDir: string, wanted
     } catch (error) {
       failures.push(`the header at ${width} failed: ${messageOf(error)}`);
       console.error(failures[failures.length - 1]);
+    }
+  }
+  return failures;
+}
+
+// ---------------------------------------------------------------- the full-page screens (run 2, parts 1 to 3)
+
+/** The full-page views of run 2 that are a screen with a design loaded, by name. */
+const RUN2_SCREEN_VIEWS: Readonly<Record<string, (page: Page) => Promise<void>>> = {
+  'weave-sample': prepareSample,
+  'weave-lost': prepareLost,
+};
+
+/** One view of a screen at each of its widths: a fresh page, the screen made ready, then both themes as full-page files. */
+async function captureScreens(page: Page, baseUrl: string, outDir: string, wanted: readonly string[]): Promise<string[]> {
+  const failures: string[] = [];
+  for (const view of RUN2_VIEWS) {
+    const prepare = RUN2_SCREEN_VIEWS[view.name];
+    if (prepare === undefined || !wanted.includes(view.name)) continue;
+    for (const width of view.widths) {
+      try {
+        await page.setViewport(width, WINDOW_HEIGHT);
+        await freshPage(page, baseUrl);
+        await prepare(page);
+        for (const theme of SCREENSHOT_THEMES) {
+          await chooseTheme(page, 'after', theme);
+          const name = `${view.name}-${theme}-${width}.png`;
+          await capture(page, width, path.join(outDir, name));
+          console.log(`saved ${name}`);
+          try {
+            await printHints(page, name);
+          } catch (error) {
+            console.log(`hint  ${name}: could not be computed: ${messageOf(error)}`);
+          }
+        }
+      } catch (error) {
+        failures.push(`${view.name} at ${width} failed: ${messageOf(error)}`);
+        console.error(failures[failures.length - 1]);
+      }
     }
   }
   return failures;
@@ -580,6 +620,7 @@ async function main(): Promise<number> {
       // A file of an earlier run must not stand in for one that fails now.
       for (const name of run2Names(run2Views)) rmSync(path.join(outDir, name), { force: true });
       failures.push(...(await captureHeader(page, baseUrl, outDir, run2Views)));
+      failures.push(...(await captureScreens(page, baseUrl, outDir, run2Views)));
     }
     for (const width of mode === 'after-run1' || mode === 'after-run2' ? [] : SCREENSHOT_WIDTHS) {
       for (const view of views) {

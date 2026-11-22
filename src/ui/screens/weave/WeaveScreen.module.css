@@ -1,11 +1,70 @@
-.screen {
-  max-width: 60rem;
+/*
+ * The Weave screen with a design loaded: a tinted band like the Landing's, with a section header, the cloth in a rounded
+ * card and the controls in another (beside it from 900px, below it on a narrow screen). The band takes back the
+ * Shell main's side padding; its content sits in the Landing's container, so the left edges line up with the header.
+ */
+.screenTitle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.screenTitle {
-  margin: 0 0 12px;
-  font-family: var(--font-display);
-  font-weight: 400;
+.band {
+  margin-inline: calc(var(--space-4) * -1);
+  padding-block: var(--space-7);
+  color: var(--ink);
+  background: var(--tint);
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: min(
+    calc(100% - 2 * (var(--space-3) + 1px + var(--space-3))),
+    calc(76rem - 2 * (1px + var(--space-3)))
+  );
+  margin-inline: auto;
+}
+
+.work {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+@media (min-width: 900px) {
+  .work {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+.workCard {
+  color: var(--ink);
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  color: var(--ink);
+}
+.stack > * {
+  min-width: 0;
+}
+.nextStep {
+  margin: 0;
+}
+.emptyArt {
+  width: 100%;
+  max-width: 20rem;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-media);
 }
 
 .sectionTitle {
@@ -15,8 +74,10 @@
 }
 
 .clothArea {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
   width: 100%;
-  margin-bottom: 8px;
 }
 
 .canvas {
@@ -39,12 +100,12 @@
 
 
 .gaps {
-  margin: 8px 0;
+  margin: 0;
   font-family: var(--font-data);
 }
 
 .position {
-  margin: 8px 0;
+  margin: 0;
   font-family: var(--font-data);
 }
 
@@ -64,7 +125,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin: 12px 0;
+  margin: 0;
 }
 
 .field {
@@ -78,9 +139,12 @@
 }
 
 .tryIt {
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
+  padding: var(--space-5);
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lift);
 }
 
 
@@ -108,54 +172,19 @@
 }
 
 .scrubberField {
-  margin: 8px 0;
+  margin: 0;
 }
 
 .confirm {
   margin-top: 12px;
 }
-/* The cloth, its notice and the playback strip, with the card of the pick shown: below the strip on a narrow
-   screen, beside the cloth from 720px. */
-.playArea {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0 var(--space-4);
-}
-.playArea > * {
-  min-width: 0;
+.card {
+  width: 12rem;
+  max-width: 100%;
 }
 .notice {
   min-width: 0;
 }
-.card {
-  width: 12rem;
-  max-width: 100%;
-  margin: var(--space-2) 0;
-}
-@media (min-width: 720px) {
-  .playArea {
-    grid-template-columns: minmax(0, 1fr) 12rem;
-    grid-template-areas:
-      'cloth card'
-      'notice .'
-      'position .'
-      'strip .';
-    align-items: start;
-  }
-  .playArea > .clothArea {
-    grid-area: cloth;
-  }
-  .playArea > .card {
-    grid-area: card;
-    margin-top: 0;
-  }
-  .playArea > .notice {
-    grid-area: notice;
-  }
-  .playArea > .position {
-    grid-area: position;
-  }
-  .playArea > .strip {
-    grid-area: strip;
-  }
+.notice:empty {
+  display: none;
 }
