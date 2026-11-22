@@ -83,3 +83,45 @@ export function landingFullNames(): string[] {
 export function landingFullProblems(files: ReadonlyMap<string, Uint8Array>): string[] {
   return problemsOf(landingFullNames(), files, '4 landing-full screenshot names');
 }
+
+// ---------------------------------------------------------------- the run 2 set (second design pass, run 2)
+
+/** The folder under media/design/ that holds the run 2 captures, part by part. */
+export const RUN2_FOLDER = 'after-run2';
+
+/** One run 2 view: its name, and the widths it is captured at. A view is captured in both themes. */
+export type Run2View = { name: string; widths: readonly number[] };
+
+/** The header: closed in English and Hindi at five widths; the menu sheet open at the three widths under 1024 px. */
+export const RUN2_VIEWS: readonly Run2View[] = [
+  { name: 'header-closed', widths: [1280, 1024, 768, 390, 320] },
+  { name: 'header-closed-hi', widths: [1280, 1024, 768, 390, 320] },
+  { name: 'header-menu', widths: [768, 390, 320] },
+  { name: 'header-menu-hi', widths: [768, 390, 320] },
+];
+
+/** The names `<view>-<theme>-<width>.png` of the given run 2 views (all of them when none is given), in view, theme, width order. */
+export function run2Names(views: readonly string[] = RUN2_VIEWS.map((view) => view.name)): string[] {
+  const names: string[] = [];
+  for (const view of RUN2_VIEWS) {
+    if (!views.includes(view.name)) continue;
+    for (const theme of SCREENSHOT_THEMES) {
+      for (const width of view.widths) names.push(`${view.name}-${theme}-${width}.png`);
+    }
+  }
+  return names;
+}
+
+/**
+ * The same checks as `setProblems` on the run 2 folder. Only the named views are expected (all when none is given); a file of
+ * another run 2 view is not a problem, because the folder fills part by part; a file that is none of them is.
+ */
+export function run2Problems(files: ReadonlyMap<string, Uint8Array>, views?: readonly string[]): string[] {
+  const wanted = new Set(run2Names(views));
+  const known = new Set(run2Names());
+  const problems = problemsOf(run2Names(views), files, 'run 2 screenshot names');
+  return problems.filter((problem) => {
+    const name = problem.split(' ')[0]!;
+    return wanted.has(name) || !known.has(name);
+  });
+}

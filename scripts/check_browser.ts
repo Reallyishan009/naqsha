@@ -24,7 +24,7 @@ import { newPickWatch, stepPickWatch } from './checks/pickWatch.ts';
 import { encodePngRgba } from './png_rgba.ts';
 import { exitCodeFor, formatResult, formatSummary, runBrowserSteps } from './checks/report.ts';
 import type { BrowserResult, BrowserStep } from './checks/report.ts';
-import { Page, byText, expect, openHeaderMenu, openPage, sleep, startChrome, startPreview } from './checks/session.ts';
+import { Page, byText, closeHeaderMenu, expect, openHeaderMenu, openPage, sleep, startChrome, startPreview } from './checks/session.ts';
 import type { Cleanup } from './checks/session.ts';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
@@ -75,17 +75,24 @@ type Context = {
   printedPickIndex: number;
 };
 
-/** The accessible name of the header menu button in each language: only the narrowest width draws it, and it holds the header controls. */
+/** The accessible name of the header menu button in each language: pages under 1024 px draw it, and it holds the links and the two switches. */
 const MENU_NAMES: readonly string[] = [EN['nav.menu']!, HI['nav.menu']!];
-/** Opens the header menu by its accessible name where the page draws it (under 360 px); at 390 and 1280 px it does nothing, so those widths reach every control without a menu. */
+/** Opens the header menu by its accessible name where the page draws it (under 1024 px); at 1024 px and wider it does nothing, so those widths reach every control without a menu. */
 const openMenu = (page: Page): Promise<void> => openHeaderMenu(page, MENU_NAMES);
+/** Closes the sheet again after a language or theme press, so it does not cover the page under the next click (the sheet stays open after those two). */
+const closeMenu = (page: Page): Promise<void> => closeHeaderMenu(page, MENU_NAMES);
+/** Presses a language segment by its accessible name (the full language name; the segment shows "EN" or the short Hindi form), through the menu where the page draws one. */
+async function pressLanguage(page: Page, name: string): Promise<void> {
+  await openMenu(page);
+  await page.clickName('button', name);
+}
 
 async function ensureEnglish(page: Page): Promise<void> {
   if ((await page.ev<string>('document.documentElement.lang')) !== 'en') {
-    await openMenu(page);
-    await page.clickText('button', EN['language.en']!);
+    await pressLanguage(page, EN['language.en']!);
   }
   await page.waitFor(`document.documentElement.lang==='en'`, 'the page language to be en');
+  await closeMenu(page);
 }
 
 /** Clicks the navigation item whose text starts with the label: the Code view item also carries the word "Advanced". */
@@ -139,10 +146,10 @@ const THEME_STORAGE_KEY = 'naqsha.theme';
 
 async function ensureLanguage(page: Page, language: Language): Promise<void> {
   if ((await page.ev<string>('document.documentElement.lang')) !== language) {
-    await openMenu(page);
-    await page.clickText('button', WORDS[language]['language.' + language]!);
+    await pressLanguage(page, WORDS[language]['language.' + language]!);
   }
   await page.waitFor(`document.documentElement.lang===${JSON.stringify(language)}`, `the page language to be ${language}`);
+  await closeMenu(page);
 }
 
 /** Opens one Screen through the navigation, in the given language. */
@@ -155,9 +162,9 @@ async function showScreen(page: Page, screen: AnyScreen, language: Language): Pr
   );
 }
 
-/** The Theme_Switch: a `role="switch"` whose accessible name starts with "Night loom" (or its Hindi text). */
+/** The Theme_Switch: a `role="switch"` whose accessible name is the action, "Switch to night loom" or "Switch to day loom" (or their Hindi text). */
 const themeSwitch = (language: Language): string =>
-  `[...document.querySelectorAll('[role="switch"]')].find(e=>(e.getAttribute('aria-label')||e.textContent||'').trim().startsWith(${JSON.stringify(WORDS[language]['theme.label'])}))`;
+  `[...document.querySelectorAll('[role="switch"]')].find(e=>${JSON.stringify([WORDS[language]['theme.toNight'], WORDS[language]['theme.toDay']])}.includes((e.getAttribute('aria-label')||e.textContent||'').trim()))`;
 
 type ThemeReading = { dataTheme: string | null; stored: string | null; checked: string | null; switchFound: boolean };
 
@@ -177,6 +184,7 @@ async function chooseTheme(page: Page, theme: ThemeChoice): Promise<void> {
     await page.click(themeSwitch(language), 'the Theme_Switch');
   }
   await page.waitFor(`document.documentElement.getAttribute('data-theme')===${JSON.stringify(theme)}`, `data-theme to be ${theme}`);
+  await closeMenu(page);
 }
 
 type FontUse = { declared: number; used: { family: string; weight: number; style: 'normal' | 'italic'; status: string }[] };
@@ -556,17 +564,18 @@ function buildSteps(ctx: Context): BrowserStep[] {
       async run() {
         const lang = () => page.ev<string>('document.documentElement.lang');
         const heading = () => page.ev<string>(`document.querySelector('#screen-title')?.textContent.trim()`);
-        await page.clickText('button', EN['language.en']!);
+        await pressLanguage(page, EN['language.en']!);
         await page.waitFor(`document.documentElement.lang==='en'`, 'lang en');
         const en = { lang: await lang(), heading: await heading(), nav: await page.ev<string>(`document.querySelector('nav').innerText`) };
-        await page.clickText('button', HI['language.hi']!);
+        await pressLanguage(page, HI['language.hi']!);
         await page.waitFor(`document.documentElement.lang==='hi'`, 'lang hi');
         const hi = { lang: await lang(), heading: await heading(), nav: await page.ev<string>(`document.querySelector('nav').innerText`) };
         expect(en.heading === EN['nav.weave'], `English heading is "${en.heading}", expected "${EN['nav.weave']}"`);
         expect(hi.heading === HI['nav.weave'], `Hindi heading is "${hi.heading}", expected "${HI['nav.weave']}"`);
         expect(en.nav !== hi.nav, 'the navigation text did not change between hi and en');
-        await page.clickText('button', EN['language.en']!);
+        await pressLanguage(page, EN['language.en']!);
         await page.waitFor(`document.documentElement.lang==='en'`, 'lang back to en');
+        await closeMenu(page);
         const back = await heading();
         expect(back === EN['nav.weave'], `after switching back, the heading is "${back}"`);
         return `en: lang=${en.lang} "${en.heading}"; hi: lang=${hi.lang} "${hi.heading}"; back to en: "${back}"`;
@@ -899,7 +908,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
       name: 'theme switch: data-theme and localStorage survive a reload',
       async run() {
         await ensureEnglish(page);
-        await page.waitFor(`!!${themeSwitch('en')}`, 'the Theme_Switch (a role="switch" named "Night loom")');
+        await page.waitFor(`!!${themeSwitch('en')}`, 'the Theme_Switch (a role="switch" named "Switch to night loom" or "Switch to day loom")');
         const start = await readTheme(page);
         expect(start.dataTheme === 'day' || start.dataTheme === 'night', `data-theme is ${JSON.stringify(start.dataTheme)} at the start, expected day or night`);
         const first: ThemeChoice = start.dataTheme === 'night' ? 'day' : 'night';
@@ -923,6 +932,36 @@ function buildSteps(ctx: Context): BrowserStep[] {
           expect(reloaded.stored === target, `after a reload localStorage ${THEME_STORAGE_KEY} is ${JSON.stringify(reloaded.stored)}, expected the text ${target}`);
           expect(reloaded.checked === String(target === 'night'), `after a reload aria-checked is ${reloaded.checked}, expected ${target === 'night'}`);
           lines.push(`${target}: pressed, then reloaded: data-theme ${reloaded.dataTheme}, localStorage "${reloaded.stored}", aria-checked ${reloaded.checked}`);
+        }
+        return lines.join('\n');
+      },
+    },
+    {
+      name: 'header: shrinks after 24 px of scrolling, and the page below it does not move',
+      async run() {
+        await ensureEnglish(page);
+        const lines: string[] = [];
+        const read = `(()=>{const h=document.querySelector('header');const m=document.querySelector('main');return {height:h.getBoundingClientRect().height,mainTop:m.getBoundingClientRect().top+window.scrollY,scrolled:h.getAttribute('data-scrolled')}})()`;
+        type Reading = { height: number; mainTop: number; scrolled: string | null };
+        try {
+          for (const width of [1280, 390]) {
+            await page.setViewport(width, 900);
+            await page.ev('window.scrollTo(0,0)');
+            await page.waitFor(`document.querySelector('header').getAttribute('data-scrolled')==='false'`, `the header at the top at ${width}`);
+            await sleep(300);
+            const before = await page.ev<Reading>(read);
+            await page.ev('window.scrollTo(0,300)');
+            await page.waitFor(`document.querySelector('header').getAttribute('data-scrolled')==='true'`, `the header to shrink at ${width}`);
+            await sleep(400);
+            const after = await page.ev<Reading>(read);
+            expect(after.height < before.height - 4, `at ${width} the header is ${after.height} px high after scrolling, ${before.height} px before: it did not shrink`);
+            expect(Math.abs(after.mainTop - before.mainTop) <= 0.5, `at ${width} the page below the header moved: main starts at ${before.mainTop} before and ${after.mainTop} after`);
+            lines.push(`at ${width}: header ${before.height} -> ${after.height} px, main stays at ${after.mainTop} px`);
+            await page.ev('window.scrollTo(0,0)');
+          }
+        } finally {
+          await page.setViewport(900, 1000);
+          await page.ev('window.scrollTo(0,0)');
         }
         return lines.join('\n');
       },
@@ -1225,13 +1264,14 @@ function buildSteps(ctx: Context): BrowserStep[] {
         };
         const languageSwitches = async (): Promise<string> => {
           await goTo(page, 'weave');
-          await page.clickText('button', EN['language.en']!);
+          await pressLanguage(page, EN['language.en']!);
           await page.waitFor(`document.documentElement.lang==='en'`, 'lang en');
-          await page.clickText('button', HI['language.hi']!);
+          await pressLanguage(page, HI['language.hi']!);
           await page.waitFor(`document.documentElement.lang==='hi'`, 'lang hi');
           const hiHeading = await page.ev<string>(`document.querySelector('#screen-title')?.textContent.trim()`);
-          await page.clickText('button', EN['language.en']!);
+          await pressLanguage(page, EN['language.en']!);
           await page.waitFor(`document.documentElement.lang==='en'`, 'lang back to en');
+          await closeMenu(page);
           const enHeading = await page.ev<string>(`document.querySelector('#screen-title')?.textContent.trim()`);
           expect(hiHeading === HI['nav.weave'], `Hindi heading is "${hiHeading}", expected "${HI['nav.weave']}"`);
           expect(enHeading === EN['nav.weave'], `English heading is "${enHeading}", expected "${EN['nav.weave']}"`);

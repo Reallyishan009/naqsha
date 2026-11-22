@@ -10,6 +10,10 @@
  * reveal itself is covered by its unit tests (tests/ui/components/reveal.test.tsx). The script still scrolls from the top to the bottom of
  * the page and back, waits until every picture is decoded and no block is waiting to be revealed, and only then takes the picture.
  *
+ * `npm run screenshots -- after-run2` takes the run 2 set into `media/design/after-run2/`, part by part: the header views
+ * (`header-closed`, `header-closed-hi`, `header-menu`, `header-menu-hi`, each `<view>-<theme>-<width>.png`, cropped to the top 700 px),
+ * with `--view <name>` to take one view. The theme, the language and the menu are all pressed by accessible name, and motion is reduced.
+ *
  * Options for working on the script itself: `--out <directory>` writes somewhere else, `--view <name>` (repeatable)
  * takes only that view and ignores the missing files of the others when it checks the set.
  *
@@ -31,6 +35,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { findChrome } from './checks/chrome.ts';
 import {
+  RUN2_FOLDER,
+  RUN2_VIEWS,
   LANDING_FULL_FOLDER,
   LANDING_FULL_VIEW,
   LANDING_FULL_WIDTHS,
@@ -39,16 +45,18 @@ import {
   SCREENSHOT_WIDTHS,
   landingFullNames,
   landingFullProblems,
+  run2Names,
+  run2Problems,
   screenshotNames,
   setProblems,
 } from './checks/screenshots.ts';
-import { Page, byText, closeHeaderMenu, openHeaderMenu, openPage, startChrome, startPreview } from './checks/session.ts';
+import { Page, byName, byText, closeHeaderMenu, openHeaderMenu, openPage, startChrome, startPreview } from './checks/session.ts';
 import type { Cleanup } from './checks/session.ts';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const EN = JSON.parse(readFileSync(path.join(repoRoot, 'src', 'ui', 'i18n', 'en.json'), 'utf8')) as Record<string, string>;
 
-type Mode = 'before' | 'after' | 'after-run1';
+type Mode = 'before' | 'after' | 'after-run1' | 'after-run2';
 type View = (typeof SCREENSHOT_VIEWS)[number];
 type Theme = (typeof SCREENSHOT_THEMES)[number];
 type Screen = 'weave' | 'keep' | 'scan' | 'code';
@@ -56,10 +64,11 @@ type Design = 'diamond' | 'border' | 'floral';
 
 /** Height of the emulated window; a capture is taller when the page is. */
 const WINDOW_HEIGHT = 800;
-/** The accessible name of the Theme_Switch (the visible label `theme.label`); the state is `aria-checked`. */
-const THEME_SWITCH_NAME = 'Night loom';
-/** The accessible name of the header menu button, in both languages: only the narrowest width draws it, and it holds the header controls. */
-const MENU_NAMES: readonly string[] = [EN['nav.menu']!, JSON.parse(readFileSync(path.join(repoRoot, 'src', 'ui', 'i18n', 'hi.json'), 'utf8'))['nav.menu'].text as string];
+const HI = JSON.parse(readFileSync(path.join(repoRoot, 'src', 'ui', 'i18n', 'hi.json'), 'utf8')) as Record<string, { text: string }>;
+/** The accessible names of the Theme_Switch: the action it offers, "Switch to night loom" or "Switch to day loom"; the state is `aria-checked`. */
+const THEME_SWITCH_NAMES: readonly string[] = [EN['theme.toNight']!, EN['theme.toDay']!, HI['theme.toNight']!.text, HI['theme.toDay']!.text];
+/** The accessible name of the header menu button, in both languages: pages under 1024 px draw it, and it holds the links and the two switches. */
+const MENU_NAMES: readonly string[] = [EN['nav.menu']!, HI['nav.menu']!.text];
 /** The accessible names of the Disclosures that may hold a control, in the screens that have them. */
 const MORE_NAME = 'More';
 /** Names of the two designs saved for the Keep and Code views. */
@@ -78,16 +87,17 @@ const escapeRegex = (text: string): string => text.replace(/[.*+?^$()|[\]\\]/g, 
 
 // ---------------------------------------------------------------- arguments
 
-type Options = { mode: Mode; outDir: string; views: readonly View[] };
+type Options = { mode: Mode; outDir: string; views: readonly View[]; run2Views: readonly string[] };
 
 function parseArguments(argv: readonly string[]): Options | string {
-  const usage = 'usage: npm run screenshots -- before|after|after-run1 [--out <directory>] [--view <name>]...';
+  const usage = 'usage: npm run screenshots -- before|after|after-run1|after-run2 [--out <directory>] [--view <name>]...';
   let mode: Mode | null = null;
   let outDir: string | null = null;
   const views: View[] = [];
+  const run2Views: string[] = [];
   for (let i = 0; i < argv.length; i++) {
     const argument = argv[i]!;
-    if (argument === 'before' || argument === 'after' || argument === 'after-run1') {
+    if (argument === 'before' || argument === 'after' || argument === 'after-run1' || argument === 'after-run2') {
       if (mode !== null) return `${usage}\nthe mode was given twice`;
       mode = argument;
     } else if (argument === '--out') {
@@ -96,18 +106,26 @@ function parseArguments(argv: readonly string[]): Options | string {
       outDir = path.resolve(value);
     } else if (argument === '--view') {
       const value = argv[++i];
+      const run2View = RUN2_VIEWS.find((view) => view.name === value);
+      if (run2View !== undefined) {
+        if (!run2Views.includes(run2View.name)) run2Views.push(run2View.name);
+        continue;
+      }
       const view = SCREENSHOT_VIEWS.find((name) => name === value);
-      if (view === undefined) return `${usage}\n--view must be one of: ${SCREENSHOT_VIEWS.join(', ')}`;
+      if (view === undefined) return `${usage}\n--view must be one of: ${[...SCREENSHOT_VIEWS, ...RUN2_VIEWS.map((v) => v.name)].join(', ')}`;
       if (!views.includes(view)) views.push(view);
     } else {
       return `${usage}\nunknown argument "${argument}"`;
     }
   }
   if (mode === null) return usage;
+  if (mode === 'after-run2' && views.length > 0) return `${usage}\n--view for after-run2 must be one of: ${RUN2_VIEWS.map((v) => v.name).join(', ')}`;
+  if (mode !== 'after-run2' && run2Views.length > 0) return `${usage}\n${run2Views.join(', ')} belongs to after-run2`;
   if (mode === 'after-run1' && views.length > 0) return `${usage}\n--view does not apply to after-run1, which takes only the Landing`;
   return {
     mode,
-    outDir: outDir ?? path.join(repoRoot, 'media', 'design', mode === 'after-run1' ? LANDING_FULL_FOLDER : mode),
+    outDir: outDir ?? path.join(repoRoot, 'media', 'design', mode === 'after-run1' ? LANDING_FULL_FOLDER : mode === 'after-run2' ? RUN2_FOLDER : mode),
+    run2Views: run2Views.length === 0 ? RUN2_VIEWS.map((view) => view.name) : RUN2_VIEWS.map((view) => view.name).filter((name) => run2Views.includes(name)),
     views: views.length === 0 ? SCREENSHOT_VIEWS : SCREENSHOT_VIEWS.filter((view) => views.includes(view)),
   };
 }
@@ -187,7 +205,7 @@ async function freshPage(page: Page, baseUrl: string): Promise<void> {
   await page.navigate('about:blank');
   await page.cdp.call('Storage.clearDataForOrigin', { origin: new URL(baseUrl).origin, storageTypes: 'indexeddb,local_storage' });
   await page.navigate(baseUrl);
-  const english = `[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===${q(EN['language.en'])})`;
+  const english = byName('button', EN['language.en']!);
   await page.waitFor(`!!(${english})`, 'the English language control');
   if (!(await page.ev<boolean>(`(${english}).getAttribute('aria-pressed')==='true'`))) {
     await openHeaderMenu(page, MENU_NAMES);
@@ -310,12 +328,12 @@ async function chooseTheme(page: Page, mode: Mode, theme: Theme): Promise<void> 
     );
     return;
   }
-  const control = `[...document.querySelectorAll('[role="switch"]')].find(b=>(b.getAttribute('aria-label')||b.textContent).trim().startsWith(${q(THEME_SWITCH_NAME)}))`;
-  await page.waitFor(`!!(${control})`, `the "${THEME_SWITCH_NAME}" switch`);
+  const control = `[...document.querySelectorAll('[role="switch"]')].find(b=>${q(THEME_SWITCH_NAMES)}.includes((b.getAttribute('aria-label')||b.textContent).trim()))`;
+  await page.waitFor(`!!(${control})`, 'the theme switch');
   const wantNight = theme === 'night';
   if ((await page.ev<boolean>(`(${control}).getAttribute('aria-checked')==='true'`)) !== wantNight) {
     await openHeaderMenu(page, MENU_NAMES);
-    await page.click(control, `the "${THEME_SWITCH_NAME}" switch`);
+    await page.click(control, 'the theme switch');
   }
   await page.waitFor(
     `document.documentElement.getAttribute('data-theme')===${q(theme)}&&(${control}).getAttribute('aria-checked')===${q(String(wantNight))}`,
@@ -327,7 +345,7 @@ async function chooseTheme(page: Page, mode: Mode, theme: Theme): Promise<void> 
 type LayoutMetrics = { cssContentSize?: { height: number }; contentSize: { height: number } };
 
 /** Writes one full-page PNG, `width` pixels wide, as soon as it is taken. */
-async function capture(page: Page, width: number, file: string): Promise<void> {
+async function capture(page: Page, width: number, file: string, maxHeight = Infinity): Promise<void> {
   // The Code view lists its diff entries with `content-visibility: auto`, so a full-page capture would leave the entries
   // below the 800 px window blank, although a weaver who scrolls to them sees them. The page is painted in full for the capture.
   await page.ev(
@@ -335,7 +353,7 @@ async function capture(page: Page, width: number, file: string): Promise<void> {
   );
   await page.ev(`document.fonts.ready.then(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>r(true)))))`);
   const metrics = await page.cdp.call<LayoutMetrics>('Page.getLayoutMetrics');
-  const contentHeight = Math.max(WINDOW_HEIGHT, Math.ceil((metrics.cssContentSize ?? metrics.contentSize).height));
+  const contentHeight = Math.min(maxHeight, Math.max(WINDOW_HEIGHT, Math.ceil((metrics.cssContentSize ?? metrics.contentSize).height)));
   const shot = await page.cdp.call<{ data: string }>('Page.captureScreenshot', {
     format: 'png',
     captureBeyondViewport: true,
@@ -447,6 +465,58 @@ async function captureLandingFull(page: Page, baseUrl: string, outDir: string): 
   return failures;
 }
 
+// ---------------------------------------------------------------- the header set (run 2, part 0)
+
+/** The height of the strip of the page the header views keep: the header and the sheet under it, with some of the page. */
+const HEADER_CROP_PX = 700;
+
+/** Switches the page to Hindi or English through the language segments, found by their accessible names. */
+async function chooseLanguage(page: Page, language: 'en' | 'hi'): Promise<void> {
+  if ((await page.ev<string>('document.documentElement.lang')) === language) return;
+  await openHeaderMenu(page, MENU_NAMES);
+  await page.click(byName('button', language === 'hi' ? HI['language.hi']!.text : EN['language.en']!), `the ${language} language control`);
+  await page.waitFor(`document.documentElement.lang===${q(language)}`, `the page language to be ${language}`);
+  await closeHeaderMenu(page, MENU_NAMES);
+}
+
+/** The header views of run 2: each width on a fresh page; English, then Hindi; each theme; the sheet closed, and where the page has one, open. */
+async function captureHeader(page: Page, baseUrl: string, outDir: string, wanted: readonly string[]): Promise<string[]> {
+  const failures: string[] = [];
+  const widths = [...new Set(RUN2_VIEWS.filter((view) => wanted.includes(view.name)).flatMap((view) => view.widths))].sort((a, b) => b - a);
+  for (const width of widths) {
+    try {
+      await page.setViewport(width, WINDOW_HEIGHT);
+      await freshPage(page, baseUrl);
+      await prepareLanding(page);
+      for (const language of ['en', 'hi'] as const) {
+        await chooseLanguage(page, language);
+        const suffix = language === 'hi' ? '-hi' : '';
+        for (const theme of SCREENSHOT_THEMES) {
+          await chooseTheme(page, 'after', theme);
+          for (const kind of ['closed', 'menu']) {
+            const view = RUN2_VIEWS.find((candidate) => candidate.name === `header-${kind}${suffix}`);
+            if (view === undefined || !wanted.includes(view.name) || !view.widths.includes(width)) continue;
+            if (kind === 'menu') await openHeaderMenu(page, MENU_NAMES);
+            const name = `${view.name}-${theme}-${width}.png`;
+            await capture(page, width, path.join(outDir, name), HEADER_CROP_PX);
+            console.log(`saved ${name}`);
+            try {
+              await printHints(page, name);
+            } catch (error) {
+              console.log(`hint  ${name}: could not be computed: ${messageOf(error)}`);
+            }
+            if (kind === 'menu') await closeHeaderMenu(page, MENU_NAMES);
+          }
+        }
+      }
+    } catch (error) {
+      failures.push(`the header at ${width} failed: ${messageOf(error)}`);
+      console.error(failures[failures.length - 1]);
+    }
+  }
+  return failures;
+}
+
 // ---------------------------------------------------------------- main
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
@@ -457,7 +527,7 @@ async function main(): Promise<number> {
     console.error(options);
     return 2;
   }
-  const { mode, outDir, views } = options;
+  const { mode, outDir, views, run2Views } = options;
   const cleanups: Cleanup[] = [];
   const cleanUp = async (): Promise<void> => {
     for (const cleanup of cleanups.splice(0).reverse()) {
@@ -506,7 +576,12 @@ async function main(): Promise<number> {
       for (const name of landingFullNames()) rmSync(path.join(outDir, name), { force: true });
       failures.push(...(await captureLandingFull(page, baseUrl, outDir)));
     }
-    for (const width of mode === 'after-run1' ? [] : SCREENSHOT_WIDTHS) {
+    if (mode === 'after-run2') {
+      // A file of an earlier run must not stand in for one that fails now.
+      for (const name of run2Names(run2Views)) rmSync(path.join(outDir, name), { force: true });
+      failures.push(...(await captureHeader(page, baseUrl, outDir, run2Views)));
+    }
+    for (const width of mode === 'after-run1' || mode === 'after-run2' ? [] : SCREENSHOT_WIDTHS) {
       for (const view of views) {
         const names = SCREENSHOT_THEMES.map((theme) => `${view}-${theme}-${width}.png`);
         // A file of an earlier run must not stand in for one that fails now.
@@ -547,12 +622,13 @@ async function main(): Promise<number> {
     }
   }
   const landing = mode === 'after-run1';
-  const skipped = landing ? [] : screenshotNames().filter((name) => !views.some((view) => name.startsWith(`${view}-`)));
-  const problems = (landing ? landingFullProblems(files) : setProblems(files)).filter((problem) => !skipped.some((name) => problem.startsWith(`${name} `)));
+  const run2 = mode === 'after-run2';
+  const skipped = landing || run2 ? [] : screenshotNames().filter((name) => !views.some((view) => name.startsWith(`${view}-`)));
+  const problems = (run2 ? run2Problems(files, run2Views) : landing ? landingFullProblems(files) : setProblems(files)).filter((problem) => !skipped.some((name) => problem.startsWith(`${name} `)));
   for (const failure of failures) console.error(`FAIL  ${failure}`);
   for (const problem of problems) console.error(`FAIL  ${problem}`);
   if (failures.length === 0 && problems.length === 0) {
-    console.log(`OK    ${(landing ? landingFullNames() : screenshotNames()).length - skipped.length} files in ${outDir} are valid PNG files of the right width`);
+    console.log(`OK    ${(run2 ? run2Names(run2Views) : landing ? landingFullNames() : screenshotNames()).length - skipped.length} files in ${outDir} are valid PNG files of the right width`);
     return 0;
   }
   return 1;

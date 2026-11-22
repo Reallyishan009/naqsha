@@ -200,6 +200,10 @@ export const ADDED_KEYS: readonly string[] = [
   'landing.footer.built',
   'landing.footer.fonts.heading',
   'landing.footer.fonts.item',
+  'theme.toNight',
+  'theme.toDay',
+  'language.short.en',
+  'language.short.hi',
 ];
 
 /** The purpose and next-step key of each of the four screens (R10.1). */

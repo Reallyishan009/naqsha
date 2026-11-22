@@ -1,0 +1,45 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Header layout, scroll shrink, menu sheet, screenshots, commit `header: calmer layout, menu sheet`": [
+      {
+        "executionId": "8dad67e8-09a1-4d18-a1d5-6e0d67df97da",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795312350119
+      },
+      {
+        "executionId": "8dad67e8-09a1-4d18-a1d5-6e0d67df97da",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795312350992
+      }
+    ],
+    "2.1 Weave reskin and commit `weave: reskin with cards and sections`": [
+      {
+        "executionId": "8dad67e8-09a1-4d18-a1d5-6e0d67df97da",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795312350194
+      }
+    ],
+    "3.1 Keep reskin and commit `keep: reskin with photo cards, timeline and segmented export`": [
+      {
+        "executionId": "8dad67e8-09a1-4d18-a1d5-6e0d67df97da",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795312350247
+      }
+    ],
+    "4.1 Scan and Code reskin and commit `scan and code: reskin`": [
+      {
+        "executionId": "8dad67e8-09a1-4d18-a1d5-6e0d67df97da",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795312350271
+      }
+    ],
+    "5.1 Motion and commit `motion: screen fade, scan sweep`": [
+      {
+        "executionId": "8dad67e8-09a1-4d18-a1d5-6e0d67df97da",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795312350297
+      }
+    ]
+  }
+}

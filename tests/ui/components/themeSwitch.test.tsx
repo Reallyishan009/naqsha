@@ -17,34 +17,33 @@ const noop = (): void => undefined;
 function markup(theme: ThemeName, language: 'en' | 'hi' = 'en'): string {
   const t = translator(DICTIONARIES, language);
   return renderToStaticMarkup(
-    <ThemeSwitch theme={theme} label={t('theme.label')} stateText={t(theme === 'night' ? 'theme.on' : 'theme.off')} onChoose={noop} />,
+    <ThemeSwitch theme={theme} label={t(theme === 'night' ? 'theme.toDay' : 'theme.toNight')} onChoose={noop} />,
   );
 }
 
 describe('ThemeSwitch', () => {
-  it('R4.1 the Theme_Switch is a button with role switch and a visible label and state text', () => {
+  it('R4.1 the Theme_Switch is an icon-only button with role switch, named by the loom a press switches to', () => {
     const day = markup('day');
     expect(day).toMatch(/^<button [^>]*role="switch"/);
     expect(day).toContain('type="button"');
-    expect(day).toContain('>Night loom</span>');
-    expect(day).toContain('>Off</span>');
+    expect(day).toContain('aria-label="Switch to night loom"');
+    expect(markup('night')).toContain('aria-label="Switch to day loom"');
+    // No visible text: the sun or the moon is the whole control.
+    expect(day.replace(/<svg.*<\/svg>/, '')).not.toMatch(/<span/);
   });
 
-  it('R4.2 aria-checked follows the theme and the state text follows it too', () => {
+  it('R4.2 aria-checked follows the theme', () => {
     expect(markup('day')).toContain('aria-checked="false"');
     expect(markup('night')).toContain('aria-checked="true"');
-    expect(markup('night')).toContain('>On</span>');
-    expect(markup('night')).not.toContain('>Off</span>');
   });
 
-  it('R6.10 the accessible name starts with the label in both languages and both themes', () => {
+  it('R6.10 the accessible name is the action in both languages and both themes', () => {
     for (const language of ['en', 'hi'] as const) {
-      const label = translator(DICTIONARIES, language)('theme.label');
+      const t = translator(DICTIONARIES, language);
       for (const theme of ['day', 'night'] as const) {
-        expect(markup(theme, language)).toContain(`aria-label="${label}"`);
+        expect(markup(theme, language)).toContain(`aria-label="${t(theme === 'night' ? 'theme.toDay' : 'theme.toNight')}"`);
       }
     }
-    expect(translator(DICTIONARIES, 'en')('theme.label').startsWith('Night loom')).toBe(true);
   });
 
   it('R4.1 the sun and the moon are different drawn shapes, both aria-hidden', () => {
@@ -62,7 +61,7 @@ describe('ThemeSwitch', () => {
   it('R4.1 activating the switch asks for the other theme', () => {
     const chosen: ThemeName[] = [];
     for (const theme of ['day', 'night'] as const) {
-      const element = ThemeSwitch({ theme, label: 'Night loom', stateText: 'x', onChoose: (next) => chosen.push(next) }) as ReactElement<{
+      const element = ThemeSwitch({ theme, label: 'Switch', onChoose: (next) => chosen.push(next) }) as ReactElement<{
         onClick: () => void;
       }>;
       element.props.onClick();
@@ -70,12 +69,10 @@ describe('ThemeSwitch', () => {
     expect(chosen).toEqual(['night', 'day']);
   });
 
-  it('R23.5 the switch is at least 48 by 48 px and its text may wrap', () => {
+  it('R23.5 the switch is at least 48 by 48 px', () => {
     const source = readFileSync(path.join(SRC, 'components/ThemeSwitch.module.css'), 'utf8');
     expect(source).toMatch(/min-width:\s*var\(--touch-target\)/);
     expect(source).toMatch(/min-height:\s*var\(--touch-target\)/);
-    expect(source).toMatch(/overflow-wrap:\s*anywhere/);
-    expect(source).not.toMatch(/white-space:\s*nowrap/);
   });
 });
 
@@ -102,6 +99,7 @@ describe('theme change and the AppState', () => {
       expect(html.match(/<button [^>]*class="[^"]*navButton/g)).toHaveLength(4);
       expect(html.match(/role="status"/g)).toHaveLength(1);
       expect(html).toMatch(/<header [^>]*><svg [^>]*data-selvedge/);
+      expect(html).toContain(`aria-label="${theme === 'night' ? 'Switch to day loom' : 'Switch to night loom'}"`);
     }
   });
 });
@@ -118,6 +116,7 @@ describe('Selvedge', () => {
     const css = readFileSync(path.join(SRC, 'components/Selvedge.module.css'), 'utf8');
     expect(css).toContain('fill: var(--zari)');
     expect(css).toContain('fill: var(--madder)');
-    expect(readFileSync(path.join(SRC, 'Shell.module.css'), 'utf8')).toMatch(/\.header \{[^}]*overflow: hidden/);
+    // The header no longer clips (the menu sheet hangs below it), so the Selvedge is a strip between the rounded corners.
+    expect(readFileSync(path.join(SRC, 'Shell.module.css'), 'utf8')).toMatch(/\.header > \[data-selvedge\] \{[^}]*left: var\(--radius-card\)/);
   });
 });

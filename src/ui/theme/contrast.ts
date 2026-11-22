@@ -187,6 +187,8 @@ function pairsFor(theme: ThemeName): TokenPair[] {
   // Text on a zari fill, a primary Button, the deep-green band, and on the dark Code view panel.
   pairs.push({ theme, foreground: 'on-zari', background: 'zari', minimum: 4.5 });
   pairs.push({ theme, foreground: 'on-primary', background: 'primary', minimum: 4.5 });
+  // The current link of the header: on-primary text on the tan accent pill.
+  pairs.push({ theme, foreground: 'on-primary', background: 'accent', minimum: 4.5 });
   pairs.push({ theme, foreground: 'on-band', background: 'band', minimum: 4.5 });
   pairs.push({ theme, foreground: 'band-accent', background: 'band', minimum: 4.5 });
   pairs.push({ theme, foreground: 'on-hole', background: 'hole', minimum: 4.5 });

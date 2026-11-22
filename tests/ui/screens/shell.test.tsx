@@ -84,23 +84,54 @@ describe('shell', () => {
     }
   });
 
-  it('the pill header has a named menu button that starts collapsed, the group it controls, and one Scan pill, in both languages', () => {
+  it('the narrow header has the Scan pill, then a named menu button that starts collapsed, then the sheet with the navigation and the two switches, in both languages', () => {
     for (const language of LANGUAGES) {
       const t = translator(DICTIONARIES, language);
-      const html = render({ ...initialAppState, language });
+      const html = renderToStaticMarkup(<Shell state={{ ...initialAppState, language }} dispatch={() => undefined} compact />);
       const button = /<button\b[^>]*aria-expanded="false"[^>]*aria-controls="([^"]+)"[^>]*>(.*?)<\/button>/.exec(html);
       expect(button, `${language} menu button`).not.toBeNull();
       expect(button![2]).toContain(`<span>${t('nav.menu')}</span>`);
-      // The group holds the navigation, the language switch, the theme switch and the Scan pill, so it can hide them as one.
-      const group = new RegExp(`<div id="${button![1]}"[^>]*data-open="false"[^>]*>(.*)</div></div></header>`).exec(html)?.[1] ?? '';
-      expect(group).toContain('<nav ');
-      expect(group).toContain('role="group"');
-      expect(group).toContain('role="switch"');
-      expect(group).toContain(`>${t('nav.scanCard')}</button>`);
-      // One Scan pill in the header. (The Weave Landing's hero has its own "Scan a card" in main, outside the header.)
+      const sheet = new RegExp(`<div id="${button![1]}"[^>]*data-open="false"[^>]*>(.*)</div></div></header>`).exec(html)?.[1] ?? '';
+      expect(sheet).toContain('<nav ');
+      expect(sheet).toContain('role="group"');
+      expect(sheet).toContain('role="switch"');
+      // One Scan pill in the header, before the menu button and outside the sheet.
       const header = /<header\b.*?<\/header>/s.exec(html)?.[0] ?? '';
       expect(header.split(`>${t('nav.scanCard')}</button>`)).toHaveLength(2);
+      expect(sheet).not.toContain(t('nav.scanCard'));
+      expect(header.indexOf(t('nav.scanCard'))).toBeLessThan(header.indexOf('aria-controls'));
     }
+  });
+
+  it('the wide header has no menu button and its controls come in the order links, Scan pill, language, theme, in both languages', () => {
+    for (const language of LANGUAGES) {
+      const t = translator(DICTIONARIES, language);
+      const html = renderToStaticMarkup(<Shell state={{ ...initialAppState, language }} dispatch={() => undefined} compact={false} />);
+      const header = /<header\b.*?<\/header>/s.exec(html)?.[0] ?? '';
+      expect(header).not.toContain('aria-controls');
+      const at = [header.indexOf('<nav '), header.indexOf(`>${t('nav.scanCard')}</button>`), header.indexOf('role="group"'), header.indexOf('role="switch"')];
+      expect(at.every((index) => index >= 0)).toBe(true);
+      expect([...at].sort((a, b) => a - b)).toEqual(at);
+      expect(header.split(`>${t('nav.scanCard')}</button>`)).toHaveLength(2);
+    }
+  });
+
+  it('the Scan pill is not drawn on the Scan screen, and is drawn on the others', () => {
+    for (const compact of [true, false]) {
+      for (const screen of SCREENS) {
+        const html = renderToStaticMarkup(<Shell state={{ ...initialAppState, screen, language: 'en' }} dispatch={() => undefined} compact={compact} />);
+        const header = /<header\b.*?<\/header>/s.exec(html)?.[0] ?? '';
+        expect(header.includes('>Scan a card</button>'), `${screen} compact=${compact}`).toBe(screen !== 'scan');
+      }
+    }
+  });
+
+  it('the language segments show EN and the Hindi short form, and keep the full language names as accessible names', () => {
+    const html = render({ ...initialAppState, language: 'en' });
+    expect(html).toContain(`aria-label="${EN['language.en']}"`);
+    expect(html).toContain(`aria-label="${EN['language.hi']}"`);
+    expect(html).toContain('<span>EN</span>');
+    expect(html).toContain(`<span>${EN['language.short.hi']}</span>`);
   });
 
   it('R12.2 the language switch offers both languages as pressable buttons', () => {
@@ -158,5 +189,27 @@ describe('shell', () => {
     expect(shell.match(/min-height: var\(--touch-target\)/g)?.length).toBeGreaterThan(0);
     expect(tokens).toContain('prefers-reduced-motion: reduce');
     expect(tokens).toContain('outline: 3px solid var(--zari)');
+  });
+
+  it('the header shrinks by padding and gives the same room back as margin, so the page below does not move, and it animates only under the motion token', async () => {
+    const { readFileSync } = await import('node:fs');
+    const path = await import('node:path');
+    const root = path.resolve(import.meta.dirname, '../../..');
+    const css = readFileSync(path.join(root, 'src/ui/Shell.module.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const rule = (selector: string): string => {
+      for (const match of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) if (match[1]!.trim() === selector) return match[2]!;
+      return '';
+    };
+    const space: Record<string, number> = { '--space-1': 4, '--space-2': 8, '--space-3': 12, '--space-4': 16 };
+    const px = (value: string): number => space[/var\((--space-\d)\)/.exec(value)![1]!]!;
+    const bar = rule('.bar');
+    const [top, , bottom] = /padding:\s*([^;]+);/.exec(bar)![1]!.split(/\s+/);
+    const [shrunkTop, shrunkBottom] = /padding-block:\s*([^;]+);/.exec(rule(".header[data-scrolled='true'] .bar"))![1]!.split(/\s+/);
+    const given = px(top!) - px(shrunkTop!) + (px(bottom!) - px(shrunkBottom!));
+    const margin = px(/margin-bottom:\s*([^;]+);/.exec(rule(".header[data-scrolled='true']"))![1]!);
+    expect(given).toBeGreaterThan(0);
+    expect(margin).toBe(given);
+    for (const selector of ['.header', '.bar']) expect(rule(selector), selector).toMatch(/transition:[^;]*var\(--motion-short\)/);
+    expect(readFileSync(path.join(root, 'src/ui/theme/tokens.css'), 'utf8')).toMatch(/--motion-short:\s*120ms/);
   });
 });

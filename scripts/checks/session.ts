@@ -122,6 +122,11 @@ export class Page {
     return this.click(byText(selector, text), `${selector} "${text}"`);
   }
 
+  /** Clicks the element with this accessible name (its `aria-label`, else its text). */
+  clickName(selector: string, name: string): Promise<void> {
+    return this.click(byName(selector, name), `${selector} named "${name}"`);
+  }
+
   async fillField(label: string, value: string): Promise<void> {
     await this.waitFor(
       `(()=>{const l=[...document.querySelectorAll('label')].find(l=>l.querySelector('span')?.textContent.trim()===${JSON.stringify(label)});const i=l?.querySelector('input,textarea');if(!i)return false;i.focus();i.select();return true})()`,
@@ -143,14 +148,17 @@ export class Page {
   }
 }
 
+/** The element whose accessible name is `name`: its `aria-label`, else its text (the language segments are named in full and show "EN"). */
+export const byName = (selector: string, name: string): string =>
+  `[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>(e.getAttribute('aria-label')||e.textContent).trim()===${JSON.stringify(name)})`;
 export const byText = (selector: string, text: string): string =>
   `[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>e.textContent.trim()===${JSON.stringify(text)})`;
 
 /**
  * Opens the menu of the header, found by its accessible name (`nav.menu` in the language the page shows, so pass the
- * name in each language), but only where the page draws it: at the narrowest width the navigation, the language
- * switch, the theme switch and the Scan pill sit behind that button. Where the button is not drawn (display: none, as
- * at 390 and 1280 px) or the menu is open already, nothing is clicked, so a control that is always shown is never
+ * name in each language), but only where the page draws it: under 1024 px the navigation, the language
+ * switch and the theme switch sit in the sheet behind that button. Where the button is not drawn (the page is 1024 px
+ * or wider) or the menu is open already, nothing is clicked, so a control that is always shown is never
  * reached through a menu. Call it before pressing any header control.
  */
 export async function openHeaderMenu(page: Page, names: readonly string[]): Promise<void> {

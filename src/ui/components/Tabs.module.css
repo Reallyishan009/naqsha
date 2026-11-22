@@ -43,3 +43,25 @@
   stroke-width: 2.5;
   stroke-linecap: square;
 }
+
+/* One pill split into segments: the segments touch, the outline is the group's, and the current one keeps its fill and check mark. */
+.segmented {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 0;
+  padding: 2px;
+  background: var(--surface);
+  border: 1px solid var(--ink-soft);
+  border-radius: var(--radius-pill);
+}
+
+.segmented .tab {
+  padding-inline: var(--space-3);
+  background: transparent;
+  border-color: transparent;
+}
+
+.segmented .current {
+  background: var(--primary);
+  border-color: var(--primary);
+}

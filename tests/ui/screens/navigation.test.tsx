@@ -50,21 +50,21 @@ describe('navigation', () => {
     }
   });
 
-  it('R9.4 the Code view item alone shows the word from nav.advanced, and nav.code is unchanged', () => {
+  it('R9.4 no navigation item carries the word from nav.advanced (the Code view screen shows it as a chip instead), and nav.code is unchanged', () => {
     expect(EN['nav.code']).toBe('Code');
     for (const language of LANGUAGES) {
       const word = label(language, 'nav.advanced');
       expect(word).not.toBe('');
       const buttons = navButtons('weave', language);
       buttons.forEach((button, index) => {
-        expect(button.inner.includes(`>${word}</span>`), `${language} ${SCREENS[index]}`).toBe(SCREENS[index] === 'code');
+        expect(button.inner.includes(word), `${language} ${SCREENS[index]}`).toBe(false);
       });
       expect(buttons[3]!.inner.startsWith(`${label(language, 'nav.code')}<svg`)).toBe(true);
     }
     expect(HI['nav.advanced']?.reviewed).toBe(false);
   });
 
-  it('R9.3 R9.5 R9.6 the styles mark the current item by weight, a 3 px underline and a fill, wrap without a media query, and keep 48 px targets', () => {
+  it('R9.3 R9.5 R9.6 the styles mark the current item by weight, a 3 px underline and a fill, wrap without a media query, and keep 48 px targets (the sheet rows too)', () => {
     const css = readFileSync(path.join(ROOT, 'src/ui/Shell.module.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     const rule = (selector: string): string => {
       for (const match of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) if (match[1]!.trim() === selector) return match[2]!;
@@ -74,14 +74,14 @@ describe('navigation', () => {
     expect(current).toMatch(/font-weight:\s*700/);
     expect(current).toMatch(/text-decoration:\s*underline/);
     expect(current).toMatch(/text-decoration-thickness:\s*3px/);
-    expect(current).toMatch(/background:\s*var\(--primary\)/);
+    expect(current).toMatch(/background:\s*var\(--accent\)/);
     expect(current).toMatch(/color:\s*var\(--on-primary\)/);
     expect(rule('.navIcon')).toMatch(/order:\s*-1/);
-    expect(rule('.navButton')).toMatch(/flex-direction:\s*column/);
+    expect(rule('.navButton')).toMatch(/flex-direction:\s*row/);
     expect(rule('.navButton')).toMatch(/min-height:\s*var\(--touch-target\)/);
     expect(rule('.navButton')).toMatch(/min-width:\s*var\(--touch-target\)/);
     expect(rule('.nav')).toMatch(/flex-wrap:\s*wrap/);
-    expect(rule('.bar')).toMatch(/flex-wrap:\s*wrap/);
+    expect(rule('.sheet .navButton')).toMatch(/min-height:\s*var\(--touch-target\)/);
     expect(rule('.switches')).toMatch(/flex-wrap:\s*wrap/);
     expect(css).not.toContain('@media');
   });

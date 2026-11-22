@@ -1890,5 +1890,21 @@
   "landing.footer.fonts.item": {
     "text": "{family}, {foundry} द्वारा",
     "reviewed": false
+  },
+  "theme.toNight": {
+    "text": "रात के करघे पर जाएँ",
+    "reviewed": false
+  },
+  "theme.toDay": {
+    "text": "दिन के करघे पर जाएँ",
+    "reviewed": false
+  },
+  "language.short.en": {
+    "text": "EN",
+    "reviewed": false
+  },
+  "language.short.hi": {
+    "text": "हि",
+    "reviewed": false
   }
 }

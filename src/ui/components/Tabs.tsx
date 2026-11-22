@@ -1,21 +1,29 @@
 import styles from './Tabs.module.css';
 
-export type TabItem = { key: string; label: string; lang?: string };
+export type TabItem = {
+  key: string;
+  label: string;
+  lang?: string;
+  /** A short visible text ("EN"); the full `label` stays the accessible name. */
+  short?: string;
+};
 
 export type TabsProps = {
   label: string;
   items: readonly TabItem[];
   current: string;
   onChoose: (key: string) => void;
+  /** Draws the items as the two or three segments of one pill. */
+  segmented?: boolean;
 };
 
 /**
  * A group of toggle buttons (`aria-pressed`). The current choice is bold and carries a drawn check mark
  * as well as its fill, so it does not depend on colour.
  */
-export function Tabs({ label, items, current, onChoose }: TabsProps) {
+export function Tabs({ label, items, current, onChoose, segmented = false }: TabsProps) {
   return (
-    <div role="group" aria-label={label} className={styles.tabs}>
+    <div role="group" aria-label={label} className={segmented ? `${styles.tabs} ${styles.segmented}` : styles.tabs}>
       {items.map((item) => {
         const isCurrent = item.key === current;
         return (
@@ -25,6 +33,7 @@ export function Tabs({ label, items, current, onChoose }: TabsProps) {
             lang={item.lang}
             className={isCurrent ? `${styles.tab} ${styles.current}` : styles.tab}
             aria-pressed={isCurrent}
+            aria-label={item.short === undefined ? undefined : item.label}
             onClick={() => onChoose(item.key)}
           >
             {isCurrent ? (
@@ -32,7 +41,7 @@ export function Tabs({ label, items, current, onChoose }: TabsProps) {
                 <polyline points="2,8.5 6,12.5 14,3.5" />
               </svg>
             ) : null}
-            <span>{item.label}</span>
+            <span>{item.short ?? item.label}</span>
           </button>
         );
       })}

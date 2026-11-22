@@ -15,6 +15,7 @@ import { ClothCanvas, createClothPlayer } from '../weave/ClothCanvas.tsx';
 import { Button } from '../../components/Button.tsx';
 import { Field } from '../../components/Field.tsx';
 import { Notice } from '../../components/Notice.tsx';
+import { Chip } from '../../components/Chip.tsx';
 import { ScreenIntro } from '../../components/ScreenIntro.tsx';
 import { StateMessage } from '../../components/StateMessage.tsx';
 import { NothingToCompareIllustration } from '../../illustrations/SpotIllustrations.tsx';
@@ -201,9 +202,12 @@ export function CodeViewScreen({
 
   return (
     <section aria-labelledby="screen-title" className={styles.screen}>
-      <h2 id="screen-title" className={styles.screenTitle}>
-        {t('codeview.title')}
-      </h2>
+      <div className={styles.titleLine}>
+        <h2 id="screen-title" className={styles.screenTitle}>
+          {t('codeview.title')}
+        </h2>
+        <Chip>{t('nav.advanced')}</Chip>
+      </div>
 
       <ScreenIntro purpose={t('codeview.purpose')} next={t('codeview.nextStep')} />
 

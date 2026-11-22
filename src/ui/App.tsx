@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { Component, lazy, Suspense, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
 import type { ComponentType, Dispatch, ErrorInfo, KeyboardEvent, ReactNode } from 'react';
 import { DICTIONARIES, profileFailureKey, translator } from './i18n/messages.ts';
 import type { Translate } from './i18n/messages.ts';
@@ -36,10 +36,31 @@ import './theme/tokens.css';
 import type { AppAction, AppState, Language, Screen } from './types.ts';
 
 const SCREENS: ReadonlyArray<Screen> = ['weave', 'keep', 'scan', 'code'];
-const LANGUAGES: ReadonlyArray<Language> = ['hi', 'en'];
+const LANGUAGES: ReadonlyArray<Language> = ['en', 'hi'];
 
-/** The id the header menu button points at (`aria-controls`): the group of navigation, switches and the Scan pill. */
+/** The id the header menu button points at (`aria-controls`): the sheet with the navigation and the two switches. */
 const HEADER_MENU_ID = 'header-menu';
+
+/** From this viewport width the header lays its links and controls in one line; under it the links sit in the menu sheet. */
+const WIDE_QUERY = '(min-width: 1024px)';
+/** How far the page scrolls before the header shrinks, in CSS pixels. */
+const SHRINK_AFTER_PX = 24;
+
+function subscribeWide(onChange: () => void): () => void {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return () => undefined;
+  const list = window.matchMedia(WIDE_QUERY);
+  list.addEventListener('change', onChange);
+  return () => list.removeEventListener('change', onChange);
+}
+
+/** True at 1024 px and wider; true too where there is no window (server rendering, tests), so the wide header is the default. */
+function useWideHeader(): boolean {
+  return useSyncExternalStore(
+    subscribeWide,
+    () => (typeof window.matchMedia === 'function' ? window.matchMedia(WIDE_QUERY).matches : true),
+    () => true,
+  );
+}
 
 type BoundaryProps = {
   message: string;
@@ -111,10 +132,12 @@ export type ShellProps = {
   onLoadUpdate?: () => void;
   /** Loads the card profile again after it failed; the Landing offers it beside the failure message. */
   onRetryProfile?: () => void;
+  /** Forces the narrow header (true) or the wide one (false); a test gives it, the page follows the viewport width. */
+  compact?: boolean;
 };
 
 /** The shell: navigation, language switch, profile banner, the current screen and one live region. Pure of browser APIs. */
-export function Shell({ state, dispatch, onLanguageChosen, theme = 'day', onThemeChosen, updateReady = false, onLoadUpdate, onRetryProfile }: ShellProps) {
+export function Shell({ state, dispatch, onLanguageChosen, theme = 'day', onThemeChosen, updateReady = false, onLoadUpdate, onRetryProfile, compact }: ShellProps) {
   const t = useMemo(() => translator(DICTIONARIES, state.language), [state.language]);
   const { profile, announcement } = state;
   // Each retry of a Screen that failed to load adds one: the Screen is remounted and its chunk is asked for again.
@@ -123,95 +146,139 @@ export function Shell({ state, dispatch, onLanguageChosen, theme = 'day', onThem
   const CodeViewScreen = useLazyScreen(importCodeViewScreen, screenAttempt);
   // The Landing shows the profile's loading and failure itself, with its own retry.
   const landingShowsProfile = state.screen === 'weave' && state.current.pattern.length === 0;
-  // At the narrowest width the navigation, the switches and the Scan pill sit behind the menu button; wider, they are always shown.
+  // Under 1024 px the links and the two switches sit in a sheet behind the Menu button; wider they are always shown.
+  const wide = useWideHeader();
+  const narrow = compact ?? !wide;
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
-  /** Closes the menu after a choice made in it, and keeps keyboard focus on a control that is still shown. */
+  const headerRef = useRef<HTMLElement>(null);
+  const sheetOpen = narrow && menuOpen;
+  useEffect(() => {
+    if (!narrow) setMenuOpen(false);
+  }, [narrow]);
+  // The header shrinks a little once the page has scrolled; the Shell.module.css pairs its padding with its margin, so the page below does not move.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = (): void => setScrolled(window.scrollY > SHRINK_AFTER_PX);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  // A click or touch outside the header closes the sheet, without moving focus.
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const onPointerDown = (event: PointerEvent): void => {
+      if (event.target instanceof Node && headerRef.current?.contains(event.target) !== true) setMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [sheetOpen]);
+  /** Closes the sheet after a choice made in it, and keeps keyboard focus on a control that is still shown. */
   const closeMenuAfterChoice = (): void => {
-    if (!menuOpen) return;
+    if (!sheetOpen) return;
     setMenuOpen(false);
     menuButton.current?.focus();
   };
-  const onMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
-    if (event.key !== 'Escape' || !menuOpen) return;
+  const onMenuKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
+    if (event.key !== 'Escape' || !sheetOpen) return;
     event.stopPropagation();
     menuButton.current?.focus();
     setMenuOpen(false);
   };
+  const navigation = (
+    <nav aria-label={t('nav.label')} className={styles.nav}>
+      {SCREENS.map((screen) => (
+        <button
+          key={screen}
+          type="button"
+          className={styles.navButton}
+          aria-current={state.screen === screen ? 'page' : undefined}
+          onClick={() => {
+            dispatch({ type: 'navigate', screen });
+            closeMenuAfterChoice();
+          }}
+        >
+          {/* The label is the first text of the button; CSS `order: -1` puts the icon in front of it. */}
+          {t(`nav.${screen}`)}
+          <NavIcon screen={screen} className={styles.navIcon} />
+        </button>
+      ))}
+    </nav>
+  );
+  // The header's one primary Button. It belongs to the Shell, so it is outside every Screen and its one primary Button. The Scan screen is already there, so it is not drawn on it.
+  const scanPill =
+    state.screen === 'scan' ? null : (
+      <Button
+        variant="primary"
+        className={styles.scanPill}
+        onClick={() => {
+          dispatch({ type: 'navigate', screen: 'scan' });
+          closeMenuAfterChoice();
+        }}
+      >
+        {t('nav.scanCard')}
+      </Button>
+    );
+  const switches = (
+    <div className={styles.switches}>
+      <Tabs
+        segmented
+        label={t('language.label')}
+        items={LANGUAGES.map((language) => {
+          const words = translator(DICTIONARIES, language);
+          return { key: language, lang: language, label: words(`language.${language}`), short: words(`language.short.${language}`) };
+        })}
+        current={state.language}
+        onChoose={(key) => {
+          const language: Language = key === 'en' ? 'en' : 'hi';
+          dispatch({ type: 'set-language', language });
+          onLanguageChosen?.(language);
+        }}
+      />
+      <ThemeSwitch
+        theme={theme}
+        label={t(theme === 'night' ? 'theme.toDay' : 'theme.toNight')}
+        onChoose={(next) => onThemeChosen?.(next)}
+      />
+    </div>
+  );
   return (
     <div className={styles.shell}>
-      <header className={styles.header}>
+      <header ref={headerRef} className={styles.header} data-scrolled={scrolled} data-narrow={narrow} onKeyDown={onMenuKeyDown}>
         <Selvedge />
         <div className={styles.bar}>
           <div className={styles.brand}>
             <BrandMark className={styles.mark} />
             <h1 className={styles.title}>{t('app.title')}</h1>
           </div>
-          <button
-            ref={menuButton}
-            type="button"
-            className={styles.menuButton}
-            aria-expanded={menuOpen}
-            aria-controls={HEADER_MENU_ID}
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            <MenuIcon className={styles.menuIcon} />
-            <span>{t('nav.menu')}</span>
-          </button>
-          <div id={HEADER_MENU_ID} className={styles.panel} data-open={menuOpen} onKeyDown={onMenuKeyDown}>
-            <nav aria-label={t('nav.label')} className={styles.nav}>
-              {SCREENS.map((screen) => (
-                <button
-                  key={screen}
-                  type="button"
-                  className={styles.navButton}
-                  aria-current={state.screen === screen ? 'page' : undefined}
-                  onClick={() => {
-                    dispatch({ type: 'navigate', screen });
-                    closeMenuAfterChoice();
-                  }}
-                >
-                  {/* The label is the first text of the button; CSS `order: -1` puts the icon in front of it. */}
-                  {t(`nav.${screen}`)}
-                  <NavIcon screen={screen} className={styles.navIcon} />
-                  {screen === 'code' ? <span className={styles.navAdvanced}>{t('nav.advanced')}</span> : null}
-                </button>
-              ))}
-            </nav>
-            <div className={styles.switches}>
-              <Tabs
-                label={t('language.label')}
-                items={LANGUAGES.map((language) => ({
-                  key: language,
-                  lang: language,
-                  label: translator(DICTIONARIES, language)(`language.${language}`),
-                }))}
-                current={state.language}
-                onChoose={(key) => {
-                  const language: Language = key === 'en' ? 'en' : 'hi';
-                  dispatch({ type: 'set-language', language });
-                  onLanguageChosen?.(language);
-                }}
-              />
-              <ThemeSwitch
-                theme={theme}
-                label={t('theme.label')}
-                stateText={t(theme === 'night' ? 'theme.on' : 'theme.off')}
-                onChoose={(next) => onThemeChosen?.(next)}
-              />
-            </div>
-            {/* The header's one primary Button. It belongs to the Shell, so it is outside every Screen and its one primary Button. */}
-            <Button
-              variant="primary"
-              className={styles.scanPill}
-              onClick={() => {
-                dispatch({ type: 'navigate', screen: 'scan' });
-                closeMenuAfterChoice();
-              }}
-            >
-              {t('nav.scanCard')}
-            </Button>
-          </div>
+          {narrow ? (
+            <>
+              {scanPill}
+              <button
+                ref={menuButton}
+                type="button"
+                className={styles.menuButton}
+                aria-expanded={menuOpen}
+                aria-controls={HEADER_MENU_ID}
+                onClick={() => setMenuOpen(!menuOpen)}
+              >
+                <MenuIcon className={styles.menuIcon} />
+                <span>{t('nav.menu')}</span>
+              </button>
+              <div id={HEADER_MENU_ID} className={styles.sheet} data-open={menuOpen}>
+                {navigation}
+                {switches}
+              </div>
+            </>
+          ) : (
+            <>
+              {navigation}
+              <div className={styles.actions}>
+                {scanPill}
+                {switches}
+              </div>
+            </>
+          )}
         </div>
       </header>
       {updateReady ? (

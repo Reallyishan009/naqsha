@@ -471,5 +471,9 @@
   "landing.footer.github": "Source code on GitHub",
   "landing.footer.built": "Built with Kiro; planning and prompt drafting with Claude",
   "landing.footer.fonts.heading": "Font credits",
-  "landing.footer.fonts.item": "{family}, by {foundry}"
+  "landing.footer.fonts.item": "{family}, by {foundry}",
+  "theme.toNight": "Switch to night loom",
+  "theme.toDay": "Switch to day loom",
+  "language.short.en": "EN",
+  "language.short.hi": "हि"
 }

@@ -7,6 +7,10 @@ import {
   SCREENSHOT_WIDTHS,
   landingFullNames,
   landingFullProblems,
+  RUN2_FOLDER,
+  RUN2_VIEWS,
+  run2Names,
+  run2Problems,
   screenshotNames,
   setProblems,
 } from '../../scripts/checks/screenshots.ts';
@@ -134,5 +138,48 @@ describe('full-page Landing screenshot set', () => {
     const files = validSet();
     for (const [name, bytes] of validLandingFullSet()) files.set(name, bytes);
     expect(setProblems(files)).toHaveLength(4);
+  });
+});
+
+describe('run 2 screenshot set', () => {
+  const widthOf = (name: string): number => Number(/-(\d+)\.png$/.exec(name)![1]);
+
+  it('goes to media/design/after-run2 and names each file <view>-<theme>-<width>.png', () => {
+    expect(RUN2_FOLDER).toBe('after-run2');
+    const names = run2Names();
+    expect(names).toContain('header-closed-day-1280.png');
+    expect(names).toContain('header-menu-hi-night-320.png');
+    expect(new Set(names).size).toBe(names.length);
+    // The menu sheet exists only under 1024 px.
+    expect(names.filter((name) => name.startsWith('header-menu')).every((name) => widthOf(name) < 1024)).toBe(true);
+  });
+
+  it('run2Names takes the named views only', () => {
+    const names = run2Names(['header-menu']);
+    expect(names).toHaveLength(2 * RUN2_VIEWS.find((view) => view.name === 'header-menu')!.widths.length);
+    expect(names.every((name) => name.startsWith('header-menu-day-') || name.startsWith('header-menu-night-'))).toBe(true);
+  });
+
+  it('a complete set has no problem, a missing file, a wrong width, a text file and a stranger are each named', () => {
+    const files = new Map<string, Uint8Array>(run2Names().map((name) => [name, pngOfWidth(widthOf(name))]));
+    expect(run2Problems(files)).toEqual([]);
+    files.delete('header-closed-day-320.png');
+    files.set('header-closed-night-390.png', pngOfWidth(391));
+    files.set('header-menu-day-768.png', new TextEncoder().encode('this is not a picture at all, just text'));
+    files.set('weave-sample-day-1280.png', pngOfWidth(1280));
+    expect(run2Problems(files)).toEqual([
+      'header-closed-day-320.png is missing',
+      'header-closed-night-390.png is 391 pixels wide, expected 390',
+      'header-menu-day-768.png is not a PNG file',
+      'weave-sample-day-1280.png is not one of the run 2 screenshot names',
+    ]);
+  });
+
+  it('files of the views not asked for are not missing, and a problem of another view is left out', () => {
+    const files = new Map<string, Uint8Array>(run2Names(['header-menu']).map((name) => [name, pngOfWidth(widthOf(name))]));
+    expect(run2Problems(files, ['header-menu'])).toEqual([]);
+    files.set('header-closed-day-1280.png', new TextEncoder().encode('broken'));
+    expect(run2Problems(files, ['header-menu'])).toEqual([]);
+    expect(run2Problems(files, ['header-closed'])).toContain('header-closed-day-1280.png is not a PNG file');
   });
 });

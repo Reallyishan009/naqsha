@@ -3,10 +3,8 @@ import styles from './ThemeSwitch.module.css';
 
 export type ThemeSwitchProps = {
   theme: ThemeName;
-  /** The visible name of the switch ("Night loom"), already translated. */
+  /** The accessible name, already translated: it says which loom the press switches to ("Switch to night loom"). */
   label: string;
-  /** The visible state text ("On" or "Off"), already translated. */
-  stateText: string;
   onChoose: (theme: ThemeName) => void;
 };
 
@@ -34,25 +32,14 @@ function ThemeIcon({ theme }: { theme: ThemeName }) {
 }
 
 /**
- * The Night loom switch: one `role="switch"` button, at least 48 by 48 px. `aria-checked` is true in the Night loom.
- * The visible text names the switch and says On or Off; the text may wrap onto a second line.
+ * The theme switch: one icon-only `role="switch"` button, at least 48 by 48 px. `aria-checked` is true in the Night loom.
+ * Its accessible name says what a press does ("Switch to night loom" in Day loom, "Switch to day loom" in Night loom).
  */
-export function ThemeSwitch({ theme, label, stateText, onChoose }: ThemeSwitchProps) {
+export function ThemeSwitch({ theme, label, onChoose }: ThemeSwitchProps) {
   const night = theme === 'night';
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={night}
-      aria-label={label}
-      className={styles.switch}
-      onClick={() => onChoose(night ? 'day' : 'night')}
-    >
+    <button type="button" role="switch" aria-checked={night} aria-label={label} className={styles.switch} onClick={() => onChoose(night ? 'day' : 'night')}>
       <ThemeIcon theme={theme} />
-      <span className={styles.text}>
-        <span>{label}</span>
-        <span className={styles.state}>{stateText}</span>
-      </span>
     </button>
   );
 }

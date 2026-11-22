@@ -7,7 +7,7 @@
   container-type: inline-size;
 }
 
-/* The header is the floating pill: frosted glass over whatever scrolls under it. The Selvedge is its first child; the header clips it to the rounded corners. */
+/* The header is the floating pill: frosted glass over whatever scrolls under it. The Selvedge is its first child, a strip between the rounded corners. It does not clip (overflow stays visible), so the menu sheet can hang below it. Once the page has scrolled, the bar loses 12 px of padding and the header gains 12 px of margin below it: the page under it does not move. */
 .header {
   position: sticky;
   top: var(--space-3);
@@ -15,28 +15,44 @@
   width: calc(100% - var(--space-5));
   max-width: 76rem;
   margin: var(--space-3) auto 0;
-  overflow: hidden;
   background: var(--frost);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
+  box-shadow: var(--shadow-float);
+  transition:
+    margin-bottom var(--motion-short),
+    box-shadow var(--motion-short);
+}
+
+.header[data-scrolled='true'] {
+  margin-bottom: var(--space-3);
   box-shadow: var(--shadow-lift);
 }
 
-/* The three zones (mark and name, navigation, switches and the Scan pill) are flex items of the bar and wrap by themselves. `order` and the container queries at the end of this sheet choose the layout of each width. */
+.header > [data-selvedge] {
+  position: absolute;
+  top: 0;
+  left: var(--radius-card);
+  width: calc(100% - 2 * var(--radius-card));
+}
+
 .bar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2) var(--space-4);
-  padding: var(--space-3);
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  transition: padding var(--motion-short);
+}
+
+.header[data-scrolled='true'] .bar {
+  padding-block: var(--space-3) var(--space-1);
 }
 
 .brand {
-  order: 1;
   display: flex;
-  flex: 1 1 0;
+  flex: none;
   align-items: center;
   gap: var(--space-2);
   min-width: 0;
@@ -55,10 +71,87 @@
   overflow-wrap: anywhere;
 }
 
-/* The menu button is drawn only at the narrowest width (see the last query). */
+/* Wide: the four links take the middle; the Scan pill and the two switches sit at the right. */
+.nav {
+  display: flex;
+  flex: 1 1 0;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.navButton {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: var(--space-1) var(--space-3);
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  text-align: center;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: background-color var(--motion-short);
+}
+
+.navButton:hover:not([aria-current='page']) {
+  background: var(--tint);
+}
+
+/* The label is first in the markup; the icon moves in front of it. */
+.navIcon {
+  order: -1;
+  flex: none;
+}
+
+/* The current link: the tan pill, and also bold text and a 3 px underline, so it does not depend on colour. */
+.navButton[aria-current='page'] {
+  color: var(--on-primary);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.scanPill {
+  flex: none;
+}
+
+/* The shared Button is a pill here; the two class names tie, so the longer selector wins whatever order the sheets load in. */
+.actions .scanPill,
+.bar > .scanPill {
+  border-radius: var(--radius-pill);
+}
+
+/* The language segments and the theme button, close together. */
+.switches {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* The menu button is drawn only in the narrow header. */
 .menuButton {
-  display: none;
-  order: 2;
+  display: inline-flex;
   flex: none;
   align-items: center;
   gap: var(--space-2);
@@ -83,106 +176,67 @@
   flex: none;
 }
 
-/* Wide enough to hold the controls: the group takes no box of its own, so its three controls are items of the bar. */
-.panel {
-  display: contents;
+/* Narrow: the mark, the Scan pill and the Menu button on one row; the sheet hangs under the pill. */
+.header[data-narrow='true'] .bar {
+  gap: var(--space-2);
 }
 
-.scanPill {
-  order: 2;
-  flex: none;
+.header[data-narrow='true'] .brand {
+  flex: 1 1 0;
 }
 
-/* The shared Button is a pill here; the two class names tie, so the longer selector wins whatever order the sheets load in. */
-.panel .scanPill {
-  border-radius: var(--radius-pill);
+.header[data-narrow='true'] .scanPill {
+  padding-inline: var(--space-3);
+  font-size: var(--text-meta);
 }
 
-/* The language Tabs and the Night loom switch, side by side, each free to wrap its own text. */
-.switches {
-  order: 4;
-  display: flex;
-  flex: 1 1 100%;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2) var(--space-3);
-  min-width: 0;
-}
-
-/* The two switches take the pill shape of the header; their colours, check mark and sun or moon are their own. */
-.switches button {
-  border-width: 1px;
-  border-radius: var(--radius-pill);
-}
-
-.switches [role='group'] {
-  gap: var(--space-1);
-}
-/* The Tabs take 8 px more room on each side in the shared style; here the two languages and the Night loom switch must still share a row at 390 px, so the header keeps the narrower padding (the two class names beat the Tabs' one). */
-.switches [role='group'] button {
+.header[data-narrow='true'] .menuButton {
   padding-inline: var(--space-3);
 }
 
-/* Two short lines in the Night loom switch stay close, in Hindi too, so the header does not grow tall. */
-.switches [role='switch'] {
-  line-height: 1.4;
-}
-
-/* The four groups wrap onto their own lines when the width runs out. */
-.nav {
-  order: 3;
-  display: flex;
-  flex: 1 1 100%;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  min-width: 0;
-}
-
-.navButton {
-  /* A flex column: the label is first in the markup, the icon moves in front with `order: -1`. Wide screens lay it out as a row. */
-  display: flex;
-  flex: 1 1 auto;
+.sheet {
+  display: none;
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  left: 0;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-1);
-  min-width: var(--touch-target);
-  min-height: var(--touch-target);
-  padding: var(--space-1) var(--space-3);
-  color: var(--ink);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-media);
-  text-align: center;
-  overflow-wrap: anywhere;
-  cursor: pointer;
+  gap: var(--space-3);
+  max-height: calc(100vh - 7rem);
+  padding: var(--space-3);
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-float);
 }
 
-.navButton:hover:not([aria-current='page']) {
-  background: var(--tint);
+.sheet[data-open='true'] {
+  display: flex;
 }
 
-.navIcon {
-  order: -1;
+.sheet .nav {
   flex: none;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: var(--space-1);
 }
 
-/* The word that marks Code view as an advanced view. */
-.navAdvanced {
-  font-size: var(--text-small);
-  line-height: 1.2;
+/* Large rows: the icon and the label, left aligned. */
+.sheet .navButton {
+  flex: none;
+  justify-content: flex-start;
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-media);
+  text-align: left;
 }
 
-/* The current item differs by weight, a 3 px underline and a filled shape, as well as by colour. */
-.navButton[aria-current='page'] {
-  color: var(--on-primary);
-  background: var(--primary);
-  border-color: var(--primary);
-  font-weight: 700;
-  text-decoration: underline;
-  text-decoration-thickness: 3px;
-  text-underline-offset: 4px;
+.sheet .switches {
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
 }
 
 .noticeSlot {
@@ -227,120 +281,34 @@
 }
 
 /*
- * The layout of each width, by the width of the shell (a container query, not a media query). Mobile first: the rules
- * above are the 360 to 799 px layout: mark and Scan pill, then the navigation, then the switches.
+ * The two header layouts follow the viewport (1024 px), chosen in App.tsx, so no media query is needed here. A phone
+ * leaves no room for the word beside the mark: the name stays for assistive technology and the mark stands for it.
  */
-
-/* Under 360 px: the mark and the Menu button; the navigation, the switches and the Scan pill open under them. */
-@container (max-width: 359px) {
-  .menuButton {
-    display: inline-flex;
-  }
-
-  .panel {
-    display: none;
-    order: 3;
-    flex: 1 1 100%;
-    flex-direction: column;
-    gap: var(--space-3);
-    min-width: 0;
-    max-height: calc(100vh - 10rem);
-    overflow-y: auto;
-  }
-
-  .panel[data-open='true'] {
-    display: flex;
-  }
-
-  .nav {
-    order: 1;
-    flex: none;
-  }
-
-  .switches {
-    order: 2;
-    flex: none;
-  }
-
-  .scanPill {
-    order: 3;
-    align-self: stretch;
+@container (max-width: 419px) {
+  .title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 
-/* 360 to 799 px: the header takes the height of three rows, so it scrolls away with the page instead of covering a phone. */
-@container (min-width: 360px) and (max-width: 799px) {
-  .header {
-    position: static;
-  }
-
-  /* The four items share the row in equal columns, so "Advanced" fits under "Code" at 360 px. */
+/* Between 1024 and 1239 px the links and the switches take less room, so the row fits in Hindi too. */
+@container (min-width: 1024px) and (max-width: 1239px) {
   .bar {
-    padding-block: var(--space-2);
-    row-gap: var(--space-1);
+    gap: var(--space-2);
   }
 
-  .nav {
-    flex-wrap: nowrap;
+  .navButton {
+    padding-inline: var(--space-2);
     gap: var(--space-1);
   }
 
-  .navButton {
-    flex: 1 1 0;
-    padding-inline: var(--space-1);
-    line-height: 1.35;
-  }
-
-  /* The three rows of this layout must leave a phone (390 by 844 px) room for the first control of each Screen, so the labels stand without their icons here. The icons are decoration; every label is visible. */
-  .navIcon {
-    display: none;
-  }
-}
-
-/* 800 px and wider: the mark, the switches and the Scan pill on the first row, the navigation under them. */
-@container (min-width: 800px) {
-  .bar {
-    padding-inline: var(--space-4);
-  }
-
-  .switches {
-    order: 2;
-    flex: none;
-  }
-
-  .scanPill {
-    order: 3;
-  }
-
-  .nav {
-    order: 4;
-    justify-content: center;
-  }
-
-  .navButton {
-    flex: 0 1 auto;
-    flex-direction: row;
-    padding: var(--space-1) var(--space-4);
-    border-radius: var(--radius-pill);
-  }
-}
-
-/* The whole header on one row. */
-@container (min-width: 1240px) {
-  .brand {
-    flex: none;
-  }
-
-  .nav {
-    order: 2;
-    flex: 1 1 0;
-  }
-
-  .switches {
-    order: 3;
-  }
-
-  .scanPill {
-    order: 4;
+  .actions {
+    gap: var(--space-2);
   }
 }
