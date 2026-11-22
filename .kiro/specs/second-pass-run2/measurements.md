@@ -28,9 +28,23 @@ Part 1 (Weave). The Weave markup changed; no test needed a change except these.
 
 check:browser check 12 (no horizontal scroll) failed on the first run of the gate and passed on the rerun with no change; the failing width was not printed. Reported, not explained.
 
+Part 2 (Keep).
+
+| Check | Change | Why |
+|---|---|---|
+| tests/ui/screens/keep.test.tsx R14 (48 px targets) | The rule is read from `.segment` (was `.choice`); still asserts `min-height: var(--touch-target)`. | The export choices are segmented controls; the label class was renamed. The radio inputs and labels keep the same markup, so the R5.4 regex test is unchanged. |
+| tests/ui/state/stateMessages.test.ts | ADDED_KEYS: keep.heading, keep.heading.accent, keep.details.legend, credits.photos.caption. | New Hindi keys (review-list run). |
+| tests/scripts/screenshots.test.ts | New test names the keep-versions view (1280, 390, both themes). | `keep-versions` is now also a run 2 view. |
+| scripts/checks/screenshots.ts, scripts/screenshots.ts | RUN2_VIEWS gained keep-versions (design of 2 versions, history open). The full-page capture injects `header{position:static !important}` (script only, never the app) so the header sits at the top of the file. | Part 2 screenshots; orchestrator note. |
+| scripts/check_browser.ts check 12 | A failure inside the width loop now names screen, width, language and theme (and the theme press). Strength unchanged. | Flake: step 12 failed once more with "timed out waiting for the header menu to open" and no width; the run's own retry passed. Cause not found; with the new message the next flake names it. |
+
+Layout changes made to keep check 19 (primary Button inside the first 844 px at 390): the Keep intro is two short lines instead of a large subtitle, and band, container and surface padding are smaller under 900 px. The check was not touched; it first failed (871 to 919 px) and now passes.
+
 Shadow: the brief asked for a softer shadow once scrolled. tests/ui/theme/styles.test.ts pins the three shadow tokens and bans literals, so the header uses `--shadow-float` at the top and `--shadow-lift` once scrolled (smaller, softer). No test was changed for this.
 
 ## Bytes
+
+Part 2: entry chunk 127,720 B gzipped (limit for this run 150,000; 204,800 untouched).
 
 Part 1: entry chunk 126,914 B gzipped (check-bundle). Part 0: entry chunk (gzip) 127.84 kB (limit for this run 150,000 B; the 204,800 B limit untouched). Code view chunk 10,086 B gzipped.
 
@@ -39,6 +53,8 @@ Part 1: entry chunk 126,914 B gzipped (check-bundle). Part 0: entry chunk (gzip)
 New pair on-primary on accent (the current link): day 5.09:1, night 9.74:1 (minimum 4.5). The frost alpha stays 0.95 (test: at least 0.85). `node scripts/contrast_report.ts`: every pair meets its minimum.
 
 ## Screenshots
+
+Part 2: keep-versions, day and night, 1280 and 390 (full page, reduced motion, header made static for the capture).
 
 media/design/after-run2/: weave-sample and weave-lost, day and night, 1280 and 390 (full page, reduced motion). Header views: header-closed, header-closed-hi (1280, 1024, 768, 390, 320), header-menu, header-menu-hi (768, 390, 320), each day and night, cropped to the top 700 px. 1024 is an extra width, to check Hindi fits where the wide layout starts.
 

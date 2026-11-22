@@ -208,6 +208,10 @@ export const ADDED_KEYS: readonly string[] = [
   'weave.heading.accent',
   'weave.card.cloth',
   'weave.card.controls',
+  'keep.heading',
+  'keep.heading.accent',
+  'keep.details.legend',
+  'credits.photos.caption',
 ];
 
 /** The purpose and next-step key of each of the four screens (R10.1). */

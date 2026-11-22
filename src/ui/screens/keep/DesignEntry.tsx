@@ -118,11 +118,11 @@ export function DesignEntry(props: DesignEntryProps) {
           {expanded ? (
             <div id={versionsId} role="group" aria-label={t('keep.version.heading', { name: heading.name })} className={styles.versions}>
               <h4 className={styles.versionsTitle}>{t('keep.version.heading', { name: heading.name })}</h4>
-              <ol className={styles.list}>
+              <ol className={styles.timeline}>
                 {group.versions.map((version, index) => {
                   const detail = versionDetails(version, language, untitled);
                   return (
-                    <li key={version.id} className={styles.version}>
+                    <li key={version.id} className={index === 0 ? `${styles.version} ${styles.versionNewest}` : styles.version}>
                       <p className={styles.itemName}>
                         {detail.savedAt === '' ? detail.name : t('keep.version.saved', { date: detail.savedAt })}
                         {index === 0 ? <span className={styles.badge}>{t('keep.version.newest')}</span> : null}

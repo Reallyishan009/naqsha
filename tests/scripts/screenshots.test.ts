@@ -168,6 +168,14 @@ describe('run 2 screenshot set', () => {
     ]);
   });
 
+  it('names the Keep view at 390 and 1280 px, in both themes', () => {
+    expect(run2Names(['keep-versions'])).toEqual([
+      'keep-versions-day-1280.png',
+      'keep-versions-day-390.png',
+      'keep-versions-night-1280.png',
+      'keep-versions-night-390.png',
+    ]);
+  });
   it('run2Names takes the named views only', () => {
     const names = run2Names(['header-menu']);
     expect(names).toHaveLength(2 * RUN2_VIEWS.find((view) => view.name === 'header-menu')!.widths.length);

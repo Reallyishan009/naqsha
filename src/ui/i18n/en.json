@@ -479,5 +479,9 @@
   "weave.heading": "Watch the design become cloth",
   "weave.heading.accent": "cloth",
   "weave.card.cloth": "The cloth",
-  "weave.card.controls": "Controls"
+  "weave.card.controls": "Controls",
+  "keep.heading": "Keep the design, or take it to a loom",
+  "keep.heading.accent": "loom",
+  "keep.details.legend": "About this design",
+  "credits.photos.caption": "Photo: {author}, {licence}"
 }

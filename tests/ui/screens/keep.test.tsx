@@ -276,7 +276,7 @@ describe('keep screen', () => {
     const fieldCss = readFileSync('src/ui/components/Field.module.css', 'utf8');
     expect(/\.button\s*{[^}]*}/.exec(buttonCss)?.[0] ?? '', '.button').toContain('min-height: var(--touch-target)');
     expect(/\.field textarea\s*{[^}]*}/.exec(fieldCss)?.[0] ?? '', '.field controls').toContain('min-height: var(--touch-target)');
-    expect(/\.choice\s*{[^}]*}/.exec(css)?.[0] ?? '', '.choice').toContain('min-height: var(--touch-target)');
+    expect(/\.segment\s*{[^}]*}/.exec(css)?.[0] ?? '', '.segment').toContain('min-height: var(--touch-target)');
   });
 });
 

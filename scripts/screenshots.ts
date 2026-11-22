@@ -278,6 +278,15 @@ async function prepareKeepVersions(page: Page): Promise<void> {
   await page.waitFor(`document.body.innerText.includes(${q(versions)})`, `a design with "${versions}"`);
 }
 
+/** The Keep screen with a design of two versions and its version history open (the timeline). */
+async function prepareKeepVersionsOpen(page: Page): Promise<void> {
+  await prepareKeepVersions(page);
+  const label = `${EN['keep.list.showVersions']}: ${FIRST_DESIGN_NAME}`;
+  const toggle = `document.querySelector(${q(`button[aria-label="${label}"]`)})`;
+  await page.click(toggle, `the "${label}" button`);
+  // Once open the button is named "Hide versions: ...", so the open state is read from the history's own group.
+  await page.waitFor(`!!document.querySelector('[id^="keep-versions-"][role="group"]')`, 'the version history to open');
+}
 async function prepareScan(page: Page): Promise<void> {
   await goTo(page, 'scan');
   await page.waitFor(`!!document.querySelector('#scan-file')`, 'the photo chooser on the Scan screen');
@@ -351,6 +360,10 @@ async function capture(page: Page, width: number, file: string, maxHeight = Infi
   // below the 800 px window blank, although a weaver who scrolls to them sees them. The page is painted in full for the capture.
   await page.ev(
     `(()=>{let s=document.getElementById('naqsha-paint-all');if(!s){s=document.createElement('style');s.id='naqsha-paint-all';s.textContent='*{content-visibility:visible !important}';document.head.appendChild(s)}return true})()`,
+  );
+  // A full-page file shows the header at the top of the page, not stuck in the middle of the capture: the capture (never the app) makes it static.
+  await page.ev(
+    `(()=>{let s=document.getElementById('naqsha-static-header');if(maxHeight===Infinity){if(!s){s=document.createElement('style');s.id='naqsha-static-header';s.textContent='header{position:static !important}';document.head.appendChild(s)}}else if(s){s.remove()}return true})()`.replace('maxHeight===Infinity', String(maxHeight === Infinity)),
   );
   await page.ev(`document.fonts.ready.then(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>r(true)))))`);
   const metrics = await page.cdp.call<LayoutMetrics>('Page.getLayoutMetrics');
@@ -524,6 +537,7 @@ async function captureHeader(page: Page, baseUrl: string, outDir: string, wanted
 const RUN2_SCREEN_VIEWS: Readonly<Record<string, (page: Page) => Promise<void>>> = {
   'weave-sample': prepareSample,
   'weave-lost': prepareLost,
+  'keep-versions': prepareKeepVersionsOpen,
 };
 
 /** One view of a screen at each of its widths: a fresh page, the screen made ready, then both themes as full-page files. */

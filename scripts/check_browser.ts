@@ -872,10 +872,19 @@ function buildSteps(ctx: Context): BrowserStep[] {
           for (const width of [320, 390, 1280]) {
             await page.setViewport(width, 900);
             for (const theme of THEMES) {
-              await chooseTheme(page, theme);
+              const where = (screen: string, language: string): string => `${screen} at ${width} (${language}, ${theme})`;
+              try {
+                await chooseTheme(page, theme);
+              } catch (error) {
+                throw new Error(`choosing the ${theme} theme at ${width}: ${error instanceof Error ? error.message : String(error)}`);
+              }
               for (const language of LANGUAGES) {
                 for (const screen of ALL_SCREENS) {
-                  await showScreen(page, screen, language);
+                  try {
+                    await showScreen(page, screen, language);
+                  } catch (error) {
+                    throw new Error(`${where(screen, language)}: ${error instanceof Error ? error.message : String(error)}`);
+                  }
                   await sleep(400);
                   const measured = await page.ev<{ scrollWidth: number; innerWidth: number; offenders: string[] }>(
                     `(()=>{const w=window.innerWidth;const off=[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>w+0.5&&e.getBoundingClientRect().width>0).slice(0,4).map(e=>e.tagName.toLowerCase()+(e.className&&typeof e.className==='string'?'.'+e.className.split(' ')[0]:'')+' right='+Math.round(e.getBoundingClientRect().right));return {scrollWidth:document.documentElement.scrollWidth,innerWidth:w,offenders:off}})()`,

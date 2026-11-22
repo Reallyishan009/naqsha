@@ -25,10 +25,14 @@ import { useAfterDelay } from '../../components/delay.ts';
 import { Disclosure } from '../../components/Disclosure.tsx';
 import { Notice } from '../../components/Notice.tsx';
 import { Panel } from '../../components/Panel.tsx';
-import { ScreenIntro } from '../../components/ScreenIntro.tsx';
+import { Photo } from '../../components/Photo.tsx';
+import { PhotoCaption } from '../../components/PhotoCaption.tsx';
+import { SectionHeader } from '../../components/SectionHeader.tsx';
 import { StateMessage } from '../../components/StateMessage.tsx';
 import { NoSavedDesignsIllustration } from '../../illustrations/SpotIllustrations.tsx';
 import { WeftProgress } from '../../components/WeftProgress.tsx';
+import { PHOTOS } from '../../state/photos.ts';
+import { splitAtAccent } from '../../state/headline.ts';
 import type { AppAction, AppState, CompareChoice, Language, PatternOrigin } from '../../types.ts';
 import { DesignEntry } from './DesignEntry.tsx';
 import styles from './KeepScreen.module.css';
@@ -162,173 +166,214 @@ export function KeepView(props: KeepViewProps) {
   const exportNotice = profile === null ? null : <ProfileNotice profile={profile} t={t} part="notice" />;
   const exportDetails = profile === null ? null : <ProfileNotice profile={profile} t={t} part="details" />;
 
+  const heading = t('keep.heading');
+  const headingParts = splitAtAccent(heading, t('keep.heading.accent'));
+  const stack = PHOTOS['bradford-card-stack'];
+  // One export choice as a segmented control: the radio inputs and their labels are the same markup as before, laid out as joined segments.
+  const choiceGroup = (group: OptionGroup) => (
+    <fieldset key={group.name} className={styles.fieldset}>
+      <legend className={styles.legend}>{t(`keep.export.${group.name}`)}</legend>
+      <div className={styles.segments}>
+        {group.values.map((value) => (
+          <label key={String(value)} className={styles.segment}>
+            <input
+              type="radio"
+              name={`keep-option-${group.name}`}
+              className={styles.radio}
+              value={String(value)}
+              checked={form.options[group.name] === value}
+              onChange={() => props.onFormAction({ type: 'set-option', options: { ...form.options, [group.name]: value } })}
+            />
+            <span>{t(`keep.export.${group.name}.${value}`)}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+  const bitDepthGroup = OPTION_GROUPS.find((group) => group.name === 'bitDepth');
+
   return (
     <section aria-labelledby="screen-title" className={styles.screen}>
+      {/* The Screen's heading is for assistive technology and the keyboard order; the section header below is what is read first. */}
       <h2 id="screen-title" className={styles.screenTitle}>
         {t('nav.keep')}
       </h2>
 
-      <ScreenIntro purpose={t('keep.purpose')} next={t('keep.nextStep')} />
-
-      {pattern.length === 0 ? (
-        <Panel className={styles.block}>
-          <p className={styles.emptyText}>{t('keep.empty')}</p>
-        </Panel>
-      ) : null}
-      {failureKey === null ? null : (
-        <StateMessage
-          variant="error"
-          message={t(failureKey)}
-          t={t}
-          retry={props.onRetry === undefined ? undefined : { label: t('state.retry'), onRetry: props.onRetry }}
-        />
-      )}
-
-      <Panel as="section" aria-labelledby="keep-export-title" className={styles.panel}>
-        <h3 id="keep-export-title" className={styles.sectionTitle}>
-          {t('keep.export.heading')}
-        </h3>
-        <p>{t('keep.export.untested')}</p>
-        {exportNotice}
-        <Button variant="primary" disabled={!exportEnabled} onClick={props.onExport}>
-          {t('keep.export.button')}
-        </Button>
-        {showExporting ? <WeftProgress text={t('progress.exporting')} /> : null}
-        {(props.repairedCount ?? 0) > 0 ? <p>{t('keep.export.guesses')}</p> : null}
-        {exportDone ? (
-          <Notice variant="success" word={t('notice.success')}>
-            {t('keep.export.done')}
-          </Notice>
-        ) : null}
-        {exportDetails}
-      </Panel>
-
-      <Panel as="section" aria-labelledby="keep-save-title" className={styles.panel}>
-        <h3 id="keep-save-title" className={styles.sectionTitle}>
-          {t('keep.save.heading')}
-        </h3>
-        <Field label={t('keep.field.name')} className={styles.field}>
-          <input
-            type="text"
-            value={form.metadata.name}
-            onChange={(event) => props.onFormAction({ type: 'set-field', field: 'name', value: event.currentTarget.value })}
+      <div className={styles.band}>
+        <div className={styles.container}>
+          <SectionHeader
+            language={language}
+            eyebrow={t('nav.keep')}
+            before={headingParts === null ? heading : headingParts.before}
+            accent={headingParts === null ? '' : headingParts.accent}
+            after={headingParts === null ? '' : headingParts.after}
+            as="h3"
           />
-        </Field>
-        {notice}
-        <Button disabled={!saveEnabled} onClick={props.onSave}>
-          {t('keep.save.button')}
-        </Button>
-        {showSaving ? <WeftProgress text={t('progress.saving')} /> : null}
-        <p className={styles.legal}>{t('keep.save.legal')}</p>
-        {savedText === null ? null : (
-          <Notice variant="success" word={t('notice.success')}>
-            <p id="keep-saved" tabIndex={-1} className={styles.done}>
-              {savedText}
-            </p>
-          </Notice>
-        )}
-      </Panel>
+          <div className={styles.intro}>
+            <p className={styles.purpose}>{t('keep.purpose')}</p>
+            <p className={styles.nextStep}>{t('keep.nextStep')}</p>
+          </div>
 
-      {/* The export choices and the other details of the design: collapsed on arrival, so the name, Save and export stay in view. */}
-      <Panel className={styles.more}>
-        <Disclosure label={t('disclosure.more')}>
-          {OPTION_GROUPS.map((group) => (
-            <fieldset key={group.name} className={styles.fieldset}>
-              <legend className={styles.legend}>{t(`keep.export.${group.name}`)}</legend>
-              {group.values.map((value) => (
-                <label key={String(value)} className={styles.choice}>
-                  <input
-                    type="radio"
-                    name={`keep-option-${group.name}`}
-                    className={styles.radio}
-                    value={String(value)}
-                    checked={form.options[group.name] === value}
-                    onChange={() => props.onFormAction({ type: 'set-option', options: { ...form.options, [group.name]: value } })}
-                  />
-                  <span>{t(`keep.export.${group.name}.${value}`)}</span>
-                </label>
-              ))}
-            </fieldset>
-          ))}
-          <div className={styles.fields}>
-            {MORE_FIELDS.map((field) => (
-              <Field key={field} label={t(`keep.field.${field}`)} className={styles.field}>
-                {field === 'notes' ? (
-                  <textarea
-                    rows={3}
-                    value={form.metadata[field]}
-                    onChange={(event) => props.onFormAction({ type: 'set-field', field, value: event.currentTarget.value })}
-                  />
-                ) : (
+          {pattern.length === 0 ? (
+            <Panel className={styles.block}>
+              <p className={styles.emptyText}>{t('keep.empty')}</p>
+            </Panel>
+          ) : null}
+          {failureKey === null ? null : (
+            <StateMessage
+              variant="error"
+              message={t(failureKey)}
+              t={t}
+              retry={props.onRetry === undefined ? undefined : { label: t('state.retry'), onRetry: props.onRetry }}
+            />
+          )}
+
+          <div className={styles.work}>
+            <div className={styles.jobs}>
+              <section aria-labelledby="keep-export-title" className={`${styles.surface} ${styles.exportSurface}`}>
+                <h4 id="keep-export-title" className={styles.sectionTitle}>
+                  {t('keep.export.heading')}
+                </h4>
+                <p>{t('keep.export.untested')}</p>
+                {exportNotice}
+                {bitDepthGroup === undefined ? null : choiceGroup(bitDepthGroup)}
+                <Button variant="primary" disabled={!exportEnabled} onClick={props.onExport}>
+                  {t('keep.export.button')}
+                </Button>
+                {showExporting ? <WeftProgress text={t('progress.exporting')} /> : null}
+                {(props.repairedCount ?? 0) > 0 ? <p>{t('keep.export.guesses')}</p> : null}
+                {exportDone ? (
+                  <Notice variant="success" word={t('notice.success')}>
+                    {t('keep.export.done')}
+                  </Notice>
+                ) : null}
+                {exportDetails}
+              </section>
+
+              <section aria-labelledby="keep-save-title" className={styles.surface}>
+                <h4 id="keep-save-title" className={styles.sectionTitle}>
+                  {t('keep.save.heading')}
+                </h4>
+                <Field label={t('keep.field.name')} className={styles.field}>
                   <input
                     type="text"
-                    value={form.metadata[field]}
-                    onChange={(event) => props.onFormAction({ type: 'set-field', field, value: event.currentTarget.value })}
+                    value={form.metadata.name}
+                    onChange={(event) => props.onFormAction({ type: 'set-field', field: 'name', value: event.currentTarget.value })}
                   />
+                </Field>
+                {notice}
+                <Button disabled={!saveEnabled} onClick={props.onSave}>
+                  {t('keep.save.button')}
+                </Button>
+                {showSaving ? <WeftProgress text={t('progress.saving')} /> : null}
+                <p className={styles.legal}>{t('keep.save.legal')}</p>
+                {savedText === null ? null : (
+                  <Notice variant="success" word={t('notice.success')}>
+                    <p id="keep-saved" tabIndex={-1} className={styles.done}>
+                      {savedText}
+                    </p>
+                  </Notice>
                 )}
-              </Field>
-            ))}
-          </div>
-          <Field label={t('keep.save.note')}>
-            <input
-              type="text"
-              maxLength={NOTE_MAX}
-              value={form.note}
-              onChange={(event) => props.onFormAction({ type: 'set-note', value: event.currentTarget.value })}
-            />
-          </Field>
-          {origin.kind !== 'archive' ? null : (
-            <fieldset className={styles.fieldset}>
-              <legend className={styles.legend}>{t('keep.save.mode.legend')}</legend>
-              {(['version', 'design'] as const).map((mode) => (
-                <label key={mode} className={styles.choice}>
-                  <input
-                    type="radio"
-                    name="keep-save-mode"
-                    className={styles.radio}
-                    value={mode}
-                    checked={form.saveMode === mode}
-                    onChange={() => props.onFormAction({ type: 'set-save-mode', mode })}
-                  />
-                  <span>{t(`keep.save.mode.${mode}`)}</span>
-                </label>
-              ))}
-            </fieldset>
-          )}
-        </Disclosure>
-      </Panel>
+              </section>
 
-      <Panel as="section" aria-labelledby="keep-list-title" className={styles.panel}>
-        <h3 id="keep-list-title" tabIndex={-1} className={styles.sectionTitle}>
-          {t('keep.list.heading')}
-        </h3>
-        {designs !== null && designs.length === 0 ? (
-          <StateMessage variant="empty" illustration={<NoSavedDesignsIllustration />} message={t('keep.list.empty')} next={t('keep.list.empty.next')} t={t} />
-        ) : null}
-        {designs === null || designs.length === 0 ? null : (
-          <ul className={styles.list}>
-            {groupDesigns(designs).map((group) => (
-              <DesignEntry
-                key={group.designId}
-                group={group}
-                profileName={profileName}
-                origin={origin}
-                language={language}
-                expanded={props.expandedDesignId === group.designId}
-                pendingDeleteId={pendingDeleteId}
-                t={t}
-                onToggle={props.onToggleVersions ?? noop}
-                onOpen={props.onOpen}
-                onRestore={props.onRestore ?? noop}
-                onCompare={props.onCompare ?? noop}
-                onDeleteRequest={props.onDeleteRequest}
-                onDeleteConfirm={props.onDeleteConfirm}
-                onDeleteCancel={props.onDeleteCancel}
-              />
-            ))}
-          </ul>
-        )}
-      </Panel>
+              {/* The other export choices and the other details of the design: collapsed on arrival, so the name, Save and export stay in view. */}
+              <div className={styles.surface}>
+                <Disclosure label={t('disclosure.more')}>
+                  {OPTION_GROUPS.filter((group) => group.name !== 'bitDepth').map(choiceGroup)}
+                  <fieldset className={`${styles.fieldset} ${styles.group}`}>
+                    <legend className={styles.legend}>{t('keep.details.legend')}</legend>
+                    <div className={styles.fields}>
+                      {MORE_FIELDS.map((field) => (
+                        <Field key={field} label={t(`keep.field.${field}`)} className={styles.field}>
+                          {field === 'notes' ? (
+                            <textarea
+                              rows={3}
+                              value={form.metadata[field]}
+                              onChange={(event) => props.onFormAction({ type: 'set-field', field, value: event.currentTarget.value })}
+                            />
+                          ) : (
+                            <input
+                              type="text"
+                              value={form.metadata[field]}
+                              onChange={(event) => props.onFormAction({ type: 'set-field', field, value: event.currentTarget.value })}
+                            />
+                          )}
+                        </Field>
+                      ))}
+                    </div>
+                    <Field label={t('keep.save.note')}>
+                      <input
+                        type="text"
+                        maxLength={NOTE_MAX}
+                        value={form.note}
+                        onChange={(event) => props.onFormAction({ type: 'set-note', value: event.currentTarget.value })}
+                      />
+                    </Field>
+                  </fieldset>
+                  {origin.kind !== 'archive' ? null : (
+                    <fieldset className={styles.fieldset}>
+                      <legend className={styles.legend}>{t('keep.save.mode.legend')}</legend>
+                      <div className={styles.segments}>
+                        {(['version', 'design'] as const).map((mode) => (
+                          <label key={mode} className={styles.segment}>
+                            <input
+                              type="radio"
+                              name="keep-save-mode"
+                              className={styles.radio}
+                              value={mode}
+                              checked={form.saveMode === mode}
+                              onChange={() => props.onFormAction({ type: 'set-save-mode', mode })}
+                            />
+                            <span>{t(`keep.save.mode.${mode}`)}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                  )}
+                </Disclosure>
+              </div>
+            </div>
+
+            <section aria-labelledby="keep-list-title" className={`${styles.surface} ${styles.archive}`}>
+              <div className={styles.archivePicture}>
+                <Photo photo={stack} alt={t(stack.altKey)} lazy sizes="(min-width: 900px) 30vw, 100vw" className={styles.archivePhoto} />
+              </div>
+              <div className={styles.archiveBody}>
+                <PhotoCaption photo={stack} t={t} />
+                <h4 id="keep-list-title" tabIndex={-1} className={styles.sectionTitle}>
+                  {t('keep.list.heading')}
+                </h4>
+                {designs !== null && designs.length === 0 ? (
+                  <StateMessage variant="empty" illustration={<NoSavedDesignsIllustration />} message={t('keep.list.empty')} next={t('keep.list.empty.next')} t={t} />
+                ) : null}
+                {designs === null || designs.length === 0 ? null : (
+                  <ul className={styles.list}>
+                    {groupDesigns(designs).map((group) => (
+                      <DesignEntry
+                        key={group.designId}
+                        group={group}
+                        profileName={profileName}
+                        origin={origin}
+                        language={language}
+                        expanded={props.expandedDesignId === group.designId}
+                        pendingDeleteId={pendingDeleteId}
+                        t={t}
+                        onToggle={props.onToggleVersions ?? noop}
+                        onOpen={props.onOpen}
+                        onRestore={props.onRestore ?? noop}
+                        onCompare={props.onCompare ?? noop}
+                        onDeleteRequest={props.onDeleteRequest}
+                        onDeleteConfirm={props.onDeleteConfirm}
+                        onDeleteCancel={props.onDeleteCancel}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }

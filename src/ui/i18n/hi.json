@@ -1922,5 +1922,21 @@
   "weave.card.controls": {
     "text": "नियंत्रण",
     "reviewed": false
+  },
+  "keep.heading": {
+    "text": "डिज़ाइन सहेजें, या उसे करघे तक ले जाएँ",
+    "reviewed": false
+  },
+  "keep.heading.accent": {
+    "text": "करघे",
+    "reviewed": false
+  },
+  "keep.details.legend": {
+    "text": "इस डिज़ाइन के बारे में",
+    "reviewed": false
+  },
+  "credits.photos.caption": {
+    "text": "फ़ोटो: {author}, {licence}",
+    "reviewed": false
   }
 }
