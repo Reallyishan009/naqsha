@@ -1,0 +1,76 @@
+/* One punch card. Square corners everywhere: the card is a cut piece of manila stock, not a rounded control. */
+.card {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.drawing {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* The 1px outline sits on the edge of the viewBox; let its outer half show. */
+  overflow: visible;
+}
+
+/* The stock: manila with a thin ink-soft outline that keeps its width at every size. */
+.stock {
+  fill: var(--card);
+  stroke: var(--ink-soft);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Every hole is the hole colour, with a thin rim so the cut edge shows on the stock. */
+.punchedHole,
+.pegHole,
+.lacingHole {
+  fill: var(--hole);
+  stroke: var(--ink-soft);
+  stroke-width: 0.75px;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The repair panel only: a ring where a hook position is not punched. */
+.unpunchedMark {
+  fill: none;
+  stroke: var(--ink-soft);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+
+/* A lost card: a plain sheet over the hook positions with a madder hatch, and words under it. */
+.gap {
+  fill: var(--surface);
+  stroke: var(--madder);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+.gapHatch {
+  stroke: none;
+}
+.hatchLine {
+  stroke: var(--madder);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+.gapText {
+  margin: 0;
+  padding: 4px 8px;
+  background: var(--surface);
+  color: var(--madder);
+  font-weight: 700;
+  border-top: 1px solid var(--madder);
+}
+
+.cannotDraw {
+  margin: 0;
+  padding: 8px;
+  border: 1px dashed var(--madder);
+  background: var(--surface);
+  color: var(--ink);
+}

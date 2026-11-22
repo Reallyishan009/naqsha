@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { Shell } from '../../../src/ui/App.tsx';
 import { EN, HI, placeholders } from '../../../src/ui/i18n/messages.ts';
 import { appReducer, initialAppState } from '../../../src/ui/state/appState.ts';
+import { demoProfile } from '../../support/profiles.ts';
 import type { AppState, Language } from '../../../src/ui/types.ts';
 
 const LANGUAGES: Language[] = ['en', 'hi'];
@@ -23,7 +24,8 @@ function liveRegionText(
   params?: Readonly<Record<string, string | number>>,
 ): string {
   const state: AppState = appReducer(
-    { ...initialAppState, language },
+    // The card profile is ready: while it loads, the Landing shows a LoadingState, a transient `role="status"` before the live region.
+    { ...initialAppState, language, profile: { status: 'ready', profile: demoProfile() } },
     { type: 'announce', kind: 'confirmation', messageKey, ...(params === undefined ? {} : { params }) },
   );
   const html = renderToStaticMarkup(<Shell state={state} dispatch={() => undefined} />);

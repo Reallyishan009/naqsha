@@ -1,115 +1,314 @@
+/* `overflow-x: clip` keeps a wide child from adding scroll width without making the shell a scroll container, which would stop the header from sticking to the window. `hidden` is the fallback for a browser without `clip`. The shell is also the query container of the header: its layout follows the width the page has, with no media query. */
 .shell {
   min-height: 100vh;
   max-width: 100%;
   overflow-x: hidden;
+  overflow-x: clip;
+  container-type: inline-size;
 }
 
+/* The header is the floating pill: frosted glass over whatever scrolls under it. The Selvedge is its first child, a strip between the rounded corners. It does not clip (overflow stays visible), so the menu sheet can hang below it. Once the page has scrolled, the bar loses 12 px of padding and the header gains 12 px of margin below it: the page under it does not move. */
 .header {
+  position: sticky;
+  top: var(--space-3);
+  z-index: 10;
+  width: calc(100% - var(--space-5));
+  max-width: 76rem;
+  margin: var(--space-3) auto 0;
+  background: var(--frost);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-float);
+  transition:
+    margin-bottom var(--motion-short),
+    box-shadow var(--motion-short);
+}
+
+.header[data-scrolled='true'] {
+  margin-bottom: var(--space-3);
+  box-shadow: var(--shadow-lift);
+}
+
+.header > [data-selvedge] {
+  position: absolute;
+  top: 0;
+  left: var(--radius-card);
+  width: calc(100% - 2 * var(--radius-card));
+}
+
+.bar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
-  /* Selvedge edge, like the border of a sari. */
-  border-top: 6px double var(--zari);
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  transition: padding var(--motion-short);
+}
+
+.header[data-scrolled='true'] .bar {
+  padding-block: var(--space-3) var(--space-1);
+}
+
+.brand {
+  display: flex;
+  flex: none;
+  min-width: 0;
+  margin: 0;
+  font: inherit;
+}
+
+/* The mark and the name are one button that goes to the Landing; it looks like the header links. */
+.brandButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: var(--space-1) var(--space-2);
+  color: var(--ink);
+  font: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background-color var(--motion-short);
+}
+
+.brandButton:hover {
+  background: var(--tint);
+}
+
+.mark {
+  flex: none;
+  color: var(--primary);
 }
 
 .title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-size: 1.35rem;
   font-weight: 400;
+  overflow-wrap: anywhere;
 }
 
+/* Wide: the four links take the middle; the Scan pill and the two switches sit at the right. */
 .nav {
   display: flex;
+  flex: 1 1 0;
   flex-wrap: wrap;
-  gap: 8px;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
-.navButton,
-.languageButton {
+.navButton {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
   min-width: var(--touch-target);
   min-height: var(--touch-target);
-  padding: 0 16px;
+  padding: var(--space-1) var(--space-3);
   color: var(--ink);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  text-align: center;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: background-color var(--motion-short);
+}
+
+.navButton:hover:not([aria-current='page']) {
+  background: var(--tint);
+}
+
+/* The label is first in the markup; the icon moves in front of it. */
+.navIcon {
+  order: -1;
+  flex: none;
+}
+
+/* The current link: the tan pill, and also bold text and a 3 px underline, so it does not depend on colour. */
+.navButton[aria-current='page'] {
+  color: var(--on-primary);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.scanPill {
+  flex: none;
+}
+
+/* The shared Button is a pill here; the two class names tie, so the longer selector wins whatever order the sheets load in. */
+.actions .scanPill,
+.bar > .scanPill {
+  border-radius: var(--radius-pill);
+}
+
+/* The language segments and the theme button, close together. */
+.switches {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* The menu button is drawn only in the narrow header. */
+.menuButton {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: var(--space-1) var(--space-4);
+  color: var(--ink);
+  font-weight: 700;
   background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
+  border: 1px solid var(--ink-soft);
+  border-radius: var(--radius-pill);
   cursor: pointer;
 }
 
-.navButton[aria-current='page'] {
-  color: var(--ink);
-  background: var(--zari);
-  border-color: var(--zari);
-  font-weight: 700;
+.menuButton[aria-expanded='true'] {
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
 }
 
-.languages {
-  display: flex;
-  gap: 8px;
-  margin-left: auto;
+.menuIcon {
+  flex: none;
 }
 
-.languageButton[aria-pressed='true'] {
-  background: var(--zari);
-  border-color: var(--zari);
-  font-weight: 700;
+/* Narrow: the mark, the Scan pill and the Menu button on one row; the sheet hangs under the pill. */
+.header[data-narrow='true'] .bar {
+  gap: var(--space-2);
 }
 
-.banner {
-  margin: 12px 16px;
-  padding: 12px 16px;
-  color: var(--ink);
+.header[data-narrow='true'] .brand {
+  flex: 1 1 0;
+}
+
+.header[data-narrow='true'] .scanPill {
+  padding-inline: var(--space-3);
+  font-size: var(--text-meta);
+}
+
+.header[data-narrow='true'] .menuButton {
+  padding-inline: var(--space-3);
+}
+
+.sheet {
+  display: none;
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  left: 0;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: calc(100vh - 7rem);
+  padding: var(--space-3);
+  overflow-y: auto;
   background: var(--surface);
-  border: 2px solid var(--madder);
-  border-radius: var(--radius-panel);
-}
-
-.banner p {
-  margin: 4px 0;
-}
-
-.loading {
-  margin: 12px 16px;
-  color: var(--ink-soft);
-}
-
-/* A new version of the app is waiting; the control beside the sentence loads it. */
-.updateBanner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  margin: 12px 16px;
-  padding: 12px 16px;
-  color: var(--ink);
-  background: var(--surface);
-  border: 2px solid var(--zari);
-  border-radius: var(--radius-panel);
-}
-
-.updateBanner p {
-  margin: 0;
-}
-
-.updateButton {
-  min-width: var(--touch-target);
-  min-height: var(--touch-target);
-  padding: 0 16px;
-  color: var(--ink);
-  background: var(--ground);
   border: 1px solid var(--line);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-float);
 }
 
+.sheet[data-open='true'] {
+  display: flex;
+}
+
+.sheet .nav {
+  flex: none;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: var(--space-1);
+}
+
+/* Large rows: the icon and the label, left aligned. */
+.sheet .navButton {
+  flex: none;
+  justify-content: flex-start;
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-media);
+  text-align: left;
+}
+
+.sheet .switches {
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.noticeSlot {
+  margin: 12px 16px;
+}
+
+/* Less above than below, so the first line of a Screen is high on a phone. */
 .main {
-  padding: 16px;
+  padding: var(--space-2) var(--space-4) var(--space-4);
 }
 
+/* A change of Screen fades the main region in (opacity only, so nothing moves). Each Screen has its own animation name, so
+   changing the name starts the animation again without remounting main. Reduced motion gets none from the rule in tokens.css
+   (this sheet has no media query: a test keeps the header's wrapping free of one). */
+.main[data-screen='weave'] {
+  animation: fadeWeave var(--motion-short) ease-out;
+}
+.main[data-screen='keep'] {
+  animation: fadeKeep var(--motion-short) ease-out;
+}
+.main[data-screen='scan'] {
+  animation: fadeScan var(--motion-short) ease-out;
+}
+.main[data-screen='code'] {
+  animation: fadeCode var(--motion-short) ease-out;
+}
+@keyframes fadeWeave {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fadeKeep {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fadeScan {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fadeCode {
+  from {
+    opacity: 0;
+  }
+}
+/* The Landing ends in its own footer, which must reach the bottom of the page: no padding under it. */
+.mainLanding {
+  padding-bottom: 0;
+}
 .screen {
   max-width: 60rem;
 }
@@ -120,14 +319,55 @@
   font-weight: 400;
 }
 
-.screenError {
-  padding: 12px 16px;
-  border: 2px solid var(--madder);
-  border-radius: var(--radius-panel);
-}
-
 .liveRegion {
   min-height: 1.5em;
   margin: 0 16px 16px;
   color: var(--ink);
+}
+/* On the Landing the live region takes no room under the footer; it stays in the page for assistive technology. */
+.liveRegionLanding {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/*
+ * The two header layouts follow the viewport (1024 px), chosen in App.tsx, so no media query is needed here. A phone
+ * leaves no room for the word beside the mark: the button's aria-label keeps the name for assistive technology and the mark stands for it.
+ */
+@container (max-width: 419px) {
+  .title {
+    display: none;
+  }
+  .brandButton {
+    padding-inline: 0;
+  }
+}
+/* On the narrowest phones the home button, the Scan pill and the Menu button each give up a little side padding to fit one row. */
+@container (max-width: 359px) {
+  .header[data-narrow='true'] .scanPill,
+  .header[data-narrow='true'] .menuButton {
+    padding-inline: var(--space-2);
+  }
+}
+/* Between 1024 and 1239 px the links and the switches take less room, so the row fits in Hindi too. */
+@container (min-width: 1024px) and (max-width: 1239px) {
+  .bar {
+    gap: var(--space-2);
+  }
+
+  .navButton {
+    padding-inline: var(--space-2);
+    gap: var(--space-1);
+  }
+
+  .actions {
+    gap: var(--space-2);
+  }
 }

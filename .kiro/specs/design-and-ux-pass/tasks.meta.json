@@ -1,0 +1,1043 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Move the Check_Browser plumbing into `scripts/checks/session.ts`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213179
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229226959
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229321030
+      }
+    ],
+    "1.2 Add the pure screenshot helpers in `scripts/checks/screenshots.ts`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213219
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229227046
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229321743
+      }
+    ],
+    "1.3 Add the `npm run screenshots` command in `scripts/screenshots.ts`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213282
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229327061
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230380598
+      }
+    ],
+    "1.4 Make `scripts/check_bundle.ts` print every JavaScript chunk": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213314
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229227551
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229322210
+      }
+    ],
+    "1.5 Record the baseline numbers in `.kiro/specs/design-and-ux-pass/measurements.md`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213353
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229327138
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230381133
+      }
+    ],
+    "1.6 Take the 24 \"before\" screenshots": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213391
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230385462
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230429757
+      }
+    ],
+    "1.7 Stage 0 gate and commit": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213439
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230434312
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230608030
+      }
+    ],
+    "2.1 Write the font tooling under `scripts/fonts/`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213483
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230620495
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230975528
+      }
+    ],
+    "2.2 Subset the fonts, check the licences and record the report": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213537
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230981499
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231135706
+      }
+    ],
+    "2.3 Check the fonts in the Precache and in the files": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213604
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231141308
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231308894
+      }
+    ],
+    "2.4 Write the complete tokens in `src/ui/theme/tokens.css`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213645
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231141485
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231309039
+      }
+    ],
+    "2.5 Extend the Contrast_Table in `src/ui/theme/contrast.ts`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213716
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230620650
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230976069
+      }
+    ],
+    "2.6 Apply the theme before the first paint": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213757
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230981760
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231136353
+      }
+    ],
+    "2.7 Build Button, ButtonLink, Panel, Field, Tabs and Notice": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213853
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231313916
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231542599
+      }
+    ],
+    "2.8 Build WeftProgress and the delayed-progress helper": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229213913
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231547458
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231746168
+      }
+    ],
+    "2.9 Build ThemeSwitch and Selvedge, and wire them into the Shell": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214499
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795231751386
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795232057049
+      }
+    ],
+    "2.10 Move the four Screens onto the shared components": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214609
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795232058145
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795233115328
+      }
+    ],
+    "2.11 Add the style and primary-Button example tests": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214675
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795233115895
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795233763550
+      }
+    ],
+    "2.12 Extend `scripts/check_browser.ts` with the Stage A steps": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214742
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795233120847
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795233763335
+      }
+    ],
+    "2.13 Stage A gate and commit": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214794
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795233767196
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795234000934
+      }
+    ],
+    "3.1 Build Disclosure, ScreenIntro, EmptyState, StateMessage and LoadingState": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214843
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795234006365
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795234177425
+      }
+    ],
+    "3.2 Add the navigation icons and the \"Advanced\" word": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214894
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795234183045
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795234485908
+      }
+    ],
+    "3.3 Split the Weave screen and build the Landing": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229214943
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795234489732
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795240983130
+      }
+    ],
+    "3.4 Structure the Weave player with an intro and a Settings Disclosure": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215023
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795240988067
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795241496858
+      }
+    ],
+    "3.5 Structure the Keep screen": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215079
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795241502612
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795242034978
+      }
+    ],
+    "3.6 Structure the Scan screen": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215124
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795242039220
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795242490943
+      }
+    ],
+    "3.7 Structure the Code view": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215163
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795242494903
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795243091179
+      }
+    ],
+    "3.8 Move the Shell and App states onto StateMessage and LoadingState": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215211
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795243095204
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795243951348
+      }
+    ],
+    "3.9 Wire the delayed Thread_Progress": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215257
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795243956064
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795244309513
+      }
+    ],
+    "3.10 Check state messages, intro lines and Hindi keys with an example test": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215306
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795244313681
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795245837976
+      }
+    ],
+    "3.11 Update `scripts/check_browser.ts` for the Disclosures and the Landing": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215347
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795244314364
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795245837776
+      }
+    ],
+    "3.12 Stage B gate and commit": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215409
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795245841855
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795246065617
+      }
+    ],
+    "4.1 Add `cardGeometry` in `src/ui/illustrations/cardGeometry.ts`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215454
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795246073484
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795246333720
+      }
+    ],
+    "4.2 Add `heroLayout` and `heroPose`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215495
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795246073547
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795246334382
+      }
+    ],
+    "4.3 Build CardDrawing, CardFace and the CardThumb wrapper": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215542
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795246338419
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795246710193
+      }
+    ],
+    "4.4 Replace every earlier card picture with CardDrawing": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215580
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795246715558
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795254879593
+      }
+    ],
+    "4.5 Build the HeroLoom and add it to the Landing": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215625
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795246715622
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795254879888
+      }
+    ],
+    "4.6 Build Step_Icons and Spot_Illustrations and wire them in": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215674
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795254883867
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795256365977
+      }
+    ],
+    "4.7 Measure the bundle after Stage C": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215717
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795256367092
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795256411934
+      }
+    ],
+    "4.8 Take the 24 \"after\" screenshots": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215762
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795256412674
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795256498632
+      }
+    ],
+    "4.9 Inspect the 24 \"after\" files and fix every defect": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215810
+      },
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795256498878
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795262300001
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795262304812
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795263235255
+      }
+    ],
+    "4.10 Stage C gate and commit": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215855
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795263235334
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795263581513
+      }
+    ],
+    "5.1 Build the Version_Labels and use them in the Version_Chooser": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215896
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795263587788
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795263981107
+      }
+    ],
+    "5.2 Choose singular and plural pick texts": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215943
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795264004144
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795264683395
+      }
+    ],
+    "5.3 Fix the finished cloth on return to Weave": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229215988
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795264004300
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795264684262
+      }
+    ],
+    "5.4 Record the benchmark times before the change": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216033
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795264691009
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795264852523
+      }
+    ],
+    "5.5 Make the benchmark steady": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216078
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795264852767
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267414181
+      }
+    ],
+    "5.6 Correct the Tool_Error entry in `.kiro/specs/loom-mcp/design.md`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216125
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267418667
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267467637
+      }
+    ],
+    "5.7 Handle the loom-mcp screenshots in `media/kiro/`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216173
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267419443
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267467723
+      }
+    ],
+    "5.8 Stage D gate and commit": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216223
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267467863
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267981328
+      }
+    ],
+    "6.1 Write the one Build_Log entry in `docs/BUILD_LOG.md`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216273
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267985826
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268180848
+      }
+    ],
+    "6.2 Update `docs/KIRO_USAGE.md`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216311
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267987448
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268181069
+      }
+    ],
+    "6.3 Add the font credits to `README.md` and the new directories to the structure steering": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216360
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267987678
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268182066
+      }
+    ],
+    "6.4 Run `npm run check:browser` once": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216409
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268186169
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268340749
+      }
+    ],
+    "6.5 Run `npm run check:all` once": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216453
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268341216
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268591498
+      }
+    ],
+    "6.6 Fold the documents into the Stage D commit": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216517
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268591675
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268629913
+      }
+    ],
+    "6.7 Push `auto/build`": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216589
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268630658
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268671017
+      }
+    ],
+    "6.8 Write the final report and stop": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795229216634
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268671176
+      },
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268676171
+      }
+    ],
+    "1. Stage 0: screenshot tooling, \"before\" screenshots and baseline numbers": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795230608147
+      }
+    ],
+    "2. Stage A: foundation (fonts, tokens, theme switch, contrast, base components, signature details)": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795234001031
+      }
+    ],
+    "3. Stage B: understanding (Landing, navigation, disclosure, states, translations)": [
+      {
+        "executionId": "3e008bf9-c32d-43db-9d4d-4f7b40db03c9",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795246065671
+      }
+    ],
+    "4. Stage C: illustrations, bundle numbers, \"after\" screenshots and inspection": [
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795263581578
+      }
+    ],
+    "5. Stage D: small fixes (version labels, plurals, finished cloth, benchmark, loom-mcp design, media)": [
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795267981419
+      }
+    ],
+    "6. Final tasks: documents, last checks, push and report": [
+      {
+        "executionId": "6181e0bc-c288-4682-8c19-450af45661f7",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795268676230
+      }
+    ]
+  }
+}

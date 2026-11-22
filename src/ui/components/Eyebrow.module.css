@@ -1,0 +1,30 @@
+.eyebrow {
+  display: flex;
+  /* The whole line: a flex line sized to its content leaves the hairlines no room and the label wraps. */
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: 0;
+  color: var(--eyebrow);
+  font-size: var(--text-small);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+/* A hairline each side, as long as the room allows and at most 3rem. */
+.rule {
+  flex: 0 1 3rem;
+  min-width: var(--space-4);
+  height: 1px;
+  background: var(--eyebrow);
+}
+.text {
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+/* Letter spacing and capitals break Devanagari joins; Hindi gets neither. */
+.eyebrow:lang(hi) {
+  letter-spacing: 0;
+  text-transform: none;
+}

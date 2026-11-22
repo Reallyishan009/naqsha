@@ -1,0 +1,297 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Types and `prepareCloth`": [
+      {
+        "executionId": "eede5481-09cb-409a-8ea6-9df3666cb812",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795010519574
+      },
+      {
+        "executionId": "eede5481-09cb-409a-8ea6-9df3666cb812",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795010665548
+      }
+    ],
+    "1.2 Render settings": [
+      {
+        "executionId": "eede5481-09cb-409a-8ea6-9df3666cb812",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795010665653
+      },
+      {
+        "executionId": "eede5481-09cb-409a-8ea6-9df3666cb812",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795010802910
+      }
+    ],
+    "1.3 Basic `renderFrame` for rest frames": [
+      {
+        "executionId": "eede5481-09cb-409a-8ea6-9df3666cb812",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795010803518
+      },
+      {
+        "executionId": "eede5481-09cb-409a-8ea6-9df3666cb812",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011000534
+      }
+    ],
+    "1.4 Zari weft": [
+      {
+        "executionId": "eede5481-09cb-409a-8ea6-9df3666cb812",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795010999967
+      },
+      {
+        "executionId": "eede5481-09cb-409a-8ea6-9df3666cb812",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011097971
+      }
+    ],
+    "1.5 Sample cloth PNG": [
+      {
+        "executionId": "eede5481-09cb-409a-8ea6-9df3666cb812",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011098214
+      },
+      {
+        "executionId": "eede5481-09cb-409a-8ea6-9df3666cb812",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011196409
+      }
+    ],
+    "1.6 Checkpoint: look at the first render": [
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011390009
+      }
+    ],
+    "1.7 Phase 1 log and push": [
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011390131
+      },
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011461780
+      }
+    ],
+    "1. First render": [
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011461855
+      }
+    ],
+    "2.1 Gap rows": [
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011592130
+      },
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011717963
+      }
+    ],
+    "2.2 Floats": [
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011719014
+      },
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011830267
+      }
+    ],
+    "2.3 Float highlighting": [
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795011829657
+      },
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795012071144
+      }
+    ],
+    "2.4 Horizontal repeat": [
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795012071561
+      },
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795012482059
+      }
+    ],
+    "2.5 Phase 2 log and push": [
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795012482929
+      },
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795012545432
+      }
+    ],
+    "2. Gaps, floats and repeat": [
+      {
+        "executionId": "3b2a5e73-df7a-451d-bbcb-787f31427629",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795012545502
+      }
+    ],
+    "3.1 Frames and time": [
+      {
+        "executionId": "34628fd2-42fc-4386-808c-ee2f13a921a2",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795012782258
+      },
+      {
+        "executionId": "34628fd2-42fc-4386-808c-ee2f13a921a2",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795012912986
+      }
+    ],
+    "3.2 The shed in lift and pass frames": [
+      {
+        "executionId": "34628fd2-42fc-4386-808c-ee2f13a921a2",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795012914227
+      },
+      {
+        "executionId": "34628fd2-42fc-4386-808c-ee2f13a921a2",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795013099833
+      }
+    ],
+    "3.3 Player": [
+      {
+        "executionId": "34628fd2-42fc-4386-808c-ee2f13a921a2",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795013100051
+      },
+      {
+        "executionId": "34628fd2-42fc-4386-808c-ee2f13a921a2",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795013435150
+      }
+    ],
+    "3.4 Canvas and a dev-only preview page": [
+      {
+        "executionId": "34628fd2-42fc-4386-808c-ee2f13a921a2",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795013434351
+      },
+      {
+        "executionId": "34628fd2-42fc-4386-808c-ee2f13a921a2",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795013610058
+      }
+    ],
+    "3.5 Phase 3 log and push": [
+      {
+        "executionId": "34628fd2-42fc-4386-808c-ee2f13a921a2",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795013610473
+      },
+      {
+        "executionId": "34628fd2-42fc-4386-808c-ee2f13a921a2",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795013730995
+      }
+    ],
+    "3. Animation and canvas": [
+      {
+        "executionId": "34628fd2-42fc-4386-808c-ee2f13a921a2",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795013731085
+      }
+    ],
+    "4.1 Never throws, and inputs unchanged": [
+      {
+        "executionId": "81501dd2-e326-458c-9abf-0ebec763c4c9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795014164385
+      },
+      {
+        "executionId": "81501dd2-e326-458c-9abf-0ebec763c4c9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795014330734
+      }
+    ],
+    "4.3 Structure tests for the simulator": [
+      {
+        "executionId": "81501dd2-e326-458c-9abf-0ebec763c4c9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795014330901
+      },
+      {
+        "executionId": "81501dd2-e326-458c-9abf-0ebec763c4c9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795014637423
+      }
+    ],
+    "4.4 Benchmark": [
+      {
+        "executionId": "81501dd2-e326-458c-9abf-0ebec763c4c9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795014638065
+      },
+      {
+        "executionId": "81501dd2-e326-458c-9abf-0ebec763c4c9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795014925969
+      }
+    ],
+    "4.5 Final checkpoint: frame times": [
+      {
+        "executionId": "81501dd2-e326-458c-9abf-0ebec763c4c9",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795014918090
+      },
+      {
+        "executionId": "5c289039-1c40-4cb5-9a9c-a16bd72366de",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795015031877
+      },
+      {
+        "executionId": "5c289039-1c40-4cb5-9a9c-a16bd72366de",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795015431014
+      }
+    ],
+    "4.7 Faster float highlighting": [
+      {
+        "executionId": "5c289039-1c40-4cb5-9a9c-a16bd72366de",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795015031915
+      },
+      {
+        "executionId": "5c289039-1c40-4cb5-9a9c-a16bd72366de",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795015430649
+      }
+    ],
+    "4.6 Docs, phase 4 log and push": [
+      {
+        "executionId": "5c289039-1c40-4cb5-9a9c-a16bd72366de",
+        "chatSessionId": "sess_5d34f4c8-0f60-46a6-8c55-aefad0c74729",
+        "timestamp": 1795015431609
+      }
+    ]
+  }
+}

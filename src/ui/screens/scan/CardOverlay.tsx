@@ -4,6 +4,7 @@ import type { PixelData } from '../../../reader/index.ts';
 import type { Translate } from '../../i18n/messages.ts';
 import { markerLabel, nextMarkerIndex } from '../../state/scan.ts';
 import type { HookMarker, HookPosition } from '../../types.ts';
+import { Button } from '../../components/Button.tsx';
 import styles from './ScanScreen.module.css';
 
 export type CardOverlayProps = {
@@ -17,6 +18,19 @@ export type CardOverlayProps = {
   onToggle: (position: HookPosition) => void;
   t: Translate;
 };
+
+const readNumbers = new WeakMap<PixelData, number>();
+let readCount = 0;
+/** A number for each photo read: the sweep is keyed by it, so it plays once per read and not again when a hook is corrected. */
+export function readNumberOf(image: PixelData): number {
+  let number = readNumbers.get(image);
+  if (number === undefined) {
+    readCount += 1;
+    number = readCount;
+    readNumbers.set(image, number);
+  }
+  return number;
+}
 
 /** Draws the photo once into a canvas. Browser only; server rendering skips the effect. */
 function PhotoCanvas({ image, label }: { image: PixelData; label: string }) {
@@ -48,13 +62,15 @@ export function CardOverlay({ image, markers, hookRows, hookColumns, zoom, hitPx
     <div className={styles.viewport}>
       <div className={styles.stage} style={{ width: `${zoom * 100}%` }}>
         <PhotoCanvas image={image} label={t('scan.image.alt')} />
+        {/* One highlight sweep across the card when its punched holes have been found; decorative, and not drawn under reduced motion. */}
+        <span key={readNumberOf(image)} aria-hidden="true" data-sweep className={styles.sweep} />
         {markers.map((marker, index) => (
-          <button
+          <Button
             key={`${marker.hookRow}-${marker.hookColumn}`}
             ref={(element) => {
               buttons.current[index] = element;
             }}
-            type="button"
+            variant="quiet"
             className={styles.marker}
             data-shape={marker.shape}
             data-corrected={marker.corrected ? 'true' : 'false'}
@@ -73,7 +89,7 @@ export function CardOverlay({ image, markers, hookRows, hookColumns, zoom, hitPx
           >
             <span aria-hidden="true" className={styles.shape} />
             {marker.corrected ? <span aria-hidden="true" className={styles.badge} /> : null}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

@@ -1,0 +1,14 @@
+.caption {
+  margin: 0;
+  font-size: var(--text-small);
+  line-height: 1.4;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  color: inherit;
+  text-decoration: underline;
+}

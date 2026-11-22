@@ -1,6 +1,19 @@
-import type { AppAction, AppState } from '../types.ts';
+import type { Pattern } from '../../codec/index.ts';
+import type { AppAction, AppState, ClothChoices, CurrentPattern, RepairState, RepairedSlot } from '../types.ts';
 import { appendCard, commitBatch, moveCard, removeCard, replaceCard } from './batch.ts';
+import { COLOURS } from './cloth.ts';
+import { toggleBreakpoint } from './codeView.ts';
 
+/** The cloth choices the app starts with: the second colour for the warp, the fourth for the weft, no zari. */
+export const DEFAULT_CLOTH_CHOICES: ClothChoices = {
+  warpColour: COLOURS[1]?.hex ?? '#2b3a67',
+  weftColour: COLOURS[3]?.hex ?? '#f1ead8',
+  zari: { on: false },
+  repeat: 1,
+};
+
+/** No accepted repairs. */
+export const NO_REPAIRS: RepairState = { picks: [], history: [] };
 export const initialAppState: AppState = {
   screen: 'weave',
   language: 'hi',
@@ -10,13 +23,46 @@ export const initialAppState: AppState = {
   confirm: null,
   announcement: null,
   prefersReducedMotion: false,
+  selectedPick: 0,
+  breakpoints: [],
+  clothChoices: DEFAULT_CLOTH_CHOICES,
+  compare: null,
+  repairs: NO_REPAIRS,
+  finishedPattern: null,
 };
+
+/**
+ * Every action that replaces the Current_Pattern goes through here, so the Selected_Pick returns to pick 0 and the
+ * breakpoints are discarded together with the design they were set on (R3.10, R4.6).
+ */
+function withNewPattern(state: AppState, current: CurrentPattern): AppState {
+  return { ...state, current, selectedPick: 0, breakpoints: [], compare: null, repairs: NO_REPAIRS, finishedPattern: null };
+}
+
+/** True when the open design is scanned cards that were never saved: the one case where leaving it loses work (the same test request-sample uses). */
+export function hasUnsavedWork(state: AppState): boolean {
+  return state.current.origin.kind === 'scanned' && !state.current.origin.saved && state.current.pattern.length > 0;
+}
+
+/** The Landing as after a fresh start: no pattern, pick 0, no breakpoints, nothing finished, the cloth choices of the start. Language, profile, batch and archive stay. */
+function goHome(state: AppState): AppState {
+  return {
+    ...withNewPattern(state, { pattern: [], origin: { kind: 'none' } }),
+    screen: 'weave',
+    clothChoices: initialAppState.clothChoices,
+    confirm: null,
+  };
+}
+
+function lastPickIndex(state: AppState): number {
+  return Math.max(0, state.current.pattern.length - 1);
+}
 
 /** Pure reducer. */
 export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'navigate':
-      return { ...state, screen: action.screen };
+      return { ...state, screen: action.screen, compare: null };
     case 'profile-loaded':
       return { ...state, profile: action.state };
     case 'set-language':
@@ -33,18 +79,20 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         };
       }
       return {
-        ...state,
-        current: { pattern: action.pattern, origin: { kind: 'sample', design: action.design } },
+        ...withNewPattern(state, { pattern: action.pattern, origin: { kind: 'sample', design: action.design } }),
         confirm: null,
       };
     }
+    case 'go-home':
+      // Unsaved scanned cards raise the question first, on the Weave screen where it is drawn; nothing is lost without a yes.
+      return hasUnsavedWork(state) ? { ...state, screen: 'weave', compare: null, confirm: { kind: 'go-home' } } : goHome(state);
     case 'confirm-accepted': {
       const { confirm } = state;
       if (confirm === null) return state;
+      if (confirm.kind === 'go-home') return goHome(state);
       if (confirm.kind === 'replace-with-sample') {
         return {
-          ...state,
-          current: { pattern: confirm.pattern, origin: { kind: 'sample', design: confirm.design } },
+          ...withNewPattern(state, { pattern: confirm.pattern, origin: { kind: 'sample', design: confirm.design } }),
           confirm: null,
         };
       }
@@ -53,15 +101,56 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     }
     case 'open-saved':
       return {
-        ...state,
+        ...withNewPattern(state, { pattern: action.pattern, origin: { kind: 'archive', id: action.id } }),
         screen: 'weave',
-        current: { pattern: action.pattern, origin: { kind: 'archive', id: action.id } },
       };
     case 'mark-saved': {
       const { origin } = state.current;
       if (origin.kind !== 'scanned') return state;
       return { ...state, current: { ...state.current, origin: { kind: 'scanned', saved: true } } };
     }
+    case 'restore-saved':
+      // Same as opening, except the screen stays where it is, so Keep can offer the next save at once.
+      return withNewPattern(state, { pattern: action.pattern, origin: { kind: 'archive', id: action.id } });
+    case 'set-archive-origin': {
+      if (state.current.origin.kind !== 'archive') return state;
+      return { ...state, current: { ...state.current, origin: { kind: 'archive', id: action.id } } };
+    }
+    case 'accept-repairs': {
+      // Only picks of the design can change, and only on a click: this action is sent by the Accept controls.
+      const items = action.items.filter(
+        (item) => Number.isInteger(item.pick) && item.pick >= 0 && item.pick < state.current.pattern.length && Array.isArray(item.card),
+      );
+      if (items.length === 0) return state;
+      const pattern = [...state.current.pattern];
+      const before: RepairedSlot[] = [];
+      for (const item of items) {
+        before.push({ pick: item.pick, before: pattern[item.pick] });
+        pattern[item.pick] = item.card;
+      }
+      const picks = [...new Set([...state.repairs.picks, ...items.map((item) => item.pick)])].sort((a, b) => a - b);
+      return {
+        ...state,
+        current: { ...state.current, pattern },
+        repairs: { picks, history: [...state.repairs.history, before] },
+        finishedPattern: null,
+      };
+    }
+    case 'undo-repair': {
+      const last = state.repairs.history[state.repairs.history.length - 1];
+      if (last === undefined) return state;
+      const pattern = [...state.current.pattern];
+      for (const slot of last) pattern[slot.pick] = slot.before as Pattern[number];
+      const undone = new Set(last.map((slot) => slot.pick));
+      return {
+        ...state,
+        current: { ...state.current, pattern },
+        repairs: { picks: state.repairs.picks.filter((pick) => !undone.has(pick)), history: state.repairs.history.slice(0, -1) },
+        finishedPattern: null,
+      };
+    }
+    case 'compare-versions':
+      return { ...state, compare: { first: action.first, second: action.second }, screen: 'code' };
     case 'confirm-dismissed':
       return { ...state, confirm: null };
     case 'announce':
@@ -86,16 +175,36 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       // "Done" is disabled while the batch is empty (R11.7).
       if (state.batch.length === 0) return state;
       return {
-        ...state,
-        screen: 'weave',
-        current: {
+        ...withNewPattern(state, {
           pattern: commitBatch(state.batch, state.current.pattern, action.mode),
           origin: { kind: 'scanned', saved: false },
-        },
+        }),
+        screen: 'weave',
         batch: [],
         confirm: null,
       };
     }
+    case 'select-pick': {
+      // No Selected_Pick outside the design can exist (R4.2).
+      const wanted = Number.isNaN(action.pick) ? 0 : Math.round(action.pick);
+      const pick = Math.min(lastPickIndex(state), Math.max(0, wanted));
+      return pick === state.selectedPick ? state : { ...state, selectedPick: pick };
+    }
+    case 'toggle-breakpoint': {
+      // A breakpoint belongs to a pick of the design; any other index has no card to stop on.
+      const { pick } = action;
+      if (!Number.isInteger(pick) || pick < 0 || pick >= state.current.pattern.length) return state;
+      return { ...state, breakpoints: toggleBreakpoint(state.breakpoints, pick) };
+    }
+    case 'set-cloth-choices':
+      return { ...state, clothChoices: action.choices };
+    case 'cloth-finished': {
+      const { pattern } = state.current;
+      if (pattern.length === 0 || state.finishedPattern === pattern) return state;
+      return { ...state, finishedPattern: pattern };
+    }
+    case 'cloth-unfinished':
+      return state.finishedPattern === null ? state : { ...state, finishedPattern: null };
     case 'read-failed':
       // The batch stays as it is (R9.1, R11.10). Task 3.2 adds readFailureKey with these same keys.
       return appReducer(state, { type: 'announce', kind: 'error', messageKey: `error.read.${action.failure.reason}` });

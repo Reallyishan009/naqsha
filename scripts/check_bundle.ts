@@ -1,26 +1,49 @@
 /**
  * Checks the built site in dist/ (run after `npm run build`):
  * - the gzipped entry chunk is under 200 KB (R16.1),
+ * - and, as a separate check of the command (landingEntryProblem), under 150,000 bytes (second design pass: ProcessLoop and the hero art count),
  * - dist/index.html has no URL that starts with `/` or `http` (R23.3, R13).
- * - a Scan-only marker string is absent from the entry chunk and present in another chunk (R16.10).
+ * - each marker string of CHUNK_MARKERS (Scan, Code view) is absent from the entry chunk and present in another chunk (R16.10, cards-as-code R9.3).
  * - the web app manifest and its icons are there, relative and the size they declare (R24.7).
+ * - the inline theme script comes before the module script and the stylesheet link (R4.12).
  * - dist/sw.js carries a generated precache list that covers the built site with a versioned cache name (R24.2, R24.6).
+ * - the four Font_Files are in that precache list (design-and-ux-pass R1.7, R1.12).
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
+import { fontPrecacheProblems } from './checks/fonts.ts';
 import { parsePngInfo } from './checks/pngHeader.ts';
 import { precacheProblems, readPrecacheBlock } from './checks/precache.ts';
 import type { DistFile } from './checks/precache.ts';
 
 export const ENTRY_CHUNK_LIMIT_BYTES = 200 * 1024;
 
+/** The stricter limit of the second design pass, checked in addition to ENTRY_CHUNK_LIMIT_BYTES, which stays as it is. */
+export const LANDING_ENTRY_LIMIT_BYTES = 150_000;
+
+/** The problem when the entry chunk is not below the stricter Landing limit, or null when it is. */
+export function landingEntryProblem(entryChunk: string, gzippedBytes: number): string | null {
+  return gzippedBytes >= LANDING_ENTRY_LIMIT_BYTES
+    ? `entry chunk ${entryChunk} is ${gzippedBytes} bytes gzipped, the Landing limit is ${LANDING_ENTRY_LIMIT_BYTES} (move the sections below the first screen into one lazy chunk)`
+    : null;
+}
+
+export type ChunkMarker = { name: string; marker: string };
+
 /**
- * A string literal that only the reader (Scan chunk) contains: the invalid-image detail in
- * src/reader/readCard.ts. Strings survive minification; identifiers do not. If that message
- * changes, update this marker.
+ * One string literal per lazy screen chunk, found in that chunk and absent from the entry chunk.
+ * Strings survive minification; identifiers do not.
+ * - Scan: the invalid-image detail in src/reader/readCard.ts. If that message changes, update this marker.
+ * - Code view: CODE_VIEW_MARKER, the id of the listing element in src/ui/screens/code/CodeViewScreen.tsx.
  */
-export const SCAN_ONLY_MARKER = 'width and height must be positive integers';
+export const CHUNK_MARKERS: readonly ChunkMarker[] = [
+  { name: 'Scan', marker: 'width and height must be positive integers' },
+  { name: 'Code view', marker: 'naqsha-code-view-listing' },
+];
+
+/** The marker of the Scan chunk, kept for the code that imports it. */
+export const SCAN_ONLY_MARKER = CHUNK_MARKERS[0]!.marker;
 
 export const MANIFEST_FILE = 'manifest.webmanifest';
 
@@ -38,8 +61,10 @@ export type WebManifest = {
 export type BundleReport = {
   entryChunk: string;
   gzippedBytes: number;
-  /** Other .js chunks in dist/assets that contain SCAN_ONLY_MARKER, with their gzipped size. */
-  scanChunks: Array<{ file: string; gzippedBytes: number }>;
+  /** Other .js chunks in dist/assets that contain a marker of CHUNK_MARKERS, with the marker's name and the gzipped size. */
+  markerChunks: Array<{ name: string; file: string; gzippedBytes: number }>;
+  /** Every .js file in dist/assets, sorted by name, with its gzipped size. */
+  chunks: Array<{ file: string; gzippedBytes: number }>;
   absoluteUrls: string[];
   /** The cache name and number of entries of the generated precache list, when dist/sw.js has one. */
   precache: { cacheName: string; entries: number } | null;
@@ -65,8 +90,38 @@ export function findEntryChunk(html: string): string | null {
   return match ? match[1]! : null;
 }
 
+/**
+ * The inline theme script must come first in dist/index.html: before the module script and before the
+ * stylesheet link, so `data-theme` is set before the first paint (R4.12). Returns a list of problems.
+ */
+export function themeScriptProblems(html: string): string[] {
+  let themeAt = -1;
+  for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    const attributes = match[1]!;
+    if (/\bsrc\s*=/i.test(attributes) || /\btype\s*=\s*["']module["']/i.test(attributes)) continue;
+    if (match[2]!.includes('naqsha.theme') && match[2]!.includes('data-theme')) {
+      themeAt = match.index!;
+      break;
+    }
+  }
+  if (themeAt < 0) return ['dist/index.html has no inline classic theme script'];
+  const problems: string[] = [];
+  const moduleAt = html.search(/<script\b[^>]*\btype\s*=\s*["']module["']/i);
+  if (moduleAt < 0) problems.push('dist/index.html has no module script, so the theme script cannot be checked against it');
+  else if (themeAt > moduleAt) problems.push('the inline theme script in dist/index.html comes after the module script');
+  const sheetAt = html.search(/<link\b[^>]*\brel\s*=\s*["']stylesheet["']/i);
+  if (sheetAt < 0) problems.push('dist/index.html has no stylesheet link, so the theme script cannot be checked against it');
+  else if (themeAt > sheetAt) problems.push('the inline theme script in dist/index.html comes after the stylesheet link');
+  return problems;
+}
+
 export function gzippedSize(bytes: Uint8Array): number {
   return gzipSync(bytes, { level: 9 }).length;
+}
+
+/** One output line for a JavaScript file of dist/assets: its file name and gzipped size in bytes (R15.1). */
+export function formatChunkLine(file: string, gzippedBytes: number): string {
+  return `chunk: assets/${file}, ${gzippedBytes} bytes gzipped`;
 }
 
 /** Every file of dist/, as a path relative to it with `/` separators. */
@@ -111,6 +166,8 @@ export function checkBundle(distDir: string): BundleReport {
   const absoluteUrls = findAbsoluteUrls(html);
   if (absoluteUrls.length > 0) problems.push(`dist/index.html has absolute URLs: ${absoluteUrls.join(', ')}`);
 
+  problems.push(...themeScriptProblems(html));
+
   const entryChunk = findEntryChunk(html);
   let gzippedBytes = 0;
   if (entryChunk === null) {
@@ -122,19 +179,28 @@ export function checkBundle(distDir: string): BundleReport {
     }
   }
 
-  const scanChunks: BundleReport['scanChunks'] = [];
+  const markerChunks: BundleReport['markerChunks'] = [];
   const assetsDir = path.join(distDir, 'assets');
   const entryName = entryChunk === null ? '' : path.basename(entryChunk);
+  const chunks: BundleReport['chunks'] = readdirSync(assetsDir)
+    .filter((name) => name.endsWith('.js'))
+    .sort()
+    .map((file) => ({ file, gzippedBytes: gzippedSize(readFileSync(path.join(assetsDir, file))) }));
   if (entryChunk !== null) {
-    if (readFileSync(path.join(distDir, entryChunk), 'utf8').includes(SCAN_ONLY_MARKER)) {
-      problems.push(`entry chunk ${entryChunk} contains the Scan-only marker "${SCAN_ONLY_MARKER}"`);
-    }
-    for (const file of readdirSync(assetsDir).filter((name) => name.endsWith('.js') && name !== entryName).sort()) {
-      const bytes = readFileSync(path.join(assetsDir, file));
-      if (bytes.toString('utf8').includes(SCAN_ONLY_MARKER)) scanChunks.push({ file, gzippedBytes: gzippedSize(bytes) });
-    }
-    if (scanChunks.length === 0) {
-      problems.push(`no separate chunk in dist/assets contains the Scan-only marker "${SCAN_ONLY_MARKER}"`);
+    const entryText = readFileSync(path.join(distDir, entryChunk), 'utf8');
+    const otherChunks = readdirSync(assetsDir)
+      .filter((name) => name.endsWith('.js') && name !== entryName)
+      .sort()
+      .map((file) => ({ file, bytes: readFileSync(path.join(assetsDir, file)) }));
+    for (const { name, marker } of CHUNK_MARKERS) {
+      if (entryText.includes(marker)) {
+        problems.push(`entry chunk ${entryChunk} contains the ${name} marker "${marker}"`);
+      }
+      const holding = otherChunks.filter((chunk) => chunk.bytes.toString('utf8').includes(marker));
+      for (const chunk of holding) markerChunks.push({ name, file: chunk.file, gzippedBytes: gzippedSize(chunk.bytes) });
+      if (holding.length === 0) {
+        problems.push(`no separate chunk in dist/assets contains the ${name} marker "${marker}"`);
+      }
     }
   }
 
@@ -185,17 +251,24 @@ export function checkBundle(distDir: string): BundleReport {
       precache = { cacheName: block.cacheName, entries: block.entries.length };
       const distFiles: DistFile[] = files.map((file) => ({ path: file, contentHash: '' }));
       problems.push(...precacheProblems(block.entries, distFiles));
+      problems.push(...fontPrecacheProblems(block.entries));
     }
   }
-  return { entryChunk: entryChunk ?? '', gzippedBytes, scanChunks, absoluteUrls, precache, icons, problems };
+  return { entryChunk: entryChunk ?? '', gzippedBytes, markerChunks, chunks, absoluteUrls, precache, icons, problems };
 }
 
 if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === import.meta.filename) {
   const distDir = path.resolve(import.meta.dirname, '../dist');
   const report = checkBundle(distDir);
+  // The stricter Landing limit is a separate check of the command, run on the production build `npm run build` makes.
+  // checkBundle itself is also run by tests on a build made under the test mode (development React, larger), where only the 204,800 limit applies.
+  const landingProblem = report.entryChunk === '' ? null : landingEntryProblem(report.entryChunk, report.gzippedBytes);
+  if (landingProblem !== null) report.problems.push(landingProblem);
   console.log(`entry chunk: ${report.entryChunk}, ${report.gzippedBytes} bytes gzipped (limit ${ENTRY_CHUNK_LIMIT_BYTES})`);
-  for (const chunk of report.scanChunks) {
-    console.log(`scan chunk: assets/${chunk.file}, ${chunk.gzippedBytes} bytes gzipped`);
+  console.log(`entry chunk below the Landing limit of ${LANDING_ENTRY_LIMIT_BYTES}: ${report.gzippedBytes < LANDING_ENTRY_LIMIT_BYTES ? 'yes' : 'NO'}`);
+  for (const chunk of report.chunks) console.log(formatChunkLine(chunk.file, chunk.gzippedBytes));
+  for (const chunk of report.markerChunks) {
+    console.log(`${chunk.name} chunk: assets/${chunk.file}, ${chunk.gzippedBytes} bytes gzipped`);
   }
   if (report.precache !== null) {
     console.log(`precache: ${report.precache.entries} entries in cache ${report.precache.cacheName}`);

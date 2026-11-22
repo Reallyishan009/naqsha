@@ -108,3 +108,28 @@ describe('Try it print controls', () => {
     expect(key).toBe('error.generic');
   });
 });
+
+describe('Try it Demo strip', () => {
+  it('shows "Show a lost card" and "Show a torn card" with a Demo chip, in both languages', () => {
+    for (const language of ['en', 'hi'] as const) {
+      const html = render(language);
+      const t = translator(DICTIONARIES, language);
+      expect(html).toContain(`>${escape(t('tryit.demo.lostCard'))}</button>`);
+      expect(html).toContain(`>${escape(t('tryit.demo.tornCard'))}</button>`);
+      expect(html).toContain(`>${escape(t('demo.chip'))}<`);
+      expect(html).toContain('data-demo-gap="missing"');
+      expect(html).toContain('data-demo-gap="damaged"');
+    }
+  });
+  it('keeps the three samples and the lost cards button', () => {
+    const html = render('en');
+    for (const design of ['diamond', 'border', 'floral']) expect(html).toContain(`data-sample="${design}"`);
+    expect(html).toContain(escape(EN['tryit.lost'] as string));
+  });
+  it('without a Card_Profile both demo buttons wait', () => {
+    const t = translator(DICTIONARIES, 'en');
+    const html = renderToStaticMarkup(<TryIt profile={null} confirm={null} dispatch={() => undefined} t={t} />);
+    expect(html.match(/<button[^>]*data-demo-gap="[a-z]+"[^>]*>/g)?.every((tag) => /disabled/.test(tag))).toBe(true);
+    expect(html.match(/data-demo-gap/g)).toHaveLength(2);
+  });
+});

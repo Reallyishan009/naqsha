@@ -5,6 +5,8 @@ import type { Translate } from '../../i18n/messages.ts';
 import type { CameraControl } from '../../platform/browser.ts';
 import { CameraSession, captureFrame } from './camera.ts';
 import type { CameraDevice, CameraFailureKind } from './camera.ts';
+import { Button } from '../../components/Button.tsx';
+import { Notice } from '../../components/Notice.tsx';
 import styles from './ScanScreen.module.css';
 
 export type CameraPhase =
@@ -48,9 +50,9 @@ export function LiveCameraView(props: LiveCameraViewProps) {
   return (
     <div className={styles.camera}>
       {phase.status === 'live' || phase.status === 'opening' ? null : (
-        <button type="button" className={styles.button} disabled={props.disabled} onClick={props.onOpen}>
+        <Button disabled={props.disabled} onClick={props.onOpen}>
           {t('scan.camera.open')}
-        </button>
+        </Button>
       )}
       {phase.status === 'opening' ? (
         <p role="status" className={styles.busy}>
@@ -65,19 +67,15 @@ export function LiveCameraView(props: LiveCameraViewProps) {
             <div aria-hidden="true" className={styles.guide} style={{ aspectRatio: String(props.aspectRatio) }} />
           </div>
           <div className={styles.row}>
-            <button type="button" className={styles.button} onClick={props.onCapture}>
-              {t('scan.camera.capture')}
-            </button>
-            <button type="button" className={styles.button} onClick={props.onClose}>
-              {t('scan.camera.close')}
-            </button>
+            <Button onClick={props.onCapture}>{t('scan.camera.capture')}</Button>
+            <Button onClick={props.onClose}>{t('scan.camera.close')}</Button>
           </div>
         </>
       ) : null}
       {phase.status === 'error' ? (
-        <p role="alert" className={styles.failure}>
+        <Notice variant="error" word={t('notice.error')}>
           {t(cameraFailureMessageKey(phase.kind))}
-        </p>
+        </Notice>
       ) : null}
     </div>
   );

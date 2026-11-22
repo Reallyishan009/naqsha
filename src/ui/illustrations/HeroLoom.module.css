@@ -1,0 +1,155 @@
+/*
+ * The Hero_Loom: a drawn plate of a Jacquard loom. Every colour is a token. A raised hook and a lifted end sit
+ * higher than the rest (a translation by --lift) and are also gold; the position carries the meaning.
+ * --lift and --press are set on the element from LIFT_UNITS and PRESS_UNITS, in drawing units.
+ */
+.hero {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+.plate {
+  fill: var(--surface);
+  stroke: var(--line);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+
+.post {
+  stroke: var(--ink-soft);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+
+.head {
+  fill: var(--surface);
+  stroke: var(--ink-soft);
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+}
+
+.headRule {
+  stroke: var(--ink-soft);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+
+.needle {
+  stroke: var(--ink-soft);
+  stroke-width: 2px;
+}
+
+/* One hook and one warp end per end. At rest they are indigo; the lifted pose changes the position and the colour. */
+.hook,
+.end {
+  stroke: var(--indigo);
+  stroke-width: 2px;
+}
+
+.hookRaised,
+.endLifted {
+  stroke: var(--zari);
+  stroke-width: 2px;
+  /* The still pose is the lifted pose: --still-lift is 0 unless Reduced_Motion asks for the lifted state. */
+  transform: translateY(calc(var(--still-lift, 0px) * -1));
+}
+
+.board {
+  fill: var(--ink-soft);
+}
+
+.weft {
+  fill: var(--ink-soft);
+  transform-box: fill-box;
+}
+
+.card {
+  /* The card is at rest unless the Lift_Cycle presses it. */
+  transform: translateY(0);
+}
+
+.hero[data-motion='still'] {
+  --still-lift: var(--lift);
+}
+
+/* One Lift_Cycle: every part plays one animation, once, over six long motion steps (1,920 ms). */
+.hero[data-motion='play'] .card,
+.hero[data-motion='play'] .hookRaised,
+.hero[data-motion='play'] .endLifted,
+.hero[data-motion='play'] .weft {
+  animation-duration: calc(var(--motion-long) * 6);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: 1;
+}
+
+.hero[data-motion='play'] .card {
+  animation-name: press;
+}
+
+.hero[data-motion='play'] .hookRaised,
+.hero[data-motion='play'] .endLifted {
+  animation-name: rise;
+}
+
+.hero[data-motion='play'] .weft {
+  animation-name: pass;
+}
+
+/* The card presses on the needles, holds while the ends lift and the weft passes, then lets go. */
+@keyframes press {
+  0%,
+  8% {
+    transform: translateY(0);
+  }
+  22%,
+  72% {
+    transform: translateY(var(--press));
+  }
+  90%,
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* The hooks of the punched holes rise and their warp ends lift; they return after the weft has passed. */
+@keyframes rise {
+  0%,
+  20% {
+    transform: translateY(0);
+  }
+  38%,
+  72% {
+    transform: translateY(calc(var(--lift) * -1));
+  }
+  92%,
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* One weft crosses the warp direction, under the lifted ends, and stays across the cloth. */
+@keyframes pass {
+  0%,
+  40% {
+    transform: translateX(-100%);
+  }
+  70%,
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero {
+    --still-lift: var(--lift);
+  }
+
+  .card,
+  .hookRaised,
+  .endLifted,
+  .weft {
+    animation: none;
+  }
+}

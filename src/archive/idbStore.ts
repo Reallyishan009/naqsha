@@ -2,7 +2,7 @@ import { StoreUnavailableError } from './types.ts';
 import type { ArchiveStore, DesignSummary, SavedDesign } from './types.ts';
 
 export const DATABASE_NAME = 'naqsha-archive';
-export const DATABASE_VERSION = 1;
+export const DATABASE_VERSION = 2;
 const DESIGNS = 'designs';
 const SUMMARIES = 'summaries';
 
@@ -22,11 +22,21 @@ function openDatabase(factory: IDBFactory | undefined): Promise<IDBDatabase> {
       reject(new StoreUnavailableError(messageOf(error, 'indexedDB.open threw')));
       return;
     }
-    request.onupgradeneeded = () => {
+    request.onupgradeneeded = (event) => {
       const database = request.result;
-      database.createObjectStore(DESIGNS, { keyPath: 'id' });
-      const summaries = database.createObjectStore(SUMMARIES, { keyPath: 'id' });
-      summaries.createIndex('createdAt', 'createdAt');
+      const oldVersion = event.oldVersion;
+      // Version 0 is a new database: both stores and their indexes.
+      if (oldVersion < 1) {
+        database.createObjectStore(DESIGNS, { keyPath: 'id' });
+        const summaries = database.createObjectStore(SUMMARIES, { keyPath: 'id' });
+        summaries.createIndex('createdAt', 'createdAt');
+      }
+      // Version 1 to 2 adds the designId index. No record is rewritten: a record with no designId is a
+      // design with one version, so every saved design keeps working as it is.
+      if (oldVersion < 2) {
+        const summaries = request.transaction?.objectStore(SUMMARIES);
+        summaries?.createIndex('designId', 'designId');
+      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(new StoreUnavailableError(messageOf(request.error, 'could not open the database')));

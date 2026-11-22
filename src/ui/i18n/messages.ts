@@ -36,9 +36,27 @@ export function fillPlaceholders(text: string, params?: Readonly<Record<string, 
 
 export type Translate = (key: string, params?: Readonly<Record<string, string | number>>) => string;
 
+/**
+ * The key to look up for a count: `key.one` for a count of 1 and `key.other` otherwise (0 and every count of 2 or
+ * more), but only when the English dictionary has `key.one` and has no `key` of its own. The count is `params.count`,
+ * or `params.period` for the repeat evidence. A count that is not a number leaves the key alone. The choice depends on
+ * the count alone, never on the language (R17.6).
+ */
+export function pluralKey(
+  en: Readonly<Record<string, string>>,
+  key: string,
+  params?: Readonly<Record<string, string | number>>,
+): string {
+  if (params === undefined || Object.hasOwn(en, key) || !Object.hasOwn(en, `${key}.one`)) return key;
+  const count = Object.hasOwn(params, 'count') ? params.count : Object.hasOwn(params, 'period') ? params.period : undefined;
+  if (typeof count !== 'number' || Number.isNaN(count)) return key;
+  return count === 1 ? `${key}.one` : `${key}.other`;
+}
+
 /** t(key, params) for one language. */
 export function translator(dictionaries: PartialDictionaries, language: Language): Translate {
-  return (key, params) => fillPlaceholders(lookup(dictionaries, language, key), params);
+  return (key, params) =>
+    fillPlaceholders(lookup(dictionaries, language, pluralKey(dictionaries.en, key, params)), params);
 }
 
 export function simFailureKey(failure: SimFailure): string {

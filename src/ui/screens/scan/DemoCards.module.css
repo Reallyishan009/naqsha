@@ -1,0 +1,75 @@
+.card {
+  min-width: 0;
+}
+.group {
+  margin: var(--space-3) 0 var(--space-2);
+  font-size: var(--text-body);
+  font-weight: 700;
+  color: var(--ink);
+}
+.note {
+  margin: var(--space-2) 0;
+  font-size: var(--text-small);
+}
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+/* The whole thumbnail is one control, at least 48 px high. */
+.thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+  min-height: var(--touch-target);
+  padding: var(--space-1);
+  font: inherit;
+  color: var(--ink);
+  text-align: center;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-media);
+}
+.thumb:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.image {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--line);
+  border-radius: var(--radius-media);
+}
+.name {
+  font-size: var(--text-small);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.credit {
+  margin: 0;
+  font-size: var(--text-small);
+  overflow-wrap: anywhere;
+}
+.download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch-target);
+  font-size: var(--text-small);
+  color: var(--ink);
+  text-decoration: underline;
+}

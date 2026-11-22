@@ -67,4 +67,14 @@ describe('runBrowserSteps', () => {
       { seed: SEED, numRuns: NUM_RUNS },
     );
   });
+  it('the FAIL lines printed for the steps, the failed count of the summary and the exit code agree', async () => {
+    const passes = [true, false, true, true, false, true];
+    const steps = passes.map((passed, index) => (passed ? ok(`step ${index}`) : bad(`step ${index}`, `reason ${index}`)));
+    const results = await runBrowserSteps(steps);
+    const printed = results.map(formatResult).join('\n').split('\n');
+    expect(printed.filter((line) => /^FAIL /.test(line))).toHaveLength(2);
+    expect(printed.filter((line) => /^PASS /.test(line))).toHaveLength(4);
+    expect(formatSummary(results)).toContain('4 passed, 2 failed');
+    expect(exitCodeFor(results)).toBe(1);
+  });
 });

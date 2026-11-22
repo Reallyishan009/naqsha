@@ -1,3 +1,5 @@
+import type { CardProfile, Pattern } from '../../codec/index.ts';
+import { parseRenderSettings, prepareCloth } from '../../simulator/index.ts';
 import type { GapReport, RenderSettings, SimResult, Weft } from '../../simulator/index.ts';
 import type { ClothChoices, ClothView, PlaybackState, ReadyCloth } from '../types.ts';
 
@@ -50,6 +52,21 @@ export function settingsFromChoices(choices: ClothChoices, availableWidth: numbe
   } satisfies Record<keyof RenderSettings, unknown>;
 }
 
+/** Prepares the cloth and checks the settings. Never throws; either failure comes back as a value (R2.12). */
+export function buildReadyCloth(
+  profile: CardProfile,
+  pattern: Pattern,
+  choices: ClothChoices,
+  availableWidth: number,
+  availableHeight: number,
+): SimResult<ReadyCloth> {
+  const prepared = prepareCloth(profile, pattern);
+  if (!prepared.ok) return prepared;
+  const settings = parseRenderSettings(settingsFromChoices(choices, availableWidth, availableHeight));
+  if (!settings.ok) return settings;
+  return { ok: true, value: { cloth: prepared.value, settings: settings.value } };
+}
+
 /** The one-based pick numbers of the gaps, in increasing order (R2.11). */
 export function gapPickNumbers(gaps: ReadonlyArray<GapReport>): number[] {
   return gaps.map((gap) => gap.pick + 1).sort((a, b) => a - b);
@@ -89,8 +106,10 @@ export function clothReducer(view: ClothView, action: ClothAction): ClothView {
   }
 }
 
-/** A choice change rebuilds the cloth but keeps the current pick and the play state (R3.6). */
-export function playbackAfterChoice(playback: PlaybackState, pickCount: number): PlaybackState {
-  const last = Number.isInteger(pickCount) && pickCount > 0 ? pickCount : 0;
-  return { ...playback, pick: Math.min(last, Math.max(0, playback.pick)) };
+/**
+ * A choice change rebuilds the cloth and keeps the play state (R3.6). The current pick is not part of the play state:
+ * it is `AppState.selectedPick`, which `set-cloth-choices` leaves alone.
+ */
+export function playbackAfterChoice(playback: PlaybackState, _pickCount: number): PlaybackState {
+  return playback;
 }

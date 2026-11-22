@@ -1,0 +1,27 @@
+/*
+ * The scroll reveal: a block below the first screen starts at no opacity and --reveal-rise lower, and settles in
+ * --motion-long when the page sees it come into view. Under reduced motion the last rule shows every block, so
+ * a browser that asks for reduced motion never has one hidden. A block with no data-reveal attribute is simply shown.
+ */
+.reveal {
+  min-width: 0;
+}
+
+.reveal[data-reveal='pending'] {
+  opacity: 0;
+  translate: 0 var(--reveal-rise);
+}
+
+.reveal[data-reveal='revealed'] {
+  transition:
+    opacity var(--motion-long) ease-out,
+    translate var(--motion-long) ease-out;
+}
+
+/* A browser that asks for reduced motion is never shown a hidden block, whatever the page's script did. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal[data-reveal] {
+    opacity: 1;
+    translate: none;
+  }
+}

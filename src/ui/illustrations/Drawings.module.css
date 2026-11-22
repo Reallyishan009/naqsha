@@ -1,0 +1,34 @@
+/*
+ * The Step_Icons and Spot_Illustrations. Line work is currentColor, set here from tokens; a detail that carries
+ * the weaver's eye (a hole, a thread, a tick) is drawn in the accent. They scale to their container.
+ */
+.step,
+.spot {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-width: 0;
+}
+.step {
+  max-width: 2rem;
+  color: var(--ink);
+}
+.spot {
+  max-width: 11rem;
+  color: var(--ink-soft);
+}
+/* A detail in the accent. Gold in Day loom and Night loom alike; both are token values. */
+.accent {
+  stroke: var(--zari);
+}
+.accentFill {
+  fill: var(--zari);
+  stroke: none;
+}
+.blue {
+  stroke: var(--indigo);
+}
+/* Something that is not there yet: the outline of what would sit here. */
+.absent {
+  stroke-dasharray: 3 4;
+}

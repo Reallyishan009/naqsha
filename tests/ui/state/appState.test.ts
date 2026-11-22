@@ -119,6 +119,84 @@ describe('appReducer examples', () => {
     expect(appended.screen).toBe('weave');
   });
 
+  describe('the Selected_Pick, the breakpoints and the cloth choices', () => {
+    const profile = demoProfile();
+    const card = Array.from({ length: profile.hookRows }, () => Array<boolean>(profile.hookColumns).fill(false));
+    const threePicks: Pattern = [card, card, card];
+    const onThreePicks: AppState = { ...initialAppState, current: { pattern: threePicks, origin: { kind: 'sample', design: 'border' } } };
+
+    it('R4.2 the app starts at pick 0 with no breakpoints', () => {
+      expect(initialAppState.selectedPick).toBe(0);
+      expect(initialAppState.breakpoints).toEqual([]);
+    });
+
+    it('R4.2 select-pick sets the pick and clamps it to 0 .. the last pick index', () => {
+      expect(appReducer(onThreePicks, { type: 'select-pick', pick: 2 }).selectedPick).toBe(2);
+      expect(appReducer(onThreePicks, { type: 'select-pick', pick: 3 }).selectedPick).toBe(2);
+      expect(appReducer(onThreePicks, { type: 'select-pick', pick: -4 }).selectedPick).toBe(0);
+      expect(appReducer(onThreePicks, { type: 'select-pick', pick: Number.NaN }).selectedPick).toBe(0);
+      // A design with no picks has only pick 0.
+      expect(appReducer(initialAppState, { type: 'select-pick', pick: 5 }).selectedPick).toBe(0);
+    });
+
+    it('R3.1 R3.2 select-pick leaves the Current_Pattern and the breakpoints unchanged', () => {
+      const marked = appReducer(onThreePicks, { type: 'toggle-breakpoint', pick: 1 });
+      const moved = appReducer(marked, { type: 'select-pick', pick: 2 });
+      expect(moved.current).toBe(marked.current);
+      expect(moved.breakpoints).toEqual([1]);
+    });
+
+    it('R3.10 toggle-breakpoint adds and removes a pick index, keeping the list ascending without repeats', () => {
+      let state = onThreePicks;
+      for (const pick of [2, 0, 1, 2]) state = appReducer(state, { type: 'toggle-breakpoint', pick });
+      expect(state.breakpoints).toEqual([0, 1]);
+      expect(appReducer(state, { type: 'toggle-breakpoint', pick: 0 }).breakpoints).toEqual([1]);
+      // An index with no card in the design cannot hold a breakpoint.
+      expect(appReducer(state, { type: 'toggle-breakpoint', pick: 3 })).toBe(state);
+      expect(appReducer(state, { type: 'toggle-breakpoint', pick: -1 })).toBe(state);
+      expect(appReducer(state, { type: 'toggle-breakpoint', pick: 0.5 })).toBe(state);
+    });
+
+    it('R3.10 the breakpoints and the pick survive navigating away and back', () => {
+      const marked = appReducer(appReducer(onThreePicks, { type: 'toggle-breakpoint', pick: 1 }), { type: 'select-pick', pick: 2 });
+      const back = appReducer(appReducer(marked, { type: 'navigate', screen: 'code' }), { type: 'navigate', screen: 'weave' });
+      expect(back.breakpoints).toEqual([1]);
+      expect(back.selectedPick).toBe(2);
+    });
+
+    it('R3.10 R4.6 every action that replaces the Current_Pattern sets pick 0 and discards the breakpoints', () => {
+      const marked: AppState = {
+        ...onThreePicks,
+        selectedPick: 2,
+        breakpoints: [0, 2],
+        batch: [card],
+        screen: 'scan',
+      };
+      const replaced: AppState[] = [
+        appReducer(marked, { type: 'request-sample', design: 'floral', pattern: [card] }),
+        appReducer(appReducer({ ...marked, current: { pattern: threePicks, origin: { kind: 'scanned', saved: false } } }, { type: 'request-sample', design: 'floral', pattern: [card] }), { type: 'confirm-accepted' }),
+        appReducer(marked, { type: 'open-saved', id: 'a', pattern: [card] }),
+        appReducer(marked, { type: 'batch-commit', mode: 'replace' }),
+        appReducer(marked, { type: 'batch-commit', mode: 'append' }),
+      ];
+      for (const next of replaced) {
+        expect(next.selectedPick).toBe(0);
+        expect(next.breakpoints).toEqual([]);
+      }
+      // A sample waiting for confirmation has not replaced anything yet.
+      const waiting = appReducer({ ...marked, current: { pattern: threePicks, origin: { kind: 'scanned', saved: false } } }, { type: 'request-sample', design: 'floral', pattern: [card] });
+      expect(waiting.selectedPick).toBe(2);
+      expect(waiting.breakpoints).toEqual([0, 2]);
+    });
+
+    it('R4.1 set-cloth-choices replaces the choices and keeps the pick', () => {
+      const choices = { ...initialAppState.clothChoices, repeat: 3, zari: { on: true, tone: 'gold' } } as const;
+      const state = appReducer({ ...onThreePicks, selectedPick: 2 }, { type: 'set-cloth-choices', choices });
+      expect(state.clothChoices).toEqual(choices);
+      expect(state.selectedPick).toBe(2);
+    });
+  });
+
   it('R14.10 each announcement gets a new id', () => {
     const first = appReducer(initialAppState, { type: 'announce', kind: 'error', messageKey: 'a' });
     const second = appReducer(first, { type: 'announce', kind: 'confirmation', messageKey: 'b' });
@@ -267,5 +345,156 @@ describe('appReducer properties', () => {
       }),
       { numRuns: NUM_RUNS, seed: SEED },
     );
+  });
+});
+describe('version history actions', () => {
+  const pattern: Pattern = [[[true, false]]];
+  const archived: AppState = {
+    ...initialAppState,
+    screen: 'keep',
+    current: { pattern: [[[false, true]]], origin: { kind: 'archive', id: 'v1' } },
+    selectedPick: 3,
+    breakpoints: [1, 2],
+  };
+  it('R4.2 restore-saved loads the version as the open design from the archive and stays on the same screen', () => {
+    const restored = appReducer(archived, { type: 'restore-saved', id: 'v7', pattern });
+    expect(restored.screen).toBe('keep');
+    expect(restored.current).toEqual({ pattern, origin: { kind: 'archive', id: 'v7' } });
+    expect(restored.selectedPick).toBe(0);
+    expect(restored.breakpoints).toEqual([]);
+  });
+  it('R1.1 set-archive-origin moves the archive origin to the version just saved, and changes nothing else', () => {
+    const moved = appReducer(archived, { type: 'set-archive-origin', id: 'v2' });
+    expect(moved.current).toEqual({ pattern: archived.current.pattern, origin: { kind: 'archive', id: 'v2' } });
+    expect({ ...moved, current: archived.current }).toEqual(archived);
+  });
+  it('R1.2 set-archive-origin leaves a design that did not come from the archive as it is', () => {
+    const scanned: AppState = { ...archived, current: { pattern, origin: { kind: 'scanned', saved: false } } };
+    expect(appReducer(scanned, { type: 'set-archive-origin', id: 'v2' })).toEqual(scanned);
+  });
+  it('R4.1 compare-versions asks for the Code view with both sides chosen', () => {
+    const first = { kind: 'saved', id: 'v1' } as const;
+    const second = { kind: 'current' } as const;
+    const compared = appReducer(archived, { type: 'compare-versions', first, second });
+    expect(compared.screen).toBe('code');
+    expect(compared.compare).toEqual({ first, second });
+    expect(compared.current).toEqual(archived.current);
+  });
+  it('R4.1 the request is cleared by navigating and by loading another pattern', () => {
+    const compared = appReducer(archived, { type: 'compare-versions', first: { kind: 'current' }, second: { kind: 'current' } });
+    expect(appReducer(compared, { type: 'navigate', screen: 'weave' }).compare).toBeNull();
+    expect(appReducer(compared, { type: 'open-saved', id: 'x', pattern }).compare).toBeNull();
+    expect(appReducer(compared, { type: 'restore-saved', id: 'x', pattern }).compare).toBeNull();
+  });
+});
+describe('repair actions', () => {
+  const card = (hook: number): Pattern[number] => [[hook === 0, hook === 1]];
+  const lostSlot = [] as Pattern[number];
+  const damaged: AppState = {
+    ...initialAppState,
+    current: { pattern: [card(0), lostSlot, card(1), lostSlot], origin: { kind: 'sample', design: 'diamond' } },
+  };
+  it('R4.1 accepting replaces only that card, marks the pick and keeps what was there for Undo', () => {
+    const accepted = appReducer(damaged, { type: 'accept-repairs', items: [{ pick: 1, card: card(1) }] });
+    expect(accepted.current.pattern).toEqual([card(0), card(1), card(1), lostSlot]);
+    expect(accepted.current.origin).toEqual(damaged.current.origin);
+    expect(accepted.repairs.picks).toEqual([1]);
+    expect(damaged.current.pattern[1]).toBe(lostSlot); // the old state is not changed
+  });
+  it('R4.2 Undo reverses the last accept only, restores the old slot and removes the mark', () => {
+    const one = appReducer(damaged, { type: 'accept-repairs', items: [{ pick: 1, card: card(1) }] });
+    const two = appReducer(one, { type: 'accept-repairs', items: [{ pick: 3, card: card(0) }] });
+    expect(two.repairs.picks).toEqual([1, 3]);
+    const undone = appReducer(two, { type: 'undo-repair' });
+    expect(undone.current.pattern).toEqual(one.current.pattern);
+    expect(undone.repairs).toEqual(one.repairs);
+    const back = appReducer(undone, { type: 'undo-repair' });
+    expect(back.current.pattern).toEqual(damaged.current.pattern);
+    expect(back.repairs).toEqual(initialAppState.repairs);
+  });
+  it('R4.2 Undo with nothing to undo changes nothing', () => {
+    expect(appReducer(damaged, { type: 'undo-repair' })).toBe(damaged);
+  });
+  it('R4.2 R4.3 one accept of several cards is one Undo', () => {
+    const both = appReducer(damaged, {
+      type: 'accept-repairs',
+      items: [{ pick: 3, card: card(0) }, { pick: 1, card: card(1) }],
+    });
+    expect(both.repairs.picks).toEqual([1, 3]);
+    expect(both.repairs.history).toHaveLength(1);
+    expect(appReducer(both, { type: 'undo-repair' }).current.pattern).toEqual(damaged.current.pattern);
+  });
+  it('R4.3 a pick outside the design is ignored, and nothing else is accepted by itself', () => {
+    expect(appReducer(damaged, { type: 'accept-repairs', items: [{ pick: 9, card: card(1) }, { pick: -1, card: card(1) }] })).toBe(damaged);
+    expect(appReducer(damaged, { type: 'accept-repairs', items: [] })).toBe(damaged);
+    const other = appReducer(damaged, { type: 'select-pick', pick: 2 });
+    expect(other.repairs).toEqual(damaged.repairs);
+    expect(other.current.pattern).toEqual(damaged.current.pattern);
+  });
+  it('R5.3 opening, restoring, a sample or a scan commit clears the repairs', () => {
+    const repaired = appReducer(damaged, { type: 'accept-repairs', items: [{ pick: 1, card: card(1) }] });
+    const next: Pattern = [card(0)];
+    expect(appReducer(repaired, { type: 'open-saved', id: 'a', pattern: next }).repairs).toEqual(initialAppState.repairs);
+    expect(appReducer(repaired, { type: 'restore-saved', id: 'a', pattern: next }).repairs).toEqual(initialAppState.repairs);
+    expect(appReducer(repaired, { type: 'request-sample', design: 'border', pattern: next }).repairs).toEqual(initialAppState.repairs);
+  });
+  it('R5.1 saving (the origin moving to the saved version) keeps the pattern and the marks of the session', () => {
+    const repaired = appReducer(
+      { ...damaged, current: { ...damaged.current, origin: { kind: 'archive', id: 'v1' } } },
+      { type: 'accept-repairs', items: [{ pick: 1, card: card(1) }] },
+    );
+    const saved = appReducer(repaired, { type: 'set-archive-origin', id: 'v2' });
+    expect(saved.current.pattern).toEqual(repaired.current.pattern);
+    expect(saved.repairs).toEqual(repaired.repairs);
+  });
+  describe('go-home', () => {
+    const profile = demoProfile();
+    const grid = Array.from({ length: profile.hookRows }, () => Array<boolean>(profile.hookColumns).fill(true));
+    const worked = (screen: Screen, origin: PatternOrigin): AppState => ({
+      ...initialAppState,
+      screen,
+      language: 'en',
+      profile: { status: 'ready', profile },
+      current: { pattern: [grid, grid], origin },
+      selectedPick: 1,
+      breakpoints: [1],
+      finishedPattern: [grid, grid],
+      clothChoices: { ...initialAppState.clothChoices, repeat: 3 },
+    });
+    it('go-home from each screen shows the empty Landing and resets pick, breakpoints and cloth, keeping language and profile', () => {
+      for (const screen of ['weave', 'keep', 'scan', 'code'] as const) {
+        const home = appReducer(worked(screen, { kind: 'sample', design: 'diamond' }), { type: 'go-home' });
+        expect(home.screen).toBe('weave');
+        expect(home.current).toEqual({ pattern: [], origin: { kind: 'none' } });
+        expect([home.selectedPick, home.breakpoints, home.finishedPattern, home.compare]).toEqual([0, [], null, null]);
+        expect(home.clothChoices).toEqual(initialAppState.clothChoices);
+        expect(home.language).toBe('en');
+        expect(home.profile.status).toBe('ready');
+      }
+    });
+    it('go-home is a no-op in effect on the Landing', () => {
+      const landing = { ...initialAppState, profile: { status: 'ready' as const, profile } };
+      expect(appReducer(landing, { type: 'go-home' })).toEqual(landing);
+    });
+    it('go-home over unsaved scanned cards asks first on the Weave screen; yes goes home, no keeps the cards', () => {
+      for (const screen of ['weave', 'keep', 'scan', 'code'] as const) {
+        const start = worked(screen, { kind: 'scanned', saved: false });
+        const asked = appReducer(start, { type: 'go-home' });
+        expect(asked.confirm).toEqual({ kind: 'go-home' });
+        expect(asked.screen).toBe('weave');
+        expect(asked.current).toEqual(start.current);
+        expect(appReducer(asked, { type: 'confirm-dismissed' }).current).toEqual(start.current);
+        const accepted = appReducer(asked, { type: 'confirm-accepted' });
+        expect(accepted.current).toEqual({ pattern: [], origin: { kind: 'none' } });
+        expect(accepted.confirm).toBeNull();
+      }
+    });
+    it('go-home does not ask over saved scanned cards or a design opened from the archive', () => {
+      for (const origin of [{ kind: 'scanned', saved: true }, { kind: 'archive', id: 'a' }] as const) {
+        const home = appReducer(worked('keep', origin), { type: 'go-home' });
+        expect(home.confirm).toBeNull();
+        expect(home.current.pattern).toEqual([]);
+      }
+    });
   });
 });

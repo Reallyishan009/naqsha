@@ -1,135 +1,274 @@
-.screen {
-  max-width: 60rem;
+/*
+ * The Keep screen: a tinted band like the Landing's, a section header, then the export, save and "More" surfaces in a
+ * stack beside (from 900px) or above the archive card with its photo on top. The band takes back the Shell main's
+ * side padding; its content sits in the Landing's container, so the left edges line up with the header.
+ */
+.screenTitle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.screenTitle {
-  margin: 0 0 12px;
-  font-family: var(--font-display);
-  font-weight: 400;
+.band {
+  margin-inline: calc(var(--space-4) * -1);
+  padding-block: var(--space-4);
+  color: var(--ink);
+  background: var(--tint);
+}
+
+@media (min-width: 900px) {
+  .band {
+    padding-block: var(--space-7);
+  }
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: min(
+    calc(100% - 2 * (var(--space-3) + 1px + var(--space-3))),
+    calc(76rem - 2 * (1px + var(--space-3)))
+  );
+  margin-inline: auto;
+}
+
+/* The purpose and the next step: two short lines under the heading, so the export Button stays inside the first screen of a phone. */
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.purpose,
+.nextStep {
+  margin: 0;
+  font-size: var(--text-meta);
+}
+
+.nextStep {
+  color: var(--ink-soft);
+}
+
+.block {
+  margin: 0;
+}
+
+.emptyText {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.work {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .work {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+
+.jobs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+/* A rounded surface for each job: the export, the save, the extra details, the archive. */
+.surface {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lift);
+}
+
+.surface > p {
+  margin: 0;
+}
+
+/* The export is the screen's main job: a heavier outline marks it. */
+.exportSurface {
+  border: 2px solid var(--primary);
 }
 
 .sectionTitle {
-  margin: 0 0 8px;
+  margin: 0;
   font-family: var(--font-display);
+  font-size: var(--text-title);
   font-weight: 400;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
-.panel {
-  margin: 16px 0;
-  padding: 16px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
-}
-
-.empty {
-  padding: 16px;
-  color: var(--ink-soft);
-  background: var(--surface);
-  border: 1px dashed var(--line);
-  border-radius: var(--radius-panel);
-}
-
-.failure {
-  margin: 8px 0;
-  padding: 12px 16px;
-  border: 2px solid var(--madder);
-  border-radius: var(--radius-panel);
+.sectionTitle:lang(hi) {
+  line-height: var(--leading-hindi);
 }
 
 .fieldset {
-  margin: 0 0 12px;
+  min-width: 0;
+  margin: 0;
   padding: 0;
   border: 0;
 }
 
 .legend {
   padding: 0;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-2);
   font-weight: 700;
 }
 
-.choice {
+/* A soft group of fields under one legend. */
+.group {
+  padding: var(--space-4);
+  background: var(--tint);
+  border-radius: var(--radius-media);
+}
+
+/* A segmented control: the radio inputs stay in the markup, laid over their segment so the whole segment is the target. */
+.segments {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--tint);
+  border-radius: var(--radius-pill);
+}
+
+.segment {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: var(--space-2);
   min-height: var(--touch-target);
+  padding: 0 var(--space-4);
+  color: var(--ink);
+  text-align: center;
+  overflow-wrap: anywhere;
+  border-radius: var(--radius-pill);
   cursor: pointer;
+  transition: background-color var(--motion-short);
+}
+
+.segment:hover {
+  background: var(--surface);
 }
 
 .radio {
-  width: 24px;
-  height: 24px;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* The chosen segment is filled and carries a dot before its words, so it is told by shape and text, not colour alone. */
+.segment:has(.radio:checked) {
+  color: var(--on-primary);
+  background: var(--primary);
+}
+
+.segment:has(.radio:checked)::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+  border-radius: 50%;
+}
+
+.segment:has(.radio:focus-visible) {
+  outline: 3px solid var(--zari);
+  outline-offset: 2px;
 }
 
 .fields {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
 .field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
   min-width: 14rem;
   flex: 1 1 14rem;
 }
 
-.input {
-  min-height: var(--touch-target);
-  padding: 8px;
-  color: var(--ink);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  font: inherit;
-}
-
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 8px 0;
-}
-
-.button {
-  min-width: var(--touch-target);
-  min-height: var(--touch-target);
-  padding: 0 16px;
-  color: var(--ink);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  cursor: pointer;
-}
-
-.button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+/* A field straight in a surface is a block in a column: its row basis must not become a height. */
+.surface > .field {
+  flex: 0 0 auto;
+  min-width: 0;
 }
 
 .legal {
-  margin: 8px 0;
+  margin: 0;
   color: var(--ink);
 }
 
 .done {
-  margin: 8px 0;
+  margin: 0;
   font-weight: 700;
 }
 
+/* The archive card: a photo on top, then the credit, the heading and the list of designs. */
+.archive {
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.archivePicture {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--line);
+}
+
+.archivePhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.archiveBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
 .list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .item {
-  padding: 12px 0;
-  border-top: 1px solid var(--line);
+  padding: var(--space-4);
+  background: var(--tint);
+  border-radius: var(--radius-media);
 }
 
 .itemName {
@@ -144,10 +283,91 @@
   overflow-wrap: anywhere;
 }
 
-.confirm {
-  margin-top: 8px;
-  padding: 12px 16px;
+.versions {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) 0 0;
+}
+
+.versionsTitle {
+  margin: 0 0 var(--space-3);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* The version history: a vertical line with a dot for each version; the newest is a filled dot and says so in words. */
+.timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.version {
+  position: relative;
+  padding: 0 0 var(--space-4) var(--space-6);
+}
+
+.version::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: -8px;
+  left: 9px;
+  width: 2px;
+  background: var(--ink-soft);
+}
+
+.version:last-child {
+  padding-bottom: 0;
+}
+
+.version:last-child::before {
+  display: none;
+}
+
+.version::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 2px;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  background: var(--tint);
+  border: 3px solid var(--primary);
+  border-radius: 50%;
+}
+
+.versionNewest::after {
+  background: var(--primary);
+}
+
+.badge {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 0 var(--space-3);
+  font-weight: 400;
   background: var(--surface);
-  border: 2px solid var(--zari);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-pill);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+}
+
+.confirm {
+  margin-top: var(--space-2);
+}
+
+@media (min-width: 900px) {
+  .container {
+    gap: var(--space-5);
+  }
+
+  .surface:not(.archive),
+  .archiveBody {
+    padding: var(--space-5);
+  }
 }

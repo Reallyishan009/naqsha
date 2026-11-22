@@ -1,0 +1,42 @@
+.switch {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: 0;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--ink-soft);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: transform var(--motion-short);
+}
+
+.switch:active {
+  transform: translateY(1px);
+}
+
+/* The Night loom is on: a --zari border and a filled moon, besides the different shape. */
+.switch[aria-checked='true'] {
+  border-color: var(--zari);
+}
+
+.icon {
+  flex: none;
+  width: 1.5em;
+  height: 1.5em;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.switch[aria-checked='true'] .icon {
+  fill: var(--zari);
+  stroke: var(--zari);
+}

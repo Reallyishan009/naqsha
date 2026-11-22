@@ -1,0 +1,364 @@
+/*
+ * The Landing: a scrolling page. The hero is a full-width band (it takes back the 16 px side padding of the Shell's
+ * main) with the loom photo behind a deep-green tint; its text is light and left-aligned. Below the wave come the
+ * sections of the page, each a full-width band (LandingSections.module.css has the first two). The width is asked of
+ * the Screen itself (a container query), because no media query may change the layout's text size.
+ *
+ * One container for the whole page: --land-width. The header pill is at most 76rem wide with a 1 px border and
+ * --bar-pad of padding inside, 12 px from the pill's edge to the window's edge on a narrow screen; the container's
+ * edges are the pill's inner edges, so the hero's text and every section's content start on the same line as the
+ * mark in the header.
+ */
+.screen {
+  container-type: inline-size;
+}
+
+.landing {
+  --bar-pad: var(--space-3);
+  --land-width: min(
+    calc(100% - 2 * (var(--space-3) + 1px + var(--bar-pad))),
+    calc(76rem - 2 * (1px + var(--bar-pad)))
+  );
+  text-align: left;
+}
+
+/* The Screen's heading is for assistive technology and for the keyboard order; the hero's headline is what a visitor reads first. */
+.screenTitle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- the hero */
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  /* The Shell's main pads its sides by --space-4; the hero takes that back to reach the window's edges. */
+  margin-inline: calc(var(--space-4) * -1);
+  padding: var(--space-6) 0 var(--space-8);
+  overflow: hidden;
+  color: var(--on-band);
+  /* The tint's colour shows at once, before the photo has loaded. */
+  background: var(--hero-tint);
+  /* The wave below takes the colour of the page under it. */
+  --divider-fill: var(--ground);
+}
+
+/* On the dark tint the zari ring of the page is too faint (Day: 2.5 to 1); the light tan of the band is not. */
+.hero :focus-visible {
+  outline-color: var(--band-accent);
+}
+
+.heroMedia {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+}
+
+/* The photo fills the band and is cropped to it (both selectors name one class each, so this one wins over Photo's own rule). */
+.heroMedia .heroPhoto {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 30%;
+}
+
+/* The tint: the whole photo under --hero-tint at --hero-tint-alpha. Every pixel of text is on at least this much tint,
+   which is what contrast.ts (HERO_TINT) checks at its worst case, a white pixel. */
+.tint {
+  position: absolute;
+  inset: 0;
+  background: var(--hero-tint);
+  opacity: var(--hero-tint-alpha);
+}
+
+/* The text side: more of the same tint, strongest at the top and the left where the words are. It only adds to the tint, so the worst case above still holds. */
+.shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, var(--hero-tint), transparent);
+}
+
+.heroInner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  width: var(--land-width);
+  margin-inline: auto;
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.pill {
+  margin: 0;
+  padding: var(--space-1) var(--space-4);
+  color: var(--on-band);
+  font-size: var(--text-small);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--band);
+  border: 1px solid var(--band-accent);
+  border-radius: var(--radius-pill);
+}
+
+.pill:lang(hi) {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* The display font. Latin takes Newsreader and Devanagari falls through to Rozha One; Hindi has a taller line. */
+.headline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(var(--text-display), calc(var(--text-title) + 3.4vw), 60px);
+  font-weight: 400;
+  line-height: 1.1;
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+.headline:lang(hi) {
+  line-height: 1.4;
+}
+
+/* One word in the light tan, italic except in Hindi (Devanagari has no italic), where it is a change of colour only. */
+.accent {
+  color: var(--band-accent);
+  font-style: normal;
+}
+
+.italic {
+  font-style: italic;
+}
+
+.lead {
+  max-width: 34rem;
+  margin: 0;
+  font-size: var(--text-body);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* Three facts under a hairline, each a figure and a few words. */
+.facts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  width: 100%;
+  margin: var(--space-2) 0 0;
+  padding: var(--space-4) 0 0;
+  list-style: none;
+  border-top: 1px solid var(--band-accent);
+}
+
+.fact {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.factValue {
+  flex: none;
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--band-accent);
+}
+
+.factLabel {
+  font-size: var(--text-meta);
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+
+/* The slot of the Process_Loop card. It is never a trap for focus; the card tilts a little, and its margin keeps the turned corners inside the band at 320 px. */
+.mediaSlot {
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+}
+
+.mediaCard {
+  min-height: 12rem;
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-float);
+  transform: rotate(2deg);
+  overflow: hidden;
+}
+
+/* The Process_Loop's own frame is a panel; here it is the card, so its corners and edge follow the card's. */
+.mediaCard figure {
+  border: 0;
+  border-radius: var(--radius-card);
+}
+
+.divider {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  z-index: 0;
+}
+
+/* ---------------------------------------------------------------- the samples */
+
+/* The third band of the page, on the ground again (the second is on the tint). */
+.samplesBand {
+  margin-inline: calc(var(--space-4) * -1);
+  padding-block: var(--space-8);
+  color: var(--ink);
+  background: var(--ground);
+}
+
+.samples {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+  width: var(--land-width);
+  margin-inline: auto;
+  /* The "Try a sample" button scrolls here and puts keyboard focus here when there is no card yet; no ring is drawn for a programmatic focus. */
+  scroll-margin-top: var(--space-4);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+}
+
+/* The sample card: the whole card is the press target. The button's invisible layer (::after) covers the card, so the card is the positioned box and the button must not be one itself. */
+.sampleCard {
+  position: relative;
+}
+
+.sampleCard:hover {
+  box-shadow: var(--shadow-float);
+}
+
+/* The card shows the focus ring of its button, as the button's own ring would be hidden under the card's edge. */
+.sampleCard:has(.tileButton:focus-visible) {
+  outline: 3px solid var(--zari);
+  outline-offset: 3px;
+}
+
+.tileButton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+/* A button that lifts becomes the containing block of its ::after; the card lifts nothing, so the button must not. */
+.sampleCard .tileButton:hover,
+.sampleCard .tileButton:active {
+  translate: none;
+}
+
+.samplePicture {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.samplePicture .sampleCloth {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The punch card of the sample, laid on the corner of its cloth like a print. */
+.samplePicture .sampleCardArt {
+  position: absolute;
+  bottom: var(--space-3);
+  left: var(--space-3);
+  width: 42%;
+  height: auto;
+  border: 3px solid var(--surface);
+  border-radius: var(--radius-media);
+  box-shadow: var(--shadow-float);
+}
+
+.scanLink {
+  display: flex;
+  justify-content: center;
+}
+/* A link of the Landing takes the primary ink (forest green by day, amber at night), underlined, not the global indigo; --primary on --ground is in contrast.ts at 4.5. */
+.scanLink a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+@container (min-width: 40rem) {
+  .hero {
+    padding-block: var(--space-7) var(--space-9);
+  }
+
+  .heroInner {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+    align-items: center;
+    gap: var(--space-7);
+  }
+
+  .lead {
+    font-size: var(--text-lead);
+  }
+
+  .facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+
+  .fact {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+
+  .shade {
+    background: linear-gradient(to right, var(--hero-tint), transparent);
+  }
+
+  .tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+  }
+}
+
+/* The header pill pads its bar by --space-4 from 800 px of window (768 px of Screen) up. */
+@container (min-width: 48rem) {
+  .landing {
+    --bar-pad: var(--space-4);
+  }
+
+  .samplesBand {
+    padding-block: var(--space-9);
+  }
+}
+
+/* One sample card inside its reveal block: the card fills the block, so the three cards of a line stay one height. */
+.tileItem {
+  display: grid;
+}

@@ -269,6 +269,8 @@ export class FakeRegistration {
 export class FakeServiceWorkerContainer {
   readonly registered: string[] = [];
   readonly registration = new FakeRegistration();
+  /** The worker in control of the page: null on a first visit, set once a worker takes control. */
+  controller: object | null = null;
   /** When set, register rejects with this message. */
   failWith: string | null = null;
   private readonly listeners: Array<() => void> = [];
@@ -285,6 +287,7 @@ export class FakeServiceWorkerContainer {
 
   /** A different worker takes control of the page. */
   changeController(): void {
+    this.controller = {};
     for (const listener of [...this.listeners]) listener();
   }
 }

@@ -1,0 +1,130 @@
+.screen {
+  /* One Line is as tall as a touch target, so its breakpoint button fits (R3.11). */
+  --code-line-height: var(--touch-target);
+  max-width: 60rem;
+  margin-inline: auto;
+}
+
+.titleLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin: 0 0 12px;
+}
+
+.screenTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+.summary {
+  margin: 0 0 12px;
+  /* Long profile names wrap instead of widening the page at 320 px. */
+  overflow-wrap: anywhere;
+}
+
+.controls {
+  margin: 0 0 12px;
+}
+
+.selected {
+  margin: 0 0 8px;
+  font-family: var(--font-data);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+
+
+
+
+
+
+
+/* The jump field and its Go button sit on one line; the field shrinks before it widens the page at 320 px. */
+.jumpField {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+.jumpForm {
+  align-items: flex-end;
+}
+
+.noticeText {
+  margin: 0;
+}
+
+/* The listing and the cloth sit side by side on a wide viewport and stack, cloth below, on a narrow one (R4). */
+.body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.listingPane {
+  flex: 1 1 24rem;
+  min-width: 0;
+}
+
+.scrollHint {
+  margin: 0 0 8px;
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+}
+
+.clothPane {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+.clothArea {
+  width: 100%;
+  min-width: 0;
+}
+/* The photo on top: a wide crop of the tall photograph, in a rounded frame, with its credit under it. */
+.photoCard {
+  margin: 0 0 var(--space-4);
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lift);
+}
+.photo {
+  aspect-ratio: 3.4 / 1;
+  min-height: 8rem;
+  object-fit: cover;
+  object-position: 50% 30%;
+}
+/* The step, jump and breakpoint controls sit together in one rounded card. */
+.screen .controlsCard {
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lift);
+}
+/* The cloth is a rounded picture of the selected pick. */
+.clothArea canvas {
+  border-radius: var(--radius-media);
+}
+/* The credit line sits inside the frame, indented like the card's own text. */
+.photoCard [data-photo-caption] {
+  padding: 0 var(--space-4);
+}

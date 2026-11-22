@@ -2,7 +2,7 @@ import type { CardGrid, CardProfile, Pattern, Violation } from '../codec/index.t
 import type { PixelData, Pose, ReadFailure as CardReadFailure } from '../reader/index.ts';
 import type { PreparedCloth, RenderSettings, SimFailure } from '../simulator/index.ts';
 
-export type Screen = 'weave' | 'keep' | 'scan';
+export type Screen = 'weave' | 'keep' | 'scan' | 'code';
 export type Language = 'hi' | 'en';
 
 export type ProfileFailure =
@@ -31,10 +31,23 @@ export type CurrentPattern = { pattern: Pattern; origin: PatternOrigin };
 
 export type Confirm =
   | { kind: 'replace-with-sample'; design: SampleDesign; pattern: Pattern } // the sample waits here until accepted
+  | { kind: 'go-home' } // leave unsaved scanned cards for the Landing, once accepted
   | { kind: 'delete-design'; id: string }
   | { kind: 'remove-batch-card'; index: number }
   | { kind: 'commit-batch' }; // replace or append question (R11.8)
 
+/** One side of a comparison: the Current_Pattern, or one saved version. Same shape as the Code view's SideChoice. */
+export type CompareChoice = { kind: 'current' } | { kind: 'saved'; id: string };
+/** Two sides the Code view should compare as soon as it shows. Set by Keep, cleared on any other navigation. */
+export type CompareRequest = { first: CompareChoice; second: CompareChoice };
+/** One accepted repair: the pick, and what the Current_Pattern held there before (a gap, so not always a card). */
+export type RepairedSlot = { pick: number; before: unknown };
+/** Picks whose card came from an accepted suggestion, and one group of slots per accept, for Undo. */
+export type RepairState = {
+  /** Ascending, no repeats. */
+  picks: ReadonlyArray<number>;
+  history: ReadonlyArray<ReadonlyArray<RepairedSlot>>;
+};
 export type AnnouncementParams = Readonly<Record<string, string | number>>;
 
 export type Announcement = {
@@ -55,6 +68,21 @@ export type AppState = {
   confirm: Confirm | null;
   announcement: Announcement | null;
   prefersReducedMotion: boolean;
+  /** The pick both the Weave and the Code view screens show; 0 .. max(0, current.pattern.length - 1) (R4.2). */
+  selectedPick: number;
+  /** Pick indices with a breakpoint: ascending, no repeat. Screen state only; never saved or exported (R3.10). */
+  breakpoints: ReadonlyArray<number>;
+  /** The cloth choices made on Weave, shared with Code view (R4.1). */
+  clothChoices: ClothChoices;
+  /** A comparison Keep asked the Code view to show, or null. */
+  compare: CompareRequest | null;
+  /** Suggested repairs the weaver accepted into the Current_Pattern. Cleared whenever another design is loaded. */
+  repairs: RepairState;
+  /**
+   * The Pattern whose cloth was last seen finished (every pick woven), compared by identity, or null. The player
+   * reports its last frame as pick `pickCount`, which `selectedPick` cannot hold, so Weave keeps the fact here.
+   */
+  finishedPattern: Pattern | null;
 };
 
 export type AppAction =
@@ -62,17 +90,28 @@ export type AppAction =
   | { type: 'profile-loaded'; state: ProfileState }
   | { type: 'set-language'; language: Language }
   | { type: 'request-sample'; design: SampleDesign; pattern: Pattern }
+  | { type: 'go-home' } // back to the Landing, after a question when scanned cards are unsaved
   | { type: 'confirm-accepted' }
   | { type: 'confirm-dismissed' }
   | { type: 'open-saved'; id: string; pattern: Pattern }
   | { type: 'mark-saved'; id: string }
+  | { type: 'restore-saved'; id: string; pattern: Pattern } // load a version as the open design, stay on this screen
+  | { type: 'set-archive-origin'; id: string } // the open design is now this saved version
+  | { type: 'compare-versions'; first: CompareChoice; second: CompareChoice }
+  | { type: 'accept-repairs'; items: ReadonlyArray<{ pick: number; card: CardGrid }> }
+  | { type: 'undo-repair' }
   | { type: 'batch-accept'; grid: CardGrid }
   | { type: 'batch-remove'; index: number }
   | { type: 'batch-move'; index: number; by: -1 | 1 }
   | { type: 'batch-replace'; index: number; grid: CardGrid }
   | { type: 'batch-commit'; mode: 'replace' | 'append' }
   | { type: 'read-failed'; failure: CardReadFailure } // no change to the batch (R9.1)
-  | { type: 'announce'; kind: Announcement['kind']; messageKey: string; params?: AnnouncementParams };
+  | { type: 'announce'; kind: Announcement['kind']; messageKey: string; params?: AnnouncementParams }
+  | { type: 'select-pick'; pick: number }
+  | { type: 'toggle-breakpoint'; pick: number }
+  | { type: 'set-cloth-choices'; choices: ClothChoices }
+  | { type: 'cloth-finished' }
+  | { type: 'cloth-unfinished' };
 
 export type ClothChoices = {
   warpColour: string;
@@ -88,11 +127,8 @@ export type ClothView =
   | { status: 'ready'; ready: ReadyCloth }
   | { status: 'failed'; failure: SimFailure; previous: ReadyCloth | null }; // R2.12
 
-export type PlaybackState =
-  | { status: 'idle'; pick: number }
-  | { status: 'playing'; pick: number }
-  | { status: 'paused'; pick: number }
-  | { status: 'finished'; pick: number };
+/** Only the status: the pick the screen shows is `AppState.selectedPick` (R4.2). */
+export type PlaybackState = { status: 'idle' | 'playing' | 'paused' | 'finished' };
 
 export type HookPosition = { hookRow: number; hookColumn: number };
 

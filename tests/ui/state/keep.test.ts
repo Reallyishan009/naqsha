@@ -1,6 +1,6 @@
 import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { saveDesign } from '../../../src/archive/index.ts';
+import { NOTE_MAX, groupDesigns, saveDesign } from '../../../src/archive/index.ts';
 import type { ArchiveFailure, DesignSummary, Metadata } from '../../../src/archive/index.ts';
 import { DEFAULT_EXPORT_OPTIONS, bmpFileName, readPatternBmp } from '../../../src/exporter/index.ts';
 import type { ExportOptions } from '../../../src/exporter/index.ts';
@@ -9,11 +9,17 @@ import {
   afterSaveFailure,
   canExport,
   canSave,
+  compareTargets,
+  continuesId,
+  effectiveSaveMode,
+  formatSavedAt,
   initialKeepForm,
   keepFormReducer,
   runExport,
   savedLabel,
   summaryRow,
+  versionDetails,
+  EMPTY_METADATA,
 } from '../../../src/ui/state/keep.ts';
 import type { KeepForm } from '../../../src/ui/state/keep.ts';
 import { generateSample } from '../../../src/ui/samples/sampleDesigns.ts';
@@ -150,7 +156,7 @@ describe('keep properties', () => {
     );
     fc.assert(
       fc.property(metadataArbitrary, exportOptionsArbitrary, failure, (metadata, options, archiveFailure) => {
-        const form: KeepForm = { metadata, options };
+        const form: KeepForm = { metadata, options, note: '', saveMode: 'version' };
         const before = structuredClone(form);
         const after = afterSaveFailure(form, archiveFailure);
         expect(after.form).toEqual(before);
@@ -197,5 +203,52 @@ describe('keep properties', () => {
         else expect(row.profileName).toBe(design.profileName);
       }),
     );
+  });
+});
+describe('version history helpers', () => {
+  const origin = { kind: 'archive', id: 'v2' } as const;
+  const summary = (id: string, createdAt: number, designId?: string, note?: string): DesignSummary => ({
+    id,
+    profileName: 'demo',
+    metadata: { name: '', naqshband: '', weaver: '', place: '', date: '', notes: '' },
+    createdAt,
+    pickCount: 4,
+    ...(designId === undefined ? {} : { designId }),
+    ...(note === undefined ? {} : { note }),
+  });
+  it('R1.1 the save choice defaults to a new version and applies only to a design from the archive', () => {
+    expect(initialKeepForm.saveMode).toBe('version');
+    expect(effectiveSaveMode(initialKeepForm, origin)).toBe('version');
+    expect(effectiveSaveMode({ ...initialKeepForm, saveMode: 'design' }, origin)).toBe('design');
+    expect(effectiveSaveMode(initialKeepForm, { kind: 'scanned', saved: false })).toBe('design');
+    expect(effectiveSaveMode(initialKeepForm, { kind: 'none' })).toBe('design');
+  });
+  it('R1.1 R1.2 a save continues the open version only for "new version" from the archive', () => {
+    expect(continuesId(initialKeepForm, origin)).toBe('v2');
+    expect(continuesId({ ...initialKeepForm, saveMode: 'design' }, origin)).toBeUndefined();
+    expect(continuesId(initialKeepForm, { kind: 'sample', design: 'diamond' })).toBeUndefined();
+  });
+  it('R2.1 the note field holds at most 200 characters', () => {
+    const typed = keepFormReducer(initialKeepForm, { type: 'set-note', value: 'x'.repeat(250) });
+    expect(typed.note).toHaveLength(NOTE_MAX);
+  });
+  it('R4.2 set-metadata fills the form from the restored version and clears the note', () => {
+    const typed = keepFormReducer(initialKeepForm, { type: 'set-note', value: 'old' });
+    const filled = keepFormReducer(typed, { type: 'set-metadata', metadata: { ...EMPTY_METADATA, name: 'Border' } });
+    expect(filled.metadata.name).toBe('Border');
+    expect(filled.note).toBe('');
+  });
+  it('R3.2 a version row shows the date in the language in use, the note and the pick count', () => {
+    const row = versionDetails(summary('a', Date.UTC(2026, 10, 20, 12, 0), undefined, 'wider border'), 'en', 'untitled');
+    expect(row).toMatchObject({ name: 'untitled', note: 'wider border', pickCount: 4 });
+    expect(row.savedAt).toContain('2026');
+    expect(versionDetails(summary('a', 0), 'hi', 'untitled').note).toBe('');
+    expect(formatSavedAt(Number.NaN, 'en')).toBe('');
+  });
+  it('R4.1 Compare offers the previous version and, unless it is the open one, the open design', () => {
+    const [group] = groupDesigns([summary('v1', 1), summary('v2', 2, 'v1'), summary('v3', 3, 'v1')]);
+    expect(compareTargets(group!, 'v3', origin)).toEqual({ previous: group!.versions[1], openDesignId: 'v2' });
+    expect(compareTargets(group!, 'v2', origin).openDesignId).toBeNull();
+    expect(compareTargets(group!, 'v1', { kind: 'none' })).toEqual({ previous: null, openDesignId: null });
   });
 });

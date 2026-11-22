@@ -1,0 +1,191 @@
+/* Layout only: the fill, border and radius come from the shared Panel. */
+.panel {
+  margin: 16px 0;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+.hint {
+  margin: 0 0 8px;
+}
+
+.choosers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 8px 0;
+}
+
+.field {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+
+
+
+
+
+
+.result {
+  margin-top: 12px;
+}
+
+.counts {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-data);
+}
+
+/* The one scroller of the entries, and the one tab stop among them (R11.1). It scrolls in both directions, so a Bit_Line
+   and its ^ row, which sit in one block, scroll sideways together. It is never wider than the page (R11.8). */
+.entries {
+  container-type: inline-size;
+  min-width: 0;
+  max-width: 100%;
+  max-height: 70vh;
+  overflow: auto;
+  font-family: var(--font-data);
+  border: 1px solid var(--line);
+}
+
+.entryList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* An entry is as wide as its text, and at least as wide as the region, so its Bit_Line is never clipped by the entry
+   and the region's own scroll bar reaches the last end. Up to Diff_Pick_Limit entries are in the document, so the
+   browser may skip the ones that are out of view. */
+.entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 100%;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--line);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 4rem;
+}
+
+.marker,
+.picks {
+  flex: none;
+  white-space: pre;
+}
+
+.kind {
+  flex: none;
+  font-weight: 700;
+}
+
+/* The Bit_Line and the ^ row are both fixed-width and unwrapped, one above the other, so each ^ sits under its end.
+   They are not a scroll region: the entries region scrolls them. */
+.bits {
+  flex: none;
+}
+
+.bitsText {
+  display: block;
+  white-space: pre;
+}
+
+.damaged {
+  flex: 1 1 12rem;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The Diff_Text block: a selectable read-only text, the Copy and Download controls and a status line. */
+.textBlock {
+  margin-top: 12px;
+  min-width: 0;
+}
+
+.textTitle {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+/* Never wider than the page: it scrolls sideways inside itself, so there is no horizontal page scroll at 320 px. */
+.textArea {
+  /* The padding and border above and below the text, so a height of N text lines is N × 1lh plus this (the box is border-box). */
+  --diff-text-frame: calc(2 * 8px + 2 * 1px);
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  padding: 8px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  font-family: var(--font-data);
+  white-space: pre;
+  overflow: auto;
+  resize: vertical;
+}
+
+.textActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 8px 0;
+}
+
+.textStatus {
+  margin: 0;
+  min-height: 1.5em;
+  overflow-wrap: anywhere;
+}
+
+/* The bar of a region that scrolls sideways is drawn all the time, so a line cut at the edge reads as "scrolls on" and
+   not as broken text. Overlay bars hide until a touch. The colours are theme tokens. Firefox keeps its own bar. */
+.entries::-webkit-scrollbar,
+.textArea::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.entries::-webkit-scrollbar-track,
+.textArea::-webkit-scrollbar-track {
+  background: var(--line);
+}
+
+.entries::-webkit-scrollbar-thumb,
+.textArea::-webkit-scrollbar-thumb {
+  background: var(--ink-soft);
+  border: 2px solid var(--line);
+  border-radius: 5px;
+}
+
+/* On a narrow screen the marker, the kind and the pick number take a line, and the Bit_Line takes the line below it,
+   so it starts at the left edge and shows as much of the line as the width allows before it scrolls sideways. */
+@container (max-width: 40rem) {
+  .entry {
+    display: block;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .marker,
+  .kind {
+    margin-right: 8px;
+  }
+
+  .bits {
+    margin-top: 4px;
+  }
+}

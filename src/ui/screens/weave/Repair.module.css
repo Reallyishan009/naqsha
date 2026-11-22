@@ -1,0 +1,85 @@
+.notice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+}
+.noticeText {
+  margin: 0 0 8px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+.panel {
+  margin: 0;
+  padding: var(--space-5);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lift);
+}
+.heading {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+.guesses {
+  margin: 8px 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.legend {
+  margin: 4px 0 8px;
+  font-family: var(--font-data);
+}
+.gapList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gap {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.gapTitle {
+  margin: 0 0 4px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.suggestion {
+  margin: 8px 0;
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid var(--ink);
+  border-radius: 0 var(--radius-panel) var(--radius-panel) 0;
+  background: var(--tint);
+}
+.kind {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.evidence {
+  margin: 4px 0;
+  overflow-wrap: anywhere;
+}
+.suggestion .drawing {
+  width: 16rem;
+  max-width: 100%;
+  margin: 8px 0;
+}
+.gap .lostCard {
+  width: 10rem;
+  max-width: 100%;
+  margin: 8px 0;
+}
+.why {
+  margin: 8px 0 0;
+}
+.whyList {
+  margin: 4px 0 0;
+  padding-left: 20px;
+  overflow-wrap: anywhere;
+}

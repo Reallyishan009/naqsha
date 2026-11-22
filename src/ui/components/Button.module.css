@@ -1,0 +1,67 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: var(--radius-pill);
+  transition:
+    translate var(--motion-medium),
+    box-shadow var(--motion-medium),
+    text-decoration-color var(--motion-short);
+}
+/* Primary: --on-primary text on a --primary fill in every state (deep forest green by day, amber by night), so no theme conditional is needed. */
+.primary {
+  color: var(--on-primary);
+  background: var(--primary);
+  border: 2px solid var(--primary);
+}
+/* Secondary: the opaque surface with a hairline. The padding takes back the 1px the border gives up, so a secondary and a primary side by side are equally high. */
+.secondary {
+  padding: calc(var(--space-2) + 1px) calc(var(--space-4) + 1px);
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--ink-soft);
+}
+.quiet {
+  color: var(--indigo);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+}
+.button:hover:not(:disabled) {
+  text-decoration: underline;
+  /* The lift: the separate `translate` property composes with a caller's `transform` (the Scan hook markers use one). */
+  translate: 0 -2px;
+}
+/* The quiet Button has no box, so it lifts without a shadow. */
+.button:hover:not(:disabled):not(.quiet) {
+  box-shadow: var(--shadow-lift);
+}
+.button:active:not(:disabled) {
+  translate: 0 1px;
+}
+/* Disabled differs by more than colour: a dashed border, no fill and soft text. */
+.button:disabled {
+  padding: var(--space-2) var(--space-4);
+  color: var(--ink-soft);
+  background: none;
+  border: 2px dashed var(--ink-soft);
+  text-decoration: none;
+  cursor: not-allowed;
+}
+/* Reduced motion: no lift (the transitions are already removed by the global rule); the shadow and underline still show the hover. */
+@media (prefers-reduced-motion: reduce) {
+  .button:hover:not(:disabled),
+  .button:active:not(:disabled) {
+    translate: none;
+  }
+}

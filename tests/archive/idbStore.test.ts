@@ -41,13 +41,13 @@ const tiny: Pattern = [[[true, false], [false, true]]];
 const input = { pattern: tiny, profileName: 'p', metadata: { name: 'n', naqshband: '', weaver: '', place: '', date: '', notes: '' } };
 
 describe('archive over a fake IndexedDB: examples', () => {
-  it('R6.11 the database has the stores designs and summaries, with a createdAt index on summaries, at version 1', async () => {
+  it('R6.11 the database has the stores designs and summaries, with createdAt and designId indexes on summaries, at version 2', async () => {
     const { fake, deps } = makeIdbDeps();
     expect((await listDesigns(deps)).ok).toBe(true);
     expect(fake.storeNames().sort()).toEqual(['designs', 'summaries']);
-    expect(fake.indexNames('summaries')).toEqual(['createdAt']);
+    expect(fake.indexNames('summaries')).toEqual(['createdAt', 'designId']);
     expect(fake.indexNames('designs')).toEqual([]);
-    expect(fake.requestedVersions).toEqual([1]);
+    expect(fake.requestedVersions).toEqual([2]);
   });
 
   it('R6.8 saving uses one readwrite transaction over both stores', async () => {

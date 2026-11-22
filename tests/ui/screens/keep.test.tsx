@@ -8,9 +8,10 @@ import { DICTIONARIES, translator } from '../../../src/ui/i18n/messages.ts';
 import { KeepView, runDelete, runOpen, runSave } from '../../../src/ui/screens/keep/KeepScreen.tsx';
 import type { KeepViewProps } from '../../../src/ui/screens/keep/KeepScreen.tsx';
 import { generateSample } from '../../../src/ui/samples/sampleDesigns.ts';
-import { EMPTY_METADATA, initialKeepForm } from '../../../src/ui/state/keep.ts';
+import { EMPTY_METADATA, initialKeepForm, withGuessesLine } from '../../../src/ui/state/keep.ts';
 import type { Language } from '../../../src/ui/types.ts';
 import { FakeArchiveStore } from '../../support/fakes.ts';
+import { alertTexts } from '../../support/notices.ts';
 import { demoProfile } from '../../support/profiles.ts';
 
 const SEED = 20240614;
@@ -133,8 +134,7 @@ describe('keep screen', () => {
           expect(text.split(/[।.]/).filter((sentence) => sentence.trim() !== '').length, `${key} (hi) has a cause and a next step`).toBeGreaterThanOrEqual(2);
         }
         const html = view(language, { failureKey: key });
-        expect(html, `${language} ${key}`).toContain(`<p role="alert" class="`);
-        expect(html).toContain(escape(text));
+        expect(alertTexts(html), `${language} ${key}`).toContain(escape(text));
       }
     }
   });
@@ -271,10 +271,12 @@ describe('keep screen', () => {
     const css = readFileSync('src/ui/screens/keep/KeepScreen.module.css', 'utf8');
     const tokens = readFileSync('src/ui/theme/tokens.css', 'utf8');
     expect(tokens).toMatch(/--touch-target:\s*48px/);
-    for (const rule of ['.button', '.input', '.choice']) {
-      const block = new RegExp(`\\${rule}\\s*{[^}]*}`).exec(css)?.[0] ?? '';
-      expect(block, rule).toContain('min-height: var(--touch-target)');
-    }
+    // The buttons and text fields are the shared Button and Field, so their height is asserted in those modules.
+    const buttonCss = readFileSync('src/ui/components/Button.module.css', 'utf8');
+    const fieldCss = readFileSync('src/ui/components/Field.module.css', 'utf8');
+    expect(/\.button\s*{[^}]*}/.exec(buttonCss)?.[0] ?? '', '.button').toContain('min-height: var(--touch-target)');
+    expect(/\.field textarea\s*{[^}]*}/.exec(fieldCss)?.[0] ?? '', '.field controls').toContain('min-height: var(--touch-target)');
+    expect(/\.segment\s*{[^}]*}/.exec(css)?.[0] ?? '', '.segment').toContain('min-height: var(--touch-target)');
   });
 });
 
@@ -289,7 +291,8 @@ describe('keep screen actions over the fake archive store', () => {
       for (const field of ['name', 'naqshband', 'weaver', 'place', 'date', 'notes']) {
         expect(html, `${language} ${field}`).toContain(`<span>${escape(t(`keep.field.${field}`))}</span>`);
       }
-      expect(html.match(/<input type="text"/g)).toHaveLength(5);
+      // Five Metadata inputs and, since version-history, the note input: changed on purpose from 5 to 6.
+      expect(html.match(/<input type="text"/g)).toHaveLength(6);
       expect(html.match(/<textarea/g)).toHaveLength(1);
       expect(html).not.toMatch(/\brequired\b|aria-required/);
       expect(html).toMatch(new RegExp(`<button(?![^>]*disabled)[^>]*>${escape(t('keep.save.button'))}</button>`));
@@ -352,5 +355,57 @@ describe('keep screen actions over the fake archive store', () => {
     const result = await runDelete(saved.id, deps);
     expect(result.failure).toMatchObject({ reason: 'write-failed' });
     expect(result.designs).toHaveLength(1);
+  });
+});
+
+describe('the guesses line in the saved notes', () => {
+  const profile = demoProfile();
+  const pattern = generateSample(profile, 'border');
+  const en = translator(DICTIONARIES, 'en');
+  const hi = translator(DICTIONARIES, 'hi');
+  const typed = (notes: string) => ({ ...initialKeepForm, metadata: { ...EMPTY_METADATA, name: 'Border', notes }, note: 'wider' });
+  it('R5.1 repaired picks add one line after the typed notes, from pick 1 and in ascending order, without replacing them', () => {
+    const form = withGuessesLine(typed('Kota weave.\nSecond line.'), [15, 4, 35], en);
+    expect(form.metadata.notes).toBe('Kota weave.\nSecond line.\nIncludes 3 suggested cards (guesses): picks 5, 16, 36.');
+  });
+  it('R5.1 with no typed notes the line is the whole notes field, and trailing blank space is not kept', () => {
+    expect(withGuessesLine(typed(''), [1, 2], en).metadata.notes).toBe('Includes 2 suggested cards (guesses): picks 2, 3.');
+    expect(withGuessesLine(typed('Typed  \n\n'), [0], en).metadata.notes).toBe('Typed\nIncludes 1 suggested card (a guess): pick 1.');
+  });
+  it('R5.1 the line follows the current language', () => {
+    const line = withGuessesLine(typed(''), [0, 1], hi).metadata.notes;
+    expect(line).toBe(hi('keep.save.guessesNote.other', { count: 2, picks: '1, 2' }));
+    expect(line).not.toBe(withGuessesLine(typed(''), [0, 1], en).metadata.notes);
+  });
+  it('R5.1 with no repaired pick the form is returned as it is', () => {
+    const form = typed('Only what I typed');
+    expect(withGuessesLine(form, [], en)).toBe(form);
+  });
+  it('R5.1 a line that is already in the notes is not added twice, and a repeated pick is named once', () => {
+    const once = withGuessesLine(typed('x'), [3, 3], en);
+    expect(once.metadata.notes).toBe('x\nIncludes 1 suggested card (a guess): pick 4.');
+    expect(withGuessesLine(once, [3], en)).toBe(once);
+  });
+  it('R5.1 the form that was typed in is not changed', () => {
+    const form = typed('mine');
+    const before = structuredClone(form);
+    withGuessesLine(form, [1], en);
+    expect(form).toEqual(before);
+  });
+  it('R5.1 saving stores the line in the design notes and leaves the version note as typed, within 200 characters', async () => {
+    const { deps, store } = fakeDeps();
+    const long = 'n'.repeat(200);
+    const form = withGuessesLine({ ...typed('Typed notes'), note: long }, [4, 15, 35], en);
+    const saved = await runSave(profile, pattern, form, 'untitled', deps);
+    expect(saved).toMatchObject({ ok: true });
+    const [record] = store.snapshot().records;
+    expect(record?.metadata.notes).toBe('Typed notes\nIncludes 3 suggested cards (guesses): picks 5, 16, 36.');
+    expect(record?.note).toBe(long);
+  });
+  it('R5.1 a design with no repaired pick saves its notes exactly as typed', async () => {
+    const { deps, store } = fakeDeps();
+    const saved = await runSave(profile, pattern, withGuessesLine(typed('plain'), [], en), 'untitled', deps);
+    expect(saved).toMatchObject({ ok: true });
+    expect(store.snapshot().records[0]?.metadata.notes).toBe('plain');
   });
 });

@@ -168,21 +168,23 @@ describe('the position shown for a newly shown cloth', () => {
   const MODES: EntryMode[] = ['show-finished', 'autoplay', 'keep'];
   const stateArbitrary: fc.Arbitrary<PlaybackState> = fc.record({
     status: fc.constantFrom<PlaybackState['status']>('idle', 'playing', 'paused', 'finished'),
-    pick: fc.integer({ min: 0, max: 600 }),
   });
+  // The pick the previous design was at is now AppState.selectedPick, passed beside the status.
+  const selectedPickArbitrary = fc.integer({ min: 0, max: 600 });
   /** A stand-in for a prepared cloth: the position rule only ever compares cloths by identity. */
   const cloth = (picks: number) => ({ picks });
 
   it('R2.8 R3.6 R14.9 each entry gets its own position: the finished cloth on arrival, the first pick for a chosen design, the current pick for a rebuild', () => {
-    const previous = { status: 'paused', pick: 4 } satisfies PlaybackState;
-    expect(entryPlayback('show-finished', previous, 9, true)).toEqual({ status: 'finished', pick: 9 });
-    expect(entryPlayback('autoplay', previous, 9, true)).toEqual({ status: 'playing', pick: 0 });
+    const previous = { status: 'paused' } satisfies PlaybackState;
+    const selectedPick = 4;
+    expect(entryPlayback('show-finished', previous, selectedPick, 9, true)).toEqual({ status: 'finished', pick: 9 });
+    expect(entryPlayback('autoplay', previous, selectedPick, 9, true)).toEqual({ status: 'playing', pick: 0 });
     // Reduced motion: a chosen design is shown finished instead of woven (R14.9).
-    expect(entryPlayback('autoplay', previous, 9, false)).toEqual({ status: 'finished', pick: 9 });
-    expect(entryPlayback('keep', previous, 9, true)).toEqual({ status: 'paused', pick: 4 });
+    expect(entryPlayback('autoplay', previous, selectedPick, 9, false)).toEqual({ status: 'finished', pick: 9 });
+    expect(entryPlayback('keep', previous, selectedPick, 9, true)).toEqual({ status: 'paused', pick: 4 });
     // A kept position beyond the new cloth becomes its last pick, which is the finished cloth.
-    expect(entryPlayback('keep', { status: 'idle', pick: 40 }, 9, true)).toEqual({ status: 'finished', pick: 9 });
-    expect(entryPlayback('show-finished', previous, 0, true)).toEqual({ status: 'idle', pick: 0 });
+    expect(entryPlayback('keep', { status: 'idle' }, 40, 9, true)).toEqual({ status: 'finished', pick: 9 });
+    expect(entryPlayback('show-finished', previous, selectedPick, 0, true)).toEqual({ status: 'idle', pick: 0 });
   });
 
   it('R2.4 the entry is the arrival for the design already loaded, an autoplay for a design just chosen and a keep for a rebuild', () => {
@@ -196,9 +198,9 @@ describe('the position shown for a newly shown cloth', () => {
 
   it('R2.10 the player’s own report is shown while it is about the cloth on screen', () => {
     const shown = cloth(9);
-    const reported = { status: 'playing', pick: 3 } satisfies PlaybackState;
-    expect(displayedPlayback(shown, { cloth: shown, state: reported }, 'keep', 9, true)).toBe(reported);
-    expect(displayedPlayback(null, { cloth: null, state: reported }, 'keep', 0, true)).toBe(reported);
+    const reported = { status: 'playing' } satisfies PlaybackState;
+    expect(displayedPlayback(shown, { cloth: shown, state: reported }, 'keep', 3, 9, true)).toBe(reported);
+    expect(displayedPlayback(null, { cloth: null, state: reported }, 'keep', 0, 0, true)).toBe(reported);
   });
 
   it('R2.10 R3.6 the position shown for a cloth is one of that cloth’s own positions and carries nothing of the design shown before', () => {
@@ -208,24 +210,29 @@ describe('the position shown for a newly shown cloth', () => {
         fc.integer({ min: 1, max: 600 }),
         stateArbitrary,
         stateArbitrary,
+        selectedPickArbitrary,
+        selectedPickArbitrary,
         fc.constantFrom(...MODES),
         fc.boolean(),
-        (pickCount, previousCount, previous, otherPrevious, mode, autoplays) => {
+        (pickCount, previousCount, previous, otherPrevious, selectedPick, otherSelectedPick, mode, autoplays) => {
           const shown = cloth(pickCount);
           const before = { cloth: cloth(previousCount), state: previous };
-          const displayed = displayedPlayback(shown, before, mode, pickCount, autoplays);
-          // A position of the cloth now on screen, whatever the design before it was showing.
-          expect(Number.isInteger(displayed.pick)).toBe(true);
-          expect(displayed.pick).toBeGreaterThanOrEqual(0);
-          expect(displayed.pick).toBeLessThanOrEqual(pickCount);
+          const displayed = displayedPlayback(shown, before, mode, selectedPick, pickCount, autoplays);
+          // The entry holds the position of the cloth now on screen, whatever the design before it was showing.
+          const entry = entryPlayback(mode, previous, selectedPick, pickCount, autoplays);
+          expect(Number.isInteger(entry.pick)).toBe(true);
+          expect(entry.pick).toBeGreaterThanOrEqual(0);
+          expect(entry.pick).toBeLessThanOrEqual(pickCount);
           // The player is entered at this very position, so the counter and the player cannot disagree.
-          expect(displayed).toEqual(entryPlayback(mode, previous, pickCount, autoplays));
+          expect(displayed).toEqual(entry);
           if (mode === 'keep') {
             // A rebuild of the same design keeps the pick, clamped to the new cloth (R3.6).
-            expect(displayed.pick).toBe(Math.min(previous.pick, pickCount));
+            expect(entry.pick).toBe(Math.min(selectedPick, pickCount));
           } else {
             // A design the screen has not shown before takes nothing from the previous position.
-            expect(displayed).toEqual(displayedPlayback(shown, { cloth: before.cloth, state: otherPrevious }, mode, pickCount, autoplays));
+            expect(displayed).toEqual(
+              displayedPlayback(shown, { cloth: before.cloth, state: otherPrevious }, mode, otherSelectedPick, pickCount, autoplays),
+            );
           }
         },
       ),
@@ -243,5 +250,41 @@ describe('the position shown for a newly shown cloth', () => {
       }),
       { seed: ENTRY_SEED, numRuns: NUM_RUNS },
     );
+  });
+});
+
+describe('arriving on Weave after Code view moved the Selected_Pick', () => {
+  const idle = { status: 'idle' } satisfies PlaybackState;
+  const arrived: Pattern = [[[true]]];
+  const other: Pattern = [[[false]]];
+
+  it('R4.2 pick 0 arrives on the finished cloth', () => {
+    expect(entryModeFor(arrived, null, arrived, 0)).toBe('show-finished');
+    expect(entryPlayback('show-finished', idle, 0, 10, true)).toEqual({ status: 'finished', pick: 10 });
+  });
+
+  it('R4.2 pick 7 of 10 arrives paused at pick 7, with no autoplay and no replay from pick 0', () => {
+    const mode = entryModeFor(arrived, null, arrived, 7);
+    expect(mode).toBe('show-selected');
+    for (const autoplays of [true, false]) {
+      expect(entryPlayback(mode, idle, 7, 10, autoplays)).toEqual({ status: 'paused', pick: 7 });
+    }
+    // The state the screen shows for the new cloth is that same entry.
+    expect(displayedPlayback({ picks: 10 }, { cloth: { picks: 4 }, state: idle }, mode, 7, 10, true)).toEqual({ status: 'paused', pick: 7 });
+  });
+
+  it('R4.2 a pick above the last pick arrives paused at the last pick', () => {
+    expect(entryPlayback('show-selected', idle, 40, 10, true)).toEqual({ status: 'paused', pick: 9 });
+  });
+
+  it('R4.2 a design with one pick arrives finished at pick 0 and paused at its only pick otherwise', () => {
+    expect(entryPlayback('show-finished', idle, 0, 1, true)).toEqual({ status: 'finished', pick: 1 });
+    expect(entryPlayback('show-selected', idle, 5, 1, true)).toEqual({ status: 'paused', pick: 0 });
+  });
+
+  it('R4.2 only the arrival with a design already loaded shows the selected pick', () => {
+    expect(entryModeFor(other, null, arrived, 7)).toBe('autoplay');
+    expect(entryModeFor(arrived, arrived, arrived, 7)).toBe('keep');
+    expect(entryPlayback('show-selected', idle, 7, 0, true)).toEqual({ status: 'idle', pick: 0 });
   });
 });

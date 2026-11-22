@@ -1,0 +1,13 @@
+.selvedge {
+  display: block;
+  width: 100%;
+  height: 6px;
+}
+
+.zari {
+  fill: var(--zari);
+}
+
+.madder {
+  fill: var(--madder);
+}

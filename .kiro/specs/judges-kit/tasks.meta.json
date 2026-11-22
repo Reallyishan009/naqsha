@@ -1,0 +1,145 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Commit public/demo, re-aim R14.7, precache exclusions": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321546113
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321606150
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795322088245
+      }
+    ],
+    "2.1 Scan Demo cards": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321546158
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795322088331
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795323415249
+      }
+    ],
+    "3.1 Keep Demo card": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321546241
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795323415375
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795325752368
+      }
+    ],
+    "3.2 Code Demo card": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321546266
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795325752549
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795325778861
+      }
+    ],
+    "3.3 Weave Demo strip": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321546291
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795325779278
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795325780373
+      }
+    ],
+    "4.1 JUDGES.md, check:browser steps, screenshots, final gate": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321546314
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795325780632
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795325814324
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795325814962
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795326825736
+      }
+    ],
+    "1. Demo files and precache rules": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795322088286
+      }
+    ],
+    "2. Scan demo": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795323415305
+      }
+    ],
+    "3. Keep, Code, Weave demos": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795325780404
+      }
+    ],
+    "4. Docs, browser checks, screenshots": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795326825817
+      }
+    ]
+  }
+}

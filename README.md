@@ -2,29 +2,78 @@
 
 # Naqsha
 
-A browser app that reads a Jacquard loom punch card through a camera, rebuilds the weave pattern, shows how the cloth will weave, and exports a bitmap for electronic Jacquard looms. It runs at https://naqsha-ashen.vercel.app/ and keeps saved designs in the browser (IndexedDB). It has no server.
+**Read a loom's punch cards. Weave the design again.**
 
-The GIFs below were captured from the built site (`npm run preview`) with the demo card profile, whose values are illustrative and unverified. The Scan GIF reads a generated card image, not a camera photo.
+Naqsha is a browser app that reads a Jacquard loom punch card from a camera or a photo, rebuilds the weave pattern, shows how the cloth will weave, and exports a bitmap for electronic Jacquard looms. Designs are kept on the device (IndexedDB). There is no server, no login and no analytics.
+
+Many weave designs exist only as physical punch cards, and those cards wear out. Naqsha is a way to read one, check it, keep it and send it to a loom. It is built for the Kiroween 2026 hackathon (Resurrection category), and Kiro wrote the code.
+
+Public URL: https://naqsha-ashen.vercel.app/ (opens with no login, no account and no API key)
+**No punched card?** [`docs/JUDGES.md`](docs/JUDGES.md) is a 10-step path that tests every function with demo cards and a loom file download.
+
+![A tour of the screens: Landing, Weave, Scan with demo cards, Scan result, Keep and Code view](media/readme/naqsha-tour.gif)
+
+The tour above is a slideshow of screenshots of the built site, not a screen recording. The older GIFs below are recordings from before the new look, with the demo card profile (illustrative and unverified).
+
+## The screens
+
+![Landing: a loom photo behind the headline, the card being woven into cloth, and the Scan and Try a sample buttons](media/readme/landing-hero.jpg)
+
+**Landing.** The app opens on a scrolling page: a loom photo behind the headline, a live picture of a card turning into cloth, how it works, what you can do, three samples to try, a Night section and a footer with the photo and font credits. The "Naqsha" mark at the top left always brings you back here.
+
+| | |
+|---|---|
+| ![Weave: the cloth being woven pick by pick, with play, pause and step controls](media/readme/weave.jpg) | ![Scan: the photo drop zone with a Demo cards panel beside it](media/readme/scan-demo.jpg) |
+| **Weave.** Watch a design weave pick by pick. Play, pause, step, scrub, change speed and thread colours. Lost and torn cards are flagged, and repair suggestions are shown as labelled guesses. | **Scan.** Read a card from a photo or the live camera, tap a hole to correct it, read cards in a batch. The Demo cards panel loads a card with one press, so you can test without a punched card. |
+| ![Keep: the export section with 1-bit and 8-bit choice, a loom photo and the saved designs](media/readme/keep.jpg) | ![Code view: a loom photo, a compare section and the demo buttons](media/readme/code.jpg) |
+| **Keep.** Save designs on your device with a name, a place and the weaver's name. Export a BMP for an electronic loom (1-bit or 8-bit), print sample cards, and compare saved versions. | **Code view.** See each card of a design as a line of bits, step through the picks with breakpoints, and compare two designs. |
+
+![Landing cards: Read a card, Weave a preview and Export a BMP](media/readme/landing-cards.jpg)
+
+On a phone the header folds into the mark, a Scan button and a Menu:
+
+<img src="media/readme/landing-phone.jpg" alt="Landing on a 390 px wide screen" width="260">
+
+## What you can do
+
+- **Read** a punched card from a photo or camera into a grid of holes.
+- **Fix** a wrong hole with one tap, or read many cards in a batch.
+- **Weave** the design on screen, pick by pick, and change the thread colours.
+- **Keep** designs on your device, with version history and a compare view.
+- **Export** a BMP (1-bit or 8-bit) for an electronic Jacquard loom.
+- **Print** a sample card at full size to try the reader.
+- **Read as code**: every card is one line of bits.
+- **Work offline**: after the first visit the app runs with no network.
+- **Switch** between English and Hindi, and between day and night.
+- **Ask from an AI assistant**: `tools/loom-mcp` is a small MCP server (five tools) built on the app's own modules.
+
+## Try it in 60 seconds
+
+1. Open https://naqsha-ashen.vercel.app/ and press **Try a sample** to weave a design.
+2. On **Scan**, press a card in **Demo cards**, for example "Noisy and tilted". Naqsha finds the holes and the grid appears. Tap a hole to correct it.
+3. On **Keep**, save the design, make a demo edit, and download the loom file.
+4. Press **Naqsha** at the top left to go back to the Landing.
+
+The full path with what to expect at each step is in [`docs/JUDGES.md`](docs/JUDGES.md). To run it yourself, see "Run it locally".
+
+## Honest limits
+
+- **No real card has been read yet.** The reader is tested on synthetic card images. Eight photos of real Jacquard cards from Wikimedia Commons are offered on Scan, and **all eight fail** with "peg holes not found", because real cards do not match the demo card layout. The app shows exactly that.
+- **The card layout is a guess.** `public/profiles/demo-12x16.json` is an illustrative, unverified demo card (12 hook rows by 16 columns). A real loom's card needs its own measured profile.
+- **No loom has been tested with the BMP files.** The files follow the BMP format and are read back by the app. No loom's own file format was available to us.
+- **The Hindi text has not been reviewed** by a Hindi speaker (see `docs/HINDI_REVIEW.md`).
+- **The live camera and the animations have not been tried on real devices** by the author. Only Chrome (headless) is tested; Firefox, Safari and iOS are not.
+- **Photos load as AVIF with no JPEG fallback.**
+
+## Older GIFs
+
+Recorded from the built site before the new look. The Scan GIF reads a generated card image, not a camera photo.
 
 ![Weave screen: a sample design weaving pick by pick into cloth](media/weave-sample.gif)
 
 ![Scan screen: a printed card is read and one hole is corrected with a tap](media/scan-printed-card.gif)
 
 ![Keep screen: the export options, the unverified card profile notice, and the bitmap file being downloaded](media/keep-export.gif)
-
-Public URL: https://naqsha-ashen.vercel.app/ (opens with no login; deployed by hand on Vercel, see "Deploy to Vercel").
-
-**Status:** the app is built and deployed at https://naqsha-ashen.vercel.app/ , with three screens (Weave, Scan, Keep). Weave has a Try it button and printable sample cards. Keep exports a bitmap and saves designs in the IndexedDB archive. Scan reads a card from an uploaded photo, lets you tap to correct a hole, reads cards in a batch, and uses the live camera on HTTPS. Not verified: the Hindi text has not been reviewed (see `docs/HINDI_REVIEW.md`), the live camera has not been tested on real devices, and the card profile values are illustrative and unverified.
-
-## Try it in 60 seconds
-
-Open https://naqsha-ashen.vercel.app/ . It needs no login.
-
-1. On Weave, choose **Try it** to weave a sample design pick by pick.
-2. Print a sample card from Weave, or use a photo of a card, and open Scan to read it. Tap a hole to correct it.
-3. On Keep, export the bitmap or save the design to the archive.
-
-To run it yourself, see "Run it locally". Developer-only photo trial tools are listed there too.
 
 ## What it does
 
@@ -33,6 +82,7 @@ To run it yourself, see "Run it locally". Developer-only photo trial tools are l
 | Read one card from an image into a grid of punched and unpunched hook positions | Built (`src/reader`), synthetic images only |
 | Convert a card grid to a list of ends and back, through the profile's end order | Built (`src/codec`) |
 | Scan a card from an uploaded photo or the live camera, correct a hole by tap, read cards in a batch | Built (`src/ui/screens/scan`). The live camera needs HTTPS and has not been tested on real devices |
+| Read a naksha as one line of bits per pick (Code view), step through it with breakpoints, and diff it against a saved design with a plain-text export | Built (`src/codec-view`, `src/ui/screens/code`), the fourth screen, loaded only when opened. Tested in Node and in headless Chrome; not tried on a phone. The Hindi text has not been reviewed |
 | Simulate the cloth pick by pick | Built (`src/simulator`), shown on the Weave screen with play, pause, step, scrub, speed and cloth colours |
 | Export a bitmap for an electronic Jacquard loom | Built (`src/exporter`), offered on the Keep screen: uncompressed BMP, 1-bit and 8-bit, one pixel per end and one row per pick; reads its own files back. No loom controller has been tested with it |
 | Archive designs in the browser | Built (`src/archive`), on the Keep screen: save, list, reopen and delete in IndexedDB. Tested with a fake store in Node; not yet checked in a real browser |
@@ -96,18 +146,16 @@ Many weave designs exist only as physical punch cards, and those cards wear out.
 
 ## How it was built with Kiro
 
-Planning was done with Claude before any Kiro session. The code, specs and tests were produced in Kiro.
+Planning and prompt drafting were done with Claude. **Kiro wrote the code, the specs and the tests.** The author reviewed Kiro's reports, ran checks and made decisions. The full record, with what failed, is in [`docs/KIRO_USAGE.md`](docs/KIRO_USAGE.md) and `docs/BUILD_LOG.md`.
 
-| Kiro feature | Used for | Status |
-|---|---|---|
-| Specs | `card-codec-and-reader`: requirements, design with numbered correctness properties, tasks | Done |
-| Steering | Product, tech, structure, weaving glossary, card geometry (loaded only for codec and reader files), testing rules | Done |
-| Property-based tests | fast-check properties named after the requirement they check | Done |
-| Hooks | Related tests and typecheck on save; fixture regeneration with a PNG drift check | Created, not yet seen firing in the IDE |
-| MCP | Context7 documentation server | Configured |
-| Custom MCP server, custom agent | Not used | Not built |
-
-The day-by-day record, including what failed, is in `docs/BUILD_LOG.md`.
+| Kiro feature | Used for |
+|---|---|
+| **Specs** | Thirteen specs in `.kiro/specs/`, each with requirements, a design with numbered correctness properties, and tasks: `card-codec-and-reader`, `simulator`, `exporter`, `app`, `cards-as-code`, `version-history`, `repair-suggestions`, `loom-mcp`, `design-and-ux-pass`, `second-pass-run1`, `second-pass-run2`, `home-button` and `judges-kit` |
+| **Steering** | Product, tech, structure, weaving glossary, card geometry (loaded only for codec and reader files), testing rules, loom-mcp, a pre-release check |
+| **Property-based tests** | fast-check properties named after the requirement they check. They found real bugs, listed in `docs/KIRO_USAGE.md` |
+| **Hooks** | Related tests and typecheck on save; fixture regeneration with a PNG drift check. `npm run check:hooks` shows the log |
+| **MCP** | Context7 for documentation, and a custom server, `tools/loom-mcp` (stdio, five tools: `validate_profile`, `read_card_photo`, `render_cloth`, `diff_designs`, `export_bmp`) |
+| **Custom agent** | `.kiro/agents/weave-reviewer.md` |
 
 ## Architecture
 
@@ -183,7 +231,22 @@ Naqsha is not the first project to read Jacquard punch cards with a camera. It b
 - *Visual system for punched card reading in textile industry*, 2018. A camera-based system for reading the punched cards of mechanical Jacquard looms. [doi:10.1080/00051144.2018.1456097](https://www.tandfonline.com/doi/full/10.1080/00051144.2018.1456097)
 - *Digitization and recognition of Jacquard cards for textile design preservation*, Multimedia Tools and Applications, 2025. A multi-step computer vision method that extracts design information from photos of Jacquard cards. [doi:10.1007/s11042-025-20917-9](https://link.springer.com/article/10.1007/s11042-025-20917-9). Its dataset is published at [ELiRF/telers](https://github.com/ELiRF/telers).
 
-No other credits are listed.
+### Fonts
+
+Naqsha ships four font families, and all four are listed here. Each is licensed under the SIL Open Font License 1.1 (SIL OFL 1.1). The fonts are self-hosted: the app loads them from its own site and makes no request to a font service. They are subset to the characters the app uses (Basic Latin, the symbols in the app text, and for Rozha One and Hind the Devanagari block; Newsreader is Latin only, in roman and italic, with its weight and optical size axes fixed at 400 and 36) and saved as woff2 files in `public/fonts/`. The full licence text and copyright notice of each font is in `public/fonts/` next to its woff2 files (`RozhaOne-OFL.txt`, `Hind-OFL.txt`, `IBMPlexMono-OFL.txt` and `Newsreader-OFL.txt`). The source files were taken from the [google/fonts](https://github.com/google/fonts) repository at commit `06bfe0d62a98375cb09c942fa18e68bd32cff057`.
+
+| Font | Designer or foundry | Licence | Obtained from |
+|---|---|---|---|
+| Rozha One (display text for Devanagari headings, weight 400) | Indian Type Foundry | SIL OFL 1.1 | [google/fonts, `ofl/rozhaone`](https://github.com/google/fonts/tree/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/rozhaone) |
+| Hind (body text, weights 400 and 700) | Indian Type Foundry | SIL OFL 1.1 | [google/fonts, `ofl/hind`](https://github.com/google/fonts/tree/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/hind) |
+| IBM Plex Mono (data text, weight 400) | IBM Corp. | SIL OFL 1.1 | [google/fonts, `ofl/ibmplexmono`](https://github.com/google/fonts/tree/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/ibmplexmono) |
+| Newsreader (headings in Latin text, roman and italic, weight 400) | Production Type | SIL OFL 1.1 | [google/fonts, `ofl/newsreader`](https://github.com/google/fonts/tree/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/newsreader) |
+
+### Photos
+
+The Landing shows five photographs from Wikimedia Commons (six AVIF files in `public/photos/`), each under a Creative Commons Attribution licence (CC BY 2.0 or CC BY 3.0) and resized and converted to AVIF by us. The author, title, licence and source link of each one are in [`docs/IMAGE_CREDITS.md`](docs/IMAGE_CREDITS.md), and the footer of the Landing lists the same credits, generated from that file. The authors did not endorse Naqsha. The other pictures (`public/art/`) are drawn by `scripts/make_art.ts` with the app's own card renderer and cloth code.
+
+No other credits are listed beyond the research, the fonts and the photos above.
 
 ## License
 

@@ -1,14 +1,12 @@
 /**
  * `npm run check:browser`: drives a real headless Chrome over the DevTools protocol against `vite preview`
- * of the built `dist/`, and reports PASS or FAIL for thirteen steps. Needs Chrome (set CHROME_PATH to choose one)
+ * of the built `dist/`, and reports PASS or FAIL for each step (the last one, the network off, stops the server). Needs Chrome (set CHROME_PATH to choose one)
  * and a built `dist/` (it runs `npm run build` itself when `dist/` is missing).
  * Screenshots go to `media/check/` (git-ignored). Exit code is non-zero if any step failed.
  * The pure parts are in `scripts/checks/`: cdp.ts, chrome.ts, bmpHeader.ts, pngHeader.ts, report.ts.
  */
-import { spawn, spawnSync } from 'node:child_process';
-import type { ChildProcess } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { parseCardProfile } from '../src/codec/index.ts';
@@ -16,10 +14,9 @@ import type { CardGrid, CardProfile } from '../src/codec/index.ts';
 import { DEFAULT_EXPORT_OPTIONS, exportPatternBmp, readPatternBmp } from '../src/exporter/index.ts';
 import { DEFAULT_PIXELS_PER_MM } from '../src/ui/printable/raster.ts';
 import { generateSample } from '../src/ui/samples/sampleDesigns.ts';
+import { WINDOW_SIZE } from '../src/ui/state/codeView.ts';
 import { bmpMismatches, parseBmpHeader } from './checks/bmpHeader.ts';
-import { connectCdp } from './checks/cdp.ts';
-import type { CdpClient } from './checks/cdp.ts';
-import { chromeArgs, findChrome, parseDevToolsActivePort } from './checks/chrome.ts';
+import { findChrome } from './checks/chrome.ts';
 import { parsePngInfo } from './checks/pngHeader.ts';
 import { decideOffline, formatOffline, offlineConditions } from './checks/offline.ts';
 import type { OfflineCheck, OfflineGroup } from './checks/offline.ts';
@@ -27,9 +24,10 @@ import { newPickWatch, stepPickWatch } from './checks/pickWatch.ts';
 import { encodePngRgba } from './png_rgba.ts';
 import { exitCodeFor, formatResult, formatSummary, runBrowserSteps } from './checks/report.ts';
 import type { BrowserResult, BrowserStep } from './checks/report.ts';
+import { Page, byText, closeHeaderMenu, expect, openHeaderMenu, openPage, sleep, startChrome, startPreview } from './checks/session.ts';
+import type { Cleanup } from './checks/session.ts';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
-const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 const readJson = (relative: string): unknown => JSON.parse(readFileSync(path.join(repoRoot, relative), 'utf8'));
 const EN = readJson('src/ui/i18n/en.json') as Record<string, string>;
 const HI: Record<string, string> = Object.fromEntries(
@@ -40,137 +38,11 @@ type Design = (typeof DESIGNS)[number];
 const SCREENS = ['weave', 'keep', 'scan'] as const;
 type Screen = (typeof SCREENS)[number];
 
-/** Thrown by a step to say what was wrong. */
-function expect(condition: unknown, reason: string): asserts condition {
-  if (!condition) throw new Error(reason);
-}
-
 function format(template: string, values: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? `{${key}}`));
 }
 
 // ---------------------------------------------------------------- the page
-
-type Evaluated<T> = { result: { value: T }; exceptionDetails?: { text: string; exception?: { description?: string } } };
-
-class Page {
-  readonly consoleErrors: string[] = [];
-  readonly cdp: CdpClient;
-  constructor(cdp: CdpClient) {
-    this.cdp = cdp;
-  }
-
-  async init(downloadDir: string): Promise<void> {
-    const { cdp } = this;
-    cdp.on('Runtime.consoleAPICalled', (params) => {
-      if (params.type !== 'error' && params.type !== 'assert') return;
-      const args = Array.isArray(params.args) ? (params.args as { value?: unknown; description?: string }[]) : [];
-      this.consoleErrors.push(`console.${String(params.type)}: ${args.map((a) => String(a.value ?? a.description ?? '')).join(' ')}`);
-    });
-    cdp.on('Runtime.exceptionThrown', (params) => {
-      const details = params.exceptionDetails as { text?: string; exception?: { description?: string } } | undefined;
-      this.consoleErrors.push(`uncaught: ${details?.exception?.description ?? details?.text ?? 'exception'}`);
-    });
-    cdp.on('Log.entryAdded', (params) => {
-      const entry = params.entry as { level?: string; text?: string; url?: string } | undefined;
-      if (entry?.level === 'error') this.consoleErrors.push(`log: ${entry.text ?? ''} ${entry.url ?? ''}`.trim());
-    });
-    await cdp.call('Page.enable');
-    await cdp.call('Runtime.enable');
-    await cdp.call('Log.enable');
-    await cdp.call('DOM.enable');
-    await cdp.call('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: downloadDir });
-    await this.setViewport(900, 1000);
-  }
-
-  setViewport(width: number, height: number): Promise<unknown> {
-    return this.cdp.call('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
-  }
-
-  async ev<T>(expression: string): Promise<T> {
-    const answer = await this.cdp.call<Evaluated<T>>('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
-    if (answer.exceptionDetails) {
-      throw new Error(`page script failed: ${answer.exceptionDetails.exception?.description ?? answer.exceptionDetails.text}`);
-    }
-    return answer.result.value;
-  }
-
-  async waitFor<T>(expression: string, what: string, timeoutMs = 15_000): Promise<NonNullable<T>> {
-    const end = Date.now() + timeoutMs;
-    for (;;) {
-      let value: T | null = null;
-      try {
-        value = await this.ev<T>(expression);
-      } catch {
-        value = null;
-      }
-      if (value) return value as NonNullable<T>;
-      if (Date.now() > end) throw new Error(`timed out after ${timeoutMs} ms waiting for ${what}`);
-      await sleep(100);
-    }
-  }
-
-  async navigate(url: string): Promise<void> {
-    const loaded = new Promise<void>((resolve) => {
-      const off = this.cdp.on('Page.loadEventFired', () => {
-        off();
-        resolve();
-      });
-    });
-    await this.cdp.call('Page.navigate', { url });
-    await loaded;
-  }
-
-  async hardReload(): Promise<void> {
-    const loaded = new Promise<void>((resolve) => {
-      const off = this.cdp.on('Page.loadEventFired', () => {
-        off();
-        resolve();
-      });
-    });
-    await this.cdp.call('Page.reload', { ignoreCache: true });
-    await loaded;
-  }
-
-  /** A real mouse click at the centre of the element the expression returns. */
-  async click(elementExpression: string, what: string): Promise<void> {
-    const point = await this.waitFor<{ x: number; y: number }>(
-      `(()=>{const e=${elementExpression};if(!e)return null;e.scrollIntoView({block:'center'});const r=e.getBoundingClientRect();return r.width>0&&r.height>0?{x:r.x+r.width/2,y:r.y+r.height/2}:null})()`,
-      what,
-      10_000,
-    );
-    await this.cdp.call('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y });
-    await this.cdp.call('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 });
-    await this.cdp.call('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 });
-  }
-
-  clickText(selector: string, text: string): Promise<void> {
-    return this.click(byText(selector, text), `${selector} "${text}"`);
-  }
-
-  async fillField(label: string, value: string): Promise<void> {
-    await this.waitFor(
-      `(()=>{const l=[...document.querySelectorAll('label')].find(l=>l.querySelector('span')?.textContent.trim()===${JSON.stringify(label)});const i=l?.querySelector('input,textarea');if(!i)return false;i.focus();i.select();return true})()`,
-      `the "${label}" field`,
-    );
-    await this.cdp.call('Input.insertText', { text: value });
-  }
-
-  async setFile(inputSelector: string, file: string): Promise<void> {
-    const root = await this.cdp.call<{ root: { nodeId: number } }>('DOM.getDocument', { depth: 0 });
-    const found = await this.cdp.call<{ nodeId: number }>('DOM.querySelector', { nodeId: root.root.nodeId, selector: inputSelector });
-    expect(found.nodeId > 0, `no element matches ${inputSelector}`);
-    await this.cdp.call('DOM.setFileInputFiles', { files: [file], nodeId: found.nodeId });
-  }
-
-  async screenshot(file: string): Promise<void> {
-    const shot = await this.cdp.call<{ data: string }>('Page.captureScreenshot', { format: 'png' });
-    writeFileSync(file, Buffer.from(shot.data, 'base64'));
-  }
-}
-
-const byText = (selector: string, text: string): string =>
-  `[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>e.textContent.trim()===${JSON.stringify(text)})`;
 
 // ---------------------------------------------------------------- page snippets
 
@@ -184,98 +56,6 @@ const CANVAS_STATS = `(()=>{const c=document.querySelector('canvas');if(!c)retur
 type CanvasStats = { width: number; height: number; opaque: number; colours: number; hash: string };
 
 // ---------------------------------------------------------------- servers and Chrome
-
-async function freePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const server = net.createServer();
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => {
-      const address = server.address();
-      server.close(() => (typeof address === 'object' && address !== null ? resolve(address.port) : reject(new Error('no port'))));
-    });
-  });
-}
-
-type Cleanup = () => Promise<void>;
-
-async function startPreview(cleanups: Cleanup[]): Promise<{ url: string; stop: () => Promise<void> }> {
-  const { preview } = await import('vite');
-  const port = await freePort();
-  const server = await preview({
-    root: repoRoot,
-    logLevel: 'warn',
-    preview: { port, strictPort: true, host: '127.0.0.1', open: false },
-  });
-  let stopped = false;
-  const stop = async (): Promise<void> => {
-    if (stopped) return;
-    stopped = true;
-    await server.close();
-  };
-  cleanups.push(stop);
-  const url = `http://127.0.0.1:${port}/`;
-  const end = Date.now() + 20_000;
-  for (;;) {
-    try {
-      if ((await fetch(url)).ok) return { url, stop };
-    } catch {
-      // not listening yet
-    }
-    if (Date.now() > end) throw new Error(`vite preview did not answer at ${url}`);
-    await sleep(100);
-  }
-}
-
-async function startChrome(chromePath: string, cleanups: Cleanup[]): Promise<{ port: number }> {
-  const userDataDir = mkdtempSync(path.join(os.tmpdir(), 'naqsha-chrome-'));
-  const child: ChildProcess = spawn(chromePath, chromeArgs(userDataDir), { stdio: 'ignore' });
-  let exited = false;
-  child.once('exit', () => {
-    exited = true;
-  });
-  cleanups.push(async () => {
-    if (!exited) {
-      child.kill('SIGTERM');
-      for (let i = 0; i < 30 && !exited; i++) await sleep(100);
-      if (!exited) child.kill('SIGKILL');
-    }
-    for (let i = 0; i < 5; i++) {
-      try {
-        rmSync(userDataDir, { recursive: true, force: true });
-        break;
-      } catch {
-        await sleep(200);
-      }
-    }
-  });
-  const end = Date.now() + 30_000;
-  for (;;) {
-    if (exited) throw new Error(`Chrome (${chromePath}) exited before it opened a DevTools port`);
-    try {
-      const active = parseDevToolsActivePort(readFileSync(path.join(userDataDir, 'DevToolsActivePort'), 'utf8'));
-      if (active !== null) return { port: active.port };
-    } catch {
-      // the file is written once Chrome is ready
-    }
-    if (Date.now() > end) throw new Error('Chrome did not open a DevTools port within 30 s');
-    await sleep(100);
-  }
-}
-
-async function openPage(port: number): Promise<CdpClient> {
-  const end = Date.now() + 15_000;
-  for (;;) {
-    try {
-      const targets = (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()) as { type: string; webSocketDebuggerUrl?: string }[];
-      const target = targets.find((entry) => entry.type === 'page' && entry.webSocketDebuggerUrl !== undefined);
-      if (target?.webSocketDebuggerUrl) return await connectCdp(target.webSocketDebuggerUrl, 60_000);
-    } catch {
-      // try again
-    }
-    if (Date.now() > end) throw new Error('Chrome has no page to drive');
-    await sleep(200);
-  }
-}
 
 // ---------------------------------------------------------------- the steps
 
@@ -295,15 +75,159 @@ type Context = {
   printedPickIndex: number;
 };
 
-async function ensureEnglish(page: Page): Promise<void> {
-  if ((await page.ev<string>('document.documentElement.lang')) !== 'en') await page.clickText('button', EN['language.en']!);
-  await page.waitFor(`document.documentElement.lang==='en'`, 'the page language to be en');
+/** The accessible name of the header menu button in each language: pages under 1024 px draw it, and it holds the links and the two switches. */
+const MENU_NAMES: readonly string[] = [EN['nav.menu']!, HI['nav.menu']!];
+/** Opens the header menu by its accessible name where the page draws it (under 1024 px); at 1024 px and wider it does nothing, so those widths reach every control without a menu. */
+const openMenu = (page: Page): Promise<void> => openHeaderMenu(page, MENU_NAMES);
+/** Closes the sheet again after a language or theme press, so it does not cover the page under the next click (the sheet stays open after those two). */
+const closeMenu = (page: Page): Promise<void> => closeHeaderMenu(page, MENU_NAMES);
+/** Presses a language segment by its accessible name (the full language name; the segment shows "EN" or the short Hindi form), through the menu where the page draws one. */
+async function pressLanguage(page: Page, name: string): Promise<void> {
+  await openMenu(page);
+  await page.clickName('button', name);
 }
 
+async function ensureEnglish(page: Page): Promise<void> {
+  if ((await page.ev<string>('document.documentElement.lang')) !== 'en') {
+    await pressLanguage(page, EN['language.en']!);
+  }
+  await page.waitFor(`document.documentElement.lang==='en'`, 'the page language to be en');
+  await closeMenu(page);
+}
+
+/** Clicks the navigation item whose text starts with the label: the Code view item also carries the word "Advanced". */
+async function clickNavItem(page: Page, label: string): Promise<void> {
+  await openMenu(page);
+  await page.click(
+    `[...document.querySelectorAll('nav button')].find(b=>b.textContent.trim().startsWith(${JSON.stringify(label)}))`,
+    `nav button "${label}"`,
+  );
+}
+/**
+ * Opens the Disclosure whose accessible name is `name` when it is closed, and leaves it open when it is open already.
+ * A Disclosure is a `button[aria-expanded][aria-controls]`; its accessible name is its `aria-label` or its text.
+ * When no such button is on the page the step fails with a message that names the Disclosure.
+ */
+async function openDisclosure(page: Page, name: string): Promise<void> {
+  const control = `[...document.querySelectorAll('button[aria-expanded][aria-controls]')].find(b=>(b.getAttribute('aria-label')||b.textContent).trim()===${JSON.stringify(name)})`;
+  try {
+    await page.waitFor(`!!(${control})`, `the Disclosure "${name}"`);
+  } catch {
+    throw new Error(`the Disclosure "${name}" was not found`);
+  }
+  if ((await page.ev<string>(`(${control}).getAttribute('aria-expanded')`)) === 'false') {
+    await page.click(control, `the Disclosure "${name}"`);
+  }
+  await page.waitFor(`(${control}).getAttribute('aria-expanded')==='true'`, `the Disclosure "${name}" to open`);
+}
+/** Opens the Keep "More" Disclosure when it is closed; the export choices and the details other than the name are inside it. */
+async function openMore(page: Page): Promise<void> {
+  await openDisclosure(page, EN['disclosure.more']!);
+}
 async function goTo(page: Page, screen: Screen): Promise<void> {
   await ensureEnglish(page);
-  await page.clickText('nav button', EN[`nav.${screen}`]!);
+  await clickNavItem(page, EN[`nav.${screen}`]!);
   await page.waitFor(`document.querySelector('#screen-title')?.textContent.trim()===${JSON.stringify(EN[`nav.${screen}`])}`, `the ${screen} screen`);
+}
+
+// ---------------------------------------------------------------- language, theme and font helpers (Stage A)
+
+const LANGUAGES = ['en', 'hi'] as const;
+type Language = (typeof LANGUAGES)[number];
+const THEMES = ['day', 'night'] as const;
+type ThemeChoice = (typeof THEMES)[number];
+/** The four Screens, the Code view included. */
+const ALL_SCREENS = [...SCREENS, 'code'] as const;
+type AnyScreen = (typeof ALL_SCREENS)[number];
+const WORDS: Record<Language, Record<string, string>> = { en: EN, hi: HI };
+/** The key of the text each Screen shows in its `#screen-title`. */
+const HEADING_KEY: Record<AnyScreen, string> = { weave: 'nav.weave', keep: 'nav.keep', scan: 'nav.scan', code: 'codeview.title' };
+const THEME_STORAGE_KEY = 'naqsha.theme';
+
+async function ensureLanguage(page: Page, language: Language): Promise<void> {
+  if ((await page.ev<string>('document.documentElement.lang')) !== language) {
+    await pressLanguage(page, WORDS[language]['language.' + language]!);
+  }
+  await page.waitFor(`document.documentElement.lang===${JSON.stringify(language)}`, `the page language to be ${language}`);
+  await closeMenu(page);
+}
+
+/** Opens one Screen through the navigation, in the given language. */
+async function showScreen(page: Page, screen: AnyScreen, language: Language): Promise<void> {
+  await ensureLanguage(page, language);
+  await clickNavItem(page, WORDS[language][`nav.${screen}`]!);
+  await page.waitFor(
+    `document.querySelector('#screen-title')?.textContent.trim()===${JSON.stringify(WORDS[language][HEADING_KEY[screen]])}`,
+    `the ${screen} screen in ${language}`,
+  );
+}
+
+/** The Theme_Switch: a `role="switch"` whose accessible name is the action, "Switch to night loom" or "Switch to day loom" (or their Hindi text). */
+const themeSwitch = (language: Language): string =>
+  `[...document.querySelectorAll('[role="switch"]')].find(e=>${JSON.stringify([WORDS[language]['theme.toNight'], WORDS[language]['theme.toDay']])}.includes((e.getAttribute('aria-label')||e.textContent||'').trim()))`;
+
+type ThemeReading = { dataTheme: string | null; stored: string | null; checked: string | null; switchFound: boolean };
+
+function readTheme(page: Page, language: Language = 'en'): Promise<ThemeReading> {
+  return page.ev<ThemeReading>(
+    `(()=>{const s=${themeSwitch(language)};let stored=null;try{stored=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)})}catch(e){}return {dataTheme:document.documentElement.getAttribute('data-theme'),stored,checked:s?s.getAttribute('aria-checked'):null,switchFound:!!s}})()`,
+  );
+}
+
+/** Puts the page in the given theme by pressing the Theme_Switch, never by setting `data-theme` directly. */
+async function chooseTheme(page: Page, theme: ThemeChoice): Promise<void> {
+  // The switch is found by its name in the language the page shows now.
+  const language: Language = (await page.ev<string>('document.documentElement.lang')) === 'hi' ? 'hi' : 'en';
+  const now = await readTheme(page, language);
+  if (now.dataTheme !== theme) {
+    await openMenu(page);
+    await page.click(themeSwitch(language), 'the Theme_Switch');
+  }
+  await page.waitFor(`document.documentElement.getAttribute('data-theme')===${JSON.stringify(theme)}`, `data-theme to be ${theme}`);
+  await closeMenu(page);
+}
+
+type FontUse = { declared: number; used: { family: string; weight: number; style: 'normal' | 'italic'; status: string }[] };
+
+/**
+ * Every family and weight the visible text of the shown Screen uses, among the faces the style sheet declares,
+ * with the loading status of the face that the browser picks for that weight.
+ */
+const FONT_USE = `(()=>{const faces=[...document.fonts].map(f=>({family:f.family.replace(/["']/g,''),weight:Number(f.weight),style:f.style==='italic'?'italic':'normal',status:f.status}));const declared={};for(const f of faces){const k=f.family+'|'+f.style;(declared[k]=declared[k]||[]).push(f.weight)}const pick=(list,w)=>{if(list.includes(w))return w;const up=list.filter(x=>x>w).sort((a,b)=>a-b),down=list.filter(x=>x<w).sort((a,b)=>b-a);return w>500?(up[0]??down[0]):(down[0]??up[0])};const used=new Map();for(const e of document.body.querySelectorAll('*')){if(![...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()!==''))continue;if(e.getClientRects().length===0)continue;const cs=getComputedStyle(e);if(cs.visibility==='hidden')continue;const family=cs.fontFamily.split(',')[0].trim().replace(/["']/g,'');const want=cs.fontStyle==='normal'?'normal':'italic';const style=declared[family+'|'+want]?want:'normal';const list=declared[family+'|'+style];if(!list)continue;const weight=pick(list,Number(cs.fontWeight)||400);used.set(family+' '+weight+' '+style,{family,weight,style})}return {declared:faces.length,used:[...used.values()].map(u=>{const face=faces.find(f=>f.family===u.family&&f.weight===u.weight&&f.style===u.style);return {family:u.family,weight:u.weight,style:u.style,status:face?face.status:'missing'}})}})()`;
+
+/** Waits until every face the shown Screen uses reports `loaded`, and says which faces those are. */
+async function usedFontsLoaded(page: Page, what: string): Promise<string[]> {
+  const describe = (seen: FontUse): string[] => seen.used.map((face) => `${face.family} ${face.weight}${face.style === 'italic' ? ' italic' : ''}`);
+  try {
+    const seen = await page.waitFor<FontUse>(
+      `(()=>{const r=${FONT_USE};return r.used.length>0&&r.used.every(u=>u.status==='loaded')?r:null})()`,
+      `every font the ${what} uses to report loaded`,
+      10_000,
+    );
+    return describe(seen);
+  } catch (error) {
+    const seen = await page.ev<FontUse>(FONT_USE);
+    const states = seen.used.map((face) => `${face.family} ${face.weight}${face.style === 'italic' ? ' italic' : ''} is ${face.status}`);
+    throw new Error(`${what}: ${error instanceof Error ? error.message : String(error)}; ${states.length === 0 ? 'no declared font is used by the visible text' : states.join(', ')}`);
+  }
+}
+
+/** Opens each of the four Screens in both languages and checks that `document.fonts` reports `loaded` for every face the Screen uses. */
+async function fontsLoadedOnEveryScreen(page: Page): Promise<string> {
+  const faces = new Set<string>();
+  let looked = 0;
+  try {
+    for (const language of LANGUAGES) {
+      for (const screen of ALL_SCREENS) {
+        await showScreen(page, screen, language);
+        for (const face of await usedFontsLoaded(page, `${screen} screen in ${language}`)) faces.add(face);
+        looked++;
+      }
+    }
+  } finally {
+    await ensureLanguage(page, 'en');
+  }
+  return `document.fonts reports loaded for every face used on ${looked} screens (${[...faces].sort().join(', ')})`;
 }
 
 const parsePick = (text: string | null): { pick: number; total: number } | null => {
@@ -356,7 +280,8 @@ async function playToEnd(page: Page, total: number, timeoutMs = 150_000): Promis
 
 async function chooseSample(page: Page, design: Design): Promise<number> {
   await goTo(page, 'weave');
-  await page.clickText('button', EN[`tryit.${design}`]!);
+  // The Landing tile and the Try it button of the player both carry data-sample; the tile's text also holds "Try it".
+  await page.click(`document.querySelector('[data-sample="${design}"]')`, `the ${design} sample control`);
   if (await page.ev<boolean>(`!!${byText('button', EN['tryit.confirmYes']!)}`)) await page.clickText('button', EN['tryit.confirmYes']!);
   return generateSample(await profileOf(), design).length;
 }
@@ -418,7 +343,188 @@ function clearDownloads(dir: string): void {
   for (const name of readdirSync(dir)) rmSync(path.join(dir, name), { force: true });
 }
 
+// ---------------------------------------------------------------- Landing, Disclosure and navigation checks (Stage B)
+
+/** The size of the phone the Landing, the Disclosures and the primary Button are measured at (R8.10, R10.7, R23.7). */
+const PHONE = { width: 390, height: 844 } as const;
+/**
+ * The Landing's headline, its primary "Scan a card" button and its "Try a sample" button are fully inside the first screen
+ * (end within this many CSS pixels from the top, with no scrolling) at the phone size. This replaced the first pass's rule that the
+ * headline, the Step_Strip and the first Sample_Tile end within 700 px (R8.10): with a full hero the steps and tiles
+ * are below the fold by design (second design pass, task 4.1).
+ */
+const LANDING_LIMIT_PX = PHONE.height;
+
+type KeyName = 'Enter' | 'Space' | 'Tab' | 'Escape';
+const KEYS: Record<KeyName, { key: string; code: string; windowsVirtualKeyCode: number; text?: string }> = {
+  Enter: { key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' },
+  Space: { key: ' ', code: 'Space', windowsVirtualKeyCode: 32, text: ' ' },
+  Tab: { key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 },
+  Escape: { key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 },
+};
+/** A real key press (down and up) on the focused element, so the browser's own default action runs (a button's click, the Tab move). */
+async function pressKey(page: Page, name: KeyName): Promise<void> {
+  const { text, ...key } = KEYS[name];
+  await page.cdp.call('Input.dispatchKeyEvent', { type: text === undefined ? 'rawKeyDown' : 'keyDown', ...key, ...(text === undefined ? {} : { text }) });
+  await page.cdp.call('Input.dispatchKeyEvent', { type: 'keyUp', ...key });
+}
+/** Focuses the element the expression returns without scrolling, and says whether it holds focus. */
+async function focusElement(page: Page, elementExpression: string, what: string): Promise<void> {
+  const focused = await page.ev<boolean>(`(()=>{const e=${elementExpression};if(!e)return false;e.focus({preventScroll:true});return document.activeElement===e})()`);
+  expect(focused, `${what} could not take keyboard focus`);
+}
+/** Waits until the web fonts are ready and the layout has settled, so a measurement does not read a font that is still arriving. */
+async function settleLayout(page: Page): Promise<void> {
+  await page.ev<boolean>(`document.fonts.ready.then(()=>true)`);
+  await sleep(400);
+}
+
+/** Every Disclosure control of the shown Screen. */
+const DISCLOSURES = `[...document.querySelectorAll('main button[aria-expanded][aria-controls]')]`;
+const panelOf = (control: string): string => `document.getElementById((${control}).getAttribute('aria-controls'))`;
+const tabbablesOf = (panel: string): string =>
+  `[...(${panel}).querySelectorAll('a[href],button,input,select,textarea,[tabindex]')].filter(e=>!e.disabled&&e.tabIndex>=0)`;
+
+type Box = { top: number; bottom: number; left: number; right: number; width: number; height: number };
+const BOX = `(e=>{if(!e)return null;const r=e.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width,height:r.height}})`;
+
+/** The element that is the one primary Button of a Screen: the file chooser of Scan (while no card is read), otherwise the first element styled primary. */
+const primaryOf = (screen: AnyScreen): string =>
+  screen === 'scan'
+    ? `document.querySelector('main label[data-emphasis="primary"] input[type="file"]')`
+    : `document.querySelector('main [class*="_primary_"]')`;
+
+/** Checks one Disclosure of a Screen: collapsed on arrival, toggled by Enter and Space, out of the Tab order while collapsed, Escape returns focus. */
+async function checkDisclosure(page: Page, screen: AnyScreen, index: number): Promise<string> {
+  const control = `${DISCLOSURES}[${index}]`;
+  const panel = panelOf(control);
+  const name = await page.ev<string>(`(${control}).textContent.trim()`);
+  const where = `${screen} Disclosure "${name}"`;
+  const expanded = (): Promise<string> => page.ev<string>(`(${control}).getAttribute('aria-expanded')`);
+  const insidePanel = (): Promise<boolean> => page.ev<boolean>(`(${panel}).contains(document.activeElement)`);
+  const toggle = async (key: KeyName, to: 'true' | 'false'): Promise<void> => {
+    await focusElement(page, control, `the ${where} control`);
+    await pressKey(page, key);
+    await page.waitFor(`(${control}).getAttribute('aria-expanded')===${JSON.stringify(to)}`, `the ${where} to have aria-expanded ${to} after ${key}`, 3_000).catch(() => {
+      throw new Error(`${where}: after ${key} aria-expanded is not ${to}`);
+    });
+  };
+
+  // Collapsed on arrival, with its controls out of the Tab order and not drawn.
+  expect((await expanded()) === 'false', `${where}: aria-expanded is "${await expanded()}" on arrival, expected "false"`);
+  const closed = await page.ev<{ hidden: boolean; tabbable: number; drawn: number }>(
+    `(()=>{const p=${panel};const t=${tabbablesOf(panel)};return {hidden:p.hidden,tabbable:t.length,drawn:t.filter(e=>e.getClientRects().length>0).length}})()`,
+  );
+  expect(closed.hidden && closed.drawn === 0, `${where}: collapsed, the panel is ${closed.hidden ? 'hidden' : 'not hidden'} and ${closed.drawn} of its ${closed.tabbable} controls are drawn`);
+  await focusElement(page, control, `the ${where} control`);
+  await pressKey(page, 'Tab');
+  expect(!(await insidePanel()), `${where}: Tab from the collapsed control moved focus into its panel`);
+
+  // Opening it leaves the primary Button in view, at the scroll position it had.
+  await page.ev(`window.scrollTo(0,0)`);
+  const primary = primaryOf(screen);
+  const inView = async (): Promise<string | null> => {
+    const seen = await page.ev<{ box: Box | null; scrollY: number; height: number }>(`({box:${BOX}(${primary}),scrollY:window.scrollY,height:window.innerHeight})`);
+    if (seen.box === null) return 'there is no primary Button';
+    if (seen.box.height <= 0) return 'the primary Button is not drawn';
+    if (seen.box.top < 0 || seen.box.bottom > seen.height) return `the primary Button spans ${Math.round(seen.box.top)} to ${Math.round(seen.box.bottom)} of a ${seen.height} px viewport`;
+    return null;
+  };
+  const before = await inView();
+  expect(before === null, `${where}: before it opens, ${before}`);
+  const scrollBefore = await page.ev<number>(`window.scrollY`);
+  await toggle('Enter', 'true');
+  const opened = await page.ev<{ hidden: boolean; scrollY: number; enabled: number }>(
+    `(()=>{const p=${panel};return {hidden:p.hidden,scrollY:window.scrollY,enabled:${tabbablesOf(panel)}.filter(e=>e.getClientRects().length>0).length}})()`,
+  );
+  expect(!opened.hidden, `${where}: Enter opened it but its panel is still hidden`);
+  expect(opened.scrollY === scrollBefore, `${where}: opening it moved the scroll position from ${scrollBefore} to ${opened.scrollY}`);
+  const after = await inView();
+  expect(after === null, `${where}: after it opens, ${after}`);
+  // The panel's controls come directly after the Disclosure's own control in the Tab order (R10.9).
+  if (opened.enabled > 0) {
+    await focusElement(page, control, `the ${where} control`);
+    await pressKey(page, 'Tab');
+    expect(await insidePanel(), `${where}: Tab from the open control did not move focus to the first control of its panel`);
+  }
+  // Enter and Space both toggle it, each way.
+  await toggle('Enter', 'false');
+  await toggle('Space', 'true');
+  await toggle('Space', 'false');
+  // A collapse with focus on an inner control returns focus to the Disclosure's own control (R10.12).
+  let focusReturn = 'its panel holds no control that can take focus';
+  if (opened.enabled > 0) {
+    await toggle('Enter', 'true');
+    await focusElement(page, `${tabbablesOf(panel)}.find(e=>e.getClientRects().length>0)`, `the first control inside the ${where}`);
+    await pressKey(page, 'Escape');
+    await page.waitFor(`(${control}).getAttribute('aria-expanded')==='false'`, `the ${where} to collapse on Escape`, 3_000).catch(() => {
+      throw new Error(`${where}: Escape inside its panel did not collapse it`);
+    });
+    const onControl = await page.ev<boolean>(`document.activeElement===(${control})`);
+    expect(onControl, `${where}: after it collapsed with focus inside, focus is not on the Disclosure's own control`);
+    focusReturn = 'focus returns to its control when it collapses from inside';
+  }
+  return `${where}: collapsed on arrival, ${closed.tabbable} controls out of the Tab order, Enter and Space toggle aria-expanded, the primary Button stays in view when it opens; ${focusReturn}`;
+}
+
+/**
+ * Every element of the page that is the "newer Naqsha is ready" notice, found by what it says: an element whose own text
+ * is the `update.ready` message, or a button whose accessible name (its `aria-label`, else its text) is the `update.load`
+ * label, in either language. Hidden elements count too. Returns one line per hit, so an empty list means no notice.
+ */
+const UPDATE_NOTICE_HITS = `(()=>{const messages=${JSON.stringify([EN['update.ready'], HI['update.ready']])};const labels=${JSON.stringify([EN['update.load'], HI['update.load']])};const hits=[];for(const e of document.body.querySelectorAll('*')){const own=[...e.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim();if(own!==''&&messages.includes(own))hits.push('<'+e.tagName.toLowerCase()+'> says "'+own+'"')}for(const b of document.body.querySelectorAll('button,[role="button"]')){const name=(b.getAttribute('aria-label')||b.textContent||'').trim();if(labels.includes(name))hits.push('button named "'+name+'"')}return hits})()`;
+
+/** Puts a copy of the notice text on the page for a moment and checks the finder sees it, so "no notice found" cannot mean "finder broken". */
+async function updateNoticeFinderWorks(page: Page): Promise<boolean> {
+  return page.ev<boolean>(
+    `(()=>{const probe=document.createElement('p');probe.textContent=${JSON.stringify(EN['update.ready'])};document.body.appendChild(probe);const found=${UPDATE_NOTICE_HITS}.length>0;probe.remove();return found})()`,
+  );
+}
+
 const KEEP_LIST_TEXT = `(()=>{const h=document.getElementById('keep-list-title');const s=h?h.closest('section'):null;return s?s.innerText:null})()`;
+
+/** The sections of the Landing, top to bottom, by their `data-landing-section` attribute. All seven are in the entry chunk, so there is no lazy section to wait for. */
+const LANDING_SECTIONS = ['hero', 'how', 'what', 'samples', 'night', 'band', 'footer'] as const;
+/** A picture counts as shown when it has finished loading and has a size: the cache gave the browser a file it could decode. */
+const DECODED = `(i=>i.complete&&i.naturalWidth>0)`;
+
+/**
+ * The Landing's pictures with the network off: the hero photo is decoded where the page starts; then each section is scrolled
+ * to in turn (a picture below the first screen is only fetched once it is near the screen), and every picture inside it is decoded.
+ * The "how it works" section must hold the card photo, so at least one photo below the fold is proven. The page ends back at the top.
+ */
+async function landingPicturesDecoded(page: Page): Promise<string> {
+  const sections = await page.ev<string[]>(`[...document.querySelectorAll('[data-landing-section]')].map(e=>e.getAttribute('data-landing-section'))`);
+  expect(
+    JSON.stringify(sections) === JSON.stringify(LANDING_SECTIONS),
+    `the Landing has the sections ${JSON.stringify(sections)}, expected ${JSON.stringify(LANDING_SECTIONS)}`,
+  );
+  const heroPhoto = `document.querySelector('[data-landing-section="hero"] img[data-photo="loom-hero"]')`;
+  await page.waitFor(`(()=>{const i=${heroPhoto};return !!i&&${DECODED}(i)})()`, 'the hero photo (img[data-photo="loom-hero"]) to be decoded', 20_000).catch(async (error: unknown) => {
+    const state = await page.ev<string>(`(()=>{const i=${heroPhoto};return i?JSON.stringify({complete:i.complete,naturalWidth:i.naturalWidth,src:i.currentSrc}):'no hero photo'})()`);
+    throw new Error(`${error instanceof Error ? error.message : String(error)}; hero photo: ${state}`);
+  });
+  const heroSize = await page.ev<string>(`(()=>{const i=${heroPhoto};return i.naturalWidth+'x'+i.naturalHeight})()`);
+  let pictures = 1;
+  for (const section of LANDING_SECTIONS.slice(1)) {
+    const area = `document.querySelector('[data-landing-section="${section}"]')`;
+    await page.ev(`${area}.scrollIntoView({block:'start',behavior:'instant'})`);
+    await page
+      .waitFor(`[...${area}.querySelectorAll('img')].every(${DECODED})`, `every picture of the "${section}" section to be decoded`, 20_000)
+      .catch(async (error: unknown) => {
+        const broken = await page.ev<string>(`JSON.stringify([...${area}.querySelectorAll('img')].filter(i=>!${DECODED}(i)).map(i=>i.currentSrc||i.src))`);
+        throw new Error(`${error instanceof Error ? error.message : String(error)}; not decoded: ${broken}`);
+      });
+    pictures += await page.ev<number>(`${area}.querySelectorAll('img').length`);
+  }
+  // The card photo of the "how it works" section is the one photo that proves a lazy photo below the fold comes from the cache.
+  const card = `document.querySelector('[data-landing-section="how"] img[data-photo="sari-pattern-cards"]')`;
+  const cardSize = await page.ev<string | null>(`(()=>{const i=${card};return i&&${DECODED}(i)?i.naturalWidth+'x'+i.naturalHeight:null})()`);
+  expect(cardSize !== null, 'the card photo (img[data-photo="sari-pattern-cards"]) of the "how it works" section is not decoded after scrolling to it');
+  await page.ev(`window.scrollTo({top:0,behavior:'instant'})`);
+  await page.waitFor(`window.scrollY===0`, 'the page to be back at the top');
+  return `hero photo ${heroSize} decoded, card photo ${cardSize} decoded after scrolling to it, ${pictures} pictures in ${LANDING_SECTIONS.length} sections all decoded`;
+}
 
 function buildSteps(ctx: Context): BrowserStep[] {
   const { page } = ctx;
@@ -434,12 +540,23 @@ function buildSteps(ctx: Context): BrowserStep[] {
         );
         expect(heading === EN['nav.weave'] || heading === HI['nav.weave'], `the first screen heading is "${heading}", expected the Weave screen`);
         await page.waitFor(
-          `[...document.querySelectorAll('button')].some(b=>(b.textContent.trim()===${JSON.stringify(EN['tryit.diamond'])}||b.textContent.trim()===${JSON.stringify(HI['tryit.diamond'])})&&!b.disabled)`,
+          `[...document.querySelectorAll('[data-sample="diamond"]')].some(b=>!b.disabled)`,
           'the card profile to load (Try it buttons enabled)',
         );
         await sleep(500);
         expect(page.consoleErrors.length === 0, `console errors on load:\n${page.consoleErrors.join('\n')}`);
-        return `title "${title}", "${heading}" visible, Try it enabled, no console errors`;
+        // The first install of the service worker is not an update: once it controls the page, no "newer Naqsha" notice shows.
+        // The worker has installed, is active, controls this page, and no second worker is installing or waiting.
+        const worker = await page.waitFor<string>(
+          `(async()=>{if(!('serviceWorker' in navigator))return null;const r=await navigator.serviceWorker.ready.catch(()=>null);if(!r||!r.active||r.active.state!=='activated'||!navigator.serviceWorker.controller)return null;return r.waiting||r.installing?null:'active, controlling, none waiting'})()`,
+          'the first service worker to install, activate and take control of the page',
+          30_000,
+        );
+        await sleep(1_000);
+        expect(await updateNoticeFinderWorks(page), 'the finder of the update notice does not see a copy of its text, so it proves nothing');
+        const hits = await page.ev<string[]>(UPDATE_NOTICE_HITS);
+        expect(hits.length === 0, `the "newer Naqsha is ready" notice is shown on a first visit: ${hits.join('; ')}`);
+        return `title "${title}", "${heading}" visible, Try it enabled, no console errors, no "${EN['update.ready']}" notice on the first visit (worker ${worker}; found by text and button name)`;
       },
     },
     {
@@ -447,17 +564,18 @@ function buildSteps(ctx: Context): BrowserStep[] {
       async run() {
         const lang = () => page.ev<string>('document.documentElement.lang');
         const heading = () => page.ev<string>(`document.querySelector('#screen-title')?.textContent.trim()`);
-        await page.clickText('button', EN['language.en']!);
+        await pressLanguage(page, EN['language.en']!);
         await page.waitFor(`document.documentElement.lang==='en'`, 'lang en');
         const en = { lang: await lang(), heading: await heading(), nav: await page.ev<string>(`document.querySelector('nav').innerText`) };
-        await page.clickText('button', HI['language.hi']!);
+        await pressLanguage(page, HI['language.hi']!);
         await page.waitFor(`document.documentElement.lang==='hi'`, 'lang hi');
         const hi = { lang: await lang(), heading: await heading(), nav: await page.ev<string>(`document.querySelector('nav').innerText`) };
         expect(en.heading === EN['nav.weave'], `English heading is "${en.heading}", expected "${EN['nav.weave']}"`);
         expect(hi.heading === HI['nav.weave'], `Hindi heading is "${hi.heading}", expected "${HI['nav.weave']}"`);
         expect(en.nav !== hi.nav, 'the navigation text did not change between hi and en');
-        await page.clickText('button', EN['language.en']!);
+        await pressLanguage(page, EN['language.en']!);
         await page.waitFor(`document.documentElement.lang==='en'`, 'lang back to en');
+        await closeMenu(page);
         const back = await heading();
         expect(back === EN['nav.weave'], `after switching back, the heading is "${back}"`);
         return `en: lang=${en.lang} "${en.heading}"; hi: lang=${hi.lang} "${hi.heading}"; back to en: "${back}"`;
@@ -502,12 +620,13 @@ function buildSteps(ctx: Context): BrowserStep[] {
         await playToEnd(page, picks);
         await goTo(page, 'keep');
         await page.fillField(EN['keep.field.name']!, name);
+        await openMore(page);
         await page.fillField(EN['keep.field.place']!, place);
         await page.clickText('button', EN['keep.save.button']!);
         const saved = await page.waitFor<string>(`document.getElementById('keep-saved')?.textContent.trim()`, 'the "Saved" message');
         expect(saved === format(EN['keep.saved']!, { name }), `saved message is "${saved}", expected "${format(EN['keep.saved']!, { name })}"`);
         const list = await page.waitFor<string>(`(()=>{const t=${KEEP_LIST_TEXT};return t&&t.includes(${JSON.stringify(name)})?t:null})()`, 'the design in the list');
-        expect(list.includes(place) && list.includes(format(EN['keep.list.picks']!, { count: picks })), `the list row lacks the place or "${picks} picks":\n${list}`);
+        expect(list.includes(place) && list.includes(format(EN['keep.list.picks.other']!, { count: picks })), `the list row lacks the place or "${picks} picks":\n${list}`);
         ctx.saved = { name, place, picks };
         return `saved "${name}" at ${place}, ${picks} picks; the list shows it`;
       },
@@ -572,6 +691,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
         const lines: string[] = [];
         const failures: string[] = [];
         await goTo(page, 'keep');
+        await openMore(page);
         for (const bitDepth of [1, 8] as const) {
           try {
             clearDownloads(ctx.downloadDir);
@@ -651,7 +771,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
         await page.waitFor(`!!document.querySelector('#scan-file')`, 'the file input');
         await page.setFile('#scan-file', cardPng);
         const outcome = await page.waitFor<string>(
-          `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[role="alert"]')?.textContent.trim()||null)`,
+          `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[data-variant="error"] > div')?.textContent.trim()||null)`,
           'the read to finish',
           30_000,
         );
@@ -724,7 +844,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
         await goTo(page, 'scan');
         const batchBefore = await page.ev<number>(`document.querySelectorAll('#scan-batch-title ~ ol > li').length`);
         await page.setFile('#scan-file', blank);
-        const message = await page.waitFor<string>(`document.querySelector('[role="alert"]')?.textContent.trim()`, 'the failure message', 30_000);
+        const message = await page.waitFor<string>(`document.querySelector('[data-variant="error"] > div')?.textContent.trim()`, 'the failure message', 30_000);
         expect(message === EN['error.read.peg-holes-not-found'], `the message is "${message}", expected "${EN['error.read.peg-holes-not-found']}"`);
         const markers = await page.ev<number>(`document.querySelectorAll('button[data-shape]').length`);
         expect(markers === 0, `${markers} hook markers are shown after a blank image`);
@@ -746,26 +866,451 @@ function buildSteps(ctx: Context): BrowserStep[] {
         await page.waitFor(`document.querySelectorAll('button[data-shape]').length>0`, 'the read card on Scan', 30_000);
         const lines: string[] = [];
         const failures: string[] = [];
+        // The Code view, Hindi and the Night loom are measured as well (R23.2, R7.7): 3 widths x 2 themes x 2 languages x 4 Screens.
+        const startTheme = (await readTheme(page)).dataTheme === 'night' ? 'night' : 'day';
         try {
           for (const width of [320, 390, 1280]) {
             await page.setViewport(width, 900);
-            for (const screen of SCREENS) {
-              await goTo(page, screen);
-              await sleep(400);
-              const measured = await page.ev<{ scrollWidth: number; innerWidth: number; offenders: string[] }>(
-                `(()=>{const w=window.innerWidth;const off=[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>w+0.5&&e.getBoundingClientRect().width>0).slice(0,4).map(e=>e.tagName.toLowerCase()+(e.className&&typeof e.className==='string'?'.'+e.className.split(' ')[0]:'')+' right='+Math.round(e.getBoundingClientRect().right));return {scrollWidth:document.documentElement.scrollWidth,innerWidth:w,offenders:off}})()`,
-              );
-              await page.screenshot(path.join(repoRoot, 'media', 'check', `12-width-${width}-${screen}.png`));
-              const verdict = `${screen} at ${width}: scrollWidth ${measured.scrollWidth}, innerWidth ${measured.innerWidth}`;
-              if (measured.scrollWidth > measured.innerWidth) {
-                failures.push(`${verdict} (wider: ${measured.offenders.join(', ') || 'unknown'})`);
-              } else lines.push(verdict);
+            for (const theme of THEMES) {
+              const where = (screen: string, language: string): string => `${screen} at ${width} (${language}, ${theme})`;
+              try {
+                await chooseTheme(page, theme);
+              } catch (error) {
+                throw new Error(`choosing the ${theme} theme at ${width}: ${error instanceof Error ? error.message : String(error)}`);
+              }
+              for (const language of LANGUAGES) {
+                for (const screen of ALL_SCREENS) {
+                  try {
+                    await showScreen(page, screen, language);
+                  } catch (error) {
+                    throw new Error(`${where(screen, language)}: ${error instanceof Error ? error.message : String(error)}`);
+                  }
+                  await sleep(400);
+                  const measured = await page.ev<{ scrollWidth: number; innerWidth: number; offenders: string[] }>(
+                    `(()=>{const w=window.innerWidth;const off=[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>w+0.5&&e.getBoundingClientRect().width>0).slice(0,4).map(e=>e.tagName.toLowerCase()+(e.className&&typeof e.className==='string'?'.'+e.className.split(' ')[0]:'')+' right='+Math.round(e.getBoundingClientRect().right));return {scrollWidth:document.documentElement.scrollWidth,innerWidth:w,offenders:off}})()`,
+                  );
+                  const original = language === 'en' && theme === 'day' && screen !== 'code';
+                  const shotName = original ? `12-width-${width}-${screen}.png` : `12-width-${width}-${screen}-${language}-${theme}.png`;
+                  await page.screenshot(path.join(repoRoot, 'media', 'check', shotName));
+                  const verdict = `${screen} at ${width} (${language}, ${theme}): scrollWidth ${measured.scrollWidth}, innerWidth ${measured.innerWidth}`;
+                  if (measured.scrollWidth > measured.innerWidth) {
+                    failures.push(`${verdict} (wider: ${measured.offenders.join(', ') || 'unknown'})`);
+                  } else lines.push(verdict);
+                }
+              }
+            }
+          }
+        } finally {
+          await page.setViewport(900, 1000);
+          try {
+            await ensureLanguage(page, 'en');
+            await chooseTheme(page, startTheme);
+          } catch (error) {
+            failures.push(`could not put the page back in English and the ${startTheme} theme: ${error instanceof Error ? error.message : String(error)}`);
+          }
+        }
+        if (failures.length > 0) throw new Error([...failures.map((line) => `OVERFLOW ${line}`), ...lines].join('\n'));
+        return lines.join('\n');
+      },
+    },
+    {
+      name: 'theme switch: data-theme and localStorage survive a reload',
+      async run() {
+        await ensureEnglish(page);
+        await page.waitFor(`!!${themeSwitch('en')}`, 'the Theme_Switch (a role="switch" named "Switch to night loom" or "Switch to day loom")');
+        const start = await readTheme(page);
+        expect(start.dataTheme === 'day' || start.dataTheme === 'night', `data-theme is ${JSON.stringify(start.dataTheme)} at the start, expected day or night`);
+        const first: ThemeChoice = start.dataTheme === 'night' ? 'day' : 'night';
+        const lines: string[] = [`start: data-theme ${start.dataTheme}, aria-checked ${start.checked}`];
+        const headingOf = (): Promise<string> => page.ev<string>(`document.querySelector('#screen-title')?.textContent.trim()`);
+        // Press the switch to the other theme, reload, press it back, reload: each reload must show the stored choice.
+        for (const target of [first, start.dataTheme as ThemeChoice]) {
+          // A reload starts on Weave again, so the Screen is read again before each press.
+          const headingBefore = await headingOf();
+          await chooseTheme(page, target);
+          const pressed = await readTheme(page);
+          expect(pressed.dataTheme === target, `after pressing the switch data-theme is ${JSON.stringify(pressed.dataTheme)}, expected ${target}`);
+          expect(pressed.stored === target, `after pressing the switch localStorage ${THEME_STORAGE_KEY} is ${JSON.stringify(pressed.stored)}, expected the text ${target}`);
+          expect(pressed.checked === String(target === 'night'), `after pressing the switch aria-checked is ${pressed.checked}, expected ${target === 'night'}`);
+          expect((await headingOf()) === headingBefore, 'pressing the switch changed the Screen');
+          await page.hardReload();
+          await page.waitFor(`!!document.querySelector('#screen-title')`, 'the app after the reload');
+          await ensureEnglish(page);
+          const reloaded = await readTheme(page);
+          expect(reloaded.dataTheme === target, `after a reload data-theme is ${JSON.stringify(reloaded.dataTheme)}, expected ${target}`);
+          expect(reloaded.stored === target, `after a reload localStorage ${THEME_STORAGE_KEY} is ${JSON.stringify(reloaded.stored)}, expected the text ${target}`);
+          expect(reloaded.checked === String(target === 'night'), `after a reload aria-checked is ${reloaded.checked}, expected ${target === 'night'}`);
+          lines.push(`${target}: pressed, then reloaded: data-theme ${reloaded.dataTheme}, localStorage "${reloaded.stored}", aria-checked ${reloaded.checked}`);
+        }
+        return lines.join('\n');
+      },
+    },
+    {
+      name: 'header: shrinks after 24 px of scrolling, and the page below it does not move',
+      async run() {
+        await ensureEnglish(page);
+        const lines: string[] = [];
+        const read = `(()=>{const h=document.querySelector('header');const m=document.querySelector('main');return {height:h.getBoundingClientRect().height,mainTop:m.getBoundingClientRect().top+window.scrollY,scrolled:h.getAttribute('data-scrolled')}})()`;
+        type Reading = { height: number; mainTop: number; scrolled: string | null };
+        try {
+          for (const width of [1280, 390]) {
+            await page.setViewport(width, 900);
+            await page.ev('window.scrollTo(0,0)');
+            await page.waitFor(`document.querySelector('header').getAttribute('data-scrolled')==='false'`, `the header at the top at ${width}`);
+            await sleep(300);
+            const before = await page.ev<Reading>(read);
+            await page.ev('window.scrollTo(0,300)');
+            await page.waitFor(`document.querySelector('header').getAttribute('data-scrolled')==='true'`, `the header to shrink at ${width}`);
+            await sleep(400);
+            const after = await page.ev<Reading>(read);
+            expect(after.height < before.height - 4, `at ${width} the header is ${after.height} px high after scrolling, ${before.height} px before: it did not shrink`);
+            expect(Math.abs(after.mainTop - before.mainTop) <= 0.5, `at ${width} the page below the header moved: main starts at ${before.mainTop} before and ${after.mainTop} after`);
+            lines.push(`at ${width}: header ${before.height} -> ${after.height} px, main stays at ${after.mainTop} px`);
+            await page.ev('window.scrollTo(0,0)');
+          }
+        } finally {
+          await page.setViewport(900, 1000);
+          await page.ev('window.scrollTo(0,0)');
+        }
+        return lines.join('\n');
+      },
+    },
+    {
+      name: 'network log: own origin only, and no image request but the favicon, the manifest icons and the files of public/photos and public/art',
+      async run() {
+        const { cdp } = page;
+        const base = new URL(ctx.baseUrl);
+        const manifest = readJson('public/manifest.webmanifest') as { icons?: { src: string }[] };
+        // The pictures of the second design pass are files of this site: each file of public/photos and public/art, by its exact address.
+        // The Scan screen's Demo cards add the thumbnails of public/demo/cards and public/demo/real-cards (the real photos load lazily); exact addresses again.
+        const pictureFiles = ['photos', 'art', 'demo/cards', 'demo/real-cards'].flatMap((folder) => readdirSync(path.join(repoRoot, 'public', folder)).map((name) => `./${folder}/${name}`));
+        const allowedImages = new Set(
+          ['./favicon.svg', ...(manifest.icons ?? []).map((icon) => icon.src), ...pictureFiles].map((file) => new URL(file, base).href),
+        );
+        const imageName = /\.(svg|png|jpe?g|gif|webp|ico)$/i;
+        const requests: { url: string; type: string }[] = [];
+        await cdp.call('Network.enable');
+        const stop = cdp.on('Network.requestWillBeSent', (params) => {
+          const request = params.request as { url?: string } | undefined;
+          requests.push({ url: request?.url ?? '', type: typeof params.type === 'string' ? params.type : '' });
+        });
+        const startTheme = (await readTheme(page)).dataTheme === 'night' ? 'night' : 'day';
+        const combinations: string[] = [];
+        try {
+          for (const theme of THEMES) {
+            for (const language of LANGUAGES) {
+              // A fresh load each time, so the fonts, the style sheet and the Screen chunks are asked for again.
+              await page.hardReload();
+              await page.waitFor(`!!document.querySelector('#screen-title')`, 'the app after the reload');
+              await chooseTheme(page, theme);
+              await ensureLanguage(page, language);
+              for (const screen of ALL_SCREENS) await showScreen(page, screen, language);
+              combinations.push(`${language}/${theme}`);
+            }
+          }
+        } finally {
+          stop();
+          try {
+            await ensureLanguage(page, 'en');
+            await chooseTheme(page, startTheme);
+          } catch {
+            // the problems below are what matters
+          }
+          await cdp.call('Network.disable').catch(() => undefined);
+        }
+        const problems: string[] = [];
+        const origins = new Set<string>();
+        let images = 0;
+        let fonts = 0;
+        for (const { url, type } of requests) {
+          let parsed: URL;
+          try {
+            parsed = new URL(url);
+          } catch {
+            problems.push(`a request for an address that is not a URL: ${url}`);
+            continue;
+          }
+          // data: and blob: addresses carry their content and make no network request.
+          if (parsed.protocol === 'data:' || parsed.protocol === 'blob:' || parsed.protocol === 'about:') continue;
+          origins.add(parsed.origin);
+          if (parsed.origin !== base.origin) problems.push(`${type || 'request'} to another origin: ${url}`);
+          if (type === 'Font') fonts++;
+          if (type === 'Image' || imageName.test(parsed.pathname)) {
+            images++;
+            if (!allowedImages.has(parsed.href)) problems.push(`an image request that is neither the favicon, a manifest icon nor a file of public/photos or public/art: ${url}`);
+          }
+        }
+        expect(requests.length > 0 && fonts > 0, `the log holds ${requests.length} requests and ${fonts} font requests, so it did not see the page load`);
+        expect(problems.length === 0, [...new Set(problems)].join('\n'));
+        return `${requests.length} requests over ${combinations.join(', ')} on all four Screens; origins: ${[...origins].join(', ')}; ${fonts} font requests; ${images} image requests, all the favicon, a manifest icon or a file of public/photos or public/art`;
+      },
+    },
+    {
+      name: 'Landing: headline, "Scan a card" and "Try a sample" inside 844 px at 390 by 844, one primary Button, a tile starts a sample',
+      async run() {
+        const lines: string[] = [];
+        try {
+          // A reload empties the Current_Pattern, so the Weave screen shows the Landing.
+          await page.hardReload();
+          await page.waitFor(`!!document.querySelector('#screen-title')`, 'the app after the reload');
+          await page.setViewport(PHONE.width, PHONE.height);
+          for (const language of LANGUAGES) {
+            await showScreen(page, 'weave', language);
+            await page.waitFor(`!!document.querySelector('[data-hero-slot]')&&document.querySelectorAll('main [data-sample]').length===3`, `the Landing with its three Sample_Tiles in ${language}`);
+            await settleLayout(page);
+            const words = WORDS[language];
+            const seen = await page.ev<{ scrollY: number; headline: Box | null; scan: Box | null; sample: Box | null; primaries: string[]; tiles: number; secondaryTiles: number }>(
+              `(()=>{window.scrollTo(0,0);const box=${BOX};const m=document.querySelector('main');const heading=[...m.querySelectorAll('h1,h2,h3')].find(e=>e.textContent.trim()===${JSON.stringify(words['landing.headline'])});const named=text=>[...m.querySelectorAll('button')].find(e=>e.textContent.trim()===text);const tiles=[...m.querySelectorAll('[data-sample]')];const primaries=[...m.querySelectorAll('[class*="_primary_"]')];return {scrollY:window.scrollY,headline:box(heading),scan:box(named(${JSON.stringify(words['nav.scanCard'])})),sample:box(named(${JSON.stringify(words['landing.trySample'])})),primaries:primaries.map(e=>e.tagName.toLowerCase()+':'+e.textContent.trim()),tiles:tiles.length,secondaryTiles:tiles.filter(e=>/_secondary_/.test(e.className)).length}})()`,
+            );
+            expect(seen.scrollY === 0, `${language}: the page is scrolled to ${seen.scrollY} px, not 0`);
+            for (const [label, box] of [['headline', seen.headline], ['"Scan a card" button', seen.scan], ['"Try a sample" button', seen.sample]] as const) {
+              expect(box !== null && box.height > 0, `${language}: the Landing ${label} is not on the page`);
+              expect(box.top >= 0 && box.bottom <= LANDING_LIMIT_PX, `${language}: the Landing ${label} spans ${Math.round(box.top)} to ${Math.round(box.bottom)} px, expected to be inside ${LANDING_LIMIT_PX} px at ${PHONE.width} by ${PHONE.height}`);
+            }
+            expect(seen.primaries.length === 1, `${language}: the Landing has ${seen.primaries.length} primary Buttons (${seen.primaries.join(', ') || 'none'}), expected exactly 1`);
+            expect(seen.primaries[0] === `button:${words['nav.scanCard']}`, `${language}: the one primary Button of the Landing is ${seen.primaries[0]}, expected the "${words['nav.scanCard']}" button`);
+            expect(seen.tiles === 3 && seen.secondaryTiles === 3, `${language}: ${seen.secondaryTiles} of ${seen.tiles} Sample_Tiles are styled secondary, expected 3 of 3`);
+            lines.push(
+              `${language}: headline ends at ${Math.round(seen.headline!.bottom)}, "Scan a card" at ${Math.round(seen.scan!.bottom)}, "Try a sample" at ${Math.round(seen.sample!.bottom)} px (limit ${LANDING_LIMIT_PX}); one primary Button, "Scan a card"; three secondary tiles`,
+            );
+          }
+          // A tile starts its sample: the Landing goes and the first pick plays.
+          await ensureLanguage(page, 'en');
+          const design = await page.ev<string>(`document.querySelector('main [data-sample]').dataset.sample`);
+          expect((DESIGNS as readonly string[]).includes(design), `the first Sample_Tile is "${design}", not a Sample_Design`);
+          const total = generateSample(ctx.profile, design as Design).length;
+          const started = Date.now();
+          await page.click(`document.querySelector('main [data-sample]')`, 'the first Sample_Tile');
+          await page.waitFor(`!!(${PICK_TEXT})`, 'the pick counter after choosing a tile', 5_000);
+          const shownAfter = Date.now() - started;
+          const landingGone = await page.ev<boolean>(`!document.querySelector('[data-hero-slot]')`);
+          expect(landingGone, 'the Landing is still shown after a Sample_Tile was chosen');
+          const seen = await playToEnd(page, total);
+          expect(seen.length >= 3 && seen.every((value, index) => index === 0 || value > seen[index - 1]!), `the pick counter did not advance after a tile was chosen (values seen: ${seen.join(', ')})`);
+          lines.push(`the first tile (${design}) replaced the Landing with the player ${shownAfter} ms after the click; the counter went ${seen[0]} -> ${total} of ${total}`);
+        } finally {
+          await page.setViewport(900, 1000);
+          await ensureLanguage(page, 'en');
+        }
+        return lines.join('\n');
+      },
+    },
+    {
+      name: 'header: the Naqsha mark is a home button that brings the Landing back after a sample, at 390 and 1280 px',
+      async run() {
+        const lines: string[] = [];
+        try {
+          await ensureLanguage(page, 'en');
+          for (const [width, height] of [[390, 844], [1280, 900]] as const) {
+            await page.setViewport(width, height);
+            await chooseSample(page, 'diamond');
+            await page.waitFor(`!document.querySelector('[data-hero-slot]')`, `the player after choosing Diamond at ${width} px`);
+            const home = `document.querySelector('header button[aria-label=${JSON.stringify(EN['nav.home'])}]')`;
+            await page.click(home, `the home button at ${width} px`);
+            await page.waitFor(`!!document.querySelector('[data-hero-slot]')&&document.querySelectorAll('main [data-sample]').length===3`, `the Landing hero again at ${width} px`);
+            const seen = await page.ev<{ scrollY: number; height: number }>(`({scrollY:window.scrollY,height:${home}.getBoundingClientRect().height})`);
+            expect(seen.scrollY === 0, `the Landing after the home button is scrolled to ${seen.scrollY} px, not 0`);
+            expect(seen.height >= 44, `the home button is ${seen.height} px tall, under 44`);
+            lines.push(`${width} px: Diamond, then the home button shows the Landing hero at the top; the button is ${Math.round(seen.height)} px tall`);
+          }
+        } finally {
+          await page.setViewport(900, 1000);
+        }
+        // The steps after this one start from a played sample, as before this step.
+        await chooseSample(page, 'diamond');
+        return lines.join('\n');
+      },
+    },
+    {
+      name: 'Disclosures: collapsed on arrival, Enter and Space toggle, out of the Tab order, focus returns, primary Button stays in view',
+      async run() {
+        const lines: string[] = [];
+        const failures: string[] = [];
+        try {
+          await page.setViewport(PHONE.width, PHONE.height);
+          for (const screen of ['weave', 'keep', 'scan'] as const) {
+            // Leave and come back, so the Screen mounts again and its Disclosures are collapsed (R10.6).
+            await showScreen(page, 'code', 'en');
+            await showScreen(page, screen, 'en');
+            await page.waitFor(`${DISCLOSURES}.length>0`, `a Disclosure on the ${screen} screen`);
+            await settleLayout(page);
+            const count = await page.ev<number>(`${DISCLOSURES}.length`);
+            for (let index = 0; index < count; index++) {
+              try {
+                lines.push(await checkDisclosure(page, screen, index));
+              } catch (error) {
+                failures.push(error instanceof Error ? error.message : String(error));
+              }
+              // The next Disclosure is checked on a Screen that has just arrived.
+              await showScreen(page, 'code', 'en');
+              await showScreen(page, screen, 'en');
+              await page.waitFor(`${DISCLOSURES}.length===${count}`, `the ${count} Disclosures of the ${screen} screen`);
+              await settleLayout(page);
             }
           }
         } finally {
           await page.setViewport(900, 1000);
         }
-        if (failures.length > 0) throw new Error([...failures.map((line) => `OVERFLOW ${line}`), ...lines].join('\n'));
+        if (failures.length > 0) throw new Error([...failures.map((line) => `FAIL ${line}`), ...lines].join('\n'));
+        return lines.join('\n');
+      },
+    },
+    {
+      name: 'navigation: aria-current on the current item, and no clipped label at 320 px in English and Hindi',
+      async run() {
+        const lines: string[] = [];
+        const failures: string[] = [];
+        const startTheme = (await readTheme(page)).dataTheme === 'night' ? 'night' : 'day';
+        try {
+          await page.setViewport(900, 1000);
+          for (const screen of ALL_SCREENS) {
+            await showScreen(page, screen, 'en');
+            // Every item that carries aria-current at all, with its value: only the current one may, and the value is "page".
+            const marked = await page.ev<{ current: string[]; items: number }>(
+              `(()=>{const items=[...document.querySelectorAll('nav button')];return {current:items.filter(b=>b.hasAttribute('aria-current')).map(b=>b.textContent.trim()+'='+b.getAttribute('aria-current')),items:items.length}})()`,
+            );
+            const label = WORDS.en[`nav.${screen}`]!;
+            if (marked.current.length !== 1 || !marked.current[0]!.startsWith(label) || !marked.current[0]!.endsWith('=page') || marked.items !== 4) {
+              failures.push(`on the ${screen} screen aria-current is on [${marked.current.join(', ')}] of ${marked.items} items, expected only the "${label}" item, with the value "page", of 4`);
+            } else lines.push(`${screen}: only the "${label}" item has aria-current="page"`);
+          }
+          await page.setViewport(320, 700);
+          for (const theme of THEMES) {
+            await chooseTheme(page, theme);
+            for (const language of LANGUAGES) {
+              await showScreen(page, 'weave', language);
+              // At 320 px the controls are behind the Menu button, so it is opened (by its name) before they are measured.
+              await openMenu(page);
+              await settleLayout(page);
+              const result = await page.ev<{ count: number; problems: string[] }>(
+                `(()=>{const controls=[...document.querySelectorAll('header button')];const vw=window.innerWidth;const problems=[];const rects=controls.map(c=>c.getBoundingClientRect());controls.forEach((c,i)=>{const name=(c.getAttribute('aria-label')||c.textContent).trim();const r=rects[i];if(c.scrollWidth>c.clientWidth+1||c.scrollHeight>c.clientHeight+1)problems.push('"'+name+'" scrolls '+c.scrollWidth+'x'+c.scrollHeight+' in '+c.clientWidth+'x'+c.clientHeight);const walker=document.createTreeWalker(c,NodeFilter.SHOW_TEXT);for(let n=walker.nextNode();n;n=walker.nextNode()){if(!n.textContent.trim())continue;const range=document.createRange();range.selectNodeContents(n);for(const t of range.getClientRects()){if(t.left<r.left-1||t.right>r.right+1||t.top<r.top-1||t.bottom>r.bottom+1||t.left<-0.5||t.right>vw+0.5){problems.push('the text "'+n.textContent.trim()+'" of "'+name+'" is outside its control');break}}}});for(let i=0;i<controls.length;i++)for(let j=i+1;j<controls.length;j++){const a=rects[i],b=rects[j];if(a.left<b.right-0.5&&b.left<a.right-0.5&&a.top<b.bottom-0.5&&b.top<a.bottom-0.5)problems.push('"'+(controls[i].getAttribute('aria-label')||controls[i].textContent).trim()+'" overlaps "'+(controls[j].getAttribute('aria-label')||controls[j].textContent).trim()+'"')}return {count:controls.length,problems}})()`,
+              );
+              const verdict = `at 320 (${language}, ${theme}): ${result.count} header controls`;
+              if (result.count !== 10) failures.push(`${verdict}, expected 10 (the home button, the Menu button, 4 navigation items, 2 languages, the Theme_Switch, the Scan pill)`);
+              else if (result.problems.length > 0) failures.push(`${verdict}: ${result.problems.join('; ')}`);
+              else lines.push(`${verdict}: every label inside its control, no overlap`);
+            }
+          }
+        } finally {
+          await page.setViewport(900, 1000);
+          try {
+            await ensureLanguage(page, 'en');
+            await chooseTheme(page, startTheme);
+          } catch (error) {
+            failures.push(`could not put the page back in English and the ${startTheme} theme: ${error instanceof Error ? error.message : String(error)}`);
+          }
+        }
+        if (failures.length > 0) throw new Error([...failures.map((line) => `FAIL ${line}`), ...lines].join('\n'));
+        return lines.join('\n');
+      },
+    },
+    {
+      name: 'the primary Button of each Screen is within the first 844 px at 390 by 844',
+      async run() {
+        const lines: string[] = [];
+        const failures: string[] = [];
+        try {
+          await page.setViewport(PHONE.width, PHONE.height);
+          for (const language of LANGUAGES) {
+            for (const screen of ALL_SCREENS) {
+              await showScreen(page, screen, language);
+              try {
+                await page.waitFor(`!!(${primaryOf(screen)})`, `the primary Button of the ${screen} screen`);
+              } catch (error) {
+                failures.push(`${screen} (${language}): ${error instanceof Error ? error.message : String(error)}`);
+                continue;
+              }
+              await settleLayout(page);
+              const seen = await page.ev<{ box: Box; scrollY: number; hidden: boolean; name: string }>(
+                `(()=>{window.scrollTo(0,0);const e=${primaryOf(screen)};const r=e.getBoundingClientRect();return {box:{top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width,height:r.height},scrollY:window.scrollY,hidden:!!e.closest('[hidden]'),name:(e.getAttribute('aria-label')||e.textContent||e.id).trim()}})()`,
+              );
+              const verdict = `${screen} (${language}): the primary Button "${seen.name}"`;
+              if (seen.hidden || seen.box.height <= 0) failures.push(`${verdict} is hidden or in a collapsed Disclosure`);
+              else if (seen.box.top < 0 || seen.box.bottom + seen.scrollY > PHONE.height) {
+                failures.push(`${verdict} spans ${Math.round(seen.box.top)} to ${Math.round(seen.box.bottom)} px, expected to end within the first ${PHONE.height} px`);
+              } else lines.push(`${verdict} ends at ${Math.round(seen.box.bottom)} px`);
+            }
+          }
+        } finally {
+          await page.setViewport(900, 1000);
+          await ensureLanguage(page, 'en');
+        }
+        if (failures.length > 0) throw new Error([...failures.map((line) => `FAIL ${line}`), ...lines].join('\n'));
+        return lines.join('\n');
+      },
+    },
+    {
+      name: 'Scan Demo cards: "Noisy and tilted" reads the fixture grid; the blank card shows the not-found message',
+      async run() {
+        const { hookRows, hookColumns } = ctx.profile;
+        const fixture = readJson('tests/fixtures/pick0-noisy-tilted.json') as { card: boolean[][]; pickIndex: number };
+        const discardIfRead = async (): Promise<void> => {
+          await page.ev(
+            `(()=>{if(document.querySelector('#scan-read-title'))[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===${JSON.stringify(EN['scan.discard'])})?.click()})()`,
+          );
+          await page.waitFor(`!document.querySelector('#scan-read-title')&&document.querySelectorAll('button[data-shape]').length===0`, 'the earlier read to be discarded');
+        };
+        await goTo(page, 'scan');
+        await page.waitFor(`!!document.querySelector('#scan-file')`, 'the photo chooser');
+        await discardIfRead();
+        // 1. Press the card, as a judge does; the app fetches the image and reads it like an uploaded photo.
+        await page.waitFor(`!!document.querySelector('[data-demo="card-1-noisy-tilted.png"]')`, 'the "Noisy and tilted" demo card');
+        await page.click(`document.querySelector('[data-demo="card-1-noisy-tilted.png"]')`, 'the "Noisy and tilted" demo card');
+        const outcome = await page.waitFor<string>(
+          `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[data-variant="error"] > div')?.textContent.trim()||null)`,
+          'the read of the Noisy and tilted card to finish',
+          30_000,
+        );
+        expect(outcome === 'read', `the Noisy and tilted card was not read: ${outcome}`);
+        const markers = await page.ev<{ shape: string; label: string }[]>(
+          `[...document.querySelectorAll('button[data-shape]')].map(b=>({shape:b.dataset.shape,label:b.getAttribute('aria-label')||''}))`,
+        );
+        expect(markers.length === hookRows * hookColumns, `${markers.length} markers, expected ${hookRows * hookColumns}`);
+        const shapeByLabel = new Map(markers.map((marker) => [marker.label, marker.shape]));
+        const labelOf = (hookRow: number, hookColumn: number, punched: boolean): string =>
+          format(EN['scan.marker.name']!, { row: hookRow + 1, column: hookColumn + 1, state: EN[punched ? 'scan.marker.punched' : 'scan.marker.unpunched']! });
+        const wrong: string[] = [];
+        for (let hookRow = 0; hookRow < hookRows; hookRow++) {
+          for (let hookColumn = 0; hookColumn < hookColumns; hookColumn++) {
+            const expectedPunched = fixture.card[hookRow]![hookColumn]!;
+            const shape = shapeByLabel.get(labelOf(hookRow, hookColumn, expectedPunched));
+            if (shape !== (expectedPunched ? 'filled' : 'ring')) wrong.push(`hook row ${hookRow + 1} column ${hookColumn + 1} is not read ${expectedPunched ? 'punched' : 'unpunched'}`);
+          }
+        }
+        expect(wrong.length === 0, `${wrong.length} of ${markers.length} hooks differ from tests/fixtures/pick0-noisy-tilted.json: ${wrong.slice(0, 8).join('; ')}`);
+        const punched = fixture.card.flat().filter(Boolean).length;
+        expect(punched > 0 && punched < markers.length, 'the fixture card is blank or full, so it cannot tell a good read from a bad one');
+        await discardIfRead();
+        // 2. The blank card must fail with the not-found message, and leave no read behind.
+        await page.click(`document.querySelector('[data-demo="card-blank-should-fail.png"]')`, 'the blank demo card');
+        const message = await page.waitFor<string>(`document.querySelector('[data-variant="error"] > div')?.textContent.trim()`, 'the failure message of the blank card', 30_000);
+        expect(message === EN['error.read.peg-holes-not-found'], `the blank card gave "${message}", expected "${EN['error.read.peg-holes-not-found']}"`);
+        const after = await page.ev<number>(`document.querySelectorAll('button[data-shape]').length`);
+        expect(after === 0, `${after} hook markers are shown after the blank card`);
+        return `all ${markers.length} hooks equal pick ${fixture.pickIndex} of pick0-noisy-tilted.json (${punched} punched); the blank card says "${message}"`;
+      },
+    },
+    {
+      name: 'Keep Demo card: "Download loom file" links give a BMP, 192 wide',
+      async run() {
+        await goTo(page, 'keep');
+        const lines: string[] = [];
+        const endsPerPick = ctx.profile.hookRows * ctx.profile.hookColumns;
+        for (const name of ['diamond-1bit.bmp', 'diamond-8bit.bmp']) {
+          const link = `document.querySelector('a[data-demo-file="${name}"]')`;
+          await page.waitFor(`!!(${link})`, `the "${name}" link`);
+          const bytes = await page.ev<number[]>(
+            `(async()=>{const r=await fetch((${link}).href,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return [...new Uint8Array(await r.arrayBuffer())]})()`,
+          );
+          const data = Uint8Array.from(bytes);
+          expect(String.fromCharCode(data[0] ?? 0, data[1] ?? 0) === 'BM', `${name} does not start with "BM"`);
+          const parsed = parseBmpHeader(data);
+          expect(parsed.ok, `${name}: ${parsed.ok ? '' : parsed.reason}`);
+          const { header } = parsed;
+          expect(header.width === endsPerPick, `${name} is ${header.width} wide, expected ${endsPerPick} (one pixel per end of the profile)`);
+          expect(header.declaredFileSize === data.length, `${name} declares ${header.declaredFileSize} bytes and has ${data.length}`);
+          lines.push(`${name}: BM, ${header.width} x ${header.height}, ${header.bitsPerPixel} bpp, ${data.length} bytes`);
+        }
         return lines.join('\n');
       },
     },
@@ -799,14 +1344,15 @@ function buildSteps(ctx: Context): BrowserStep[] {
          * and shows that the cache, not the network, is what keeps the app working.
          */
         const confirmOffline = async (): Promise<string> => {
-          const seen = await page.ev<{ onLine: boolean; probeFailed: boolean; probeError: string; profileOk: boolean }>(
-            `(async()=>{const probe='./never-cached-'+Date.now()+'.txt';let probeFailed=false,probeError='';try{const r=await fetch(probe,{cache:'no-store'});probeError='HTTP '+r.status}catch(e){probeFailed=true;probeError=String(e)}let profileOk=false;try{const r=await fetch('./profiles/demo-12x16.json');profileOk=r.ok&&!!(await r.json()).name}catch(e){profileOk=false}return {onLine:navigator.onLine,probeFailed,probeError,profileOk}})()`,
+          const seen = await page.ev<{ onLine: boolean; probeFailed: boolean; probeError: string; profileOk: boolean; loomFilesOk: boolean }>(
+            `(async()=>{const probe='./never-cached-'+Date.now()+'.txt';let probeFailed=false,probeError='';try{const r=await fetch(probe,{cache:'no-store'});probeError='HTTP '+r.status}catch(e){probeFailed=true;probeError=String(e)}let profileOk=false;try{const r=await fetch('./profiles/demo-12x16.json');profileOk=r.ok&&!!(await r.json()).name}catch(e){profileOk=false}let loomFilesOk=true;for(const name of ['diamond-1bit.bmp','diamond-8bit.bmp']){try{const r=await fetch('./demo/loom-files/'+name);const b=new DataView(await r.arrayBuffer());loomFilesOk=loomFilesOk&&r.ok&&b.getUint8(0)===66&&b.getUint8(1)===77&&b.getInt32(18,true)===192}catch(e){loomFilesOk=false}}return {onLine:navigator.onLine,probeFailed,probeError,profileOk,loomFilesOk}})()`,
           );
           expect(
             !seen.onLine && seen.probeFailed,
             `the network is not off for the page (navigator.onLine ${seen.onLine}, a request for an address in no cache ${seen.probeFailed ? 'failed' : `succeeded: ${seen.probeError}`})`,
           );
           expect(seen.profileOk, 'the card profile could not be read from the cache while the network was off');
+          expect(seen.loomFilesOk, 'a loom file of public/demo/loom-files did not open from the cache while the network was off');
           return `navigator.onLine false, a request for an uncached address failed (${seen.probeError}), the card profile came from the cache`;
         };
         /** The service worker that must serve the reload: it controls this page and its cache is in place. */
@@ -830,13 +1376,14 @@ function buildSteps(ctx: Context): BrowserStep[] {
         };
         const languageSwitches = async (): Promise<string> => {
           await goTo(page, 'weave');
-          await page.clickText('button', EN['language.en']!);
+          await pressLanguage(page, EN['language.en']!);
           await page.waitFor(`document.documentElement.lang==='en'`, 'lang en');
-          await page.clickText('button', HI['language.hi']!);
+          await pressLanguage(page, HI['language.hi']!);
           await page.waitFor(`document.documentElement.lang==='hi'`, 'lang hi');
           const hiHeading = await page.ev<string>(`document.querySelector('#screen-title')?.textContent.trim()`);
-          await page.clickText('button', EN['language.en']!);
+          await pressLanguage(page, EN['language.en']!);
           await page.waitFor(`document.documentElement.lang==='en'`, 'lang back to en');
+          await closeMenu(page);
           const enHeading = await page.ev<string>(`document.querySelector('#screen-title')?.textContent.trim()`);
           expect(hiHeading === HI['nav.weave'], `Hindi heading is "${hiHeading}", expected "${HI['nav.weave']}"`);
           expect(enHeading === EN['nav.weave'], `English heading is "${enHeading}", expected "${EN['nav.weave']}"`);
@@ -856,7 +1403,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
           await page.waitFor(`!!document.querySelector('#scan-file')`, 'the Scan screen chunk to arrive from the cache', 20_000);
           await page.setFile('#scan-file', cardPng);
           const outcome = await page.waitFor<string>(
-            `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[role="alert"]')?.textContent.trim()||null)`,
+            `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[data-variant="error"] > div')?.textContent.trim()||null)`,
             'the read to finish',
             30_000,
           );
@@ -872,6 +1419,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
           const ends = ctx.profile.hookRows * ctx.profile.hookColumns;
           clearDownloads(ctx.downloadDir);
           await goTo(page, 'keep');
+          await openMore(page);
           await page.clickText('label span', EN['keep.export.bitDepth.1']!);
           await page.clickText('button', EN['keep.export.button']!);
           const file = await takeDownload(ctx.downloadDir);
@@ -880,6 +1428,126 @@ function buildSteps(ctx: Context): BrowserStep[] {
           const problems = bmpMismatches(parsed.header, { width: ends, height: picks, bitsPerPixel: 1 });
           expect(problems.length === 0, `${file.name}: ${problems.join('; ')}`);
           return `${file.name}: ${ends}x${picks}, 1 bit, ${file.bytes.length} bytes`;
+        };
+        /** R1.10: with the network off, `document.fonts` reports loaded for every face the shown Screens use, and no font request failed. */
+        const fontsLoaded = async (): Promise<string> => {
+          const note = await fontsLoadedOnEveryScreen(page);
+          const failedFonts = failedRequests.filter((line) => line.includes('/fonts/'));
+          expect(failedFonts.length === 0, `font requests failed: ${failedFonts.join(' | ')}`);
+          return `${note}; no font request failed`;
+        };
+        /**
+         * The Landing is on screen with the network off, with its loom picture drawn: the canvas is found by its role "img" and its
+         * accessible name (the `processLoop.title` text, through `aria-labelledby`) inside the hero slot, has a size, and has painted
+         * pixels (some pixel of its 2D context is not fully transparent, and not all of them are the same colour). This replaced the
+         * check of the Hero_Loom svg and its shapes (second design pass, task 4.1: the hero now holds the live Process_Loop).
+         */
+        const landingLoads = async (): Promise<string> => {
+          const language: Language = (await page.ev<string>('document.documentElement.lang')) === 'hi' ? 'hi' : 'en';
+          const words = WORDS[language];
+          const seen = await page
+            .waitFor<{ name: string; width: number; height: number; colours: number; headline: string; tiles: number; navigation: string }>(
+              `(()=>{const slot=document.querySelector('[data-hero-slot]');const canvas=slot?slot.querySelector('canvas[role="img"]'):null;if(!canvas)return null;const ids=(canvas.getAttribute('aria-labelledby')||'').split(/\\s+/).filter(Boolean);const name=ids.map(id=>{const e=document.getElementById(id);return e?e.textContent.trim():''}).join(' ').trim();const r=canvas.getBoundingClientRect();const ctx=canvas.getContext('2d');const data=ctx&&canvas.width>0&&canvas.height>0?new Uint32Array(ctx.getImageData(0,0,canvas.width,canvas.height).data.buffer):new Uint32Array(0);const colours=new Set();for(let i=0;i<data.length&&colours.size<4;i+=7){if((data[i]>>>24)!==0)colours.add(data[i])}const h=document.querySelector('main h3');const nav=performance.getEntriesByType('navigation')[0];return {name,width:r.width,height:r.height,colours:colours.size,headline:h?h.textContent.trim():'',tiles:document.querySelectorAll('[data-sample]').length,navigation:nav?nav.type:'unknown'}})()`,
+              'the loom picture (a canvas with role "img" in the hero slot) on the Landing',
+              20_000,
+            )
+            .catch(async (error: unknown) => {
+              const state = await page.ev<string>(
+                `JSON.stringify({screen:document.querySelector('#screen-title')?.textContent.trim()??null,slot:!!document.querySelector('[data-hero-slot]'),slotHtml:(document.querySelector('[data-hero-slot]')?.innerHTML||'').slice(0,120),text:(document.body.innerText||'').slice(0,160)})`,
+              );
+              throw new Error(`${error instanceof Error ? error.message : String(error)}; page: ${state}`);
+            });
+          expect(seen.name.startsWith(words['processLoop.title']!), `the loom picture's accessible name is "${seen.name.slice(0, 60)}", expected it to start with "${words['processLoop.title']}"`);
+          expect(seen.width > 0 && seen.height > 0 && seen.colours >= 2, `the loom picture is ${Math.round(seen.width)}x${Math.round(seen.height)} px with ${seen.colours} painted colours (at least 2 expected)`);
+          expect(seen.headline === words['landing.headline'], `the Landing headline is "${seen.headline}", expected "${words['landing.headline']}"`);
+          expect(seen.tiles >= DESIGNS.length, `the Landing shows ${seen.tiles} sample controls, expected ${DESIGNS.length}`);
+          const pictures = await landingPicturesDecoded(page);
+          return `Landing on screen offline (document loaded by ${seen.navigation}): headline "${seen.headline}", loom picture "${words['processLoop.title']}" ${Math.round(seen.width)}x${Math.round(seen.height)} px with painted pixels, ${seen.tiles} sample controls; ${pictures}`;
+        };
+        /**
+         * R9.7: the first open of Code view in this page session, with Chrome offline and the preview server stopped. The listing is
+         * absent first; Diamond is chosen on Weave, paused and set to pick 1 of its count with the scrubber; the Code navigation item is clicked; the listing arrives (only the Precache can
+         * give it); the screen shows the Diamond pick count; at most WINDOW_SIZE Lines are in the document; the Selected_Pick is 0 and
+         * is 1 after one activation of the step forward control.
+         */
+        const firstCodeViewOpen = async (): Promise<string> => {
+          const listing = `document.getElementById('naqsha-code-view-listing')`;
+          const lines = `[...(${listing}).querySelectorAll('li[data-pick]')]`;
+          const current = `${lines}.filter(li=>li.getAttribute('aria-current')==='true').map(li=>li.getAttribute('data-pick'))`;
+          expect(!(await page.ev<boolean>(`!!${listing}`)), 'the Code view listing is already in the document, so this is not the first open of Code view in this page session');
+          const expected = await chooseSample(page, 'diamond');
+          // The sample plays on Weave and the Selected_Pick moves with each frame, so make the start deterministic: pause the cloth,
+          // set the Weave scrubber to 0 with a real input event, and wait until the screen shows pick 1 of the Diamond count.
+          await page.clickText('button', EN['weave.pause']!);
+          await page.waitFor(`${byText('button', EN['weave.pause']!)}?.disabled===true`, 'the cloth to be paused', 10_000);
+          const scrubber = `(()=>{const l=[...document.querySelectorAll('label')].find(l=>l.querySelector('span')?.textContent.trim()===${JSON.stringify(EN['weave.scrubber']!)});return l?l.querySelector('input[type="range"]'):null})()`;
+          await page.ev(
+            `(()=>{const i=${scrubber};if(!i)return false;Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(i,'0');i.dispatchEvent(new Event('input',{bubbles:true}));return true})()`,
+          );
+          const startText = format(EN['weave.pickPosition']!, { pick: 1, total: expected });
+          await page.waitFor(
+            `(()=>{const i=${scrubber};return !!i&&i.value==='0'&&[...document.querySelectorAll('main p')].some(p=>p.textContent.trim()===${JSON.stringify(startText)})})()`,
+            `the Weave screen to show "${startText}" with the scrubber at 0`,
+            10_000,
+          );
+          await clickNavItem(page, EN['nav.code']!);
+          await page.waitFor(`!!${listing}`, 'the Code view listing to arrive from the Precache', 20_000).catch(async (error: unknown) => {
+            const state = await page.ev<string>(
+              `JSON.stringify({screen:document.querySelector('#screen-title')?.textContent.trim()??null,text:(document.querySelector('main')?.innerText||'').slice(0,160)})`,
+            );
+            throw new Error(`${error instanceof Error ? error.message : String(error)}; page: ${state}`);
+          });
+          const countText = format(EN[expected === 1 ? 'codeview.pickCount.one' : 'codeview.pickCount.other']!, { count: expected });
+          await page
+            .waitFor(`[...document.querySelectorAll('main span')].some(s=>s.textContent.trim()===${JSON.stringify(countText)})`, `the Code view to show "${countText}"`, 10_000)
+            .catch(async (error: unknown) => {
+              const shown = await page.ev<string>(`(document.querySelector('main')?.innerText||'').slice(0,200)`);
+              throw new Error(`${error instanceof Error ? error.message : String(error)}; the screen shows: ${JSON.stringify(shown)}`);
+            });
+          const count = await page.ev<number>(`${lines}.length`);
+          expect(count >= 1 && count <= WINDOW_SIZE, `the listing holds ${count} Lines, expected 1 to ${WINDOW_SIZE} (WINDOW_SIZE)`);
+          const before = await page.ev<(string | null)[]>(current);
+          // The Selected_Pick was set to 0 on Weave before Code view opened (see below), so it is exactly pick 0 here.
+          expect(before.length === 1 && before[0] === '0', `before the step, the Lines marked aria-current="true" have data-pick ${JSON.stringify(before)}, expected ["0"]`);
+          const nextPick = '1';
+          await page.clickText('button', EN['codeview.step.forward']!);
+          const after = await page
+            .waitFor<(string | null)[]>(`(()=>{const c=${current};return c.length===1&&c[0]===${JSON.stringify(nextPick)}?c:null})()`, `the Selected_Pick to move to pick ${nextPick} after one step forward`, 5_000)
+            .catch(async (error: unknown) => {
+              const seen = await page.ev<(string | null)[]>(current);
+              throw new Error(`${error instanceof Error ? error.message : String(error)}; the Lines marked aria-current="true" have data-pick ${JSON.stringify(seen)}`);
+            });
+          return `listing arrived with no network; "${countText}" shown, ${count} of at most ${WINDOW_SIZE} Lines in the document, Selected_Pick ${before[0]} then ${after[0]} after one step forward`;
+        };
+        /**
+         * The four families by name, after the Screens that use them have been shown (the Newsreader italic face is asked to load first, because no Screen uses it yet; it must still load offline): `document.fonts.check` is true for each
+         * weight the app uses, a FontFace of each family and weight exists (check() is also true for a family with no face), and every
+         * FontFace of those families has status "loaded". A face that is not loaded is asked to load, to say why.
+         */
+        const FONT_SPECS = ['400 18px "Rozha One"', '400 18px Hind', '700 18px Hind', '400 14px "IBM Plex Mono"', '400 18px Newsreader', 'italic 400 18px Newsreader'] as const;
+        const FONT_FACES = [
+          { family: 'Rozha One', weight: 400, style: 'normal' },
+          { family: 'Hind', weight: 400, style: 'normal' },
+          { family: 'Hind', weight: 700, style: 'normal' },
+          { family: 'IBM Plex Mono', weight: 400, style: 'normal' },
+          { family: 'Newsreader', weight: 400, style: 'normal' },
+          { family: 'Newsreader', weight: 400, style: 'italic' },
+        ] as const;
+        const fontFamiliesLoaded = async (): Promise<string> => {
+          const seen = await page.ev<{ checks: { spec: string; ok: boolean }[]; faces: { family: string; weight: number; style: string; status: string; why: string }[] }>(
+            `(async()=>{await document.fonts.ready;const specs=${JSON.stringify(FONT_SPECS)};for(const spec of specs){if(spec.startsWith('italic'))await document.fonts.load(spec)}const checks=specs.map(spec=>({spec,ok:document.fonts.check(spec)}));const families=${JSON.stringify([...new Set(FONT_FACES.map((face) => face.family))])};const faces=[];for(const f of document.fonts){const family=f.family.replace(/["']/g,'');if(!families.includes(family))continue;const status=f.status;let why='';if(status!=='loaded'){try{await f.load();why='asking it to load afterwards gave status '+f.status}catch(e){why='asking it to load failed: '+String(e)}}faces.push({family,weight:Number(f.weight),style:f.style==='italic'?'italic':'normal',status,why})}return {checks,faces}})()`,
+          );
+          const problems: string[] = [];
+          for (const check of seen.checks) if (!check.ok) problems.push(`document.fonts.check(${check.spec}) is false`);
+          for (const wanted of FONT_FACES) {
+            const face = seen.faces.find((candidate) => candidate.family === wanted.family && candidate.weight === wanted.weight && candidate.style === wanted.style);
+            if (face === undefined) problems.push(`no FontFace for ${wanted.family} ${wanted.weight} ${wanted.style} is in document.fonts`);
+          }
+          for (const face of seen.faces) if (face.status !== 'loaded') problems.push(`${face.family} ${face.weight} ${face.style} has status ${face.status}${face.why === '' ? '' : `: ${face.why}`}`);
+          const failedFonts = failedRequests.filter((line) => line.includes('/fonts/'));
+          if (failedFonts.length > 0) problems.push(`font requests failed: ${failedFonts.join(' | ')}`);
+          expect(problems.length === 0, problems.join('; '));
+          return `document.fonts.check is true for ${FONT_SPECS.join(', ')}; ${seen.faces.length} FontFaces (${seen.faces.map((face) => `${face.family} ${face.weight}${face.style === 'italic' ? ' italic' : ''}`).join(', ')}) all have status loaded`;
         };
         const groups: OfflineGroup[] = [];
         try {
@@ -891,7 +1559,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
           // the cache.
           await page.navigate(ctx.baseUrl);
           await page.waitFor(
-            `[...document.querySelectorAll('button')].some(b=>(b.textContent.trim()===${JSON.stringify(EN['tryit.diamond'])}||b.textContent.trim()===${JSON.stringify(HI['tryit.diamond'])})&&!b.disabled)`,
+            `[...document.querySelectorAll('[data-sample="diamond"]')].some(b=>!b.disabled)`,
             'the app to load online (Try it enabled)',
             20_000,
           );
@@ -932,10 +1600,16 @@ function buildSteps(ctx: Context): BrowserStep[] {
           // A: the page stays as it is and the network goes away.
           const keepChecks: OfflineCheck[] = [worker, serverGone, cacheAnswers];
           keepChecks.push(await run('the network is really off', confirmOffline));
+          // The Landing is still the first thing on this page, so it is checked before a sample is chosen.
+          keepChecks.push(await run('the Landing loads offline with its hero loom drawing', landingLoads));
           keepChecks.push(await run('a Try it sample plays to its last pick', playDiamond));
           keepChecks.push(await run('language switching works', languageSwitches));
           keepChecks.push(await run('the first Scan open works offline', firstScanOpen));
+          // Before the font check, which opens every Screen, the Code view one included.
+          keepChecks.push(await run('the first Code view open works offline', firstCodeViewOpen));
           keepChecks.push(await run('a BMP export works offline', exportOneBitBmp));
+          keepChecks.push(await run('every font the shown Screens use is loaded', fontsLoaded));
+          keepChecks.push(await run('Rozha One, Hind, IBM Plex Mono and Newsreader are loaded', fontFamiliesLoaded));
           groups.push({ title: 'A. offline, no reload', checks: keepChecks });
 
           // B: reload with no network at all; everything must come from the worker's cache.
@@ -969,25 +1643,34 @@ function buildSteps(ctx: Context): BrowserStep[] {
           reloadChecks.push(loaded);
           const afterReload = [
             'the network is really off',
+            'the Landing loads offline with its hero loom drawing',
             'Weave renders',
             'a Try it sample plays to its last pick',
             'the first Scan open works offline',
+            'the first Code view open works offline',
             'a BMP export works offline',
             'language switching works',
+            'every font the shown Screens use is loaded',
+            'Rozha One, Hind, IBM Plex Mono and Newsreader are loaded',
           ] as const;
           if (loaded.status === 'pass') {
             reloadChecks.push(await run(afterReload[0], confirmOffline));
+            // The document was just loaded with no network, so this is the Landing of a fresh offline load.
+            reloadChecks.push(await run(afterReload[1], landingLoads));
             reloadChecks.push(
-              await run(afterReload[1], async () => {
+              await run(afterReload[2], async () => {
                 await goTo(page, 'weave');
                 await page.waitFor(`!!document.querySelector('canvas')`, 'the cloth canvas', 10_000);
                 return 'Weave screen with a canvas';
               }),
             );
-            reloadChecks.push(await run(afterReload[2], playDiamond));
-            reloadChecks.push(await run(afterReload[3], firstScanOpen));
-            reloadChecks.push(await run(afterReload[4], exportOneBitBmp));
-            reloadChecks.push(await run(afterReload[5], languageSwitches));
+            reloadChecks.push(await run(afterReload[3], playDiamond));
+            reloadChecks.push(await run(afterReload[4], firstScanOpen));
+            reloadChecks.push(await run(afterReload[5], firstCodeViewOpen));
+            reloadChecks.push(await run(afterReload[6], exportOneBitBmp));
+            reloadChecks.push(await run(afterReload[7], languageSwitches));
+            reloadChecks.push(await run(afterReload[8], fontsLoaded));
+            reloadChecks.push(await run(afterReload[9], fontFamiliesLoaded));
           } else {
             for (const name of afterReload) reloadChecks.push(notRun(name, 'not tested: the page did not load after the reload'));
           }

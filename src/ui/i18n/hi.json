@@ -19,6 +19,10 @@
     "text": "स्कैन",
     "reviewed": false
   },
+  "nav.code": {
+    "text": "कोड",
+    "reviewed": false
+  },
   "language.label": {
     "text": "भाषा",
     "reviewed": false
@@ -435,6 +439,14 @@
     "text": "सहेजा गया: {name}",
     "reviewed": false
   },
+  "keep.save.guessesNote.one": {
+    "text": "इसमें 1 सुझाया हुआ कार्ड (अंदाज़ा) है: पिक {picks}।",
+    "reviewed": false
+  },
+  "keep.save.guessesNote.other": {
+    "text": "इसमें {count} सुझाए हुए कार्ड (अंदाज़े) हैं: पिक {picks}।",
+    "reviewed": false
+  },
   "keep.untitled": {
     "text": "बिना नाम",
     "reviewed": false
@@ -447,7 +459,11 @@
     "text": "अभी कोई सहेजा हुआ डिज़ाइन नहीं है।",
     "reviewed": false
   },
-  "keep.list.picks": {
+  "keep.list.picks.one": {
+    "text": "{count} पिक",
+    "reviewed": false
+  },
+  "keep.list.picks.other": {
     "text": "{count} पिक",
     "reviewed": false
   },
@@ -477,6 +493,302 @@
   },
   "keep.list.deleted": {
     "text": "सहेजा हुआ डिज़ाइन मिटा दिया गया।",
+    "reviewed": false
+  },
+  "keep.save.mode.legend": {
+    "text": "कैसे सहेजें",
+    "reviewed": false
+  },
+  "keep.save.mode.version": {
+    "text": "नए संस्करण के रूप में सहेजें",
+    "reviewed": false
+  },
+  "keep.save.mode.design": {
+    "text": "नए डिज़ाइन के रूप में सहेजें",
+    "reviewed": false
+  },
+  "keep.save.note": {
+    "text": "इस संस्करण पर टिप्पणी (वैकल्पिक, 200 अक्षरों तक)",
+    "reviewed": false
+  },
+  "keep.saved.version": {
+    "text": "नया संस्करण सहेजा गया: {name}",
+    "reviewed": false
+  },
+  "keep.list.versionCount.one": {
+    "text": "1 संस्करण",
+    "reviewed": false
+  },
+  "keep.list.versionCount.other": {
+    "text": "{count} संस्करण",
+    "reviewed": false
+  },
+  "keep.list.showVersions": {
+    "text": "संस्करण दिखाएँ",
+    "reviewed": false
+  },
+  "keep.list.hideVersions": {
+    "text": "संस्करण छिपाएँ",
+    "reviewed": false
+  },
+  "keep.version.heading": {
+    "text": "{name} के संस्करण, सबसे नया ऊपर",
+    "reviewed": false
+  },
+  "keep.version.saved": {
+    "text": "सहेजा गया {date}",
+    "reviewed": false
+  },
+  "keep.version.note": {
+    "text": "टिप्पणी: {note}",
+    "reviewed": false
+  },
+  "keep.version.noNote": {
+    "text": "कोई टिप्पणी नहीं",
+    "reviewed": false
+  },
+  "keep.version.newest": {
+    "text": "सबसे नया संस्करण",
+    "reviewed": false
+  },
+  "keep.version.comparePrevious": {
+    "text": "पिछले संस्करण से मिलाएँ",
+    "reviewed": false
+  },
+  "keep.version.compareOpen": {
+    "text": "खुले डिज़ाइन से मिलाएँ",
+    "reviewed": false
+  },
+  "keep.version.restore": {
+    "text": "वापस लाएँ",
+    "reviewed": false
+  },
+  "keep.version.restored": {
+    "text": "वापस लाया गया। अगला सहेजना नया संस्करण बनेगा। कुछ मिटाया नहीं गया।",
+    "reviewed": false
+  },
+  "weave.repair.notice.one": {
+    "text": "1 कार्ड पढ़ा नहीं जा सका",
+    "reviewed": false
+  },
+  "weave.repair.notice.other": {
+    "text": "{count} कार्ड पढ़े नहीं जा सके",
+    "reviewed": false
+  },
+  "weave.repair.suggest": {
+    "text": "सुधार सुझाएँ",
+    "reviewed": false
+  },
+  "weave.repair.hide": {
+    "text": "सुझाव छिपाएँ",
+    "reviewed": false
+  },
+  "weave.repair.loading": {
+    "text": "सुझाव आ रहे हैं…",
+    "reviewed": false
+  },
+  "weave.repair.loadFailed": {
+    "text": "सुझाव नहीं आ सके। अपना कनेक्शन देखें और फिर से सुधार सुझाएँ दबाएँ।",
+    "reviewed": false
+  },
+  "weave.repair.repaired": {
+    "text": "सुधारे गए (अंदाज़ा): पिक {picks}",
+    "reviewed": false
+  },
+  "weave.repair.undo": {
+    "text": "आख़िरी मंज़ूर सुधार वापस लें",
+    "reviewed": false
+  },
+  "repair.heading": {
+    "text": "सुझाए गए सुधार",
+    "reviewed": false
+  },
+  "repair.guesses": {
+    "text": "ये नक्शे के आधार पर अंदाज़े हैं। हो सके तो असली कार्ड से मिलाकर देखें।",
+    "reviewed": false
+  },
+  "repair.legend": {
+    "text": "● छेद किया हुआ   ○ छेद नहीं",
+    "reviewed": false
+  },
+  "repair.noGaps": {
+    "text": "अब कोई खोया कार्ड नहीं बचा।",
+    "reviewed": false
+  },
+  "repair.gap": {
+    "text": "पिक {pick}: {state}",
+    "reviewed": false
+  },
+  "repair.gap.short": {
+    "text": "पिक {pick}",
+    "reviewed": false
+  },
+  "repair.gap.missing": {
+    "text": "यहाँ कार्ड नहीं है",
+    "reviewed": false
+  },
+  "repair.gap.damaged": {
+    "text": "कार्ड पढ़ा नहीं जा सका",
+    "reviewed": false
+  },
+  "repair.kind.repeat": {
+    "text": "डिज़ाइन दोहराता है",
+    "reviewed": false
+  },
+  "repair.kind.mirror": {
+    "text": "डिज़ाइन आईने जैसा उलटा है",
+    "reviewed": false
+  },
+  "repair.kind.neighbours": {
+    "text": "दोनों तरफ़ के कार्ड एक जैसे हैं",
+    "reviewed": false
+  },
+  "repair.confidence.high": {
+    "text": "भरोसा: ज़्यादा",
+    "reviewed": false
+  },
+  "repair.confidence.medium": {
+    "text": "भरोसा: बीच का",
+    "reviewed": false
+  },
+  "repair.confidence.low": {
+    "text": "भरोसा: कम",
+    "reviewed": false
+  },
+  "repair.evidence.repeat.one": {
+    "text": "कार्ड हर पिक पर दोहराते हैं ({compared} में से {agreeing} जोड़े मिलते हैं)। पिक {picks} से लिया गया।",
+    "reviewed": false
+  },
+  "repair.evidence.repeat.other": {
+    "text": "कार्ड हर {period} पिक पर दोहराते हैं ({compared} में से {agreeing} जोड़े मिलते हैं)। पिक {picks} से लिया गया।",
+    "reviewed": false
+  },
+  "repair.evidence.mirror": {
+    "text": "डिज़ाइन उलटा पढ़ने पर भी वैसा ही है ({compared} में से {agreeing} जोड़े मिलते हैं)। पिक {partner} से नक़ल किया गया।",
+    "reviewed": false
+  },
+  "repair.evidence.neighbours": {
+    "text": "दोनों तरफ़ के पिक {before} और {after} एक ही कार्ड हैं।",
+    "reviewed": false
+  },
+  "repair.conflict": {
+    "text": "ये सुझाव आपस में नहीं मिलते। दोनों देखें, फिर एक मंज़ूर करें या छोड़ दें।",
+    "reviewed": false
+  },
+  "repair.draw": {
+    "text": "सुझाया कार्ड: {total} में से {punched} हुक की जगह छेद किए हुए",
+    "reviewed": false
+  },
+  "repair.accept": {
+    "text": "यह अंदाज़ा मंज़ूर करें",
+    "reviewed": false
+  },
+  "repair.skip": {
+    "text": "छोड़ें",
+    "reviewed": false
+  },
+  "repair.skipped": {
+    "text": "छोड़ दिया। कुछ नहीं बदला।",
+    "reviewed": false
+  },
+  "repair.showAgain": {
+    "text": "फिर दिखाएँ",
+    "reviewed": false
+  },
+  "repair.acceptAll": {
+    "text": "सारे ज़्यादा भरोसे वाले सुझाव मंज़ूर करें",
+    "reviewed": false
+  },
+  "repair.accepted": {
+    "text": "अंदाज़े के तौर पर मंज़ूर किया: {picks}।",
+    "reviewed": false
+  },
+  "repair.undone": {
+    "text": "आख़िरी मंज़ूर सुधार वापस ले लिया गया।",
+    "reviewed": false
+  },
+  "repair.mark": {
+    "text": "सुधारा गया (अंदाज़ा)",
+    "reviewed": false
+  },
+  "repair.why": {
+    "text": "बाक़ी तरीक़े क्यों नहीं?",
+    "reviewed": false
+  },
+  "repair.none.no-readable-cards": {
+    "text": "कोई कार्ड पढ़ा नहीं जा सका, इसलिए अंदाज़े का आधार नहीं है। कोई सुझाव नहीं।",
+    "reviewed": false
+  },
+  "repair.none.too-short": {
+    "text": "कार्ड की लड़ी अंदाज़े के लिए बहुत छोटी है। कोई सुझाव नहीं।",
+    "reviewed": false
+  },
+  "repair.none.no-evidence": {
+    "text": "अंदाज़े के लिए कोई दोहराव, उलटा रूप या मिलते पड़ोसी कार्ड नहीं हैं। कोई सुझाव नहीं।",
+    "reviewed": false
+  },
+  "repair.notApplied.too-few-readable-cards": {
+    "text": "इसे ढूँढने के लिए बहुत कम कार्ड पढ़े जा सके।",
+    "reviewed": false
+  },
+  "repair.notApplied.no-period": {
+    "text": "कोई दोहराव नहीं मिला।",
+    "reviewed": false
+  },
+  "repair.notApplied.no-supporter": {
+    "text": "सही दूरी पर कोई पढ़ा हुआ कार्ड नहीं है।",
+    "reviewed": false
+  },
+  "repair.notApplied.supporters-tie": {
+    "text": "सही दूरी के कार्ड बराबर बँटे हुए हैं।",
+    "reviewed": false
+  },
+  "repair.notApplied.no-mirror": {
+    "text": "कोई उलटा रूप नहीं मिला।",
+    "reviewed": false
+  },
+  "repair.notApplied.centre-pick": {
+    "text": "यह बीच का पिक है, इसलिए इसका कोई जोड़ीदार नहीं है।",
+    "reviewed": false
+  },
+  "repair.notApplied.partner-out-of-chain": {
+    "text": "जोड़ीदार कार्ड लड़ी से बाहर पड़ता है।",
+    "reviewed": false
+  },
+  "repair.notApplied.partner-unreadable": {
+    "text": "जोड़ीदार कार्ड भी पढ़ा नहीं जा सका।",
+    "reviewed": false
+  },
+  "repair.notApplied.at-chain-edge": {
+    "text": "यह पहला या आख़िरी पिक है, इसलिए इसका एक ही पड़ोसी है।",
+    "reviewed": false
+  },
+  "repair.notApplied.neighbour-unreadable": {
+    "text": "पड़ोसी कार्ड पढ़ा नहीं जा सका।",
+    "reviewed": false
+  },
+  "repair.notApplied.neighbours-differ": {
+    "text": "दोनों तरफ़ के कार्ड अलग-अलग हैं।",
+    "reviewed": false
+  },
+  "repair.failure.invalid-profile": {
+    "text": "कार्ड प्रोफ़ाइल सही नहीं है, इसलिए सुझाव नहीं बन सकते। सही कार्ड प्रोफ़ाइल लगाएँ और फिर कोशिश करें।",
+    "reviewed": false
+  },
+  "repair.failure.not-a-pattern": {
+    "text": "डिज़ाइन पढ़ा नहीं जा सका, इसलिए सुझाव नहीं बन सकते। डिज़ाइन फिर से खोलें।",
+    "reviewed": false
+  },
+  "keep.export.guesses": {
+    "text": "कुछ पिक सुझाए गए अंदाज़े हैं, कार्ड से पढ़े नहीं गए।",
+    "reviewed": false
+  },
+  "tryit.lost": {
+    "text": "खोए कार्ड वाला डिज़ाइन आज़माएँ",
+    "reviewed": false
+  },
+  "tryit.lost.hint": {
+    "text": "तीन कार्ड खोए हैं। बुनाई पर सुधार सुझाएँ दबाएँ।",
     "reviewed": false
   },
   "colour.madder": {
@@ -717,6 +1029,1142 @@
   },
   "scan.done.cancel": {
     "text": "रद्द करें",
+    "reviewed": false
+  },
+  "codeview.title": {
+    "text": "कोड दृश्य",
+    "reviewed": false
+  },
+  "codeview.listing.name": {
+    "text": "कार्ड, बिट की लाइनों में",
+    "reviewed": false
+  },
+  "codeview.line.name": {
+    "text": "पिक {pick}: एंड {ends} पर छेद",
+    "reviewed": false
+  },
+  "codeview.line.nameEmpty": {
+    "text": "पिक {pick}: किसी एंड पर छेद नहीं",
+    "reviewed": false
+  },
+  "codeview.line.nameDamaged": {
+    "text": "पिक {pick}: कार्ड खराब है",
+    "reviewed": false
+  },
+  "codeview.line.damagedLabel": {
+    "text": "खराब कार्ड",
+    "reviewed": false
+  },
+  "codeview.bitline.name": {
+    "text": "पिक {pick} के बिट",
+    "reviewed": false
+  },
+  "codeview.breakpoint.name": {
+    "text": "पिक {pick} पर रुकने का निशान",
+    "reviewed": false
+  },
+  "codeview.pickCount.one": {
+    "text": "{count} पिक",
+    "reviewed": false
+  },
+  "codeview.pickCount.other": {
+    "text": "{count} पिक",
+    "reviewed": false
+  },
+  "codeview.profile": {
+    "text": "कार्ड प्रोफ़ाइल: {name}",
+    "reviewed": false
+  },
+  "codeview.selected": {
+    "text": "चुनी हुई पिक: {pick}",
+    "reviewed": false
+  },
+  "codeview.announce.pick": {
+    "text": "पिक {pick}",
+    "reviewed": false
+  },
+  "codeview.announce.noBreakpoint": {
+    "text": "आगे कोई रुकने का निशान नहीं है। आख़िरी पिक पर रुक गए।",
+    "reviewed": false
+  },
+  "codeview.controls.name": {
+    "text": "पिक को एक के बाद एक देखें",
+    "reviewed": false
+  },
+  "codeview.step.back": {
+    "text": "पिछली पिक",
+    "reviewed": false
+  },
+  "codeview.step.forward": {
+    "text": "अगली पिक",
+    "reviewed": false
+  },
+  "codeview.jump.label": {
+    "text": "इस पिक नंबर पर जाएँ",
+    "reviewed": false
+  },
+  "codeview.jump.button": {
+    "text": "जाएँ",
+    "reviewed": false
+  },
+  "codeview.jump.range": {
+    "text": "पिक का नंबर {first} से {last} के बीच चुनें।",
+    "reviewed": false
+  },
+  "codeview.run.next": {
+    "text": "अगले रुकने के निशान तक चलें",
+    "reviewed": false
+  },
+  "codeview.cloth.heading": {
+    "text": "चुनी हुई पिक पर कपड़ा",
+    "reviewed": false
+  },
+  "codeview.cloth.alt": {
+    "text": "पिक {pick} पर बुना हुआ कपड़ा",
+    "reviewed": false
+  },
+  "codeview.empty": {
+    "text": "अभी कोई डिज़ाइन नहीं है। स्कैन स्क्रीन पर कार्ड पढ़ें, या बुनाई स्क्रीन पर कोई नमूना डिज़ाइन चुनें।",
+    "reviewed": false
+  },
+  "codeview.damaged.design": {
+    "text": "{name} की तुलना नहीं हो सकती: पिक {pick} का कार्ड खराब है। उस कार्ड को फिर स्कैन करें या दूसरा डिज़ाइन चुनें।",
+    "reviewed": false
+  },
+  "codeview.diff.heading": {
+    "text": "दो डिज़ाइनों की तुलना करें",
+    "reviewed": false
+  },
+  "codeview.scrollHint": {
+    "text": "किनारे पर कटी हुई पंक्ति बगल में खिसकती है।",
+    "reviewed": false
+  },
+  "codeview.diff.hint": {
+    "text": "जोड़ा हुआ यानी कार्ड सिर्फ़ बाद वाले डिज़ाइन में है। हटाया हुआ यानी कार्ड सिर्फ़ पहले वाले डिज़ाइन में है।",
+    "reviewed": false
+  },
+  "codeview.diff.first.label": {
+    "text": "पहले वाला डिज़ाइन",
+    "reviewed": false
+  },
+  "codeview.diff.second.label": {
+    "text": "बाद वाला डिज़ाइन",
+    "reviewed": false
+  },
+  "codeview.diff.choose": {
+    "text": "डिज़ाइन चुनें",
+    "reviewed": false
+  },
+  "codeview.diff.current": {
+    "text": "अभी खुला डिज़ाइन",
+    "reviewed": false
+  },
+  "codeview.diff.option.one": {
+    "text": "{name} ({count} पिक)",
+    "reviewed": false
+  },
+  "codeview.diff.option.other": {
+    "text": "{name} ({count} पिक)",
+    "reviewed": false
+  },
+  "codeview.diff.separator": {
+    "text": " · ",
+    "reviewed": false
+  },
+  "codeview.diff.duplicate": {
+    "text": " #{k}",
+    "reviewed": false
+  },
+  "codeview.diff.ellipsis": {
+    "text": "…",
+    "reviewed": false
+  },
+  "codeview.diff.loading": {
+    "text": "सहेजे हुए डिज़ाइन लोड हो रहे हैं…",
+    "reviewed": false
+  },
+  "codeview.diff.noSaved": {
+    "text": "तुलना के लिए कोई सहेजा हुआ डिज़ाइन नहीं है। पहले सहेजें स्क्रीन पर कोई डिज़ाइन सहेजें।",
+    "reviewed": false
+  },
+  "codeview.diff.compare": {
+    "text": "तुलना करें",
+    "reviewed": false
+  },
+  "codeview.diff.comparing": {
+    "text": "तुलना हो रही है…",
+    "reviewed": false
+  },
+  "codeview.diff.same": {
+    "text": "दोनों डिज़ाइन एक जैसे हैं।",
+    "reviewed": false
+  },
+  "codeview.diff.counts.changedHoles": {
+    "text": "बदले हुए छेद: {count}",
+    "reviewed": false
+  },
+  "codeview.diff.counts.addedCards": {
+    "text": "जोड़े गए कार्ड: {count}",
+    "reviewed": false
+  },
+  "codeview.diff.counts.removedCards": {
+    "text": "हटाए गए कार्ड: {count}",
+    "reviewed": false
+  },
+  "codeview.diff.entries.name": {
+    "text": "अंतर, हर कार्ड की एक लाइन",
+    "reviewed": false
+  },
+  "codeview.diff.kind.unchanged": {
+    "text": "वैसा ही",
+    "reviewed": false
+  },
+  "codeview.diff.kind.changed": {
+    "text": "बदला हुआ",
+    "reviewed": false
+  },
+  "codeview.diff.kind.added": {
+    "text": "जोड़ा हुआ",
+    "reviewed": false
+  },
+  "codeview.diff.kind.removed": {
+    "text": "हटाया हुआ",
+    "reviewed": false
+  },
+  "codeview.diff.name.unchanged": {
+    "text": "वैसा ही: पिक {firstPick} और पिक {secondPick}",
+    "reviewed": false
+  },
+  "codeview.diff.name.changed": {
+    "text": "बदला हुआ: पिक {firstPick} और पिक {secondPick}, एंड {ends}",
+    "reviewed": false
+  },
+  "codeview.diff.name.added": {
+    "text": "जोड़ा हुआ: पिक {secondPick}",
+    "reviewed": false
+  },
+  "codeview.diff.name.removed": {
+    "text": "हटाया हुआ: पिक {firstPick}",
+    "reviewed": false
+  },
+  "codeview.diff.text.heading": {
+    "text": "अंतर सादे पाठ में",
+    "reviewed": false
+  },
+  "codeview.diff.text.name": {
+    "text": "अंतर का सादा पाठ, हर कार्ड की एक लाइन",
+    "reviewed": false
+  },
+  "codeview.diff.copy": {
+    "text": "पाठ कॉपी करें",
+    "reviewed": false
+  },
+  "codeview.diff.copied": {
+    "text": "पाठ कॉपी हो गया।",
+    "reviewed": false
+  },
+  "codeview.diff.copyFailed": {
+    "text": "पाठ कॉपी नहीं हो सका। उसे चुनकर खुद कॉपी करें।",
+    "reviewed": false
+  },
+  "codeview.diff.download": {
+    "text": "पाठ फ़ाइल के रूप में डाउनलोड करें",
+    "reviewed": false
+  },
+  "codeview.diff.downloaded": {
+    "text": "पाठ फ़ाइल डाउनलोड हो गई।",
+    "reviewed": false
+  },
+  "codeview.refusal.dimension-mismatch": {
+    "text": "इन दोनों डिज़ाइनों की तुलना नहीं हो सकती, क्योंकि इनके कार्ड की बनावट अलग है: पहले में हुक की {firstHookRows} पंक्ति और {firstHookColumns} स्तंभ हैं, दूसरे में {secondHookRows} पंक्ति और {secondHookColumns} स्तंभ। एक ही कार्ड प्रोफ़ाइल के लिए बने दो डिज़ाइन चुनें।",
+    "reviewed": false
+  },
+  "codeview.refusal.profile-mismatch": {
+    "text": "ये दोनों डिज़ाइन अलग कार्ड प्रोफ़ाइल के लिए बने हैं: {firstProfileName} और {secondProfileName}। एक ही कार्ड प्रोफ़ाइल वाले दो डिज़ाइन चुनें।",
+    "reviewed": false
+  },
+  "codeview.refusal.too-many-picks": {
+    "text": "ये डिज़ाइन तुलना के लिए बहुत लंबे हैं। ज़्यादा से ज़्यादा {limit} पिक की तुलना हो सकती है, और इनमें {firstPicks} और {secondPicks} पिक हैं। छोटे डिज़ाइन चुनें।",
+    "reviewed": false
+  },
+  "error.codeview.load": {
+    "text": "कोड दृश्य लोड नहीं हो सका। बाकी स्क्रीन चल रही हैं।",
+    "reviewed": false
+  },
+  "notice.information": {
+    "text": "सूचना",
+    "reviewed": false
+  },
+  "notice.success": {
+    "text": "हो गया",
+    "reviewed": false
+  },
+  "notice.warning": {
+    "text": "सावधान",
+    "reviewed": false
+  },
+  "notice.error": {
+    "text": "समस्या",
+    "reviewed": false
+  },
+  "progress.reading": {
+    "text": "कार्ड पढ़ा जा रहा है…",
+    "reviewed": false
+  },
+  "progress.exporting": {
+    "text": "फ़ाइल तैयार हो रही है…",
+    "reviewed": false
+  },
+  "progress.saving": {
+    "text": "सहेजा जा रहा है…",
+    "reviewed": false
+  },
+  "theme.label": {
+    "text": "रात का करघा",
+    "reviewed": false
+  },
+  "theme.on": {
+    "text": "चालू",
+    "reviewed": false
+  },
+  "theme.off": {
+    "text": "बंद",
+    "reviewed": false
+  },
+  "disclosure.more": {
+    "text": "और",
+    "reviewed": false
+  },
+  "disclosure.settings": {
+    "text": "सेटिंग",
+    "reviewed": false
+  },
+  "state.retry": {
+    "text": "फिर कोशिश करें",
+    "reviewed": false
+  },
+  "status.screen": {
+    "text": "स्क्रीन खुल रही है…",
+    "reviewed": false
+  },
+  "keep.list.empty.next": {
+    "text": "अपना पहला डिज़ाइन रखने के लिए उसे नाम दें और सहेजें दबाएँ।",
+    "reviewed": false
+  },
+  "scan.batch.empty.next": {
+    "text": "शुरू करने के लिए एक कार्ड की फ़ोटो चुनें।",
+    "reviewed": false
+  },
+  "nav.advanced": {
+    "text": "उन्नत",
+    "reviewed": false
+  },
+  "landing.headline": {
+    "text": "करघे के पंच कार्ड पढ़ें। डिज़ाइन फिर से बुनें।",
+    "reviewed": false
+  },
+  "landing.step.scan": {
+    "text": "कार्ड स्कैन करें",
+    "reviewed": false
+  },
+  "landing.step.weave": {
+    "text": "बुनते हुए देखें",
+    "reviewed": false
+  },
+  "landing.step.keep": {
+    "text": "डिज़ाइन सहेजें",
+    "reviewed": false
+  },
+  "landing.steps.name": {
+    "text": "यह कैसे काम करता है",
+    "reviewed": false
+  },
+  "landing.tile.try": {
+    "text": "आज़माएँ",
+    "reviewed": false
+  },
+  "landing.scanLink": {
+    "text": "अपना कार्ड स्कैन करें",
+    "reviewed": false
+  },
+  "weave.purpose": {
+    "text": "करघे में धागा डालने से पहले देखें कि डिज़ाइन पिक-दर-पिक कैसे बुना जाएगा।",
+    "reviewed": false
+  },
+  "weave.nextStep": {
+    "text": "डिज़ाइन बुनने के लिए चलाएँ दबाएँ, या रंग बदलने के लिए सेटिंग खोलें।",
+    "reviewed": false
+  },
+  "keep.purpose": {
+    "text": "इस डिज़ाइन को अपने ब्राउज़र में रखें, या इलेक्ट्रॉनिक करघे के लिए फ़ाइल बनाएँ।",
+    "reviewed": false
+  },
+  "keep.nextStep": {
+    "text": "डिज़ाइन को नाम दें और सहेजें दबाएँ, या करघे के लिए फ़ाइल डाउनलोड करें।",
+    "reviewed": false
+  },
+  "scan.purpose": {
+    "text": "फ़ोटो से कार्ड पढ़ें और हर कार्ड को एक पिक के रूप में अपने डिज़ाइन में जोड़ें।",
+    "reviewed": false
+  },
+  "scan.nextStep": {
+    "text": "एक कार्ड की फ़ोटो चुनें, निशान जाँचें, फिर कार्ड स्वीकार करें।",
+    "reviewed": false
+  },
+  "codeview.purpose": {
+    "text": "डिज़ाइन के हर कार्ड को बिट की एक पंक्ति के रूप में देखें, और दो डिज़ाइनों की तुलना करें।",
+    "reviewed": false
+  },
+  "codeview.nextStep": {
+    "text": "कोई डिज़ाइन खोलें, फिर उसकी दूसरे से तुलना करें, या उसकी पिकें एक के बाद एक देखें।",
+    "reviewed": false
+  },
+  "card.title": {
+    "text": "पिक {pick} का कार्ड",
+    "reviewed": false
+  },
+  "card.desc": {
+    "text": "{total} हुक की जगह में से {punched} में छेद",
+    "reviewed": false
+  },
+  "card.damaged": {
+    "text": "यह कार्ड ख़राब है",
+    "reviewed": false
+  },
+  "card.missing": {
+    "text": "यह कार्ड नहीं है",
+    "reviewed": false
+  },
+  "card.mismatch": {
+    "text": "यह कार्ड, कार्ड प्रोफ़ाइल से मेल नहीं खाता",
+    "reviewed": false
+  },
+  "card.cannotDraw": {
+    "text": "कार्ड प्रोफ़ाइल सही नहीं है, इसलिए यह कार्ड नहीं दिखाया जा सकता",
+    "reviewed": false
+  },
+  "hero.title": {
+    "text": "जैकार्ड करघा, जिसमें ताने के धागे उठ रहे हैं",
+    "reviewed": false
+  },
+  "hero.desc": {
+    "text": "जैकार्ड हेड के नीचे एक पंच कार्ड है, जो सूइयों पर दबता है। कार्ड में जहाँ छेद हैं, वहाँ के हुक ऊपर उठते हैं और उनके ताने के धागे बाकी से ऊपर उठ जाते हैं; ये ज़्यादा ऊँचे और सुनहरे दिखाए गए हैं। उठे हुए ताने के धागे: {lifted}। बाना एक बार उनके नीचे से निकलता है।",
+    "reviewed": false
+  },
+  "hero.desc.plain": {
+    "text": "जैकार्ड हेड के नीचे एक पंच कार्ड है, जो सूइयों पर दबता है। ताने के धागे नीचे अपनी जगह पर हैं: कोई हुक ऊपर नहीं उठा और कोई धागा नहीं उठा। बाना एक बार निकलता है।",
+    "reviewed": false
+  },
+  "photo.loomHero.alt": {
+    "text": "संग्रहालय के हॉल में खड़ा एक बड़ा पुराना जैकार्ड करघा। ऊँचे गहरे लकड़ी के ढाँचे के ऊपर जैकार्ड हेड लगा है और उससे धागे नीचे आते हैं। पीछे काँच की दीवार के आगे हल्के रंग की तिरछी लकड़ी की बल्लियाँ हैं।",
+    "reviewed": false
+  },
+  "photo.sariPatternCards.alt": {
+    "text": "हथकरघे के दाईं ओर लटके पंच कार्डों का पास से लिया फ़ोटो। हर कार्ड सलेटी रंग का गत्ता है जिसमें गोल छेदों की कतारें हैं। बाईं ओर करघे से पीले धागे नीचे आ रहे हैं।",
+    "reviewed": false
+  },
+  "photo.kanchipuramHandloom.alt": {
+    "text": "सफ़ेद दीवार वाले कमरे में हथकरघे का लकड़ी का ढाँचा, नीचे से देखा हुआ। दाईं ओर पंच कार्डों की लंबी लड़ी लटकी है और ऊपर की बल्ली से पीले धागों का गुच्छा नीचे आ रहा है। बल्ली पर हरी डोरियाँ बँधी हैं।",
+    "reviewed": false
+  },
+  "photo.bradfordCardChain.alt": {
+    "text": "पुरानी मिल में जैकार्ड करघे का ऊपरी हिस्सा। हरे लोहे के जैकार्ड हेड से पंच कार्डों की लंबी पट्टी एक मुड़ी हुई धातु की नाली से गुज़रती है, और हेड से नीचे करघे तक धागों का परदा लटका है।",
+    "reviewed": false
+  },
+  "photo.bradfordCardStack.alt": {
+    "text": "एक पुरानी मिल में करघा, जिसके ऊपर लंबी ट्यूबलाइट जल रही है। ऊपर बाईं ओर पंच कार्डों का मोड़कर रखा गट्ठर लटका है। नीचे करघे पर सफ़ेद कपड़ा है जिस पर बारीक गहरे नीले चौखाने हैं।",
+    "reviewed": false
+  },
+  "art.cardDiamond.alt": {
+    "text": "क्रीम रंग की मेज़ पर डायमंड नमूने का एक पंच कार्ड, ऊपर से देखा हुआ। कार्ड हल्के भूरे गत्ते का है, कोने सीधे हैं और हल्की छाया पड़ रही है। उसमें गोल छेद नियमित ढंग से कतारों में किए गए हैं। हर छोटी भुजा के बीच में एक बड़ा छेद है और ऊपर-नीचे के कोनों के पास डोरी पिरोने के छोटे छेद हैं।",
+    "reviewed": false
+  },
+  "art.cardBorder.alt": {
+    "text": "क्रीम रंग की मेज़ पर बॉर्डर नमूने का एक पंच कार्ड, ऊपर से देखा हुआ। हल्के भूरे गत्ते का ज़्यादातर हिस्सा सादा है। ऊपर और नीचे के किनारे के पास कुछ गोल छेद हैं, हर छोटी भुजा के बीच में एक बड़ा छेद है और कोनों के पास डोरी के छोटे छेद हैं।",
+    "reviewed": false
+  },
+  "art.cardFloral.alt": {
+    "text": "क्रीम रंग की मेज़ पर फूलदार नमूने का एक पंच कार्ड, ऊपर से देखा हुआ। हल्के भूरे गत्ते पर गोल छेदों की छोटी कतारें गुच्छों में हैं। हर छोटी भुजा के बीच में एक बड़ा छेद है और कोनों के पास डोरी के छोटे छेद हैं।",
+    "reviewed": false
+  },
+  "art.gridDiamond.alt": {
+    "text": "डायमंड नमूना, सफ़ेद पट्टी पर छोटे चौखानों के जाल के रूप में। गहरे हरे चौखाने वे ताने के धागे हैं जो उठते हैं, हल्के चौखाने नीचे रहते हैं। गहरे चौखानों से एक छल्ला और भरा हुआ बीच बनता है, यानी एक डायमंड, जो तीन कतारों में चार-चार बार दोहराया गया है। पतली रेखाएँ बताती हैं कि एक दोहराव कहाँ ख़त्म होकर अगला शुरू होता है।",
+    "reviewed": false
+  },
+  "art.clothDiamond.alt": {
+    "text": "डायमंड नमूने का बुना हुआ कपड़ा। गहरे लाल ज़मीन पर क्रीम रंग के डायमंड हैं, हर एक भरे हुए बीच के चारों ओर छल्ले जैसा, तीन कतारों में चार-चार।",
+    "reviewed": false
+  },
+  "art.clothBorder.alt": {
+    "text": "बॉर्डर नमूने का बुना हुआ कपड़ा। हर किनारे पर गहरे लाल धागों की ज़िगज़ैग और एक सीधी लाल रेखा नीचे तक जाती है। बीच में कपड़ा क्रीम रंग का है और उस पर आर-पार बारीक सुनहरी रेखाएँ हैं।",
+    "reviewed": false
+  },
+  "art.clothFloral.alt": {
+    "text": "फूलदार नमूने का बुना हुआ कपड़ा। गहरे हरे ज़मीन पर आड़ी-खड़ी पट्टियों से बने क्रीम रंग के फूल तीन कतारों में हैं, और कुछ कतारों के बाद कपड़े के आर-पार एक पतली सुनहरी रेखा है।",
+    "reviewed": false
+  },
+  "art.clothLost.alt": {
+    "text": "तीन खोए हुए कार्डों के साथ बुना डायमंड कपड़ा। गहरे लाल ज़मीन पर क्रीम डायमंड की कतारों के आर-पार लाल-सफ़ेद तिरछी जाली की तीन पतली पट्टियाँ हैं, हर खोए कार्ड के लिए एक।",
+    "reviewed": false
+  },
+  "art.chain8.alt": {
+    "text": "डायमंड नमूने के आठ पंच कार्ड, लाल डोरियों से एक लड़ी में पिरोए हुए, क्रीम मेज़ पर चार-चार की दो कतारों में रखे हैं। हर कार्ड को अगले से दो डोरियाँ जोड़ती हैं। कतारों के दाएँ सिरे पर दो लंबी डोरियाँ मुड़कर लड़ी को निचली कतार में वापस ले जाती हैं।",
+    "reviewed": false
+  },
+  "credits.photos.heading": {
+    "text": "फ़ोटो के श्रेय",
+    "reviewed": false
+  },
+  "credits.photos.item": {
+    "text": "{title}, फ़ोटो: {author}।",
+    "reviewed": false
+  },
+  "credits.photos.source": {
+    "text": "स्रोत का पन्ना",
+    "reviewed": false
+  },
+  "credits.photos.change": {
+    "text": "बदलाव: आकार छोटा किया, फ़ॉर्मेट बदला।",
+    "reviewed": false
+  },
+  "processLoop.title": {
+    "text": "पंच कार्ड से कपड़ा बुना जा रहा है",
+    "reviewed": false
+  },
+  "processLoop.desc": {
+    "text": "हर सात सेकंड में दोहराता चित्र। एक पंच कार्ड जैकार्ड हेड में सरककर आता है और उसके छेद जल उठते हैं। छेदों के नीचे के हुक ऊपर उठकर अपने ताने के धागे उठाते हैं, उनके नीचे से बाना निकलता है और कपड़े की एक और पंक्ति जुड़ जाती है। कार्ड एक के बाद एक, और तेज़ी से, {picks} पिक तक आते हैं, जब तक कपड़ा पूरा न हो जाए।",
+    "reviewed": false
+  },
+  "processLoop.desc.still": {
+    "text": "{picks} पिक का पूरा बुना कपड़ा, और जैकार्ड हेड में आख़िरी पंच कार्ड, जिसके छेद जल रहे हैं। छेदों के नीचे के हुक ऊपर हैं और अपने ताने के धागे उठाए हुए हैं। कुछ भी हिलता नहीं।",
+    "reviewed": false
+  },
+  "processLoop.pause": {
+    "text": "करघे का चित्र रोकें",
+    "reviewed": false
+  },
+  "processLoop.play": {
+    "text": "करघे का चित्र चलाएँ",
+    "reviewed": false
+  },
+  "nav.home": {
+    "text": "नक्शा, मुखपृष्ठ",
+    "reviewed": false
+  },
+  "home.confirm": {
+    "text": "आपके स्कैन किए कार्ड सहेजे नहीं गए हैं। क्या इन्हें छोड़कर शुरुआत पर जाएँ?",
+    "reviewed": false
+  },
+  "home.confirmYes": {
+    "text": "शुरुआत पर जाएँ",
+    "reviewed": false
+  },
+  "nav.menu": {
+    "text": "मेनू",
+    "reviewed": false
+  },
+  "nav.scanCard": {
+    "text": "कार्ड स्कैन करें",
+    "reviewed": false
+  },
+  "landing.eyebrow": {
+    "text": "जैकार्ड कार्ड रीडर",
+    "reviewed": false
+  },
+  "landing.headline.accent": {
+    "text": "फिर से",
+    "reviewed": false
+  },
+  "landing.lead": {
+    "text": "पंच कार्ड की फ़ोटो लें। नक्शा उसके छेद पढ़ता है, दिखाता है कि उनसे कैसा कपड़ा बुना जाएगा, और डिज़ाइन आपके करघे के लिए सहेज लेता है।",
+    "reviewed": false
+  },
+  "landing.trySample": {
+    "text": "नमूना आज़माएँ",
+    "reviewed": false
+  },
+  "landing.facts.name": {
+    "text": "नक्शा के बारे में तीन बातें",
+    "reviewed": false
+  },
+  "landing.fact.uploads.value": {
+    "text": "0",
+    "reviewed": false
+  },
+  "landing.fact.uploads.label": {
+    "text": "अपलोड: आपकी फ़ोटो आपके डिवाइस पर ही रहती हैं",
+    "reviewed": false
+  },
+  "landing.fact.offline.value": {
+    "text": "ऑफ़लाइन",
+    "reviewed": false
+  },
+  "landing.fact.offline.label": {
+    "text": "पहली बार खोलने के बाद बिना नेटवर्क के भी चलता है",
+    "reviewed": false
+  },
+  "landing.fact.picks.label": {
+    "text": "पिक हीरा नमूने में",
+    "reviewed": false
+  },
+  "landing.samples.name": {
+    "text": "नमूना डिज़ाइन",
+    "reviewed": false
+  },
+  "landing.how.eyebrow": {
+    "text": "यह कैसे काम करता है",
+    "reviewed": false
+  },
+  "landing.how.heading": {
+    "text": "कार्ड से कपड़े तक तीन कदम",
+    "reviewed": false
+  },
+  "landing.how.heading.accent": {
+    "text": "कपड़े",
+    "reviewed": false
+  },
+  "landing.how.subtitle": {
+    "text": "कार्ड पढ़ें, डिज़ाइन देखें, कपड़ा बुनते देखें।",
+    "reviewed": false
+  },
+  "landing.how.card.title": {
+    "text": "कार्ड पढ़ें",
+    "reviewed": false
+  },
+  "landing.how.card.text": {
+    "text": "पंच कार्ड की फ़ोटो लें और उसे खोलें। नक्शा हर छेद पढ़ता है: छेद हो तो धागा उठता है, न हो तो नीचे रहता है।",
+    "reviewed": false
+  },
+  "landing.how.card.chip.holes": {
+    "text": "गोल छेद",
+    "reviewed": false
+  },
+  "landing.how.card.chip.pick": {
+    "text": "एक कार्ड, एक पिक",
+    "reviewed": false
+  },
+  "landing.how.pattern.title": {
+    "text": "डिज़ाइन देखें",
+    "reviewed": false
+  },
+  "landing.how.pattern.text": {
+    "text": "सारे कार्ड मिलकर डिज़ाइन बनाते हैं, हर पिक की एक पंक्ति। गहरा खाना उठने वाला धागा है, हल्का खाना नीचे रहने वाला।",
+    "reviewed": false
+  },
+  "landing.how.pattern.chip.dark": {
+    "text": "गहरा: उठता है",
+    "reviewed": false
+  },
+  "landing.how.pattern.chip.pale": {
+    "text": "हल्का: नीचे रहता है",
+    "reviewed": false
+  },
+  "landing.how.cloth.title": {
+    "text": "कपड़ा देखें",
+    "reviewed": false
+  },
+  "landing.how.cloth.text": {
+    "text": "कपड़ा एक-एक पिक करके बुना जाता है, जैसे करघे पर बुना जाएगा। करघे में धागा डालने से पहले धागों के रंग बदलकर देखें।",
+    "reviewed": false
+  },
+  "landing.how.cloth.chip.pick": {
+    "text": "पिक-दर-पिक",
+    "reviewed": false
+  },
+  "landing.how.cloth.chip.colours": {
+    "text": "आपके रंग",
+    "reviewed": false
+  },
+  "landing.can.eyebrow": {
+    "text": "आप क्या कर सकते हैं",
+    "reviewed": false
+  },
+  "landing.can.heading": {
+    "text": "अपने पुराने कार्डों को काम में लाएँ",
+    "reviewed": false
+  },
+  "landing.can.heading.accent": {
+    "text": "काम",
+    "reviewed": false
+  },
+  "landing.can.subtitle": {
+    "text": "सब कुछ इसी डिवाइस पर चलता है, पंजीकरण की ज़रूरत नहीं।",
+    "reviewed": false
+  },
+  "landing.can.read.title": {
+    "text": "कार्ड पढ़ें",
+    "reviewed": false
+  },
+  "landing.can.read.text": {
+    "text": "पंच कार्ड की फ़ोटो खोलें, नक्शा हर छेद ढूँढ लेता है। हर कार्ड एक पिक बन जाता है।",
+    "reviewed": false
+  },
+  "landing.can.read.chip": {
+    "text": "फ़ोटो से",
+    "reviewed": false
+  },
+  "landing.can.read.action": {
+    "text": "स्कैन खोलें",
+    "reviewed": false
+  },
+  "landing.can.weave.title": {
+    "text": "बुनाई का पूर्वावलोकन",
+    "reviewed": false
+  },
+  "landing.can.weave.text": {
+    "text": "करघे में धागा डालने से पहले कपड़े को पिक-दर-पिक बुनते देखें, और धागों के दूसरे रंग आज़माएँ।",
+    "reviewed": false
+  },
+  "landing.can.weave.action": {
+    "text": "नमूना बुनें",
+    "reviewed": false
+  },
+  "landing.can.export.title": {
+    "text": "BMP निर्यात करें",
+    "reviewed": false
+  },
+  "landing.can.export.text": {
+    "text": "इलेक्ट्रॉनिक करघे के लिए BMP फ़ाइल बनाएँ: हर एंड का एक खाना, हर पिक की एक पंक्ति।",
+    "reviewed": false
+  },
+  "landing.can.export.chip.one": {
+    "text": "1-बिट",
+    "reviewed": false
+  },
+  "landing.can.export.chip.eight": {
+    "text": "8-बिट",
+    "reviewed": false
+  },
+  "landing.can.export.action": {
+    "text": "BMP फ़ाइल बनाएँ",
+    "reviewed": false
+  },
+  "landing.can.keep.title": {
+    "text": "संस्करण सहेजें",
+    "reviewed": false
+  },
+  "landing.can.keep.text": {
+    "text": "डिज़ाइन इसी डिवाइस पर सहेजें। बदलाव को नए संस्करण के रूप में सहेजें, तो पहले वाला डिज़ाइन वैसा ही रहता है।",
+    "reviewed": false
+  },
+  "landing.can.keep.chip": {
+    "text": "इसी डिवाइस पर",
+    "reviewed": false
+  },
+  "landing.can.keep.action": {
+    "text": "सहेजें खोलें",
+    "reviewed": false
+  },
+  "landing.can.code.title": {
+    "text": "कोड दृश्य",
+    "reviewed": false
+  },
+  "landing.can.code.text": {
+    "text": "हर कार्ड को 1 और 0 की एक पंक्ति में देखें, और दो डिज़ाइनों की तुलना करके बदले हुए छेद ढूँढें।",
+    "reviewed": false
+  },
+  "landing.can.code.action": {
+    "text": "कोड दृश्य खोलें",
+    "reviewed": false
+  },
+  "landing.can.repair.title": {
+    "text": "मरम्मत के अनुमान",
+    "reviewed": false
+  },
+  "landing.can.repair.text": {
+    "text": "कोई कार्ड खो जाए या खराब हो जाए, तो नक्शा आसपास के कार्डों से अंदाज़ा लगाता है कि वह कैसा था, और कारण भी दिखाता है। अनुमान सिर्फ़ अनुमान है।",
+    "reviewed": false
+  },
+  "landing.can.repair.chip": {
+    "text": "अनुमान, पक्की बात नहीं",
+    "reviewed": false
+  },
+  "landing.can.repair.action": {
+    "text": "मरम्मत के अनुमान देखें",
+    "reviewed": false
+  },
+  "landing.can.offline.title": {
+    "text": "बिना नेटवर्क भी चलता है",
+    "reviewed": false
+  },
+  "landing.can.offline.text": {
+    "text": "पहली बार खोलने के बाद नक्शा को नेटवर्क नहीं चाहिए। आपकी फ़ोटो और डिज़ाइन इसी डिवाइस पर रहते हैं।",
+    "reviewed": false
+  },
+  "landing.can.offline.chip": {
+    "text": "पंजीकरण नहीं",
+    "reviewed": false
+  },
+  "landing.try.eyebrow": {
+    "text": "नमूना आज़माएँ",
+    "reviewed": false
+  },
+  "landing.try.heading": {
+    "text": "अपना कार्ड स्कैन करने से पहले एक नमूना बुनें",
+    "reviewed": false
+  },
+  "landing.try.heading.accent": {
+    "text": "नमूना",
+    "reviewed": false
+  },
+  "landing.try.subtitle": {
+    "text": "एक चुनें और उसे पिक-दर-पिक बुनते देखें।",
+    "reviewed": false
+  },
+  "landing.sample.diamond": {
+    "text": "गोल छल्ले और भरे केंद्र: एक हीरा, जो पूरे कपड़े पर दोहराया गया है।",
+    "reviewed": false
+  },
+  "landing.sample.border": {
+    "text": "हर किनारे पर टेढ़ी-मेढ़ी रेखा और एक सीधी रेखा, बीच में सादा कपड़ा।",
+    "reviewed": false
+  },
+  "landing.sample.floral": {
+    "text": "पंक्तियों में छोटे फूल, और हर कुछ पंक्तियों के बाद एक पतली सुनहरी रेखा।",
+    "reviewed": false
+  },
+  "landing.tile.try.name": {
+    "text": "आज़माएँ: {design}",
+    "reviewed": false
+  },
+  "landing.sample.ends.one": {
+    "text": "{count} एंड",
+    "reviewed": false
+  },
+  "landing.sample.ends.other": {
+    "text": "{count} एंड",
+    "reviewed": false
+  },
+  "landing.night.eyebrow": {
+    "text": "रात का करघा",
+    "reviewed": false
+  },
+  "landing.night.heading": {
+    "text": "अँधेरे में आँखों को आराम",
+    "reviewed": false
+  },
+  "landing.night.heading.accent": {
+    "text": "अँधेरे में",
+    "reviewed": false
+  },
+  "landing.night.text": {
+    "text": "देर तक काम कर रहे हैं? रात का करघा पन्ने को गहरा कर देता है और शब्द साफ़ रखता है, ताकि एक दीये की रोशनी में भी कार्ड आसानी से पढ़ा जाए। नक्शा आपकी पसंद इसी डिवाइस पर याद रखता है।",
+    "reviewed": false
+  },
+  "landing.night.action": {
+    "text": "रात पर जाएँ",
+    "reviewed": false
+  },
+  "landing.night.actionBack": {
+    "text": "दिन पर लौटें",
+    "reviewed": false
+  },
+  "landing.band.heading": {
+    "text": "एक कार्ड लाइए",
+    "reviewed": false
+  },
+  "landing.band.heading.accent": {
+    "text": "कार्ड",
+    "reviewed": false
+  },
+  "landing.band.text": {
+    "text": "एक छेददार कार्ड की फ़ोटो लें, या किसी नमूने से शुरू करें। करघा लगाने से पहले नक्शा आपको कपड़ा दिखा देता है।",
+    "reviewed": false
+  },
+  "landing.band.privacy": {
+    "text": "आपकी फ़ोटो इसी डिवाइस पर पढ़ी जाती हैं। कुछ भी अपलोड नहीं होता।",
+    "reviewed": false
+  },
+  "landing.footer.line": {
+    "text": "नक्शा करघे के पंच कार्ड पढ़ता है और डिज़ाइन को फिर से बुनता है, आपके ब्राउज़र में ही।",
+    "reviewed": false
+  },
+  "landing.footer.links": {
+    "text": "नक्शा के पन्ने",
+    "reviewed": false
+  },
+  "landing.footer.licence": {
+    "text": "नक्शा {licence} के तहत जारी किया गया है।",
+    "reviewed": false
+  },
+  "landing.footer.github": {
+    "text": "GitHub पर सोर्स कोड",
+    "reviewed": false
+  },
+  "landing.footer.built": {
+    "text": "Kiro से बनाया गया; योजना और प्रॉम्प्ट का मसौदा Claude के साथ",
+    "reviewed": false
+  },
+  "landing.footer.fonts.heading": {
+    "text": "फ़ॉन्ट के श्रेय",
+    "reviewed": false
+  },
+  "landing.footer.fonts.item": {
+    "text": "{family}, {foundry} द्वारा",
+    "reviewed": false
+  },
+  "theme.toNight": {
+    "text": "रात के करघे पर जाएँ",
+    "reviewed": false
+  },
+  "theme.toDay": {
+    "text": "दिन के करघे पर जाएँ",
+    "reviewed": false
+  },
+  "language.short.en": {
+    "text": "EN",
+    "reviewed": false
+  },
+  "language.short.hi": {
+    "text": "हि",
+    "reviewed": false
+  },
+  "weave.heading": {
+    "text": "डिज़ाइन को कपड़ा बनते देखें",
+    "reviewed": false
+  },
+  "weave.heading.accent": {
+    "text": "कपड़ा",
+    "reviewed": false
+  },
+  "weave.card.cloth": {
+    "text": "कपड़ा",
+    "reviewed": false
+  },
+  "weave.card.controls": {
+    "text": "नियंत्रण",
+    "reviewed": false
+  },
+  "keep.heading": {
+    "text": "डिज़ाइन सहेजें, या उसे करघे तक ले जाएँ",
+    "reviewed": false
+  },
+  "keep.heading.accent": {
+    "text": "करघे",
+    "reviewed": false
+  },
+  "keep.details.legend": {
+    "text": "इस डिज़ाइन के बारे में",
+    "reviewed": false
+  },
+  "credits.photos.caption": {
+    "text": "फ़ोटो: {author}, {licence}",
+    "reviewed": false
+  },
+  "scan.steps.label": {
+    "text": "कार्ड पढ़ने के चरण",
+    "reviewed": false
+  },
+  "scan.step.photograph": {
+    "text": "फ़ोटो खींचें",
+    "reviewed": false
+  },
+  "scan.step.check": {
+    "text": "छेद जाँचें",
+    "reviewed": false
+  },
+  "scan.step.weave": {
+    "text": "बुनें",
+    "reviewed": false
+  },
+  "scan.demo.title": {
+    "text": "डेमो कार्ड",
+    "reviewed": false
+  },
+  "scan.demo.chip": {
+    "text": "डेमो",
+    "reviewed": false
+  },
+  "scan.demo.made.heading": {
+    "text": "हमारे बनाए कार्ड",
+    "reviewed": false
+  },
+  "scan.demo.made.note": {
+    "text": "डेमो कार्ड की बनावट पर हमने बनाए हैं। किसी असली करघे का कार्ड नहीं।",
+    "reviewed": false
+  },
+  "scan.demo.real.heading": {
+    "text": "असली कार्ड की फ़ोटो",
+    "reviewed": false
+  },
+  "scan.demo.real.note": {
+    "text": "असली फ़ोटो। नक्शा का रीडर डेमो कार्ड की बनावट के लिए बना है, इसलिए हो सकता है वह इन्हें ठीक न पढ़े।",
+    "reviewed": false
+  },
+  "scan.demo.credit": {
+    "text": "{author}, {licence}",
+    "reviewed": false
+  },
+  "scan.demo.downloadShort": {
+    "text": "डाउनलोड",
+    "reviewed": false
+  },
+  "scan.demo.download": {
+    "text": "{name} की मूल तस्वीर डाउनलोड करें",
+    "reviewed": false
+  },
+  "scan.demo.needsConnection": {
+    "text": "इस तस्वीर के लिए इंटरनेट चाहिए। इंटरनेट से जुड़ें और इसे फिर दबाएँ।",
+    "reviewed": false
+  },
+  "scan.demo.loadFailed": {
+    "text": "यह तस्वीर लोड नहीं हो सकी। इसे फिर दबाएँ।",
+    "reviewed": false
+  },
+  "scan.demo.name.clean1": {
+    "text": "साफ़ 1",
+    "reviewed": false
+  },
+  "scan.demo.name.clean2": {
+    "text": "साफ़ 2",
+    "reviewed": false
+  },
+  "scan.demo.name.clean3": {
+    "text": "साफ़ 3",
+    "reviewed": false
+  },
+  "scan.demo.name.tilted": {
+    "text": "तिरछा",
+    "reviewed": false
+  },
+  "scan.demo.name.noisy": {
+    "text": "धुंधला",
+    "reviewed": false
+  },
+  "scan.demo.name.noisyTilted": {
+    "text": "धुंधला और तिरछा",
+    "reviewed": false
+  },
+  "scan.demo.name.blank": {
+    "text": "कार्ड नहीं (पढ़ना विफल होना चाहिए)",
+    "reviewed": false
+  },
+  "scan.demo.name.single1": {
+    "text": "एक कार्ड 1",
+    "reviewed": false
+  },
+  "scan.demo.name.single2": {
+    "text": "एक कार्ड 2",
+    "reviewed": false
+  },
+  "scan.demo.name.single3": {
+    "text": "एक कार्ड 3",
+    "reviewed": false
+  },
+  "scan.demo.name.single4": {
+    "text": "एक कार्ड 4",
+    "reviewed": false
+  },
+  "scan.demo.name.chain": {
+    "text": "कार्डों की लड़ी",
+    "reviewed": false
+  },
+  "scan.demo.name.bradfordChain": {
+    "text": "ब्रैडफ़र्ड की लड़ी",
+    "reviewed": false
+  },
+  "scan.demo.name.bradfordStack": {
+    "text": "ब्रैडफ़र्ड का ढेर",
+    "reviewed": false
+  },
+  "scan.demo.name.sari": {
+    "text": "साड़ी के कार्ड",
+    "reviewed": false
+  },
+  "demo.chip": {
+    "text": "डेमो",
+    "reviewed": false
+  },
+  "keep.demo.title": {
+    "text": "डेमो डिज़ाइन",
+    "reviewed": false
+  },
+  "keep.demo.intro": {
+    "text": "अभी अपना डिज़ाइन नहीं है? ये बटन आपके लिए एक डिज़ाइन सहेज देते हैं, ताकि सूची, संस्करण और तुलना में कुछ दिखे।",
+    "reviewed": false
+  },
+  "keep.demo.save": {
+    "text": "डेमो डिज़ाइन सहेजें",
+    "reviewed": false
+  },
+  "keep.demo.edit": {
+    "text": "डेमो में बदलाव करें",
+    "reviewed": false
+  },
+  "keep.demo.saved": {
+    "text": "डेमो डिज़ाइन सहेजा गया। वह सूची में है।",
+    "reviewed": false
+  },
+  "keep.demo.edited": {
+    "text": "डेमो डिज़ाइन का नया संस्करण सहेजा गया, कुछ छेद बदलकर। सूची में उसके संस्करण खोलें।",
+    "reviewed": false
+  },
+  "keep.demo.editNote": {
+    "text": "डेमो बदलाव {count}: कुछ छेद बदले",
+    "reviewed": false
+  },
+  "keep.demo.loom.heading": {
+    "text": "करघे की फ़ाइल डाउनलोड करें",
+    "reviewed": false
+  },
+  "keep.demo.loom.note": {
+    "text": "डायमंड नमूना, नक्शा के अपने एक्सपोर्ट से बना। किसी असली करघे पर जाँची नहीं गई।",
+    "reviewed": false
+  },
+  "keep.demo.loom.link": {
+    "text": "{name} डाउनलोड करें",
+    "reviewed": false
+  },
+  "codeview.demo.title": {
+    "text": "डेमो से कोड व्यू आज़माएँ",
+    "reviewed": false
+  },
+  "codeview.demo.intro": {
+    "text": "तीन बटन, जिनके लिए अपना कार्ड नहीं चाहिए।",
+    "reviewed": false
+  },
+  "codeview.demo.load": {
+    "text": "डायमंड कार्ड को कोड में खोलें",
+    "reviewed": false
+  },
+  "codeview.demo.breakpoint": {
+    "text": "पिक {pick} पर ब्रेकपॉइंट लगाएँ",
+    "reviewed": false
+  },
+  "codeview.demo.compare": {
+    "text": "बदले हुए संस्करण से तुलना करें",
+    "reviewed": false
+  },
+  "codeview.demo.needDesign": {
+    "text": "ब्रेकपॉइंट के लिए कम से कम {count} पिक का डिज़ाइन चाहिए। पहले डायमंड कार्ड खोलें।",
+    "reviewed": false
+  },
+  "codeview.demo.compareHint": {
+    "text": "तुलना करने पर एक डेमो डिज़ाइन और उसका बदला हुआ संस्करण सहेजे जाते हैं (सहेजें स्क्रीन की सूची में), फिर दोनों की तुलना होती है।",
+    "reviewed": false
+  },
+  "codeview.demo.breakpointSet": {
+    "text": "पिक {pick} पर ब्रेकपॉइंट लगा है।",
+    "reviewed": false
+  },
+  "tryit.demo.title": {
+    "text": "सुधार के सुझाव आज़माएँ",
+    "reviewed": false
+  },
+  "tryit.demo.intro": {
+    "text": "हर बटन डायमंड को एक कार्ड पर निशान लगाकर खोलता है, ताकि आप देख सकें कि नक्शा उसके लिए क्या सुझाता है।",
+    "reviewed": false
+  },
+  "tryit.demo.lostCard": {
+    "text": "खोया हुआ कार्ड दिखाएँ",
+    "reviewed": false
+  },
+  "tryit.demo.tornCard": {
+    "text": "फटा हुआ कार्ड दिखाएँ",
+    "reviewed": false
+  },
+  "tryit.demo.hint": {
+    "text": "खोया कार्ड लड़ी में नहीं है। फटा कार्ड है, पर पढ़ा नहीं जा सकता। बुनाई पर सुधार सुझाएँ दबाएँ।",
     "reviewed": false
   }
 }

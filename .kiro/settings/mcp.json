@@ -8,6 +8,12 @@
       },
       "disabled": false,
       "autoApprove": ["resolve-library-id", "query-docs"]
+    },
+    "loom-mcp": {
+      "command": "node",
+      "args": ["tools/loom-mcp/src/server.ts"],
+      "disabled": false,
+      "autoApprove": ["validate_profile", "read_card_photo", "render_cloth", "diff_designs"]
     }
   }
 }

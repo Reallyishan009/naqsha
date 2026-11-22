@@ -6,7 +6,9 @@ import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseCardProfile } from '../../src/codec/index.ts';
 import { buildPrecache } from '../../scripts/build_precache.ts';
-import { checkBundle, findAbsoluteUrls, findEntryChunk } from '../../scripts/check_bundle.ts';
+import { CHUNK_MARKERS, SCAN_ONLY_MARKER, checkBundle, findAbsoluteUrls, findEntryChunk } from '../../scripts/check_bundle.ts';
+import { IMAGE_CREDITS } from '../../src/ui/state/imageCredits.ts';
+import { REPOSITORY_URL } from '../../src/ui/state/siteCredits.ts';
 import viteConfig from '../../vite.config.ts';
 import { stripComments } from '../support/source.ts';
 
@@ -32,7 +34,7 @@ describe('deploy configuration', () => {
     expect(viteConfig.base).toBe('./');
   });
 
-  it('R13.3 the only fetch in src/ui is the Card_Profile request, built from profileUrl()', () => {
+  it('R13.3 the only fetches in src/ui are the Card_Profile request, built from profileUrl(), and the demo images', () => {
     const calls: string[] = [];
     for (const file of filesUnder(SRC, /\.(ts|tsx)$/)) {
       const code = stripComments(readFileSync(file, 'utf8'), false);
@@ -40,7 +42,8 @@ describe('deploy configuration', () => {
         calls.push(`${path.relative(SRC, file).split(path.sep).join('/')}: ${match[1]!.trim()}`);
       }
     }
-    expect(calls).toEqual(['ui/App.tsx: profileUrl()']);
+    // The second is the Scan screen's demo images: a GET of a file served with the app (public/demo), nothing of the user's sent.
+    expect(calls).toEqual(['ui/App.tsx: profileUrl()', 'ui/platform/browser.ts: demoImageUrl)']);
   });
 
   it('R13.7 no analytics string in the app source or index.html', () => {
@@ -69,7 +72,7 @@ describe('deploy configuration', () => {
     expect(JSON.parse(readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'))).not.toHaveProperty('env');
   });
 
-  it('R13.5 every font stack ends in a generic family, and no web font is declared', () => {
+  it('R13.5 every font stack ends in a generic family, and a web font is declared only in the token file, from a relative path', () => {
     const tokens = readFileSync(path.join(SRC, 'ui', 'theme', 'tokens.css'), 'utf8');
     const stacks = [...tokens.matchAll(/--font-[\w-]+:\s*([^;]+);/g)].map((match) => match[1]!.trim());
     expect(stacks.length).toBeGreaterThanOrEqual(3);
@@ -78,8 +81,15 @@ describe('deploy configuration', () => {
       expect(['serif', 'sans-serif', 'monospace', 'system-ui'], stack).toContain(last);
     }
     for (const file of filesUnder(SRC, /\.css$/)) {
-      const css = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-      expect(css, `${file} declares a web font`).not.toMatch(/@font-face|@import/);
+      const withFaces = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+      expect(withFaces, `${file} imports a style sheet`).not.toMatch(/@import/);
+      // Only the token file declares fonts (R1.2), and each src is a path with no scheme and no host.
+      const faces = [...withFaces.matchAll(/@font-face\s*\{[^}]*\}/g)].map((match) => match[0]);
+      if (!file.endsWith(`${path.sep}theme${path.sep}tokens.css`)) expect(faces, `${file} declares a web font`).toEqual([]);
+      for (const face of faces) {
+        for (const source of face.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)) expect(source[1], `${file}: ${source[1]}`).toMatch(/^\/?fonts\/[\w-]+\.woff2$/);
+      }
+      const css = withFaces.replace(/@font-face\s*\{[^}]*\}/g, '');
       for (const match of css.matchAll(/font-family:\s*([^;]+);/g)) {
         const value = match[1]!.trim();
         const generic = /(^|,)\s*(serif|sans-serif|monospace|system-ui)\s*$/.test(value);
@@ -143,6 +153,21 @@ describe('built site', () => {
     expect(report.gzippedBytes).toBeGreaterThan(0);
   });
 
+  it('cards-as-code R9.3 R9.9 the Scan and Code view markers are each in exactly one chunk, and not the entry chunk', () => {
+    expect(CHUNK_MARKERS.map((entry) => entry.name)).toEqual(['Scan', 'Code view']);
+    expect(SCAN_ONLY_MARKER).toBe(CHUNK_MARKERS[0]!.marker);
+    expect(CHUNK_MARKERS.map((entry) => entry.marker)).toContain('naqsha-code-view-listing');
+    const report = checkBundle(outDir);
+    const entryText = readFileSync(path.join(outDir, report.entryChunk), 'utf8');
+    for (const { name, marker } of CHUNK_MARKERS) {
+      expect(entryText.includes(marker), `${name} marker in the entry chunk`).toBe(false);
+      const holding = report.markerChunks.filter((chunk) => chunk.name === name);
+      expect(holding, `${name} marker chunks`).toHaveLength(1);
+      expect(holding[0]!.file).not.toBe(path.basename(report.entryChunk));
+      expect(holding[0]!.gzippedBytes).toBeGreaterThan(0);
+    }
+  });
+
   it('R13.4 the entry chunk requests the Card_Profile at a path that exists inside the Built_Site', () => {
     const entry = findEntryChunk(readFileSync(path.join(outDir, 'index.html'), 'utf8'));
     expect(entry).not.toBeNull();
@@ -163,13 +188,24 @@ describe('built site', () => {
         build: { outDir: productionDir, emptyOutDir: true },
       });
       const allowedUrl = /^https?:\/\/(www\.w3\.org\/|react\.dev\/errors)/;
+      // The links the footer shows: the licence and source page of each photo (read from docs/IMAGE_CREDITS.md, the exact
+      // addresses and nothing else) and the app's own repository. They are links a visitor may follow, never requests the page makes.
+      // The real card photos' CREDITS.md is bundled whole to read its authors and licences; its addresses are links too.
+      const realCardLinks = (readFileSync(path.join(ROOT, 'public/demo/real-cards/CREDITS.md'), 'utf8').match(/https?:\/\/[^\s"'`)\\]+/g) ?? []);
+      const creditLinks = [...IMAGE_CREDITS.flatMap((credit) => [credit.licenceUrl, credit.sourceUrl]), ...realCardLinks];
+      expect(creditLinks.length).toBeGreaterThan(0);
+      const allowedLink = (url: string): boolean =>
+        // The address pattern below stops at a closing parenthesis, so a link that holds one is seen up to it.
+        creditLinks.some((link) => link === url || link.startsWith(`${url})`)) ||
+        url === REPOSITORY_URL ||
+        url.startsWith(`${REPOSITORY_URL}/`);
       const files = filesUnder(productionDir, /\.(js|css|html)$/);
       expect(files.length).toBeGreaterThan(0);
       const offenders: string[] = [];
       for (const file of files) {
         const text = readFileSync(file, 'utf8');
         for (const url of text.match(/https?:\/\/[^\s"'`)\\]+/g) ?? []) {
-          if (!allowedUrl.test(url)) offenders.push(`${path.relative(productionDir, file)}: ${url}`);
+          if (!allowedUrl.test(url) && !allowedLink(url)) offenders.push(`${path.relative(productionDir, file)}: ${url}`);
         }
         if (/analytics|gtag|googletagmanager|plausible|hotjar|mixpanel|sentry|XMLHttpRequest|sendBeacon|WebSocket|EventSource/i.test(text)) {
           offenders.push(`${path.relative(productionDir, file)}: analytics or network API`);

@@ -9,3 +9,8 @@ media/check/
 
 # hooks evidence log (written by .kiro/hooks commands via scripts/log_hook.ts)
 logs/
+
+# downloaded source fonts for scripts/fonts/subset.sh (dev only, the woff2 files are committed)
+scripts/fonts/source/
+# loom-mcp export output
+tools/loom-mcp/out/

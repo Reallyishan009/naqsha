@@ -1,5 +1,6 @@
 .screen {
   max-width: 60rem;
+  margin-inline: auto;
 }
 .screenTitle,
 .sectionTitle {
@@ -9,36 +10,139 @@
 }
 .panel {
   margin: 16px 0;
-  padding: 16px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
 }
-.empty {
-  padding: 16px;
+/* Every sheet of the screen is a rounded card with a soft shadow; the selector is longer than the Panel's own, so it wins whatever the order. */
+.screen .panel {
+  border-radius: var(--radius-media);
+  box-shadow: var(--shadow-lift);
+}
+/* The three steps: pills in a row that wraps. The current one is bold with a filled dot; the others have an open dot (shape and weight, not colour alone). */
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  color: var(--ink);
+  font-size: var(--text-small);
+  line-height: 1.4;
+  background: var(--tint);
+  border-radius: var(--radius-pill);
+}
+.step[data-current='true'] {
+  font-weight: 700;
+  color: var(--on-primary);
+  background: var(--accent);
+}
+.stepDot {
+  flex: none;
+  width: 0.7em;
+  height: 0.7em;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+.step[data-current='true'] .stepDot {
+  background: currentColor;
+}
+/* The photo chooser is the big zone of the screen: a dashed rounded frame, the drawn card beside the controls (above them where the line is too short for both). */
+.screen .zone {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-5);
+  border: 2px dashed var(--ink-soft);
+  border-radius: var(--radius-card);
+}
+.zoneArt {
+  flex: 0 1 10rem;
+  width: 10rem;
+  max-width: 100%;
+  margin-inline: auto;
+  border-radius: var(--radius-media);
+  box-shadow: var(--shadow-lift);
+}
+.zoneBody {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+/* One column below 1024 px, in DOM order: the chooser and the controls, then the Demo cards. */
+.layout {
+  display: block;
+}
+.main,
+.side {
+  min-width: 0;
+}
+.side {
+  margin: 16px 0;
+}
+/* From 1024 px: the controls (left) and the Demo cards (right) side by side; the DOM order is kept, only the grid places them. */
+@media (min-width: 1024px) {
+  .screen {
+    max-width: 72rem;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-areas: 'main side';
+    gap: var(--space-5);
+    align-items: start;
+  }
+  .main {
+    grid-area: main;
+  }
+  .side {
+    grid-area: side;
+  }
+  /* The "No cards yet" panel is compact here so "More" stays in the first screen: a small drawing beside the two lines, less padding. */
+  .compactEmpty > div {
+    padding: var(--space-2) var(--space-4);
+  }
+  .compactEmpty [data-empty-state] {
+    display: grid;
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    align-items: center;
+    column-gap: var(--space-4);
+    row-gap: 0;
+  }
+  .compactEmpty [data-empty-state] > div:first-child {
+    grid-row: 1 / span 2;
+    grid-column: 1;
+  }
+  .compactEmpty [data-empty-state] > p {
+    grid-column: 2;
+  }
+  .compactEmpty [data-empty-state] svg {
+    width: 3.5rem;
+  }
+}
+.more {
+  margin: 16px 0 0;
+}
+.emptyText {
+  margin: 0;
   color: var(--ink-soft);
-  background: var(--surface);
-  border: 1px dashed var(--line);
-  border-radius: var(--radius-panel);
+}
+.confirm {
+  margin-top: 8px;
 }
 .busy {
   font-weight: 700;
 }
-.failure {
-  margin: 8px 0;
-  padding: 12px 16px;
-  border: 2px solid var(--madder);
-  border-radius: var(--radius-panel);
+.details {
+  margin-top: 8px;
 }
 .details code {
   font-family: var(--font-data);
-}
-.file {
-  display: block;
-  min-height: var(--touch-target);
-  max-width: 100%;
-  margin: 8px 0;
-  font: inherit;
 }
 .row {
   display: flex;
@@ -46,27 +150,6 @@
   align-items: center;
   gap: 8px;
   margin: 8px 0;
-}
-.button {
-  min-width: var(--touch-target);
-  min-height: var(--touch-target);
-  padding: 0 16px;
-  color: var(--ink);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  cursor: pointer;
-}
-.button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.confirm {
-  margin-top: 8px;
-  padding: 12px 16px;
-  background: var(--surface);
-  border: 2px solid var(--zari);
-  border-radius: var(--radius-panel);
 }
 .legend {
   margin: 0 0 8px;
@@ -116,13 +199,43 @@
   width: 100%;
   height: auto;
 }
+/* The sweep: a clip box over the photo with one band that crosses it once (transform only, 640 ms = 2 x --motion-long).
+   The band stops outside the photo, and under reduced motion nothing is drawn. */
+.sweep {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sweep::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 18%;
+  background: var(--zari);
+  opacity: 0.35;
+  transform: translateX(-100%);
+  animation: sweepAcross calc(var(--motion-long) * 2) ease-in-out 1 both;
+}
+@keyframes sweepAcross {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(560%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sweep {
+    display: none;
+  }
+}
 .marker {
   position: absolute;
   min-width: var(--touch-target);
   min-height: var(--touch-target);
   padding: 0;
-  background: transparent;
-  border: 0;
   cursor: pointer;
   transform: translate(-50%, -50%);
 }
@@ -146,7 +259,7 @@
 }
 .marker[data-shape='filled'] .shape {
   background: var(--indigo);
-  border: 2px solid #fff;
+  border: 2px solid var(--on-hole);
 }
 .marker[data-shape='ring'] .shape {
   background: transparent;
@@ -186,9 +299,6 @@
   max-width: 12rem;
   height: auto;
 }
-.thumbCard {
-  fill: var(--card);
-}
 .note {
   margin: 8px 0;
   color: var(--ink-soft);
@@ -201,7 +311,7 @@
   width: 100%;
   max-width: 32rem;
   overflow: hidden;
-  background: #000;
+  background: var(--hole);
 }
 .video {
   display: block;
@@ -220,8 +330,4 @@
   border-radius: var(--radius-control);
   transform: translate(-50%, -50%);
   pointer-events: none;
-}
-.button:focus-visible {
-  outline: 3px solid var(--zari);
-  outline-offset: 2px;
 }
