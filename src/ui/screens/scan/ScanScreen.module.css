@@ -74,20 +74,35 @@
   flex: 1 1 16rem;
   min-width: 0;
 }
-.chooseBand {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-  align-items: flex-start;
+/* One column below 1024 px, in DOM order: the chooser and the controls, then the Demo cards. */
+.layout {
+  display: block;
 }
-.chooseBand > .zone {
-  flex: 1 1 24rem;
+.main,
+.side {
   min-width: 0;
 }
-.chooseBand > :not(.zone) {
-  flex: 1 1 20rem;
-  min-width: 0;
+.side {
   margin: 16px 0;
+}
+/* From 1024 px: the controls (left) and the Demo cards (right) side by side; the DOM order is kept, only the grid places them. */
+@media (min-width: 1024px) {
+  .screen {
+    max-width: 72rem;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-areas: 'main side';
+    gap: var(--space-5);
+    align-items: start;
+  }
+  .main {
+    grid-area: main;
+  }
+  .side {
+    grid-area: side;
+  }
 }
 .more {
   margin: 16px 0 0;

@@ -141,14 +141,16 @@ export function ScanView(props: ScanViewProps) {
           );
         })}
       </ol>
+      {/* From 1024 px the controls sit on the left and the Demo cards on the right. The DOM order is the tab order and the narrow-screen order. */}
+      <div className={styles.layout}>
+      <div className={styles.main}>
       {profile === null ? (
         <Panel>
           <p className={styles.emptyText}>{t('scan.needsProfile')}</p>
         </Panel>
       ) : (
         <>
-          {/* Choose-a-photo is the first control, outside the Disclosure. The Demo cards sit beside it, below it where the line is short. */}
-          <div className={styles.chooseBand}>
+          {/* Choose-a-photo is the first control, outside the Disclosure. The Demo cards come last in the DOM and sit on the right. */}
           <Panel as="section" aria-labelledby="scan-choose-title" className={`${styles.panel} ${styles.zone}`}>
             {/* A hint of what to photograph: a card drawn by the app. */}
             <ArtImage art={ART['card-diamond']} alt={t(ART['card-diamond'].altKey)} className={styles.zoneArt} />
@@ -180,14 +182,6 @@ export function ScanView(props: ScanViewProps) {
             {scan.status === 'failed' ? <FailureMessage failure={scan.failure} t={t} /> : null}
             </div>
           </Panel>
-          <DemoCards
-            t={t}
-            base={import.meta.env.BASE_URL}
-            busy={scan.status === 'reading'}
-            notice={props.demoNotice ?? null}
-            onDemo={props.onDemo ?? noopDemo}
-          />
-          </div>
           <ProfileNotice profile={profile} t={t} />
           {batch.length === 0 ? (
             <StateMessage variant="empty" illustration={<NoCardsScannedIllustration />} message={t('scan.batch.empty')} next={t('scan.batch.empty.next')} t={t} />
@@ -236,6 +230,19 @@ export function ScanView(props: ScanViewProps) {
           ) : null}
         </Panel>
       </Disclosure>
+      </div>
+      </div>
+      {profile === null ? null : (
+        <div className={styles.side}>
+          <DemoCards
+            t={t}
+            base={import.meta.env.BASE_URL}
+            busy={scan.status === 'reading'}
+            notice={props.demoNotice ?? null}
+            onDemo={props.onDemo ?? noopDemo}
+          />
+        </div>
+      )}
       </div>
     </section>
   );
