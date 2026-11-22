@@ -230,12 +230,12 @@ Scope notes:
 
 ### Requirement 12: Languages and text
 
-**User Story:** As a Hindi-speaking weaver, I want the app in Hindi by default and English on request, so that I can use it without reading English.
+**User Story:** As a Hindi-speaking weaver, I want the app in the browser's language when it is Hindi, and English otherwise, with English on request, so that I can use it without reading English.
 
 #### Acceptance Criteria
 
 1. THE App SHALL hold all user-visible text in the `hi` and `en` Translation_Files, with no user-visible string literal in components.
-2. WHEN the App starts without a stored language choice, THE App SHALL use Hindi.
+2. WHEN the App starts without a stored language choice, THE App SHALL use Hindi if `navigator.language` starts with "hi", and English otherwise.
 3. THE App SHALL provide a language switch visible on every Screen, with a Touch_Target of at least 48 CSS pixels.
 4. WHEN the user switches language, THE App SHALL change all visible text and the document `lang` attribute without reloading the page, and SHALL keep the Current_Pattern.
 5. THE App SHALL store the language choice in browser storage and restore it on the next start.

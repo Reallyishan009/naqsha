@@ -6,7 +6,7 @@ import { decodePng } from '../../support/png.ts';
 import { validateCardGrid } from '../../../src/codec/index.ts';
 import type { CardGrid } from '../../../src/codec/index.ts';
 import { DICTIONARIES, translator } from '../../../src/ui/i18n/messages.ts';
-import { ScanView } from '../../../src/ui/screens/scan/ScanScreen.tsx';
+import { NARROW_VIEW_PX, ScanView, scrollResultIntoView } from '../../../src/ui/screens/scan/ScanScreen.tsx';
 import type { ScanViewProps } from '../../../src/ui/screens/scan/ScanScreen.tsx';
 import {
   initialScanState,
@@ -311,5 +311,21 @@ describe('scan state', () => {
       }),
       { numRuns: NUM_RUNS, seed: SEED },
     );
+  });
+});
+
+describe('scroll the result into view', () => {
+  it('R-scroll on a narrow screen the result scrolls to the top, instantly under reduced motion and smoothly otherwise; never on a wide one or a null target', () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 200, max: 3000 }), fc.boolean(), (width, reduced) => {
+        const calls: ScrollIntoViewOptions[] = [];
+        const target = { scrollIntoView: (o?: boolean | ScrollIntoViewOptions) => void calls.push(o as ScrollIntoViewOptions) };
+        const done = scrollResultIntoView(target, width, reduced);
+        if (width >= NARROW_VIEW_PX) return !done && calls.length === 0;
+        return done && calls.length === 1 && calls[0]!.block === 'start' && calls[0]!.behavior === (reduced ? 'auto' : 'smooth');
+      }),
+      { numRuns: 100, seed: 7 },
+    );
+    expect(scrollResultIntoView(null, 390, false)).toBe(false);
   });
 });

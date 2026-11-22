@@ -11,11 +11,11 @@ import type { KeyValueStorage } from '../../../src/ui/platform/browser.ts';
 const ROOT = path.resolve(import.meta.dirname, '../../..');
 const INDEX_HTML = readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 
-/** The one inline classic script of index.html. */
-function inlineScript(html: string): string {
-  const match = /<script>([\s\S]*?)<\/script>/i.exec(html);
-  if (match === null) throw new Error('index.html has no inline classic script');
-  return match[1]!;
+/** The one classic script of index.html: the text of the file its `src` names, in public/. */
+function themeScript(html: string): string {
+  const match = /<script\s+src="\.\/([^"]+)"\s*><\/script>/i.exec(html);
+  if (match === null) throw new Error('index.html has no classic theme script with a src');
+  return readFileSync(path.join(ROOT, 'public', match[1]!), 'utf8');
 }
 
 type Environment = {
@@ -25,7 +25,7 @@ type Environment = {
   dark: boolean | 'throws';
 };
 
-/** Runs the script of index.html in a fresh context and returns the `data-theme` it set (null if none). */
+/** Runs the theme script of index.html in a fresh context and returns the `data-theme` it set (null if none). */
 function runInlineScript(environment: Environment): string | null {
   let applied: string | null = null;
   const localStorage = {
@@ -47,7 +47,7 @@ function runInlineScript(environment: Environment): string | null {
       },
     },
   };
-  vm.runInNewContext(inlineScript(INDEX_HTML), { localStorage, window, document });
+  vm.runInNewContext(themeScript(INDEX_HTML), { localStorage, window, document });
   return applied;
 }
 
@@ -134,7 +134,7 @@ describe('theme storage in platform/browser', () => {
   });
 });
 
-describe('the inline theme script of index.html', () => {
+describe('the theme script of index.html', () => {
   const cases: Array<{ name: string; environment: Environment; stored: ThemeName | null; prefersDark: boolean }> = [
     { name: 'stored day, dark preference', environment: { stored: 'day', dark: true }, stored: 'day', prefersDark: true },
     { name: 'stored night, light preference', environment: { stored: 'night', dark: false }, stored: 'night', prefersDark: false },
@@ -155,40 +155,59 @@ describe('the inline theme script of index.html', () => {
   }
 
   it('R4.12 sits in the head before the module script', () => {
-    const scriptAt = INDEX_HTML.indexOf('<script>');
+    const scriptAt = INDEX_HTML.indexOf('<script src="./theme-init.js">');
     const moduleAt = INDEX_HTML.indexOf('<script type="module"');
     expect(scriptAt).toBeGreaterThan(INDEX_HTML.indexOf('<head>'));
     expect(scriptAt).toBeLessThan(INDEX_HTML.indexOf('</head>'));
     expect(moduleAt).toBeGreaterThan(scriptAt);
   });
+
+  it('deploy: index.html has no inline script, because script-src is \'self\'', () => {
+    const inline = [...INDEX_HTML.matchAll(/<script\b([^>]*)>/gi)].filter((match) => !/\bsrc\s*=/i.test(match[1]!));
+    expect(inline).toEqual([]);
+  });
 });
 
 describe('themeScriptProblems (the check-bundle rule)', () => {
-  const script = '<script>(function(){localStorage.getItem(\'naqsha.theme\');document.documentElement.setAttribute(\'data-theme\',\'day\')})()</script>';
+  const script = '<script src="./theme-init.js"></script>';
   const module = '<script type="module" crossorigin src="./assets/index-a.js"></script>';
   const sheet = '<link rel="stylesheet" crossorigin href="./assets/index-a.css">';
+  const themeText = "localStorage.getItem('naqsha.theme');document.documentElement.setAttribute('data-theme','day')";
+  const read = (src: string): string | null => (src === './theme-init.js' ? themeText : null);
 
   it('R4.12 passes when the script comes before the module script and the stylesheet link', () => {
-    expect(themeScriptProblems(`<head>${script}${module}${sheet}</head>`)).toEqual([]);
+    expect(themeScriptProblems(`<head>${script}${module}${sheet}</head>`, read)).toEqual([]);
   });
 
   it('R4.12 names the module script when the theme script follows it', () => {
-    expect(themeScriptProblems(`<head>${module}${script}${sheet}</head>`)).toEqual([
-      'the inline theme script in dist/index.html comes after the module script',
+    expect(themeScriptProblems(`<head>${module}${script}${sheet}</head>`, read)).toEqual([
+      'the theme script in dist/index.html comes after the module script',
     ]);
   });
 
   it('R4.12 names the stylesheet link when the theme script follows it', () => {
-    expect(themeScriptProblems(`<head>${sheet}${script}${module}</head>`)).toEqual([
-      'the inline theme script in dist/index.html comes after the stylesheet link',
+    expect(themeScriptProblems(`<head>${sheet}${script}${module}</head>`, read)).toEqual([
+      'the theme script in dist/index.html comes after the stylesheet link',
     ]);
   });
 
   it('R4.12 fails when the theme script is missing', () => {
-    expect(themeScriptProblems(`<head>${module}${sheet}</head>`)).toEqual(['dist/index.html has no inline classic theme script']);
+    expect(themeScriptProblems(`<head>${module}${sheet}</head>`, read)).toEqual(['dist/index.html has no classic theme script']);
+  });
+
+  it('R4.12 fails when the script file is missing or is not the theme script', () => {
+    expect(themeScriptProblems(`<head>${script}${module}${sheet}</head>`, () => null)).toEqual(['dist/index.html has no classic theme script']);
+    expect(themeScriptProblems(`<head>${script}${module}${sheet}</head>`, () => 'alert(1)')).toEqual(['dist/index.html has no classic theme script']);
+  });
+
+  it('deploy: an inline script is a problem, because script-src is \'self\'', () => {
+    const inline = '<script>document.title="x"</script>';
+    expect(themeScriptProblems(`<head>${inline}${script}${module}${sheet}</head>`, read)).toEqual([
+      "dist/index.html has an inline script, which script-src 'self' blocks",
+    ]);
   });
 
   it('R4.12 the source index.html has the script before its module script', () => {
-    expect(themeScriptProblems(`${INDEX_HTML}<link rel="stylesheet" href="./a.css">`)).toEqual([]);
+    expect(themeScriptProblems(`${INDEX_HTML}<link rel="stylesheet" href="./a.css">`, (src) => (src === './theme-init.js' ? themeScript(INDEX_HTML) : null))).toEqual([]);
   });
 });

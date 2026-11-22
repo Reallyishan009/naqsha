@@ -1,0 +1,29 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Default language (approved R12.2 change) and Scan scroll-into-view": [
+      {
+        "executionId": "56fb63e1-7cc2-48c6-9f05-bb1662a46943",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795349806548
+      },
+      {
+        "executionId": "56fb63e1-7cc2-48c6-9f05-bb1662a46943",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795349835010
+      },
+      {
+        "executionId": "56fb63e1-7cc2-48c6-9f05-bb1662a46943",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795351707658
+      }
+    ],
+    "1. Both fixes": [
+      {
+        "executionId": "56fb63e1-7cc2-48c6-9f05-bb1662a46943",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795351707716
+      }
+    ]
+  }
+}

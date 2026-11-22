@@ -7,7 +7,7 @@ import { EN, HI } from '../../../src/ui/i18n/messages.ts';
 import { initialAppState } from '../../../src/ui/state/appState.ts';
 import type { Language, Screen } from '../../../src/ui/types.ts';
 
-const SCREENS: Screen[] = ['weave', 'keep', 'scan', 'code'];
+const SCREENS: Array<Exclude<Screen, 'home'>> = ['weave', 'keep', 'scan', 'code'];
 const LANGUAGES: Language[] = ['hi', 'en'];
 const ROOT = path.resolve(import.meta.dirname, '../../..');
 
@@ -50,6 +50,13 @@ describe('navigation', () => {
     }
   });
 
+  it('R9.2 on the home screen no navigation item has aria-current, and there are still four items', () => {
+    for (const language of LANGUAGES) {
+      const buttons = navButtons('home', language);
+      expect(buttons).toHaveLength(4);
+      expect(buttons.map((button) => button.attributes.includes('aria-current')), language).toEqual([false, false, false, false]);
+    }
+  });
   it('R9.4 no navigation item carries the word from nav.advanced (the Code view screen shows it as a chip instead), and nav.code is unchanged', () => {
     expect(EN['nav.code']).toBe('Code');
     for (const language of LANGUAGES) {

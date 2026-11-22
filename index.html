@@ -9,14 +9,7 @@
     <link rel="apple-touch-icon" href="./icons/icon-192.png" />
     <meta name="theme-color" content="#FFFBF2" />
     <title>Naqsha</title>
-    <script>
-      (function () {
-        var theme = null;
-        try { var stored = localStorage.getItem('naqsha.theme'); if (stored === 'day' || stored === 'night') theme = stored; } catch (e) {}
-        if (theme === null) { try { theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'day'; } catch (e) { theme = 'day'; } }
-        document.documentElement.setAttribute('data-theme', theme);
-      })();
-    </script>
+    <script src="./theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>

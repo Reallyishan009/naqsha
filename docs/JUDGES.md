@@ -4,7 +4,7 @@ Open https://naqsha-ashen.vercel.app/ . No login. Every step below needs one cli
 
 ## The 10 steps
 
-1. **Weave, "Diamond"** (under Try it). Expect: a cloth weaving pick by pick, "Pick 36 of 36" at the end. "Border" and "Floral" do the same with other designs.
+1. **Home, then Weave, "Diamond"**. The app opens on Home; press **Weave** for the Weave tool (Try it is under the empty cloth), or choose the Diamond tile on Home, which also ends on Weave. Expect: a cloth weaving pick by pick, "Pick 36 of 36" at the end. "Border" and "Floral" do the same with other designs.
 2. **Weave, "Show a lost card"** (under Try it, in "More" once a cloth is shown). Expect: the Diamond with one card missing and a notice "1 card could not be read". Press **Suggest repairs** to see what Naqsha guesses for it and why. "Show a torn card" does the same for a card that is there but unreadable.
 3. **Weave, "Download PNG"** (printable card, under Try it). Expect: a PNG of one card of the Diamond, 720 x 540 px. You can read it back in step 4.
 4. **Scan, "Clean 1"** (Demo cards, "Cards made by us"). Expect: the card is read and every hook is marked punched or not. Tap a mark to correct it, then **Accept this card**. "Clean 2", "Clean 3" and "Tilted" work the same way.

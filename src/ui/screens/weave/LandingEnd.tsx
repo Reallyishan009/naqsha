@@ -114,13 +114,11 @@ export function BringBand({ language, t, onScan, onTrySample }: BringBandProps) 
   );
 }
 /** The screens the footer links to, in the order of the header's navigation. */
-const FOOTER_SCREENS: ReadonlyArray<Screen> = ['weave', 'keep', 'scan', 'code'];
+const FOOTER_SCREENS: ReadonlyArray<Exclude<Screen, 'home'>> = ['weave', 'keep', 'scan', 'code'];
 
 export type LandingFooterProps = {
   t: Translate;
   dispatch: Dispatch<AppAction>;
-  /** The Weave link is the page the visitor is on, so it takes them to the top of it. */
-  onTop: () => void;
 };
 
 /**
@@ -128,7 +126,7 @@ export type LandingFooterProps = {
  * the four screens, the licence, the source on GitHub, how the app was made, the font credits and the photo credits
  * (the last list is generated from docs/IMAGE_CREDITS.md).
  */
-export function LandingFooter({ t, dispatch, onTop }: LandingFooterProps) {
+export function LandingFooter({ t, dispatch }: LandingFooterProps) {
   const base = import.meta.env.BASE_URL;
   return (
     <footer className={styles.footer} data-landing-section="footer">
@@ -146,7 +144,7 @@ export function LandingFooter({ t, dispatch, onTop }: LandingFooterProps) {
                 <ButtonLink
                   href={`#${screen}`}
                   variant="quiet"
-                  onActivate={() => (screen === 'weave' ? onTop() : dispatch({ type: 'navigate', screen }))}
+                  onActivate={() => dispatch({ type: 'navigate', screen })}
                 >
                   {t(`nav.${screen}`)}
                 </ButtonLink>

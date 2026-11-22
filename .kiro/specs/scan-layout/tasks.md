@@ -6,8 +6,8 @@ Small layout fix on the Scan screen. Credit target under 15, stop after about 12
 
 ## Tasks
 
-- [ ] 1. Scan two-column layout
-  - [-] 1.1 Two columns at 1024 px and wider, one column below, screenshots, commit
+- [x] 1. Scan two-column layout
+  - [x] 1.1 Two columns at 1024 px and wider, one column below, screenshots, commit
     - Problem: on Scan the Demo cards panel (src/ui/screens/scan/DemoCards.tsx, placed in `.chooseBand` beside the drop zone) is very tall and pushes everything after the drop zone far down: the Unverified notice, the Card profile control, the "No cards yet. Each card you accept is one pick." text, "Choose a photo of a card to begin." and the "More" section.
     - At 1024 px and wider, two columns. Left column top to bottom: the "Choose a photo of one card" Card (drop zone), then directly below it the Unverified notice, the Card profile control, the "No cards yet" text and "Choose a photo of a card to begin.", and the "More" section. Right column: the Demo cards panel at the top, content unchanged. The panel may be position: sticky below the header only if that covers nothing (the header is itself sticky; the sticky top offset must clear it, with the panel's own height possibly taller than the viewport: then leave it static); otherwise static.
     - Under 1024 px: one column in this order: the drop zone Card, the Unverified notice and the rest of the left column, then the Demo cards panel last. The Demo cards panel must not come before the controls at narrow widths.

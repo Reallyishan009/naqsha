@@ -25,6 +25,20 @@ export function readStoredLanguage(storage: KeyValueStorage | null): Language | 
   }
 }
 
+/** `navigator.language`, or undefined when it is missing or reading it throws. Never throws. */
+export function browserLanguage(): string | undefined {
+  try {
+    const value = typeof navigator === 'undefined' ? undefined : navigator.language;
+    return typeof value === 'string' ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+/** A stored language wins; otherwise Hindi when the browser language starts with "hi" (any case), else English. Never throws. */
+export function chooseLanguage(stored: Language | null, navigatorLanguage: string | undefined): Language {
+  if (stored !== null) return stored;
+  return typeof navigatorLanguage === 'string' && navigatorLanguage.toLowerCase().startsWith('hi') ? 'hi' : 'en';
+}
 /** Stores the language. Returns false when the storage refuses; the app carries on. Never throws. */
 export function storeLanguage(storage: KeyValueStorage | null, language: Language): boolean {
   if (storage === null) return false;

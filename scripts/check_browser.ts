@@ -17,6 +17,7 @@ import { generateSample } from '../src/ui/samples/sampleDesigns.ts';
 import { WINDOW_SIZE } from '../src/ui/state/codeView.ts';
 import { bmpMismatches, parseBmpHeader } from './checks/bmpHeader.ts';
 import { findChrome } from './checks/chrome.ts';
+import { readVercelHeaders } from './checks/headers.ts';
 import { parsePngInfo } from './checks/pngHeader.ts';
 import { decideOffline, formatOffline, offlineConditions } from './checks/offline.ts';
 import type { OfflineCheck, OfflineGroup } from './checks/offline.ts';
@@ -73,6 +74,8 @@ type Context = {
   cardPng: string | null;
   /** Index of the Diamond pick that was printed: the one with the most punched holes, so the read cannot pass on an empty card. */
   printedPickIndex: number;
+  /** The response headers the preview server sent for the start page, lower-case names. */
+  sentHeaders: Record<string, string>;
 };
 
 /** The accessible name of the header menu button in each language: pages under 1024 px draw it, and it holds the links and the two switches. */
@@ -130,6 +133,16 @@ async function goTo(page: Page, screen: Screen): Promise<void> {
   await page.waitFor(`document.querySelector('#screen-title')?.textContent.trim()===${JSON.stringify(EN[`nav.${screen}`])}`, `the ${screen} screen`);
 }
 
+/** Presses the Naqsha mark, whose name is the page language's `nav.home`, and waits for the home screen: its heading and the hero's loom slot. */
+async function goHome(page: Page): Promise<void> {
+  const language: Language = (await page.ev<string>('document.documentElement.lang')) === 'hi' ? 'hi' : 'en';
+  const words = WORDS[language];
+  await page.click(`document.querySelector('header button[aria-label=${JSON.stringify(words['nav.home'])}]')`, 'the Naqsha mark (home button)');
+  await page.waitFor(
+    `document.querySelector('#screen-title')?.textContent.trim()===${JSON.stringify(words['nav.home'])}&&!!document.querySelector('[data-hero-slot]')`,
+    `the home screen in ${language}`,
+  );
+}
 // ---------------------------------------------------------------- language, theme and font helpers (Stage A)
 
 const LANGUAGES = ['en', 'hi'] as const;
@@ -538,7 +551,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
           `(()=>{const h=document.querySelector('#screen-title');if(!h)return null;const r=h.getBoundingClientRect();return r.width>0&&r.height>0?h.textContent.trim():null})()`,
           'a visible screen heading',
         );
-        expect(heading === EN['nav.weave'] || heading === HI['nav.weave'], `the first screen heading is "${heading}", expected the Weave screen`);
+        expect(heading === EN['nav.home'] || heading === HI['nav.home'], `the first screen heading is "${heading}", expected the home screen`);
         await page.waitFor(
           `[...document.querySelectorAll('[data-sample="diamond"]')].some(b=>!b.disabled)`,
           'the card profile to load (Try it buttons enabled)',
@@ -570,14 +583,14 @@ function buildSteps(ctx: Context): BrowserStep[] {
         await pressLanguage(page, HI['language.hi']!);
         await page.waitFor(`document.documentElement.lang==='hi'`, 'lang hi');
         const hi = { lang: await lang(), heading: await heading(), nav: await page.ev<string>(`document.querySelector('nav').innerText`) };
-        expect(en.heading === EN['nav.weave'], `English heading is "${en.heading}", expected "${EN['nav.weave']}"`);
-        expect(hi.heading === HI['nav.weave'], `Hindi heading is "${hi.heading}", expected "${HI['nav.weave']}"`);
+        expect(en.heading === EN['nav.home'], `English heading is "${en.heading}", expected "${EN['nav.home']}"`);
+        expect(hi.heading === HI['nav.home'], `Hindi heading is "${hi.heading}", expected "${HI['nav.home']}"`);
         expect(en.nav !== hi.nav, 'the navigation text did not change between hi and en');
         await pressLanguage(page, EN['language.en']!);
         await page.waitFor(`document.documentElement.lang==='en'`, 'lang back to en');
         await closeMenu(page);
         const back = await heading();
-        expect(back === EN['nav.weave'], `after switching back, the heading is "${back}"`);
+        expect(back === EN['nav.home'], `after switching back, the heading is "${back}"`);
         return `en: lang=${en.lang} "${en.heading}"; hi: lang=${hi.lang} "${hi.heading}"; back to en: "${back}"`;
       },
     },
@@ -1050,12 +1063,13 @@ function buildSteps(ctx: Context): BrowserStep[] {
       async run() {
         const lines: string[] = [];
         try {
-          // A reload empties the Current_Pattern, so the Weave screen shows the Landing.
+          // A reload empties the Current_Pattern and opens the home screen, which is the Landing.
           await page.hardReload();
           await page.waitFor(`!!document.querySelector('#screen-title')`, 'the app after the reload');
           await page.setViewport(PHONE.width, PHONE.height);
           for (const language of LANGUAGES) {
-            await showScreen(page, 'weave', language);
+            await ensureLanguage(page, language);
+            await goHome(page);
             await page.waitFor(`!!document.querySelector('[data-hero-slot]')&&document.querySelectorAll('main [data-sample]').length===3`, `the Landing with its three Sample_Tiles in ${language}`);
             await settleLayout(page);
             const words = WORDS[language];
@@ -1118,6 +1132,70 @@ function buildSteps(ctx: Context): BrowserStep[] {
         }
         // The steps after this one start from a played sample, as before this step.
         await chooseSample(page, 'diamond');
+        return lines.join('\n');
+      },
+    },
+    {
+      name: 'home and Weave: Weave on a fresh app is the Weave tool (Try it, no hero), the mark brings the hero back, Diamond on the Landing ends on the cloth, at 390 and 1280 px',
+      async run() {
+        const lines: string[] = [];
+        try {
+          await ensureLanguage(page, 'en');
+          for (const [width, height] of [[390, 844], [1280, 900]] as const) {
+            await page.setViewport(width, height);
+            // A reload empties the Current_Pattern and opens the home screen.
+            await page.hardReload();
+            await page.waitFor(`!!document.querySelector('#screen-title')`, `the app after the reload at ${width} px`);
+            await ensureLanguage(page, 'en');
+            await page.waitFor(`document.querySelector('#screen-title')?.textContent.trim()===${JSON.stringify(EN['nav.home'])}&&!!document.querySelector('[data-hero-slot]')`, `the home screen with its hero at ${width} px`);
+            await clickNavItem(page, EN['nav.weave']!);
+            await page.waitFor(`document.querySelector('#screen-title')?.textContent.trim()===${JSON.stringify(EN['nav.weave'])}`, `the Weave screen at ${width} px`);
+            const weave = await page.ev<{ hero: boolean; tryIt: boolean; empty: boolean; tiles: number; current: string | null }>(
+              `(()=>{const m=document.querySelector('main');const text=m?m.innerText:'';const c=document.querySelector('header nav [aria-current]');return {hero:!!document.querySelector('[data-hero-slot]'),tryIt:text.includes(${JSON.stringify(EN['tryit.title'])}),empty:text.includes(${JSON.stringify(EN['weave.empty'])}),tiles:document.querySelectorAll('main [data-sample]').length,current:c?c.textContent.trim():null}})()`,
+            );
+            expect(!weave.hero, `Weave on a fresh app at ${width} px shows the Landing hero`);
+            expect(weave.tryIt && weave.empty && weave.tiles === 3, `Weave on a fresh app at ${width} px: Try it ${weave.tryIt}, empty message ${weave.empty}, ${weave.tiles} sample controls (expected true, true, 3)`);
+            await goHome(page);
+            const home = await page.ev<{ hero: boolean; current: boolean }>(`({hero:!!document.querySelector('[data-hero-slot]'),current:!!document.querySelector('header nav [aria-current]')})`);
+            expect(home.hero && !home.current, `the mark at ${width} px: hero ${home.hero}, a navigation item is current ${home.current} (expected true, false)`);
+            const total = generateSample(await profileOf(), 'diamond').length;
+            await page.click(`document.querySelector('main [data-sample="diamond"]')`, `the Diamond tile of the Landing at ${width} px`);
+            await page.waitFor(`!!(${PICK_TEXT})&&!document.querySelector('[data-hero-slot]')`, `the cloth after choosing Diamond on the Landing at ${width} px`, 5_000);
+            const seen = await playToEnd(page, total);
+            expect(seen[seen.length - 1] === total, `Diamond from the Landing at ${width} px ended at pick ${seen[seen.length - 1]} of ${total}`);
+            lines.push(`${width} px: Weave on a fresh app shows Try it, the empty message and ${weave.tiles} sample controls, no hero; the mark shows the hero with no current item; Diamond from the Landing plays to pick ${total} of ${total}`);
+          }
+        } finally {
+          await page.setViewport(900, 1000);
+        }
+        return lines.join('\n');
+      },
+    },
+    {
+      name: 'Weave Try it: Diamond lands the cloth heading just below the sticky header, at 390 and 1280 px',
+      async run() {
+        const lines: string[] = [];
+        try {
+          await ensureLanguage(page, 'en');
+          for (const [width, height] of [[390, 844], [1280, 900]] as const) {
+            await page.setViewport(width, height);
+            await chooseSample(page, 'diamond');
+            await page.waitFor(`!!${byText('h3', EN['weave.card.cloth']!)}`, `the cloth card at ${width} px`);
+            await page.ev('window.scrollTo(0,document.body.scrollHeight)');
+            await page.click(`document.querySelector('section[aria-labelledby="tryit-title"] [data-sample="diamond"]')`, `the Try it Diamond button at ${width} px`);
+            await sleep(1500);
+            const m = await page.ev<{ head: number; headBottom: number; header: number; play: number | null; inner: number }>(
+              `(()=>{const h=${byText('h3', EN['weave.card.cloth']!)};const hd=document.querySelector('header').getBoundingClientRect();const p=[...document.querySelectorAll('button')].find(b=>[${JSON.stringify(EN['weave.play'])},${JSON.stringify(EN['weave.pause'])}].includes(b.textContent.trim()));return {head:h.getBoundingClientRect().top,headBottom:h.getBoundingClientRect().bottom,header:hd.bottom,play:p?p.getBoundingClientRect().bottom:null,inner:innerHeight}})()`,
+            );
+            expect(m.head >= m.header - 1, `at ${width} px the cloth heading top ${m.head} is above the header bottom ${m.header}`);
+            expect(m.headBottom <= m.inner, `at ${width} px the cloth heading is below the view (${m.headBottom} > ${m.inner})`);
+            if (width === 1280) expect(m.play !== null && m.play <= m.inner, `at 1280 px the Play row bottom ${m.play} is below the view ${m.inner}`);
+            if (process.env['NAQSHA_TRYIT_SHOTS'] !== undefined) await page.screenshot(path.join(repoRoot, 'media', 'design', 'after-run4', `weave-tryit-landing-day-${width}.png`));
+            lines.push(`${width} px: cloth heading top ${Math.round(m.head)} px, header bottom ${Math.round(m.header)} px, Play row bottom ${m.play === null ? 'n/a' : Math.round(m.play)} px of ${m.inner}`);
+          }
+        } finally {
+          await page.setViewport(900, 1000);
+        }
         return lines.join('\n');
       },
     },
@@ -1291,6 +1369,32 @@ function buildSteps(ctx: Context): BrowserStep[] {
       },
     },
     {
+      name: 'Scan at 390 px: pressing the "Noisy and tilted" demo card scrolls the read result into the viewport',
+      async run() {
+        try {
+          await page.setViewport(390, 800);
+          await goTo(page, 'scan');
+          await page.waitFor(`!!document.querySelector('#scan-file')`, 'the photo chooser');
+          await page.ev(
+            `(()=>{if(document.querySelector('#scan-read-title'))[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===${JSON.stringify(EN['scan.discard'])})?.click()})()`,
+          );
+          await page.waitFor(`!document.querySelector('#scan-read-title')`, 'the earlier read to be discarded');
+          await page.ev(`window.scrollTo(0,0)`);
+          await page.waitFor(`!!document.querySelector('[data-demo="card-1-noisy-tilted.png"]')`, 'the "Noisy and tilted" demo card');
+          await page.click(`document.querySelector('[data-demo="card-1-noisy-tilted.png"]')`, 'the "Noisy and tilted" demo card');
+          await page.waitFor(`!!document.querySelector('#scan-read-title')`, 'the read result', 30_000);
+          const top = await page.waitFor<number>(
+            `(()=>{const e=document.querySelector('#scan-read-title');const t=e?e.getBoundingClientRect().top:null;return t!==null&&t>=0&&t<innerHeight?Math.round(t):null})()`,
+            'the read result to be scrolled into the viewport',
+            10_000,
+          );
+          return `the read result top is ${top} px in a ${390} px wide view`;
+        } finally {
+          await page.setViewport(900, 1000);
+        }
+      },
+    },
+    {
       name: 'Keep Demo card: "Download loom file" links give a BMP, 192 wide',
       async run() {
         await goTo(page, 'keep');
@@ -1443,6 +1547,8 @@ function buildSteps(ctx: Context): BrowserStep[] {
          * check of the Hero_Loom svg and its shapes (second design pass, task 4.1: the hero now holds the live Process_Loop).
          */
         const landingLoads = async (): Promise<string> => {
+          // The page may be on a Screen from an earlier check: the Naqsha mark brings the Landing back.
+          await goHome(page);
           const language: Language = (await page.ev<string>('document.documentElement.lang')) === 'hi' ? 'hi' : 'en';
           const words = WORDS[language];
           const seen = await page
@@ -1689,6 +1795,23 @@ function buildSteps(ctx: Context): BrowserStep[] {
         return text;
       },
     },
+    {
+      // The preview server sends the headers of vercel.json, so every step above ran under the deployed policy:
+      // the four Screens, the samples, the Landing, the downloads and the offline reload.
+      name: 'no Content-Security-Policy violation in the whole run',
+      async run() {
+        const expected = readVercelHeaders(repoRoot);
+        expect(
+          ctx.sentHeaders['content-security-policy'] === expected['Content-Security-Policy'],
+          `the preview server sent the policy ${JSON.stringify(ctx.sentHeaders['content-security-policy'])}, vercel.json has ${JSON.stringify(expected['Content-Security-Policy'])}`,
+        );
+        expect(
+          page.cspViolations.length === 0,
+          `the browser reported ${page.cspViolations.length} Content-Security-Policy violation(s):\n${page.cspViolations.join('\n')}`,
+        );
+        return 'every step ran under the Content-Security-Policy of vercel.json, and the browser reported no violation';
+      },
+    },
   ];
 }
 
@@ -1763,6 +1886,7 @@ async function main(): Promise<number> {
       saved: null,
       cardPng: null,
       printedPickIndex: 0,
+      sentHeaders: Object.fromEntries((await fetch(baseUrl)).headers.entries()),
     };
     const steps = buildSteps(ctx);
     const errorsAfterLoad: string[] = [];

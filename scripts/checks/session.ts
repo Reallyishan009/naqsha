@@ -12,6 +12,7 @@ import path from 'node:path';
 import { connectCdp } from './cdp.ts';
 import type { CdpClient } from './cdp.ts';
 import { chromeArgs, parseDevToolsActivePort } from './chrome.ts';
+import { readVercelHeaders } from './headers.ts';
 
 const repoRoot = path.resolve(import.meta.dirname, '..', '..');
 
@@ -29,6 +30,8 @@ type Evaluated<T> = { result: { value: T }; exceptionDetails?: { text: string; e
 
 export class Page {
   readonly consoleErrors: string[] = [];
+  /** Every Content-Security-Policy violation the page reported (the `securitypolicyviolation` event, or a "Refused to" message of the browser). */
+  readonly cspViolations: string[] = [];
   readonly cdp: CdpClient;
   constructor(cdp: CdpClient) {
     this.cdp = cdp;
@@ -37,20 +40,32 @@ export class Page {
   async init(downloadDir: string): Promise<void> {
     const { cdp } = this;
     cdp.on('Runtime.consoleAPICalled', (params) => {
-      if (params.type !== 'error' && params.type !== 'assert') return;
       const args = Array.isArray(params.args) ? (params.args as { value?: unknown; description?: string }[]) : [];
+      const said = args.map((a) => String(a.value ?? a.description ?? '')).join(' ');
+      if (/Content Security Policy|Refused to/i.test(said)) this.cspViolations.push(`console.${String(params.type)}: ${said}`);
+      if (params.type !== 'error' && params.type !== 'assert') return;
       this.consoleErrors.push(`console.${String(params.type)}: ${args.map((a) => String(a.value ?? a.description ?? '')).join(' ')}`);
     });
     cdp.on('Runtime.exceptionThrown', (params) => {
       const details = params.exceptionDetails as { text?: string; exception?: { description?: string } } | undefined;
       this.consoleErrors.push(`uncaught: ${details?.exception?.description ?? details?.text ?? 'exception'}`);
     });
+    cdp.on('Runtime.bindingCalled', (params) => {
+      if (params.name === 'naqshaCsp') this.cspViolations.push(String(params.payload));
+    });
     cdp.on('Log.entryAdded', (params) => {
       const entry = params.entry as { level?: string; text?: string; url?: string } | undefined;
+      if (entry !== undefined && /Content Security Policy|Refused to/i.test(entry.text ?? '')) this.cspViolations.push(`log: ${entry.text ?? ''} ${entry.url ?? ''}`.trim());
       if (entry?.level === 'error') this.consoleErrors.push(`log: ${entry.text ?? ''} ${entry.url ?? ''}`.trim());
     });
     await cdp.call('Page.enable');
     await cdp.call('Runtime.enable');
+    // Every document, from its first script on, reports a policy violation through this binding. A script added
+    // through the protocol is not itself subject to the page's policy.
+    await cdp.call('Runtime.addBinding', { name: 'naqshaCsp' });
+    await cdp.call('Page.addScriptToEvaluateOnNewDocument', {
+      source: `document.addEventListener('securitypolicyviolation',e=>{window.naqshaCsp(e.violatedDirective+' blocked '+(e.blockedURI||'inline')+' at '+e.documentURI)},true)`,
+    });
     await cdp.call('Log.enable');
     await cdp.call('DOM.enable');
     await cdp.call('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: downloadDir });
@@ -224,7 +239,8 @@ export async function startPreview(cleanups: Cleanup[]): Promise<{ url: string; 
   const server = await preview({
     root: repoRoot,
     logLevel: 'warn',
-    preview: { port, strictPort: true, host: '127.0.0.1', open: false },
+    // The headers of vercel.json, so the page runs under the policy it is deployed with.
+    preview: { port, strictPort: true, host: '127.0.0.1', open: false, headers: readVercelHeaders(repoRoot) },
   });
   let stopped = false;
   const stop = async (): Promise<void> => {

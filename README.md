@@ -19,7 +19,7 @@ The tour above is a slideshow of screenshots of the built site, not a screen rec
 
 ![Landing: a loom photo behind the headline, the card being woven into cloth, and the Scan and Try a sample buttons](media/readme/landing-hero.jpg)
 
-**Landing.** The app opens on a scrolling page: a loom photo behind the headline, a live picture of a card turning into cloth, how it works, what you can do, three samples to try, a Night section and a footer with the photo and font credits. The "Naqsha" mark at the top left always brings you back here.
+**Landing.** The app opens on the home screen, a scrolling page of its own (Weave is only the Weave tool, and with no design it shows its empty state with the Try it samples): a loom photo behind the headline, a live picture of a card turning into cloth, how it works, what you can do, three samples to try, a Night section and a footer with the photo and font credits. The "Naqsha" mark at the top left always brings you back here.
 
 | | |
 |---|---|
@@ -52,7 +52,7 @@ On a phone the header folds into the mark, a Scan button and a Menu:
 1. Open https://naqsha-ashen.vercel.app/ and press **Try a sample** to weave a design.
 2. On **Scan**, press a card in **Demo cards**, for example "Noisy and tilted". Naqsha finds the holes and the grid appears. Tap a hole to correct it.
 3. On **Keep**, save the design, make a demo edit, and download the loom file.
-4. Press **Naqsha** at the top left to go back to the Landing.
+4. Press **Naqsha** at the top left to go back to the Landing. A design you have open stays open.
 
 The full path with what to expect at each step is in [`docs/JUDGES.md`](docs/JUDGES.md). To run it yourself, see "Run it locally".
 

@@ -15,7 +15,7 @@ export const DEFAULT_CLOTH_CHOICES: ClothChoices = {
 /** No accepted repairs. */
 export const NO_REPAIRS: RepairState = { picks: [], history: [] };
 export const initialAppState: AppState = {
-  screen: 'weave',
+  screen: 'home',
   language: 'hi',
   profile: { status: 'loading' },
   current: { pattern: [], origin: { kind: 'none' } },
@@ -42,16 +42,6 @@ function withNewPattern(state: AppState, current: CurrentPattern): AppState {
 /** True when the open design is scanned cards that were never saved: the one case where leaving it loses work (the same test request-sample uses). */
 export function hasUnsavedWork(state: AppState): boolean {
   return state.current.origin.kind === 'scanned' && !state.current.origin.saved && state.current.pattern.length > 0;
-}
-
-/** The Landing as after a fresh start: no pattern, pick 0, no breakpoints, nothing finished, the cloth choices of the start. Language, profile, batch and archive stay. */
-function goHome(state: AppState): AppState {
-  return {
-    ...withNewPattern(state, { pattern: [], origin: { kind: 'none' } }),
-    screen: 'weave',
-    clothChoices: initialAppState.clothChoices,
-    confirm: null,
-  };
 }
 
 function lastPickIndex(state: AppState): number {
@@ -84,12 +74,11 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       };
     }
     case 'go-home':
-      // Unsaved scanned cards raise the question first, on the Weave screen where it is drawn; nothing is lost without a yes.
-      return hasUnsavedWork(state) ? { ...state, screen: 'weave', compare: null, confirm: { kind: 'go-home' } } : goHome(state);
+      // Only the screen changes: the design, pick, breakpoints and cloth choices stay, so nothing is lost and nothing is asked.
+      return { ...state, screen: 'home', compare: null };
     case 'confirm-accepted': {
       const { confirm } = state;
       if (confirm === null) return state;
-      if (confirm.kind === 'go-home') return goHome(state);
       if (confirm.kind === 'replace-with-sample') {
         return {
           ...withNewPattern(state, { pattern: confirm.pattern, origin: { kind: 'sample', design: confirm.design } }),

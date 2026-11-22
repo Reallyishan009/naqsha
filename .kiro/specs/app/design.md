@@ -123,7 +123,7 @@ The `src/ui/index.ts` exports in `structure.md` (`ScannerPage`, `SimulatorPage`,
 
 - `ScanScreen` is loaded with `React.lazy(() => import('./screens/scan/ScanScreen.tsx'))` inside `Suspense`. `src/reader` is imported only by `ScanScreen` and the printable test, so Rollup places it in the Scan chunk (R16.10).
 - `printable/download.ts`, `png.ts` and `raster.ts` are loaded by `import()` when the user activates a print download. `layout.ts` and `svg.ts` are small and ship with the Try it entry only if the SVG option is chosen; both are behind the same dynamic import.
-- `hi.json` and `en.json` are both in the main chunk (a few KB gzipped). Hindi is the default, so splitting would only delay the first paint.
+- `hi.json` and `en.json` are both in the main chunk (a few KB gzipped). The default is Hindi when `navigator.language` starts with "hi" and English otherwise; either may be shown first, so splitting would only delay the first paint.
 - A script `scripts/check_bundle.ts` (task) gzips the entry chunk after `npm run build` and fails over 200 KB. It also asserts that the entry chunk text does not contain a Scan-only marker string, and that `dist/index.html` has no URL starting with `/` or `http`.
 - Fonts: the design brief names Google Fonts, but R13.6 forbids a third-party host. The first build uses the fallback stacks only (Georgia, system-ui, ui-monospace). Self-hosted `woff2` subsets in `public/fonts/` are a CUT-LAST addition and are referenced by relative `@font-face` URLs.
 

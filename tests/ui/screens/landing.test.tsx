@@ -8,6 +8,7 @@ import { generateSample } from '../../../src/ui/samples/sampleDesigns.ts';
 import { renderClothPreview } from '../../../src/ui/screens/weave/ClothPreview.tsx';
 import { Landing, SampleTile, SampleTiles } from '../../../src/ui/screens/weave/Landing.tsx';
 import type { SampleTileProps } from '../../../src/ui/screens/weave/Landing.tsx';
+import { HomeScreen } from '../../../src/ui/screens/home/HomeScreen.tsx';
 import { WeaveScreen } from '../../../src/ui/screens/weave/WeaveScreen.tsx';
 import { initialAppState } from '../../../src/ui/state/appState.ts';
 import type { AppAction, AppState, Language, SampleDesign } from '../../../src/ui/types.ts';
@@ -50,12 +51,16 @@ function textAndNames(html: string): string {
 }
 
 describe('Landing', () => {
-  it('R8.1 R8.12 a Weave screen with no pick and a ready profile shows the Landing, and one with a pick does not', () => {
+  it('R8.1 R8.12 the home screen shows the Landing, and the Weave screen shows it with no pick or with one: never', () => {
     const t = translator(DICTIONARIES, 'en');
-    const empty = renderToStaticMarkup(<WeaveScreen state={ready('en')} dispatch={() => undefined} t={t} />);
+    const home = renderToStaticMarkup(<HomeScreen state={ready('en')} dispatch={() => undefined} t={t} />);
     const headline = (EN['landing.headline'] as string).replaceAll("'", '&#x27;');
-    expect(headlineText(empty)).toBe(headline);
-    expect(initialAppState.screen).toBe('weave');
+    expect(headlineText(home)).toBe(headline);
+    expect(initialAppState.screen).toBe('home');
+    const empty = renderToStaticMarkup(<WeaveScreen state={{ ...ready('en'), screen: 'weave' }} dispatch={() => undefined} t={t} />);
+    expect(headlineText(empty)).toBe('');
+    expect(empty).toContain(EN['tryit.title'] as string);
+    expect(empty).toContain(EN['weave.empty'] as string);
     const profile = demoProfile();
     const arrived: AppState = {
       ...ready('en'),

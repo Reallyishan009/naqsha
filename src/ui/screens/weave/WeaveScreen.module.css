@@ -44,6 +44,8 @@
   }
 }
 .workCard {
+  /* The cloth card lands just below the sticky header, whose real height the Try it scroll writes to --header-height. */
+  scroll-margin-top: calc(var(--header-height, 144px) + var(--space-4));
   color: var(--ink);
 }
 .stack {

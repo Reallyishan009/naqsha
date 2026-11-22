@@ -6,6 +6,8 @@ import {
   browserPrefersDark,
   browserPrefersReducedMotion,
   browserStorage,
+  browserLanguage,
+  chooseLanguage,
   readStoredLanguage,
   readStoredTheme,
   setDocumentLanguage,
@@ -27,6 +29,7 @@ import { ThemeSwitch } from './components/ThemeSwitch.tsx';
 import { BrandMark } from './illustrations/BrandMark.tsx';
 import { MenuIcon, NavIcon } from './illustrations/NavIcons.tsx';
 import styles from './Shell.module.css';
+import { HomeScreen } from './screens/home/HomeScreen.tsx';
 import { KeepScreen } from './screens/keep/KeepScreen.tsx';
 import { WeaveScreen } from './screens/weave/WeaveScreen.tsx';
 import { appReducer, initialAppState } from './state/appState.ts';
@@ -35,7 +38,7 @@ import { applyTheme, chooseTheme } from './theme/theme.ts';
 import './theme/tokens.css';
 import type { AppAction, AppState, Language, Screen } from './types.ts';
 
-const SCREENS: ReadonlyArray<Screen> = ['weave', 'keep', 'scan', 'code'];
+const SCREENS: ReadonlyArray<Exclude<Screen, 'home'>> = ['weave', 'keep', 'scan', 'code'];
 const LANGUAGES: ReadonlyArray<Language> = ['en', 'hi'];
 
 /** The id the header menu button points at (`aria-controls`): the sheet with the navigation and the two switches. */
@@ -145,7 +148,7 @@ export function Shell({ state, dispatch, onLanguageChosen, theme = 'day', onThem
   const ScanScreen = useLazyScreen(importScanScreen, screenAttempt);
   const CodeViewScreen = useLazyScreen(importCodeViewScreen, screenAttempt);
   // The Landing shows the profile's loading and failure itself, with its own retry.
-  const landingShowsProfile = state.screen === 'weave' && state.current.pattern.length === 0;
+  const landingShowsProfile = state.screen === 'home';
   // Under 1024 px the links and the two switches sit in a sheet behind the Menu button; wider they are always shown.
   const wide = useWideHeader();
   const narrow = compact ?? !wide;
@@ -328,8 +331,10 @@ export function Shell({ state, dispatch, onLanguageChosen, theme = 'day', onThem
           t={t}
           onRetry={() => setScreenAttempt((attempt) => attempt + 1)}
         >
-          {state.screen === 'weave' ? (
-            <WeaveScreen state={state} dispatch={dispatch} t={t} onRetryProfile={onRetryProfile} theme={theme} onThemeChosen={onThemeChosen} />
+          {state.screen === 'home' ? (
+            <HomeScreen state={state} dispatch={dispatch} t={t} onRetryProfile={onRetryProfile} theme={theme} onThemeChosen={onThemeChosen} />
+          ) : state.screen === 'weave' ? (
+            <WeaveScreen state={state} dispatch={dispatch} t={t} />
           ) : state.screen === 'keep' ? (
             <KeepScreen state={state} dispatch={dispatch} t={t} />
           ) : state.screen === 'scan' ? (
@@ -367,7 +372,7 @@ export function App({ fetchText = defaultFetchText, storage, prefersReducedMotio
   const store = storage === undefined ? browserStorage() : storage;
   const [state, dispatch] = useReducer(appReducer, undefined, () => ({
     ...initialAppState,
-    language: readStoredLanguage(store) ?? initialAppState.language,
+    language: chooseLanguage(readStoredLanguage(store), browserLanguage()),
     prefersReducedMotion: prefersReducedMotion ?? browserPrefersReducedMotion(),
   }));
 
@@ -389,9 +394,8 @@ export function App({ fetchText = defaultFetchText, storage, prefersReducedMotio
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileAttempt]);
 
-  // A new Screen, or the player taking the Landing's place, starts at the top: the Landing is a long page, and a
-  // sample chosen far down it must not leave the next Screen scrolled to the same depth.
-  const showsLanding = state.screen === 'weave' && state.current.pattern.length === 0;
+  // A new Screen starts at the top: the Landing is a long page, and a sample chosen far down it must not leave the
+  // next Screen scrolled to the same depth.
   const firstView = useRef(true);
   useLayoutEffect(() => {
     if (firstView.current) {
@@ -399,7 +403,7 @@ export function App({ fetchText = defaultFetchText, storage, prefersReducedMotio
       return;
     }
     if (typeof window.scrollTo === 'function') window.scrollTo(0, 0);
-  }, [state.screen, showsLanding]);
+  }, [state.screen]);
   useEffect(() => {
     setDocumentLanguage(state.language);
   }, [state.language]);

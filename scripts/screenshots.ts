@@ -46,6 +46,8 @@ import {
   RUN3_THEME,
   RUN3_VIEWS,
   RUN3_WIDTHS,
+  RUN4_FOLDER,
+  RUN4_NAMES,
   RUN2_VIEWS,
   LANDING_FULL_FOLDER,
   LANDING_FULL_VIEW,
@@ -59,6 +61,7 @@ import {
   run2Problems,
   run3Names,
   run3Problems,
+  run4Problems,
   screenshotNames,
   setProblems,
 } from './checks/screenshots.ts';
@@ -68,7 +71,7 @@ import type { Cleanup } from './checks/session.ts';
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const EN = JSON.parse(readFileSync(path.join(repoRoot, 'src', 'ui', 'i18n', 'en.json'), 'utf8')) as Record<string, string>;
 
-type Mode = 'before' | 'after' | 'after-run1' | 'after-run2' | 'after-run3';
+type Mode = 'before' | 'after' | 'after-run1' | 'after-run2' | 'after-run3' | 'after-run4';
 type View = (typeof SCREENSHOT_VIEWS)[number];
 type Theme = (typeof SCREENSHOT_THEMES)[number];
 type Screen = 'weave' | 'keep' | 'scan' | 'code';
@@ -102,14 +105,14 @@ const escapeRegex = (text: string): string => text.replace(/[.*+?^$()|[\]\\]/g, 
 type Options = { mode: Mode; outDir: string; views: readonly View[]; run2Views: readonly string[] };
 
 function parseArguments(argv: readonly string[]): Options | string {
-  const usage = 'usage: npm run screenshots -- before|after|after-run1|after-run2|after-run3 [--out <directory>] [--view <name>]...';
+  const usage = 'usage: npm run screenshots -- before|after|after-run1|after-run2|after-run3|after-run4 [--out <directory>] [--view <name>]...';
   let mode: Mode | null = null;
   let outDir: string | null = null;
   const views: View[] = [];
   const run2Views: string[] = [];
   for (let i = 0; i < argv.length; i++) {
     const argument = argv[i]!;
-    if (argument === 'before' || argument === 'after' || argument === 'after-run1' || argument === 'after-run2' || argument === 'after-run3') {
+    if (argument === 'before' || argument === 'after' || argument === 'after-run1' || argument === 'after-run2' || argument === 'after-run3' || argument === 'after-run4') {
       if (mode !== null) return `${usage}\nthe mode was given twice`;
       mode = argument;
     } else if (argument === '--out') {
@@ -144,9 +147,10 @@ function parseArguments(argv: readonly string[]): Options | string {
   if (mode !== 'after-run2' && run2Views.length > 0) return `${usage}\n${run2Views.join(', ')} belongs to after-run2`;
   if (mode === 'after-run1' && views.length > 0) return `${usage}\n--view does not apply to after-run1, which takes only the Landing`;
   if (mode === 'after-run3' && (views.length > 0 || run2Views.length > 0)) return `${usage}\n--view does not apply to after-run3, which takes the four Demo card screens`;
+  if (mode === 'after-run4' && (views.length > 0 || run2Views.length > 0)) return `${usage}\n--view does not apply to after-run4, which takes the home screen and the empty Weave screen`;
   return {
     mode,
-    outDir: outDir ?? path.join(repoRoot, 'media', 'design', mode === 'after-run1' ? LANDING_FULL_FOLDER : mode === 'after-run2' ? RUN2_FOLDER : mode === 'after-run3' ? RUN3_FOLDER : mode),
+    outDir: outDir ?? path.join(repoRoot, 'media', 'design', mode === 'after-run1' ? LANDING_FULL_FOLDER : mode === 'after-run2' ? RUN2_FOLDER : mode === 'after-run3' ? RUN3_FOLDER : mode === 'after-run4' ? RUN4_FOLDER : mode),
     run2Views: run2Views.length === 0 ? RUN2_VIEWS.map((view) => view.name) : RUN2_VIEWS.map((view) => view.name).filter((name) => run2Views.includes(name)),
     views: views.length === 0 ? SCREENSHOT_VIEWS : SCREENSHOT_VIEWS.filter((view) => views.includes(view)),
   };
@@ -234,8 +238,8 @@ async function freshPage(page: Page, baseUrl: string): Promise<void> {
     await page.click(english, 'the English language control');
   }
   await page.waitFor(
-    `document.documentElement.lang==='en'&&(${english}).getAttribute('aria-pressed')==='true'&&document.querySelector('#screen-title')?.textContent.trim()===${q(EN['nav.weave'])}`,
-    'the Weave screen in English',
+    `document.documentElement.lang==='en'&&(${english}).getAttribute('aria-pressed')==='true'&&document.querySelector('#screen-title')?.textContent.trim()===${q(EN['nav.home'])}`,
+    'the home screen in English',
   );
   await closeHeaderMenu(page, MENU_NAMES);
 }
@@ -670,6 +674,51 @@ async function captureRun3(page: Page, baseUrl: string, outDir: string): Promise
   return failures;
 }
 
+// ---------------------------------------------------------------- the home set (run 4)
+
+/** The fresh app's Weave screen: the Weave tool with no design loaded, reached by pressing Weave on the home screen. */
+async function prepareWeaveEmpty(page: Page): Promise<void> {
+  await prepareLanding(page);
+  await goTo(page, 'weave');
+  await page.waitFor(`!document.querySelector('[data-hero-slot]')&&document.body.innerText.includes(${q(EN['weave.empty']!)})`, 'the Weave tool with its empty message and no hero');
+}
+
+/** The six files of the home set: home in Day at both widths, the empty Weave screen in both looms at both widths. */
+async function captureRun4(page: Page, baseUrl: string, outDir: string): Promise<string[]> {
+  const failures: string[] = [];
+  for (const width of RUN3_WIDTHS) {
+    try {
+      await page.setViewport(width, WINDOW_HEIGHT);
+      await freshPage(page, baseUrl);
+      await prepareLanding(page);
+      await scrollThrough(page);
+      await chooseTheme(page, 'after', 'day');
+      await capture(page, width, path.join(outDir, `home-day-${width}.png`));
+      console.log(`saved home-day-${width}.png`);
+      // The capture leaves the page laid out for a full-page file, so the empty Weave screen starts from a fresh page.
+      await page.setViewport(width, WINDOW_HEIGHT);
+      await freshPage(page, baseUrl);
+      await prepareWeaveEmpty(page);
+      await scrollThrough(page);
+      for (const theme of SCREENSHOT_THEMES) {
+        await chooseTheme(page, 'after', theme);
+        const name = `weave-empty-${theme}-${width}.png`;
+        await capture(page, width, path.join(outDir, name));
+        console.log(`saved ${name}`);
+        try {
+          await printHints(page, name);
+        } catch (error) {
+          console.log(`hint  ${name}: could not be computed: ${messageOf(error)}`);
+        }
+      }
+    } catch (error) {
+      failures.push(`the home set at ${width} failed: ${messageOf(error)}`);
+      console.error(failures[failures.length - 1]);
+    }
+  }
+  return failures;
+}
+
 // ---------------------------------------------------------------- main
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
@@ -740,7 +789,12 @@ async function main(): Promise<number> {
       for (const name of run3Names()) rmSync(path.join(outDir, name), { force: true });
       failures.push(...(await captureRun3(page, baseUrl, outDir)));
     }
-    for (const width of mode === 'after-run1' || mode === 'after-run2' || mode === 'after-run3' ? [] : SCREENSHOT_WIDTHS) {
+    if (mode === 'after-run4') {
+      // A file of an earlier run must not stand in for one that fails now.
+      for (const name of RUN4_NAMES) rmSync(path.join(outDir, name), { force: true });
+      failures.push(...(await captureRun4(page, baseUrl, outDir)));
+    }
+    for (const width of mode === 'after-run1' || mode === 'after-run2' || mode === 'after-run3' || mode === 'after-run4' ? [] : SCREENSHOT_WIDTHS) {
       for (const view of views) {
         const names = SCREENSHOT_THEMES.map((theme) => `${view}-${theme}-${width}.png`);
         // A file of an earlier run must not stand in for one that fails now.
@@ -783,12 +837,13 @@ async function main(): Promise<number> {
   const landing = mode === 'after-run1';
   const run2 = mode === 'after-run2';
   const run3 = mode === 'after-run3';
-  const skipped = landing || run2 || run3 ? [] : screenshotNames().filter((name) => !views.some((view) => name.startsWith(`${view}-`)));
-  const problems = (run3 ? run3Problems(files) : run2 ? run2Problems(files, run2Views) : landing ? landingFullProblems(files) : setProblems(files)).filter((problem) => !skipped.some((name) => problem.startsWith(`${name} `)));
+  const run4 = mode === 'after-run4';
+  const skipped = landing || run2 || run3 || run4 ? [] : screenshotNames().filter((name) => !views.some((view) => name.startsWith(`${view}-`)));
+  const problems = (run4 ? run4Problems(files) : run3 ? run3Problems(files) : run2 ? run2Problems(files, run2Views) : landing ? landingFullProblems(files) : setProblems(files)).filter((problem) => !skipped.some((name) => problem.startsWith(`${name} `)));
   for (const failure of failures) console.error(`FAIL  ${failure}`);
   for (const problem of problems) console.error(`FAIL  ${problem}`);
   if (failures.length === 0 && problems.length === 0) {
-    console.log(`OK    ${(run3 ? run3Names() : run2 ? run2Names(run2Views) : landing ? landingFullNames() : screenshotNames()).length - skipped.length} files in ${outDir} are valid PNG files of the right width`);
+    console.log(`OK    ${(run4 ? [...RUN4_NAMES] : run3 ? run3Names() : run2 ? run2Names(run2Views) : landing ? landingFullNames() : screenshotNames()).length - skipped.length} files in ${outDir} are valid PNG files of the right width`);
     return 0;
   }
   return 1;
