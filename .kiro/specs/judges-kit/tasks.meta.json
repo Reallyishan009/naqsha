@@ -1,0 +1,52 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Commit public/demo, re-aim R14.7, precache exclusions": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321546113
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321606150
+      }
+    ],
+    "2.1 Scan Demo cards": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321546158
+      }
+    ],
+    "3.1 Keep Demo card": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321546241
+      }
+    ],
+    "3.2 Code Demo card": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321546266
+      }
+    ],
+    "3.3 Weave Demo strip": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321546291
+      }
+    ],
+    "4.1 JUDGES.md, check:browser steps, screenshots, final gate": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321546314
+      }
+    ]
+  }
+}

@@ -92,7 +92,7 @@ describe('Step_Icons and Spot_Illustrations', () => {
     const added = [
       ...git('diff', '--name-only', '--diff-filter=A', STAGE_0, '--', 'src', 'public').split('\n'),
       ...git('ls-files', '--others', '--exclude-standard', '--', 'src', 'public').split('\n'),
-    ].filter((file) => file !== '' && !file.startsWith('public/fonts/'));
+    ].filter((file) => file !== '' && !file.startsWith('public/fonts/') && !file.startsWith('public/demo/')); // public/demo/ holds the judges' demo files (images and BMPs for testing, not illustrations); everything else stays strict
     expect(added.filter((file) => /\.(svg|png|jpe?g|gif|webp|ico|woff2?|ttf|otf)$/i.test(file))).toEqual([]);
     const before = JSON.parse(git('show', `${STAGE_0}:package.json`)) as Record<string, unknown>;
     const now = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8')) as Record<string, unknown>;

@@ -17,6 +17,17 @@ export const PRECACHE_END = '/* naqsha:precache-end */';
 /** The worker serves itself; it is never a precache entry. */
 export const NOT_PRECACHED = ['sw.js'];
 
+/**
+ * Built files that are deliberately not precached (judges' demo kit). Paths are relative to `dist/`.
+ * `demo/real-cards/` is 1.1 MB of photographs and is never precached; the two noisy demo cards are 253,538 bytes
+ * together (docs: .kiro/specs/judges-kit/measurements.md). Offline, these load only if the browser already has them.
+ */
+export const NOT_PRECACHED_PREFIXES = ['demo/real-cards/'];
+export const NOT_PRECACHED_FILES = ['demo/cards/card-1-noisy.png', 'demo/cards/card-1-noisy-tilted.png'];
+/** True for a built file the service worker does not precache: the worker itself and the explicit demo exclusions. */
+export function isNotPrecached(path: string): boolean {
+  return NOT_PRECACHED.includes(path) || NOT_PRECACHED_FILES.includes(path) || NOT_PRECACHED_PREFIXES.some((prefix) => path.startsWith(prefix));
+}
 /** The start page, which a navigation to the scope root asks for. The file list adds `./index.html` as well. */
 export const START_PAGE_ENTRY = './';
 
@@ -27,7 +38,7 @@ export const START_PAGE_ENTRY = './';
 export function precacheEntries(files: readonly DistFile[]): string[] {
   const paths = files
     .map((file) => file.path)
-    .filter((path) => !NOT_PRECACHED.includes(path))
+    .filter((path) => !isNotPrecached(path))
     .sort()
     .map((path) => `./${path}`);
   return [START_PAGE_ENTRY, ...paths];
@@ -40,7 +51,7 @@ export function precacheEntries(files: readonly DistFile[]): string[] {
 export function precacheCacheName(files: readonly DistFile[]): string {
   const hash = createHash('sha256');
   hash.update(`v${PRECACHE_FORMAT_VERSION}`);
-  for (const file of [...files].filter((file) => !NOT_PRECACHED.includes(file.path)).sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))) {
+  for (const file of [...files].filter((file) => !isNotPrecached(file.path)).sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))) {
     hash.update(`\n${file.path}:${file.contentHash}`);
   }
   return `naqsha-v${PRECACHE_FORMAT_VERSION}-${hash.digest('hex').slice(0, 12)}`;
@@ -103,7 +114,7 @@ export function precacheProblems(entries: readonly string[], files: readonly Dis
   }
   const listed = new Set(entries);
   for (const file of files) {
-    if (NOT_PRECACHED.includes(file.path)) continue;
+    if (isNotPrecached(file.path)) continue;
     if (!listed.has(`./${file.path}`)) problems.push(`built file ${file.path} is not in the precache list`);
   }
   const built = new Set(files.map((file) => `./${file.path}`));

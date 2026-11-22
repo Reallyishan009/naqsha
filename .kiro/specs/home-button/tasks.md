@@ -6,8 +6,8 @@ Small fix: no way back to the Landing after a sample is chosen. One task; the fu
 
 ## Tasks
 
-- [ ] 1. Home button
-  - [-] 1.1 Make the Naqsha mark and name a home button, add the go-home action, tests, screenshot, commit
+- [x] 1. Home button
+  - [x] 1.1 Make the Naqsha mark and name a home button, add the go-home action, tests, screenshot, commit
     - Bug: the Landing shows only when state.screen === 'weave' and current.pattern is empty, and nothing can empty it again except a reload.
     - (1) Make the "Naqsha" name and mark at the top left of the header ONE button styled like a link, accessible name "Naqsha, home" (add the Hindi string, hi reviewed false, ADDED_KEYS, review-list). Works in the wide header, the narrow header (under 420 px, where only the mark shows), from any screen; keeps a 44 px touch target and a visible focus ring; hover = soft tint like the other header links. Clicking takes the user to the Landing.
     - (2) Reducer action 'go-home': screen = 'weave', current = empty (pattern [], origin none), selection and cloth state reset like a fresh start (selectedPick, finishedPattern, breakpoints as the app's initial state does; keep language, theme, archive, profile); the existing effect for showsLanding scrolls to top. If the Menu sheet is open, close it.

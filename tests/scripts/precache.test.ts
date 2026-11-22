@@ -6,7 +6,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildPrecache, listDistFiles } from '../../scripts/build_precache.ts';
 import {
   injectPrecacheBlock,
+  isNotPrecached,
   NOT_PRECACHED,
+  NOT_PRECACHED_FILES,
+  NOT_PRECACHED_PREFIXES,
   precacheCacheName,
   precacheEntries,
   precacheProblems,
@@ -135,6 +138,22 @@ describe('precache list built from dist/', () => {
     ]);
   });
 
+  it('the NOT_PRECACHED list is explicit: real-cards by prefix, the two noisy cards by name, nothing else of demo/', () => {
+    const files = (paths: readonly string[]): DistFile[] => paths.map((file) => ({ path: file, contentHash: 'x' }));
+    expect(NOT_PRECACHED_PREFIXES).toEqual(['demo/real-cards/']);
+    expect(NOT_PRECACHED_FILES).toEqual(['demo/cards/card-1-noisy.png', 'demo/cards/card-1-noisy-tilted.png']);
+    const listing = [...CORE_FILES, 'assets/index-AAAAAAAA.js', 'assets/index-AAAAAAAA.css', ...NOT_PRECACHED_FILES, 'demo/real-cards/a.jpg', 'demo/cards/card-1-clean.png', 'demo/README.txt'];
+    const entries = precacheEntries(files(listing));
+    expect(entries).toContain('./demo/cards/card-1-clean.png');
+    expect(entries).toContain('./demo/README.txt');
+    expect(entries.filter((entry) => entry.includes('noisy') || entry.includes('real-cards'))).toEqual([]);
+    expect(precacheProblems(entries, files(listing))).toEqual([]);
+    // Changing an excluded file does not change the cache name; changing a precached demo file does.
+    const changed = (path: string) => files(listing).map((file) => (file.path === path ? { ...file, contentHash: 'y' } : file));
+    expect(precacheCacheName(changed('demo/real-cards/a.jpg'))).toBe(precacheCacheName(files(listing)));
+    expect(precacheCacheName(changed('demo/cards/card-1-noisy.png'))).toBe(precacheCacheName(files(listing)));
+    expect(precacheCacheName(changed('demo/cards/card-1-clean.png'))).not.toBe(precacheCacheName(files(listing)));
+  });
   it('R24.6 the block round-trips, and a source without markers is left alone', () => {
     const entries = ['./', './index.html', './assets/index-abc.js'];
     const block = renderPrecacheBlock('naqsha-v1-0123456789ab', entries);
@@ -226,16 +245,29 @@ describe('precache list of the built site in dist/sw.js', () => {
     }
   });
 
-  it('R9.5 the precache list omits no file of the built site and names no file that is not one', () => {
+  it('R9.5 the precache list omits no file of the built site except the explicit NOT_PRECACHED list, and names no file that is not one', () => {
     // The worker serves itself and is never an entry; the start page entry "./" is the scope root.
-    const expectedFiles = files.filter((file) => file !== 'sw.js');
+    const expectedFiles = files.filter((file) => !isNotPrecached(file));
     expect(missingFromPrecache(expectedFiles, entries, 'built file')).toEqual([]);
     const known = new Set(expectedFiles.map((file) => `./${file}`));
     const extra = entries.filter((entry) => entry !== './' && !known.has(entry));
     expect(extra, `precache entries that are not a file of dist/: ${extra.join(', ')}`).toEqual([]);
     expect(new Set(entries).size, 'the precache list names an entry twice').toBe(entries.length);
   });
-
+  it('the files on the NOT_PRECACHED list are not in the precache list, and the small demo files are', () => {
+    const excluded = files.filter((file) => file !== 'sw.js' && isNotPrecached(file));
+    for (const file of NOT_PRECACHED_FILES) expect(excluded, `${file} is not a built file`).toContain(file);
+    expect(excluded.filter((file) => file.startsWith('demo/real-cards/')).length, 'dist/demo/real-cards holds no file').toBeGreaterThan(0);
+    for (const file of excluded) expect(entries, `${file} must not be precached`).not.toContain(`./${file}`);
+    expect(entries.filter((entry) => entry.startsWith('./demo/real-cards/'))).toEqual([]);
+    // Everything else of demo/ is precached.
+    const demoKept = files.filter((file) => file.startsWith('demo/') && !isNotPrecached(file));
+    expect(demoKept.length).toBeGreaterThan(0);
+    expect(missingFromPrecache(demoKept, entries, 'demo file')).toEqual([]);
+    for (const file of ['demo/cards/card-1-clean.png', 'demo/cards/card-blank-should-fail.png', 'demo/loom-files/diamond-1bit.bmp', 'demo/README.txt']) {
+      expect(entries).toContain(`./${file}`);
+    }
+  });
   it('every font file of dist/fonts is named by an entry of the precache list', () => {
     const fonts = files.filter((file) => file.startsWith('fonts/'));
     expect(fonts.filter((file) => file.endsWith('.woff2')).length, 'dist/fonts holds no .woff2 file').toBeGreaterThan(0);

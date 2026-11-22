@@ -11,6 +11,18 @@
         "executionId": "ab7f3ed8-df5d-4e81-ae97-01126d6faf93",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795319718915
+      },
+      {
+        "executionId": "ab7f3ed8-df5d-4e81-ae97-01126d6faf93",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321160202
+      }
+    ],
+    "1. Home button": [
+      {
+        "executionId": "ab7f3ed8-df5d-4e81-ae97-01126d6faf93",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795321160242
       }
     ]
   }
