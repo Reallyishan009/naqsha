@@ -535,5 +535,10 @@
   "codeview.demo.compare": "Compare with an edited version",
   "codeview.demo.needDesign": "A breakpoint needs a design with at least {count} picks. Load the Diamond card first.",
   "codeview.demo.compareHint": "Compare saves a demo design and an edited version of it in the list on the Keep screen, then compares the two.",
-  "codeview.demo.breakpointSet": "A breakpoint is set on pick {pick}."
+  "codeview.demo.breakpointSet": "A breakpoint is set on pick {pick}.",
+  "tryit.demo.title": "Try the repair suggestions",
+  "tryit.demo.intro": "Each button loads the Diamond with one card flagged, so you can see what Naqsha suggests for it.",
+  "tryit.demo.lostCard": "Show a lost card",
+  "tryit.demo.tornCard": "Show a torn card",
+  "tryit.demo.hint": "A lost card is missing from the chain. A torn card is there but cannot be read. On Weave, press Suggest repairs."
 }

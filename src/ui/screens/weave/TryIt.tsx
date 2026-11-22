@@ -3,9 +3,10 @@ import type { Dispatch } from 'react';
 import type { CardProfile, Pattern } from '../../../codec/index.ts';
 import { printFailureKey } from '../../i18n/messages.ts';
 import type { Translate } from '../../i18n/messages.ts';
-import { generateSample, sampleWithLostCards } from '../../samples/sampleDesigns.ts';
+import { generateSample, sampleWithLostCards, sampleWithOneGap } from '../../samples/sampleDesigns.ts';
 import type { AppAction, Confirm, SampleDesign } from '../../types.ts';
 import { Button } from '../../components/Button.tsx';
+import { Card } from '../../components/Card.tsx';
 import { Field } from '../../components/Field.tsx';
 import { Notice } from '../../components/Notice.tsx';
 import { Panel } from '../../components/Panel.tsx';
@@ -151,6 +152,25 @@ export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModu
         </Button>
       </div>
       <p>{t('tryit.lost.hint')}</p>
+      <Card as="div" title={t('tryit.demo.title')} titleAs="h4" chips={[t('demo.chip')]}>
+        <p>{t('tryit.demo.intro')}</p>
+        <div className={styles.strip}>
+          {(['missing', 'damaged'] as const).map((kind) => (
+            <Button
+              key={kind}
+              data-demo-gap={kind}
+              disabled={profile === null}
+              onClick={() => {
+                if (profile === null) return;
+                dispatch({ type: 'request-sample', design: 'diamond', pattern: sampleWithOneGap(profile, kind) });
+              }}
+            >
+              {t(kind === 'missing' ? 'tryit.demo.lostCard' : 'tryit.demo.tornCard')}
+            </Button>
+          ))}
+        </div>
+        <p>{t('tryit.demo.hint')}</p>
+      </Card>
       {profile === null || samples === null
         ? null
         : samples.map(({ design, pattern }) => (

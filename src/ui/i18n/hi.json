@@ -2146,5 +2146,25 @@
   "codeview.demo.breakpointSet": {
     "text": "पिक {pick} पर ब्रेकपॉइंट लगा है।",
     "reviewed": false
+  },
+  "tryit.demo.title": {
+    "text": "सुधार के सुझाव आज़माएँ",
+    "reviewed": false
+  },
+  "tryit.demo.intro": {
+    "text": "हर बटन डायमंड को एक कार्ड पर निशान लगाकर खोलता है, ताकि आप देख सकें कि नक्शा उसके लिए क्या सुझाता है।",
+    "reviewed": false
+  },
+  "tryit.demo.lostCard": {
+    "text": "खोया हुआ कार्ड दिखाएँ",
+    "reviewed": false
+  },
+  "tryit.demo.tornCard": {
+    "text": "फटा हुआ कार्ड दिखाएँ",
+    "reviewed": false
+  },
+  "tryit.demo.hint": {
+    "text": "खोया कार्ड लड़ी में नहीं है। फटा कार्ड है, पर पढ़ा नहीं जा सकता। बुनाई पर सुधार सुझाएँ दबाएँ।",
+    "reviewed": false
   }
 }

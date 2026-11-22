@@ -4,7 +4,8 @@ import { encodeCardGrid, validateCardGrid } from '../../../src/codec/index.ts';
 import type { CardProfile, Pattern } from '../../../src/codec/index.ts';
 import { exportPatternBmp, readPatternBmp } from '../../../src/exporter/index.ts';
 import { suggestRepairs } from '../../../src/repair/index.ts';
-import { generateSample, lostCardPicks, sampleWithLostCards } from '../../../src/ui/samples/sampleDesigns.ts';
+import { prepareCloth } from '../../../src/simulator/index.ts';
+import { flaggedPick, generateSample, lostCardPicks, sampleWithLostCards, sampleWithOneGap } from '../../../src/ui/samples/sampleDesigns.ts';
 import type { SampleDesign } from '../../../src/ui/types.ts';
 import { exportOptionsArbitrary } from '../../support/patterns.ts';
 import { cardProfileArbitrary, demoProfile } from '../../support/profiles.ts';
@@ -138,5 +139,45 @@ describe('the sample with lost cards', () => {
     const result = suggestRepairs(lost, profile);
     if (!result.ok) throw new Error('failed');
     for (const gap of result.gaps) expect(gap.suggestions[0]?.card).toEqual(diamond[gap.pick]);
+  });
+});
+describe('the sample with one card flagged (Weave Demo strip)', () => {
+  const profile = demoProfile();
+  const diamond = generateSample(profile, 'diamond');
+  for (const kind of ['missing', 'damaged'] as const) {
+    it(`a ${kind} gap: exactly one pick is flagged ${kind}, the rest are the diamond sample, and the gap has the lost card as its first suggestion`, () => {
+      const pattern = sampleWithOneGap(profile, kind);
+      expect(pattern).toHaveLength(diamond.length);
+      const pick = flaggedPick(diamond.length);
+      pattern.forEach((card, index) => {
+        if (index !== pick) expect(card).toEqual(diamond[index]);
+      });
+      const result = suggestRepairs(pattern, profile);
+      if (!result.ok) throw new Error('failed');
+      expect(result.gaps).toHaveLength(1);
+      expect(result.gaps[0]).toMatchObject({ pick, gapKind: kind });
+      expect(result.gaps[0]?.suggestions[0]?.card).toEqual(diamond[pick]);
+    });
+  }
+  it('a lost card is a missing slot and a torn card is a card that is there but is no card of the profile', () => {
+    const pick = flaggedPick(diamond.length);
+    expect(sampleWithOneGap(profile, 'missing')[pick]).toBeNull();
+    const torn = sampleWithOneGap(profile, 'damaged')[pick];
+    expect(Array.isArray(torn)).toBe(true);
+    expect(validateCardGrid(profile, torn).length).toBeGreaterThan(0);
+  });
+  it('the cloth reports one gap, of the kind asked for, on the flagged pick', () => {
+    for (const kind of ['missing', 'damaged'] as const) {
+      const cloth = prepareCloth(profile, sampleWithOneGap(profile, kind));
+      if (!cloth.ok) throw new Error('not prepared');
+      expect(cloth.value.gaps.map((gap) => [gap.pick, gap.kind])).toEqual([[flaggedPick(diamond.length), kind]]);
+    }
+  });
+  it('the flagged pick is inside the design, also for a design too short for the lost-card picks', () => {
+    expect(flaggedPick(36)).toBe(4);
+    for (const count of [1, 2, 3, 5]) {
+      expect(flaggedPick(count)).toBeGreaterThanOrEqual(0);
+      expect(flaggedPick(count)).toBeLessThan(count);
+    }
   });
 });

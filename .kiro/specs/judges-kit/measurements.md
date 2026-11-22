@@ -67,4 +67,10 @@ None was read or partly read. All eight fail at the same step (the two large ali
 - "Load the Diamond card as code" uses `request-sample`, so unsaved scanned cards raise the usual question; the question is drawn on Weave, so in that one case the screen goes to Weave.
 - Entry chunk after 3.2: 130,955 B gzipped by `check-bundle` (limit 150,000).
 
+## Weave demo strip (task 3.3)
+
+- No check changed. "Show a lost card" loads the Diamond with pick index 4 (the first lost-card pick of the existing sample) as a `missing` gap (the slot is null); "Show a torn card" loads it with the same pick as a `damaged` gap (the card with its last hook row torn off, so it is no card of the profile). Both go through the existing `request-sample`, so unsaved scanned cards raise the usual question. Exactly one pick is flagged in each; the simulator's gap report and the repair module read the kind asked for, and the first suggestion is the original Diamond card (tests in `tests/ui/samples/sampleDesigns.test.ts`).
+- The three samples and "Try a design with lost cards" (three gaps) are unchanged.
+- Entry chunk after 3.3: 131,375 B gzipped by `check-bundle` (limit 150,000).
+
 ## Skipped

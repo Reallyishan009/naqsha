@@ -39,6 +39,11 @@ export const STATE_MESSAGE_KEYS: readonly string[] = [
 
 /** The keys this pass added to both translation files (R11.7). */
 export const ADDED_KEYS: readonly string[] = [
+  'tryit.demo.title',
+  'tryit.demo.intro',
+  'tryit.demo.lostCard',
+  'tryit.demo.tornCard',
+  'tryit.demo.hint',
   'codeview.demo.title',
   'codeview.demo.intro',
   'codeview.demo.load',

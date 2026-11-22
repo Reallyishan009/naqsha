@@ -1,5 +1,5 @@
 import { decodeEnds, endsPerPick } from '../../codec/index.ts';
-import type { CardProfile, Ends, Pattern } from '../../codec/index.ts';
+import type { CardGrid, CardProfile, Ends, Pattern } from '../../codec/index.ts';
 import type { SampleDesign } from '../types.ts';
 
 /** Number of times the motif repeats along the picks (R4.5). */
@@ -107,4 +107,30 @@ export function sampleWithLostCards(profile: CardProfile): Pattern {
   const pattern = generateSample(profile, 'diamond');
   const lost = new Set(lostCardPicks(pattern.length));
   return pattern.map((card, pick) => (lost.has(pick) ? [] : card));
+}
+
+/** The two kinds of gap the simulator and the repair module tell apart: nothing is in the slot, or the card in it cannot be read. */
+export type GapKind = 'missing' | 'damaged';
+
+/**
+ * The pick of the diamond sample that "one card flagged" flags: the first of the lost-card picks, or the middle pick of a
+ * chain too short to have them.
+ */
+export function flaggedPick(pickCount: number): number {
+  return lostCardPicks(pickCount)[0] ?? Math.floor(pickCount / 2);
+}
+
+/**
+ * The diamond sample with one card flagged, so the repair suggestions for a single gap can be seen. A lost card is a
+ * missing gap: the slot holds nothing. A torn card is a damaged gap: the card is there with its last hook row torn off,
+ * so it is no card of the profile. Every other pick is the sample's own card. The diamond repeats, so the gap has a suggestion.
+ */
+export function sampleWithOneGap(profile: CardProfile, kind: GapKind): Pattern {
+  const pattern = generateSample(profile, 'diamond');
+  const pick = flaggedPick(pattern.length);
+  return pattern.map((card, index) => {
+    if (index !== pick) return card;
+    // A missing slot is null, which the Pattern type does not allow: the simulator and the repair module read it as a gap.
+    return kind === 'missing' ? (null as unknown as CardGrid) : card.slice(0, -1);
+  });
 }
