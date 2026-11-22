@@ -39,6 +39,21 @@ function withNewPattern(state: AppState, current: CurrentPattern): AppState {
   return { ...state, current, selectedPick: 0, breakpoints: [], compare: null, repairs: NO_REPAIRS, finishedPattern: null };
 }
 
+/** True when the open design is scanned cards that were never saved: the one case where leaving it loses work (the same test request-sample uses). */
+export function hasUnsavedWork(state: AppState): boolean {
+  return state.current.origin.kind === 'scanned' && !state.current.origin.saved && state.current.pattern.length > 0;
+}
+
+/** The Landing as after a fresh start: no pattern, pick 0, no breakpoints, nothing finished, the cloth choices of the start. Language, profile, batch and archive stay. */
+function goHome(state: AppState): AppState {
+  return {
+    ...withNewPattern(state, { pattern: [], origin: { kind: 'none' } }),
+    screen: 'weave',
+    clothChoices: initialAppState.clothChoices,
+    confirm: null,
+  };
+}
+
 function lastPickIndex(state: AppState): number {
   return Math.max(0, state.current.pattern.length - 1);
 }
@@ -68,9 +83,13 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         confirm: null,
       };
     }
+    case 'go-home':
+      // Unsaved scanned cards raise the question first, on the Weave screen where it is drawn; nothing is lost without a yes.
+      return hasUnsavedWork(state) ? { ...state, screen: 'weave', compare: null, confirm: { kind: 'go-home' } } : goHome(state);
     case 'confirm-accepted': {
       const { confirm } = state;
       if (confirm === null) return state;
+      if (confirm.kind === 'go-home') return goHome(state);
       if (confirm.kind === 'replace-with-sample') {
         return {
           ...withNewPattern(state, { pattern: confirm.pattern, origin: { kind: 'sample', design: confirm.design } }),

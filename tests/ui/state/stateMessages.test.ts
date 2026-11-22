@@ -39,6 +39,9 @@ export const STATE_MESSAGE_KEYS: readonly string[] = [
 
 /** The keys this pass added to both translation files (R11.7). */
 export const ADDED_KEYS: readonly string[] = [
+  'nav.home',
+  'home.confirm',
+  'home.confirmYes',
   'notice.information',
   'notice.success',
   'notice.warning',

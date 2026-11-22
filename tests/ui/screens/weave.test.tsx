@@ -146,6 +146,13 @@ describe('weave screen', () => {
     expect(asking).toContain(EN['tryit.confirmReplace'] as string);
     expect(asking).toContain(EN['tryit.confirmYes'] as string);
     expect(asking).toContain(EN['tryit.confirmNo'] as string);
+    const leaving = renderToStaticMarkup(
+      <TryIt profile={demoProfile()} confirm={{ kind: 'go-home' }} dispatch={() => undefined} t={t} />,
+    );
+    expect(leaving).toContain(EN['home.confirm'] as string);
+    expect(leaving).toContain(EN['home.confirmYes'] as string);
+    expect(leaving).toContain(EN['tryit.confirmNo'] as string);
+    expect(leaving).not.toContain(EN['tryit.confirmReplace'] as string);
     const quiet = renderToStaticMarkup(
       <TryIt profile={demoProfile()} confirm={null} dispatch={() => undefined} t={t} />,
     );

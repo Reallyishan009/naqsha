@@ -247,10 +247,20 @@ export function Shell({ state, dispatch, onLanguageChosen, theme = 'day', onThem
       <header ref={headerRef} className={styles.header} data-scrolled={scrolled} data-narrow={narrow} onKeyDown={onMenuKeyDown}>
         <Selvedge />
         <div className={styles.bar}>
-          <div className={styles.brand}>
-            <BrandMark className={styles.mark} />
-            <h1 className={styles.title}>{t('app.title')}</h1>
-          </div>
+          <h1 className={styles.brand}>
+            <button
+              type="button"
+              className={styles.brandButton}
+              aria-label={t('nav.home')}
+              onClick={() => {
+                dispatch({ type: 'go-home' });
+                setMenuOpen(false);
+              }}
+            >
+              <BrandMark className={styles.mark} />
+              <span className={styles.title}>{t('app.title')}</span>
+            </button>
+          </h1>
           {narrow ? (
             <>
               {scanPill}

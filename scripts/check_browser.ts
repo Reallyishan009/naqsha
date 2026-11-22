@@ -1095,6 +1095,32 @@ function buildSteps(ctx: Context): BrowserStep[] {
       },
     },
     {
+      name: 'header: the Naqsha mark is a home button that brings the Landing back after a sample, at 390 and 1280 px',
+      async run() {
+        const lines: string[] = [];
+        try {
+          await ensureLanguage(page, 'en');
+          for (const [width, height] of [[390, 844], [1280, 900]] as const) {
+            await page.setViewport(width, height);
+            await chooseSample(page, 'diamond');
+            await page.waitFor(`!document.querySelector('[data-hero-slot]')`, `the player after choosing Diamond at ${width} px`);
+            const home = `document.querySelector('header button[aria-label=${JSON.stringify(EN['nav.home'])}]')`;
+            await page.click(home, `the home button at ${width} px`);
+            await page.waitFor(`!!document.querySelector('[data-hero-slot]')&&document.querySelectorAll('main [data-sample]').length===3`, `the Landing hero again at ${width} px`);
+            const seen = await page.ev<{ scrollY: number; height: number }>(`({scrollY:window.scrollY,height:${home}.getBoundingClientRect().height})`);
+            expect(seen.scrollY === 0, `the Landing after the home button is scrolled to ${seen.scrollY} px, not 0`);
+            expect(seen.height >= 44, `the home button is ${seen.height} px tall, under 44`);
+            lines.push(`${width} px: Diamond, then the home button shows the Landing hero at the top; the button is ${Math.round(seen.height)} px tall`);
+          }
+        } finally {
+          await page.setViewport(900, 1000);
+        }
+        // The steps after this one start from a played sample, as before this step.
+        await chooseSample(page, 'diamond');
+        return lines.join('\n');
+      },
+    },
+    {
       name: 'Disclosures: collapsed on arrival, Enter and Space toggle, out of the Tab order, focus returns, primary Button stays in view',
       async run() {
         const lines: string[] = [];
@@ -1159,7 +1185,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
                 `(()=>{const controls=[...document.querySelectorAll('header button')];const vw=window.innerWidth;const problems=[];const rects=controls.map(c=>c.getBoundingClientRect());controls.forEach((c,i)=>{const name=(c.getAttribute('aria-label')||c.textContent).trim();const r=rects[i];if(c.scrollWidth>c.clientWidth+1||c.scrollHeight>c.clientHeight+1)problems.push('"'+name+'" scrolls '+c.scrollWidth+'x'+c.scrollHeight+' in '+c.clientWidth+'x'+c.clientHeight);const walker=document.createTreeWalker(c,NodeFilter.SHOW_TEXT);for(let n=walker.nextNode();n;n=walker.nextNode()){if(!n.textContent.trim())continue;const range=document.createRange();range.selectNodeContents(n);for(const t of range.getClientRects()){if(t.left<r.left-1||t.right>r.right+1||t.top<r.top-1||t.bottom>r.bottom+1||t.left<-0.5||t.right>vw+0.5){problems.push('the text "'+n.textContent.trim()+'" of "'+name+'" is outside its control');break}}}});for(let i=0;i<controls.length;i++)for(let j=i+1;j<controls.length;j++){const a=rects[i],b=rects[j];if(a.left<b.right-0.5&&b.left<a.right-0.5&&a.top<b.bottom-0.5&&b.top<a.bottom-0.5)problems.push('"'+(controls[i].getAttribute('aria-label')||controls[i].textContent).trim()+'" overlaps "'+(controls[j].getAttribute('aria-label')||controls[j].textContent).trim()+'"')}return {count:controls.length,problems}})()`,
               );
               const verdict = `at 320 (${language}, ${theme}): ${result.count} header controls`;
-              if (result.count !== 9) failures.push(`${verdict}, expected 9 (the Menu button, 4 navigation items, 2 languages, the Theme_Switch, the Scan pill)`);
+              if (result.count !== 10) failures.push(`${verdict}, expected 10 (the home button, the Menu button, 4 navigation items, 2 languages, the Theme_Switch, the Scan pill)`);
               else if (result.problems.length > 0) failures.push(`${verdict}: ${result.problems.join('; ')}`);
               else lines.push(`${verdict}: every label inside its control, no overlap`);
             }

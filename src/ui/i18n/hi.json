@@ -1547,6 +1547,18 @@
     "text": "करघे का चित्र चलाएँ",
     "reviewed": false
   },
+  "nav.home": {
+    "text": "नक्शा, मुखपृष्ठ",
+    "reviewed": false
+  },
+  "home.confirm": {
+    "text": "आपके स्कैन किए कार्ड सहेजे नहीं गए हैं। क्या इन्हें छोड़कर शुरुआत पर जाएँ?",
+    "reviewed": false
+  },
+  "home.confirmYes": {
+    "text": "शुरुआत पर जाएँ",
+    "reviewed": false
+  },
   "nav.menu": {
     "text": "मेनू",
     "reviewed": false

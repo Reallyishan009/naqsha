@@ -53,9 +53,31 @@
 .brand {
   display: flex;
   flex: none;
+  min-width: 0;
+  margin: 0;
+  font: inherit;
+}
+
+/* The mark and the name are one button that goes to the Landing; it looks like the header links. */
+.brandButton {
+  position: relative;
+  display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-width: 0;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: var(--space-1) var(--space-2);
+  color: var(--ink);
+  font: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background-color var(--motion-short);
+}
+
+.brandButton:hover {
+  background: var(--tint);
 }
 
 .mark {
@@ -317,21 +339,23 @@
 
 /*
  * The two header layouts follow the viewport (1024 px), chosen in App.tsx, so no media query is needed here. A phone
- * leaves no room for the word beside the mark: the name stays for assistive technology and the mark stands for it.
+ * leaves no room for the word beside the mark: the button's aria-label keeps the name for assistive technology and the mark stands for it.
  */
 @container (max-width: 419px) {
   .title {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+    display: none;
+  }
+  .brandButton {
+    padding-inline: 0;
   }
 }
-
+/* On the narrowest phones the home button, the Scan pill and the Menu button each give up a little side padding to fit one row. */
+@container (max-width: 359px) {
+  .header[data-narrow='true'] .scanPill,
+  .header[data-narrow='true'] .menuButton {
+    padding-inline: var(--space-2);
+  }
+}
 /* Between 1024 and 1239 px the links and the switches take less room, so the row fits in Hindi too. */
 @container (min-width: 1024px) and (max-width: 1239px) {
   .bar {

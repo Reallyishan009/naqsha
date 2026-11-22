@@ -447,4 +447,54 @@ describe('repair actions', () => {
     expect(saved.current.pattern).toEqual(repaired.current.pattern);
     expect(saved.repairs).toEqual(repaired.repairs);
   });
+  describe('go-home', () => {
+    const profile = demoProfile();
+    const grid = Array.from({ length: profile.hookRows }, () => Array<boolean>(profile.hookColumns).fill(true));
+    const worked = (screen: Screen, origin: PatternOrigin): AppState => ({
+      ...initialAppState,
+      screen,
+      language: 'en',
+      profile: { status: 'ready', profile },
+      current: { pattern: [grid, grid], origin },
+      selectedPick: 1,
+      breakpoints: [1],
+      finishedPattern: [grid, grid],
+      clothChoices: { ...initialAppState.clothChoices, repeat: 3 },
+    });
+    it('go-home from each screen shows the empty Landing and resets pick, breakpoints and cloth, keeping language and profile', () => {
+      for (const screen of ['weave', 'keep', 'scan', 'code'] as const) {
+        const home = appReducer(worked(screen, { kind: 'sample', design: 'diamond' }), { type: 'go-home' });
+        expect(home.screen).toBe('weave');
+        expect(home.current).toEqual({ pattern: [], origin: { kind: 'none' } });
+        expect([home.selectedPick, home.breakpoints, home.finishedPattern, home.compare]).toEqual([0, [], null, null]);
+        expect(home.clothChoices).toEqual(initialAppState.clothChoices);
+        expect(home.language).toBe('en');
+        expect(home.profile.status).toBe('ready');
+      }
+    });
+    it('go-home is a no-op in effect on the Landing', () => {
+      const landing = { ...initialAppState, profile: { status: 'ready' as const, profile } };
+      expect(appReducer(landing, { type: 'go-home' })).toEqual(landing);
+    });
+    it('go-home over unsaved scanned cards asks first on the Weave screen; yes goes home, no keeps the cards', () => {
+      for (const screen of ['weave', 'keep', 'scan', 'code'] as const) {
+        const start = worked(screen, { kind: 'scanned', saved: false });
+        const asked = appReducer(start, { type: 'go-home' });
+        expect(asked.confirm).toEqual({ kind: 'go-home' });
+        expect(asked.screen).toBe('weave');
+        expect(asked.current).toEqual(start.current);
+        expect(appReducer(asked, { type: 'confirm-dismissed' }).current).toEqual(start.current);
+        const accepted = appReducer(asked, { type: 'confirm-accepted' });
+        expect(accepted.current).toEqual({ pattern: [], origin: { kind: 'none' } });
+        expect(accepted.confirm).toBeNull();
+      }
+    });
+    it('go-home does not ask over saved scanned cards or a design opened from the archive', () => {
+      for (const origin of [{ kind: 'scanned', saved: true }, { kind: 'archive', id: 'a' }] as const) {
+        const home = appReducer(worked('keep', origin), { type: 'go-home' });
+        expect(home.confirm).toBeNull();
+        expect(home.current.pattern).toEqual([]);
+      }
+    });
+  });
 });

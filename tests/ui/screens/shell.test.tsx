@@ -212,4 +212,31 @@ describe('shell', () => {
     for (const selector of ['.header', '.bar']) expect(rule(selector), selector).toMatch(/transition:[^;]*var\(--motion-short\)/);
     expect(readFileSync(path.join(root, 'src/ui/theme/tokens.css'), 'utf8')).toMatch(/--motion-short:\s*120ms/);
   });
+  it('the Naqsha mark and name are one home button on every screen, wide and narrow, in both languages', () => {
+    for (const language of LANGUAGES) {
+      const name = language === 'en' ? (EN['nav.home'] as string) : (HI['nav.home']?.text as string);
+      const word = language === 'en' ? (EN['app.title'] as string) : (HI['app.title']?.text as string);
+      for (const screen of SCREENS) {
+        for (const compact of [false, true]) {
+          const html = renderToStaticMarkup(<Shell state={{ ...initialAppState, language, screen }} dispatch={() => undefined} compact={compact} />);
+          const home = /<button\b[^>]*aria-label="([^"]*)"[^>]*>(.*?)<\/button>/.exec(html);
+          expect(home?.[1], `${language} ${screen} ${compact}`).toBe(name);
+          expect(home?.[2]).toContain('data-brand-mark');
+          expect(home?.[2]).toContain(`>${word}</span>`);
+        }
+      }
+    }
+    expect(EN['nav.home']).toBe('Naqsha, home');
+    expect(HI['nav.home']?.reviewed).toBe(false);
+  });
+  it('the home button keeps the touch target and a hover tint', async () => {
+    const { readFileSync } = await import('node:fs');
+    const path = await import('node:path');
+    const root = path.resolve(import.meta.dirname, '../../..');
+    const css = readFileSync(path.join(root, 'src/ui/Shell.module.css'), 'utf8');
+    const rule = /\.brandButton\s*\{([^}]*)\}/.exec(css)![1]!;
+    expect(rule).toContain('min-height: var(--touch-target)');
+    expect(rule).toContain('min-width: var(--touch-target)');
+    expect(css).toMatch(/\.brandButton:hover\s*\{[^}]*var\(--tint\)/);
+  });
 });

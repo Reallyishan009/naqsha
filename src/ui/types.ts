@@ -31,6 +31,7 @@ export type CurrentPattern = { pattern: Pattern; origin: PatternOrigin };
 
 export type Confirm =
   | { kind: 'replace-with-sample'; design: SampleDesign; pattern: Pattern } // the sample waits here until accepted
+  | { kind: 'go-home' } // leave unsaved scanned cards for the Landing, once accepted
   | { kind: 'delete-design'; id: string }
   | { kind: 'remove-batch-card'; index: number }
   | { kind: 'commit-batch' }; // replace or append question (R11.8)
@@ -89,6 +90,7 @@ export type AppAction =
   | { type: 'profile-loaded'; state: ProfileState }
   | { type: 'set-language'; language: Language }
   | { type: 'request-sample'; design: SampleDesign; pattern: Pattern }
+  | { type: 'go-home' } // back to the Landing, after a question when scanned cards are unsaved
   | { type: 'confirm-accepted' }
   | { type: 'confirm-dismissed' }
   | { type: 'open-saved'; id: string; pattern: Pattern }
