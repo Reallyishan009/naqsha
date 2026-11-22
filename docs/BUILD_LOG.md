@@ -1596,3 +1596,7 @@ Keep and Code screenshots and all 390 px screenshots by the sub-agent (the orche
 ## Demo loom files: now the Diamond export (bmp-fix 1.1)
 - `public/demo/loom-files/diamond-1bit.bmp` (926 bytes) and `diamond-8bit.bmp` (7,990 bytes) are now the normal export of the 36-pick Diamond sample, 192 x 36. They replace the 200-pick files (4,862 and 39,478 bytes). The BMP files were replaced by the user; this task did not edit them.
 - `tests/ui/state/demoDesigns.test.tsx` compares them byte for byte with the export of `generateSample(profile, 'diamond')` at 1 and 8 bit and reads size, width and pick count from the header. The Keep Demo card text, `public/demo/README.txt` and `docs/JUDGES.md` say they are the Diamond export. `media/sample-design-*.bmp` (200 picks, `scripts/export_sample.ts`) are unchanged.
+
+## Home as its own screen (home-screen 1.1 and 2.1)
+- The Landing is now the screen `home` (first screen, opened by the Naqsha mark); `weave` is only the Weave tool, with its empty state when no design is loaded. The mark no longer clears the design, so the unsaved-work question for it is gone. Landing samples load the design and move to Weave.
+- `check:browser` has a new step (Weave on a fresh app shows Try it and no hero, the mark shows the hero, Diamond from the Landing ends on the cloth, at 390 and 1280 px); `npm run screenshots -- after-run4` writes 6 files to `media/design/after-run4/`. Details in `.kiro/specs/home-screen/measurements.md`.

@@ -159,3 +159,23 @@ export function run3Names(): string[] {
 export function run3Problems(files: ReadonlyMap<string, Uint8Array>): string[] {
   return problemsOf(run3Names(), files, '8 run 3 screenshot names');
 }
+
+// ---------------------------------------------------------------- the run 4 set (home as its own screen)
+
+/** The folder under media/design/ that holds the home screen captures. */
+export const RUN4_FOLDER = 'after-run4';
+
+/** The six files: home in the Day loom at 390 and 1280 px, and the Weave empty state at both widths in both looms. */
+export const RUN4_NAMES = [
+  'home-day-390.png',
+  'home-day-1280.png',
+  'weave-empty-day-390.png',
+  'weave-empty-day-1280.png',
+  'weave-empty-night-390.png',
+  'weave-empty-night-1280.png',
+] as const;
+
+/** The same checks as `setProblems` on the 6 files of the run 4 set: exactly these names, each a PNG as wide as its name says. */
+export function run4Problems(files: ReadonlyMap<string, Uint8Array>): string[] {
+  return problemsOf([...RUN4_NAMES], files, '6 run 4 screenshot names');
+}

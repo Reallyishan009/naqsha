@@ -24,3 +24,12 @@ Part 1 (`home: its own screen`):
 
 - No screenshot was opened in Part 1.
 - The Landing heading is now "Naqsha, home" (nav.home) instead of "Weave"; Hindi "नक्शा, मुखपृष्ठ" is the existing string.
+
+## Part 2 (`home: checks, screenshots, docs`)
+- scripts/check_browser.ts: new step "home and Weave" (nothing removed, nothing loosened). Steps 1, 2, 16, the home-button step and the offline Landing checks were re-aimed in Part 1 and are unchanged here.
+- scripts/screenshots.ts: `freshPage` now waits for the home screen heading (`nav.home`) instead of the Weave heading, because a fresh app opens on home; the older modes' views are otherwise unchanged (`weave-landing` is the home screen). New mode `after-run4` with `RUN4_NAMES` and `run4Problems` in scripts/checks/screenshots.ts; tests added in tests/scripts/screenshots.test.ts.
+- The empty Weave capture starts from a fresh page: after a full-page capture at 390 px the header menu can no longer be clicked.
+## Not checked by eye (Part 2)
+- Opened: weave-empty-day-390, weave-empty-night-1280. Not opened: home-day-390, home-day-1280, weave-empty-day-1280, weave-empty-night-390.
+## Bytes (Part 2)
+- Entry chunk 132.63 kB gzipped by vite (limit 150,000 bytes); check-bundle passed. No source file under src/ changed in Part 2.

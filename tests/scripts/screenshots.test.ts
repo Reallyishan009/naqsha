@@ -16,6 +16,9 @@ import {
   RUN3_WIDTHS,
   run3Names,
   run3Problems,
+  RUN4_FOLDER,
+  RUN4_NAMES,
+  run4Problems,
   screenshotNames,
   setProblems,
 } from '../../scripts/checks/screenshots.ts';
@@ -244,6 +247,34 @@ describe('run 3 screenshot set (Demo cards)', () => {
       'keep-demo-day-1280.png is 1281 pixels wide, expected 1280',
       'code-demo-day-390.png is not a PNG file',
       'scan-demo-night-390.png is not one of the 8 run 3 screenshot names',
+    ]);
+  });
+});
+describe('run 4 screenshot set (home as its own screen)', () => {
+  const widthOf = (name: string): number => Number(/-(\d+)\.png$/.exec(name)![1]);
+  it('goes to media/design/after-run4 and holds home in Day and the empty Weave screen in both looms, at 390 and 1280 px', () => {
+    expect(RUN4_FOLDER).toBe('after-run4');
+    expect([...RUN4_NAMES]).toEqual([
+      'home-day-390.png',
+      'home-day-1280.png',
+      'weave-empty-day-390.png',
+      'weave-empty-day-1280.png',
+      'weave-empty-night-390.png',
+      'weave-empty-night-1280.png',
+    ]);
+  });
+  it('a complete set has no problem; a missing file, a wrong width, a text file and a stranger are each named', () => {
+    const files = new Map<string, Uint8Array>(RUN4_NAMES.map((name) => [name, pngOfWidth(widthOf(name))]));
+    expect(run4Problems(files)).toEqual([]);
+    files.delete('home-day-390.png');
+    files.set('home-day-1280.png', pngOfWidth(1281));
+    files.set('weave-empty-day-390.png', new TextEncoder().encode('this is not a picture at all, just text'));
+    files.set('home-night-390.png', pngOfWidth(390));
+    expect(run4Problems(files)).toEqual([
+      'home-day-390.png is missing',
+      'home-day-1280.png is 1281 pixels wide, expected 1280',
+      'weave-empty-day-390.png is not a PNG file',
+      'home-night-390.png is not one of the 6 run 4 screenshot names',
     ]);
   });
 });

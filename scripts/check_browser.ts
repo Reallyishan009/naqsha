@@ -1136,6 +1136,42 @@ function buildSteps(ctx: Context): BrowserStep[] {
       },
     },
     {
+      name: 'home and Weave: Weave on a fresh app is the Weave tool (Try it, no hero), the mark brings the hero back, Diamond on the Landing ends on the cloth, at 390 and 1280 px',
+      async run() {
+        const lines: string[] = [];
+        try {
+          await ensureLanguage(page, 'en');
+          for (const [width, height] of [[390, 844], [1280, 900]] as const) {
+            await page.setViewport(width, height);
+            // A reload empties the Current_Pattern and opens the home screen.
+            await page.hardReload();
+            await page.waitFor(`!!document.querySelector('#screen-title')`, `the app after the reload at ${width} px`);
+            await ensureLanguage(page, 'en');
+            await page.waitFor(`document.querySelector('#screen-title')?.textContent.trim()===${JSON.stringify(EN['nav.home'])}&&!!document.querySelector('[data-hero-slot]')`, `the home screen with its hero at ${width} px`);
+            await clickNavItem(page, EN['nav.weave']!);
+            await page.waitFor(`document.querySelector('#screen-title')?.textContent.trim()===${JSON.stringify(EN['nav.weave'])}`, `the Weave screen at ${width} px`);
+            const weave = await page.ev<{ hero: boolean; tryIt: boolean; empty: boolean; tiles: number; current: string | null }>(
+              `(()=>{const m=document.querySelector('main');const text=m?m.innerText:'';const c=document.querySelector('header nav [aria-current]');return {hero:!!document.querySelector('[data-hero-slot]'),tryIt:text.includes(${JSON.stringify(EN['tryit.title'])}),empty:text.includes(${JSON.stringify(EN['weave.empty'])}),tiles:document.querySelectorAll('main [data-sample]').length,current:c?c.textContent.trim():null}})()`,
+            );
+            expect(!weave.hero, `Weave on a fresh app at ${width} px shows the Landing hero`);
+            expect(weave.tryIt && weave.empty && weave.tiles === 3, `Weave on a fresh app at ${width} px: Try it ${weave.tryIt}, empty message ${weave.empty}, ${weave.tiles} sample controls (expected true, true, 3)`);
+            await goHome(page);
+            const home = await page.ev<{ hero: boolean; current: boolean }>(`({hero:!!document.querySelector('[data-hero-slot]'),current:!!document.querySelector('header nav [aria-current]')})`);
+            expect(home.hero && !home.current, `the mark at ${width} px: hero ${home.hero}, a navigation item is current ${home.current} (expected true, false)`);
+            const total = generateSample(await profileOf(), 'diamond').length;
+            await page.click(`document.querySelector('main [data-sample="diamond"]')`, `the Diamond tile of the Landing at ${width} px`);
+            await page.waitFor(`!!(${PICK_TEXT})&&!document.querySelector('[data-hero-slot]')`, `the cloth after choosing Diamond on the Landing at ${width} px`, 5_000);
+            const seen = await playToEnd(page, total);
+            expect(seen[seen.length - 1] === total, `Diamond from the Landing at ${width} px ended at pick ${seen[seen.length - 1]} of ${total}`);
+            lines.push(`${width} px: Weave on a fresh app shows Try it, the empty message and ${weave.tiles} sample controls, no hero; the mark shows the hero with no current item; Diamond from the Landing plays to pick ${total} of ${total}`);
+          }
+        } finally {
+          await page.setViewport(900, 1000);
+        }
+        return lines.join('\n');
+      },
+    },
+    {
       name: 'Disclosures: collapsed on arrival, Enter and Space toggle, out of the Tab order, focus returns, primary Button stays in view',
       async run() {
         const lines: string[] = [];
