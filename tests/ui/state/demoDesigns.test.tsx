@@ -25,7 +25,6 @@ import {
 } from '../../../src/ui/state/demoDesigns.ts';
 import { initialKeepForm, runExport } from '../../../src/ui/state/keep.ts';
 import type { AppAction, AppState, Language } from '../../../src/ui/types.ts';
-import { demoPattern } from '../../../scripts/demo_pattern.ts';
 import { FakeArchiveStore } from '../../support/fakes.ts';
 import { demoProfile } from '../../support/profiles.ts';
 
@@ -194,10 +193,14 @@ describe('the Keep Demo card', () => {
 
 describe('the loom files of the Keep Demo card', () => {
   const readFile = (name: string): Uint8Array => new Uint8Array(readFileSync(path.join(ROOT, 'public/demo/loom-files', name)));
-  const pickCount = 200;
+  const diamond = generateSample(profile, 'diamond');
+  const header = (bytes: Uint8Array): { width: number; height: number; bitDepth: number } => {
+    const view = new DataView(bytes.buffer, bytes.byteOffset);
+    return { width: view.getInt32(18, true), height: view.getInt32(22, true), bitDepth: view.getUint16(28, true) };
+  };
 
   /** The bytes the normal export button offers for a pattern, taken from the download it starts. */
-  function exportedBytes(pattern: ReturnType<typeof demoPattern>, bitDepth: 1 | 8): Uint8Array {
+  function exportedBytes(pattern: typeof diamond, bitDepth: 1 | 8): Uint8Array {
     let bytes: Uint8Array | null = null;
     const outcome = runExport(profile, pattern, { bitDepth }, {
       makeBlob: (data) => {
@@ -218,16 +221,18 @@ describe('the loom files of the Keep Demo card', () => {
     for (const file of DEMO_LOOM_FILES) expect(readFile(file.fileName).length).toBeGreaterThan(0);
   });
 
-  it('are byte for byte what the normal export gives for the demo pattern of 200 picks', () => {
-    expect(exportedBytes(demoPattern(profile, pickCount), 1)).toEqual(readFile('diamond-1bit.bmp'));
-    expect(exportedBytes(demoPattern(profile, pickCount), 8)).toEqual(readFile('diamond-8bit.bmp'));
+  it('are byte for byte what the normal export gives for the Diamond sample at 1 and 8 bit', () => {
+    expect(exportedBytes(diamond, 1)).toEqual(readFile('diamond-1bit.bmp'));
+    expect(exportedBytes(diamond, 8)).toEqual(readFile('diamond-8bit.bmp'));
   });
 
-  it('are 192 ends wide, the same width as the export of the Diamond sample', () => {
-    const widthOf = (bytes: Uint8Array): number => new DataView(bytes.buffer, bytes.byteOffset).getInt32(18, true);
-    const diamond = generateSample(profile, 'diamond');
-    expect(widthOf(exportedBytes(diamond, 1))).toBe(widthOf(readFile('diamond-1bit.bmp')));
-    expect(widthOf(readFile('diamond-8bit.bmp'))).toBe(widthOf(readFile('diamond-1bit.bmp')));
+  it('are 926 and 7,990 bytes, 192 ends wide and 36 picks long, read back from the BMP header', () => {
+    const oneBit = readFile('diamond-1bit.bmp');
+    const eightBit = readFile('diamond-8bit.bmp');
+    expect(oneBit.length).toBe(926);
+    expect(eightBit.length).toBe(7990);
+    expect(header(oneBit)).toEqual({ width: 192, height: 36, bitDepth: 1 });
+    expect(header(eightBit)).toEqual({ width: 192, height: 36, bitDepth: 8 });
   });
 });
 

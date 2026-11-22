@@ -526,7 +526,7 @@
   "keep.demo.edited": "A new version of the demo design was saved, with a few holes changed. Open its versions in the list.",
   "keep.demo.editNote": "Demo edit {count}: a few holes changed",
   "keep.demo.loom.heading": "Download loom file",
-  "keep.demo.loom.note": "Made with Naqsha's own export. Not tested on a physical loom.",
+  "keep.demo.loom.note": "The Diamond sample, exported by Naqsha itself. Not tested on a physical loom.",
   "keep.demo.loom.link": "Download {name}",
   "codeview.demo.title": "Try the Code view with a demo",
   "codeview.demo.intro": "Three buttons that need no card of your own.",

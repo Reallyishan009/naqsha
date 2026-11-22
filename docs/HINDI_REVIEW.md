@@ -534,7 +534,7 @@ Unreviewed strings: 542
 | `keep.demo.edited` | डेमो डिज़ाइन का नया संस्करण सहेजा गया, कुछ छेद बदलकर। सूची में उसके संस्करण खोलें। | A new version of the demo design was saved, with a few holes changed. Open its versions in the list. |
 | `keep.demo.editNote` | डेमो बदलाव {count}: कुछ छेद बदले | Demo edit {count}: a few holes changed |
 | `keep.demo.loom.heading` | करघे की फ़ाइल डाउनलोड करें | Download loom file |
-| `keep.demo.loom.note` | नक्शा के अपने एक्सपोर्ट से बनी। किसी असली करघे पर जाँची नहीं गई। | Made with Naqsha's own export. Not tested on a physical loom. |
+| `keep.demo.loom.note` | डायमंड नमूना, नक्शा के अपने एक्सपोर्ट से बना। किसी असली करघे पर जाँची नहीं गई। | The Diamond sample, exported by Naqsha itself. Not tested on a physical loom. |
 | `keep.demo.loom.link` | {name} डाउनलोड करें | Download {name} |
 | `codeview.demo.title` | डेमो से कोड व्यू आज़माएँ | Try the Code view with a demo |
 | `codeview.demo.intro` | तीन बटन, जिनके लिए अपना कार्ड नहीं चाहिए। | Three buttons that need no card of your own. |

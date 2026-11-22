@@ -1586,9 +1586,13 @@ Work list `.kiro/specs/judges-kit/` (tasks 1.1 to 4.1), branch `auto/build`. Goa
 ### Numbers
 - Entry chunk **131,375 bytes** gzipped (limit 150,000). Precache 54 entries, **1,397,783 bytes**, no limit exists; the two noisy PNGs (253,538 B) are left out by that number.
 - **Real card reads: 0 of 8.** All eight real photos fail with `peg-holes-not-found`, because the reader is built for the demo card layout. `docs/JUDGES.md` says so and the screen shows the failure unchanged.
-- **Loom files vs the Diamond sample.** `diamond-1bit.bmp` and `diamond-8bit.bmp` are 192 x 200 and byte-identical to the export of the 200-pick `demoPattern` (`scripts/export_sample.ts`), not of the 36-pick Diamond sample. The names say "diamond" but the text says what they are. No real loom's file format was available, and the BMP is not tested on a physical loom.
+- **Loom files vs the Diamond sample.** `diamond-1bit.bmp` and `diamond-8bit.bmp` were first 192 x 200 and byte-identical to the export of the 200-pick `demoPattern` (`scripts/export_sample.ts`), not of the 36-pick Diamond sample. They were then replaced (see the later entry: the loom files are now the Diamond export, 192 x 36). The old note said "diamond" but the text says what they are. No real loom's file format was available, and the BMP is not tested on a physical loom.
 ### Changed checks
 Listed in `.kiro/specs/judges-kit/measurements.md`: R14.7 now allows `public/demo/`; precache R9.5 allows the explicit exclusion list and asserts it is absent; R13.3 allows one demo-image fetch; R23.7 allows the addresses in `CREDITS.md`; Code view Tab order gained the Demo card buttons; the offline step also fetches the loom files. One failure in this task: a literal 192 in the new check tripped the card-geometry test; the check now reads the width from the profile.
 ### Not checked by eye
 Keep and Code screenshots and all 390 px screenshots by the sub-agent (the orchestrator opens them); Hindi Demo cards; offline thumbnails (the noisy cards and real photos show as broken images offline by design).
 **Kiro features used:** a work list in `.kiro/specs/judges-kit/`, one sub-agent task at a time, steering (glossary, structure, card geometry, testing).
+
+## Demo loom files: now the Diamond export (bmp-fix 1.1)
+- `public/demo/loom-files/diamond-1bit.bmp` (926 bytes) and `diamond-8bit.bmp` (7,990 bytes) are now the normal export of the 36-pick Diamond sample, 192 x 36. They replace the 200-pick files (4,862 and 39,478 bytes). The BMP files were replaced by the user; this task did not edit them.
+- `tests/ui/state/demoDesigns.test.tsx` compares them byte for byte with the export of `generateSample(profile, 'diamond')` at 1 and 8 bit and reads size, width and pick count from the header. The Keep Demo card text, `public/demo/README.txt` and `docs/JUDGES.md` say they are the Diamond export. `media/sample-design-*.bmp` (200 picks, `scripts/export_sample.ts`) are unchanged.

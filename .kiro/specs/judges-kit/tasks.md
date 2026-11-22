@@ -22,8 +22,8 @@ One task at a time, in order; each task follows brief.md in this folder (its rul
   - [x] 3.3 Weave Demo strip
     - Implement brief.md section 4 and 5 with tests. Gate. Commit `weave: demo strip` and push.
 
-- [ ] 4. Docs, browser checks, screenshots
-  - [-] 4.1 JUDGES.md, check:browser steps, screenshots, final gate
+- [x] 4. Docs, browser checks, screenshots
+  - [x] 4.1 JUDGES.md, check:browser steps, screenshots, final gate
     - Implement brief.md sections 6, 7 (check:browser steps) and 8 (screenshots, mode after-run3). Update docs/BUILD_LOG.md (one entry for Part B incl. bytes: entry chunk, precache total, and the real-card read results) and docs/KIRO_USAGE.md (short). Run the full gate plus check:all once. Commit `judges kit: JUDGES.md, browser checks, screenshots` and push. Report bytes and the file list of screenshots.
 
 ## Notes

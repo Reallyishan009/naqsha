@@ -18,7 +18,7 @@ export const DEMO_METADATA: Metadata = {
   notes: 'Saved by the Demo card of the Keep screen.',
 };
 
-/** The loom files in public/demo/loom-files, made with the export of Naqsha. They are not the Diamond sample. */
+/** The loom files in public/demo/loom-files, the normal export of Naqsha for the Diamond sample, at 1 bit and 8 bit. */
 export const DEMO_LOOM_FILES: ReadonlyArray<{ path: string; fileName: string }> = [
   { path: 'demo/loom-files/diamond-1bit.bmp', fileName: 'diamond-1bit.bmp' },
   { path: 'demo/loom-files/diamond-8bit.bmp', fileName: 'diamond-8bit.bmp' },
