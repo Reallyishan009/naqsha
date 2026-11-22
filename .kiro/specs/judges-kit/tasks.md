@@ -14,16 +14,16 @@ One task at a time, in order; each task follows brief.md in this folder (its rul
   - [x] 2.1 Scan Demo cards
     - Implement brief.md section 1 and 5 for the Scan screen with tests. Run the gate. Commit `scan: demo cards and real card photos` and push. Record in measurements.md 'Real card reads' what the reader returned for each of the 8 real photos (read, partly read or failed, and the message) by running them through the real reader in headless Chrome or the reader in Node (readCard with loadPixelData; whichever is quicker), without altering the reader.
 
-- [ ] 3. Keep, Code, Weave demos
-  - [-] 3.1 Keep Demo card
+- [x] 3. Keep, Code, Weave demos
+  - [x] 3.1 Keep Demo card
     - Implement brief.md section 2 and 5 with tests. Gate. Commit `keep: demo card` and push.
-  - [~] 3.2 Code Demo card
+  - [x] 3.2 Code Demo card
     - Implement brief.md section 3 and 5 with tests. Gate. Commit `code: demo card` and push.
-  - [~] 3.3 Weave Demo strip
+  - [x] 3.3 Weave Demo strip
     - Implement brief.md section 4 and 5 with tests. Gate. Commit `weave: demo strip` and push.
 
 - [ ] 4. Docs, browser checks, screenshots
-  - [~] 4.1 JUDGES.md, check:browser steps, screenshots, final gate
+  - [-] 4.1 JUDGES.md, check:browser steps, screenshots, final gate
     - Implement brief.md sections 6, 7 (check:browser steps) and 8 (screenshots, mode after-run3). Update docs/BUILD_LOG.md (one entry for Part B incl. bytes: entry chunk, precache total, and the real-card read results) and docs/KIRO_USAGE.md (short). Run the full gate plus check:all once. Commit `judges kit: JUDGES.md, browser checks, screenshots` and push. Report bytes and the file list of screenshots.
 
 ## Notes

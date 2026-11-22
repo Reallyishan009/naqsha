@@ -1577,3 +1577,18 @@ Listed one by one in `measurements.md`. Header labels changed (icon-only theme s
 - The fade and the sweep were seen only as frames or as the CSS read, not as motion. The centred Scan and Code columns were not recaptured.
 - No real device, no screen reader, no redeploy (`check:deployed` was not run). New Hindi strings are `reviewed: false` in `docs/HINDI_REVIEW.md`.
 **Kiro features used:** a work list in `.kiro/specs/second-pass-run2/` run task by task by sub-agents, steering (glossary, testing, tech, structure, product), the `weave-reviewer` rules through the glossary and structure tests.
+## 2026-11-22: Part B, judges' demo kit (Demo cards on every screen, JUDGES.md, browser checks)
+Work list `.kiro/specs/judges-kit/` (tasks 1.1 to 4.1), branch `auto/build`. Goal: a judge with no punched card can test every function of every screen with one click and download a loom file. No new dependency, colour or font; no property test added or weakened.
+### What was built
+- **Demo files** (`public/demo/`): 7 card PNGs and 2 loom BMPs made with our own code, 8 real card photos from Wikimedia Commons with `CREDITS.md`. Precache has an explicit exclusion list (`NOT_PRECACHED_*` in `scripts/checks/precache.ts`): the real photos and the two noisy PNGs stay out.
+- **Scan**: Demo cards (pressing a thumbnail runs the same read as an uploaded file). **Keep**: save a demo design, make a demo edit, two loom file links. **Code view**: load the Diamond, a breakpoint on pick 3, compare with an edited version. **Weave**: "Show a lost card" and "Show a torn card". `docs/JUDGES.md` is the 10-step path, linked from the README.
+- `check:browser` has 23 steps: two new ones (Scan "Noisy and tilted" read equals `tests/fixtures/pick0-noisy-tilted.json` and the blank card's not-found message; Keep loom file links give a BMP of the profile's width, 192) sit before the offline step, which is now step 23. `npm run screenshots -- after-run3` writes 8 files to `media/design/after-run3/`.
+### Numbers
+- Entry chunk **131,375 bytes** gzipped (limit 150,000). Precache 54 entries, **1,397,783 bytes**, no limit exists; the two noisy PNGs (253,538 B) are left out by that number.
+- **Real card reads: 0 of 8.** All eight real photos fail with `peg-holes-not-found`, because the reader is built for the demo card layout. `docs/JUDGES.md` says so and the screen shows the failure unchanged.
+- **Loom files vs the Diamond sample.** `diamond-1bit.bmp` and `diamond-8bit.bmp` are 192 x 200 and byte-identical to the export of the 200-pick `demoPattern` (`scripts/export_sample.ts`), not of the 36-pick Diamond sample. The names say "diamond" but the text says what they are. No real loom's file format was available, and the BMP is not tested on a physical loom.
+### Changed checks
+Listed in `.kiro/specs/judges-kit/measurements.md`: R14.7 now allows `public/demo/`; precache R9.5 allows the explicit exclusion list and asserts it is absent; R13.3 allows one demo-image fetch; R23.7 allows the addresses in `CREDITS.md`; Code view Tab order gained the Demo card buttons; the offline step also fetches the loom files. One failure in this task: a literal 192 in the new check tripped the card-geometry test; the check now reads the width from the profile.
+### Not checked by eye
+Keep and Code screenshots and all 390 px screenshots by the sub-agent (the orchestrator opens them); Hindi Demo cards; offline thumbnails (the noisy cards and real photos show as broken images offline by design).
+**Kiro features used:** a work list in `.kiro/specs/judges-kit/`, one sub-agent task at a time, steering (glossary, structure, card geometry, testing).

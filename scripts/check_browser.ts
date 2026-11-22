@@ -1240,6 +1240,81 @@ function buildSteps(ctx: Context): BrowserStep[] {
       },
     },
     {
+      name: 'Scan Demo cards: "Noisy and tilted" reads the fixture grid; the blank card shows the not-found message',
+      async run() {
+        const { hookRows, hookColumns } = ctx.profile;
+        const fixture = readJson('tests/fixtures/pick0-noisy-tilted.json') as { card: boolean[][]; pickIndex: number };
+        const discardIfRead = async (): Promise<void> => {
+          await page.ev(
+            `(()=>{if(document.querySelector('#scan-read-title'))[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===${JSON.stringify(EN['scan.discard'])})?.click()})()`,
+          );
+          await page.waitFor(`!document.querySelector('#scan-read-title')&&document.querySelectorAll('button[data-shape]').length===0`, 'the earlier read to be discarded');
+        };
+        await goTo(page, 'scan');
+        await page.waitFor(`!!document.querySelector('#scan-file')`, 'the photo chooser');
+        await discardIfRead();
+        // 1. Press the card, as a judge does; the app fetches the image and reads it like an uploaded photo.
+        await page.waitFor(`!!document.querySelector('[data-demo="card-1-noisy-tilted.png"]')`, 'the "Noisy and tilted" demo card');
+        await page.click(`document.querySelector('[data-demo="card-1-noisy-tilted.png"]')`, 'the "Noisy and tilted" demo card');
+        const outcome = await page.waitFor<string>(
+          `document.querySelectorAll('button[data-shape]').length>0?'read':(document.querySelector('[data-variant="error"] > div')?.textContent.trim()||null)`,
+          'the read of the Noisy and tilted card to finish',
+          30_000,
+        );
+        expect(outcome === 'read', `the Noisy and tilted card was not read: ${outcome}`);
+        const markers = await page.ev<{ shape: string; label: string }[]>(
+          `[...document.querySelectorAll('button[data-shape]')].map(b=>({shape:b.dataset.shape,label:b.getAttribute('aria-label')||''}))`,
+        );
+        expect(markers.length === hookRows * hookColumns, `${markers.length} markers, expected ${hookRows * hookColumns}`);
+        const shapeByLabel = new Map(markers.map((marker) => [marker.label, marker.shape]));
+        const labelOf = (hookRow: number, hookColumn: number, punched: boolean): string =>
+          format(EN['scan.marker.name']!, { row: hookRow + 1, column: hookColumn + 1, state: EN[punched ? 'scan.marker.punched' : 'scan.marker.unpunched']! });
+        const wrong: string[] = [];
+        for (let hookRow = 0; hookRow < hookRows; hookRow++) {
+          for (let hookColumn = 0; hookColumn < hookColumns; hookColumn++) {
+            const expectedPunched = fixture.card[hookRow]![hookColumn]!;
+            const shape = shapeByLabel.get(labelOf(hookRow, hookColumn, expectedPunched));
+            if (shape !== (expectedPunched ? 'filled' : 'ring')) wrong.push(`hook row ${hookRow + 1} column ${hookColumn + 1} is not read ${expectedPunched ? 'punched' : 'unpunched'}`);
+          }
+        }
+        expect(wrong.length === 0, `${wrong.length} of ${markers.length} hooks differ from tests/fixtures/pick0-noisy-tilted.json: ${wrong.slice(0, 8).join('; ')}`);
+        const punched = fixture.card.flat().filter(Boolean).length;
+        expect(punched > 0 && punched < markers.length, 'the fixture card is blank or full, so it cannot tell a good read from a bad one');
+        await discardIfRead();
+        // 2. The blank card must fail with the not-found message, and leave no read behind.
+        await page.click(`document.querySelector('[data-demo="card-blank-should-fail.png"]')`, 'the blank demo card');
+        const message = await page.waitFor<string>(`document.querySelector('[data-variant="error"] > div')?.textContent.trim()`, 'the failure message of the blank card', 30_000);
+        expect(message === EN['error.read.peg-holes-not-found'], `the blank card gave "${message}", expected "${EN['error.read.peg-holes-not-found']}"`);
+        const after = await page.ev<number>(`document.querySelectorAll('button[data-shape]').length`);
+        expect(after === 0, `${after} hook markers are shown after the blank card`);
+        return `all ${markers.length} hooks equal pick ${fixture.pickIndex} of pick0-noisy-tilted.json (${punched} punched); the blank card says "${message}"`;
+      },
+    },
+    {
+      name: 'Keep Demo card: "Download loom file" links give a BMP, 192 wide',
+      async run() {
+        await goTo(page, 'keep');
+        const lines: string[] = [];
+        const endsPerPick = ctx.profile.hookRows * ctx.profile.hookColumns;
+        for (const name of ['diamond-1bit.bmp', 'diamond-8bit.bmp']) {
+          const link = `document.querySelector('a[data-demo-file="${name}"]')`;
+          await page.waitFor(`!!(${link})`, `the "${name}" link`);
+          const bytes = await page.ev<number[]>(
+            `(async()=>{const r=await fetch((${link}).href,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return [...new Uint8Array(await r.arrayBuffer())]})()`,
+          );
+          const data = Uint8Array.from(bytes);
+          expect(String.fromCharCode(data[0] ?? 0, data[1] ?? 0) === 'BM', `${name} does not start with "BM"`);
+          const parsed = parseBmpHeader(data);
+          expect(parsed.ok, `${name}: ${parsed.ok ? '' : parsed.reason}`);
+          const { header } = parsed;
+          expect(header.width === endsPerPick, `${name} is ${header.width} wide, expected ${endsPerPick} (one pixel per end of the profile)`);
+          expect(header.declaredFileSize === data.length, `${name} declares ${header.declaredFileSize} bytes and has ${data.length}`);
+          lines.push(`${name}: BM, ${header.width} x ${header.height}, ${header.bitsPerPixel} bpp, ${data.length} bytes`);
+        }
+        return lines.join('\n');
+      },
+    },
+    {
       name: 'works with the network off',
       async run() {
         const { cdp } = page;

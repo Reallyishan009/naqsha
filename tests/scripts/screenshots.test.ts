@@ -11,6 +11,11 @@ import {
   RUN2_VIEWS,
   run2Names,
   run2Problems,
+  RUN3_FOLDER,
+  RUN3_VIEWS,
+  RUN3_WIDTHS,
+  run3Names,
+  run3Problems,
   screenshotNames,
   setProblems,
 } from '../../scripts/checks/screenshots.ts';
@@ -208,5 +213,37 @@ describe('run 2 screenshot set', () => {
     files.set('header-closed-day-1280.png', new TextEncoder().encode('broken'));
     expect(run2Problems(files, ['header-menu'])).toEqual([]);
     expect(run2Problems(files, ['header-closed'])).toContain('header-closed-day-1280.png is not a PNG file');
+  });
+});
+describe('run 3 screenshot set (Demo cards)', () => {
+  const widthOf = (name: string): number => Number(/-(\d+)\.png$/.exec(name)![1]);
+  it('goes to media/design/after-run3 and holds the four screens at 390 and 1280 px, Day only', () => {
+    expect(RUN3_FOLDER).toBe('after-run3');
+    expect([...RUN3_VIEWS]).toEqual(['scan-demo', 'keep-demo', 'code-demo', 'weave-demo']);
+    expect([...RUN3_WIDTHS]).toEqual([390, 1280]);
+    expect(run3Names()).toEqual([
+      'scan-demo-day-390.png',
+      'scan-demo-day-1280.png',
+      'keep-demo-day-390.png',
+      'keep-demo-day-1280.png',
+      'code-demo-day-390.png',
+      'code-demo-day-1280.png',
+      'weave-demo-day-390.png',
+      'weave-demo-day-1280.png',
+    ]);
+  });
+  it('a complete set has no problem; a missing file, a wrong width, a text file and a stranger are each named', () => {
+    const files = new Map<string, Uint8Array>(run3Names().map((name) => [name, pngOfWidth(widthOf(name))]));
+    expect(run3Problems(files)).toEqual([]);
+    files.delete('scan-demo-day-390.png');
+    files.set('keep-demo-day-1280.png', pngOfWidth(1281));
+    files.set('code-demo-day-390.png', new TextEncoder().encode('this is not a picture at all, just text'));
+    files.set('scan-demo-night-390.png', pngOfWidth(390));
+    expect(run3Problems(files)).toEqual([
+      'scan-demo-day-390.png is missing',
+      'keep-demo-day-1280.png is 1281 pixels wide, expected 1280',
+      'code-demo-day-390.png is not a PNG file',
+      'scan-demo-night-390.png is not one of the 8 run 3 screenshot names',
+    ]);
   });
 });

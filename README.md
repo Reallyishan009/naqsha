@@ -26,6 +26,7 @@ Open https://naqsha-ashen.vercel.app/ . It needs no login.
 2. Print a sample card from Weave, or use a photo of a card, and open Scan to read it. Tap a hole to correct it.
 3. On Keep, export the bitmap or save the design to the archive.
 
+No punched card? [`docs/JUDGES.md`](docs/JUDGES.md) is a 10-step path that tests every function with demo cards and a loom file download.
 To run it yourself, see "Run it locally". Developer-only photo trial tools are listed there too.
 
 ## What it does

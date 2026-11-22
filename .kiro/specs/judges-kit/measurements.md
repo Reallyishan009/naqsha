@@ -73,4 +73,13 @@ None was read or partly read. All eight fail at the same step (the two large ali
 - The three samples and "Try a design with lost cards" (three gaps) are unchanged.
 - Entry chunk after 3.3: 131,375 B gzipped by `check-bundle` (limit 150,000).
 
+## JUDGES.md, browser checks and screenshots (task 4.1)
+
+- Changed checks: none loosened. `scripts/check_browser.ts` gained two steps placed before the offline step (which stops the preview server and must stay last): step 21 (Scan: press "Noisy and tilted", the read grid equals `tests/fixtures/pick0-noisy-tilted.json`; press the blank card, the not-found message, no hook markers) and step 22 (Keep: both "Download loom file" links give a BMP with 'BM', width = hookRows x hookColumns of the profile = 192, declared size = real size). The offline step is now step 23, so "step 21" in earlier entries above means the offline step. Steps 1 to 20 are unchanged.
+- The width in step 22 is read from the profile, not written as 192, because `tests/structure/cardDimensions.test.ts` forbids a hard-coded card number (it failed once on a literal 192; the step was fixed, the test untouched).
+- Screenshots: `scripts/screenshots.ts` mode `after-run3` (names, validator and tests in `scripts/checks/screenshots.ts` and `tests/scripts/screenshots.test.ts`): 8 files, `scan-demo-day-390.png` and so on, for scan-demo, keep-demo, code-demo and weave-demo at 390 and 1280, Day, in `media/design/after-run3/`. Each screen is shown after pressing its own Demo cards (Keep: save and edit; Code: load and breakpoint; Weave: Diamond, then "Show a lost card").
+- Bytes: entry chunk 131,375 B gzipped (limit 150,000); precache 54 entries, 1,397,783 B (unchanged since task 1.1; no precache limit exists).
+- Real card reads: unchanged, 8 of 8 `peg-holes-not-found` (table above). `docs/JUDGES.md` says so plainly.
+- Not checked by eye: the Keep and Code screenshots, and every 390 px screenshot, were not opened by the sub-agent (Scan 1280 and Weave 1280 were).
+
 ## Skipped

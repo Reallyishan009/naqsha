@@ -134,3 +134,28 @@ export function run2Problems(files: ReadonlyMap<string, Uint8Array>, views?: rea
     return wanted.has(name) || !known.has(name);
   });
 }
+
+// ---------------------------------------------------------------- the run 3 set (judges' demo kit)
+
+/** The folder under media/design/ that holds the Demo cards captures. */
+export const RUN3_FOLDER = 'after-run3';
+/** The four screens that carry Demo cards, each captured full-page in the Day loom. */
+export const RUN3_VIEWS = ['scan-demo', 'keep-demo', 'code-demo', 'weave-demo'] as const;
+/** The widths of the run 3 set: a phone and a desktop window. */
+export const RUN3_WIDTHS = [390, 1280] as const;
+/** The one theme of the run 3 set. */
+export const RUN3_THEME = 'day';
+
+/** The 8 names `<view>-day-<width>.png`, in view, then width order. */
+export function run3Names(): string[] {
+  const names: string[] = [];
+  for (const view of RUN3_VIEWS) {
+    for (const width of RUN3_WIDTHS) names.push(`${view}-${RUN3_THEME}-${width}.png`);
+  }
+  return names;
+}
+
+/** The same checks as `setProblems` on the 8 files of the run 3 set: exactly these names, each a PNG as wide as its name says. */
+export function run3Problems(files: ReadonlyMap<string, Uint8Array>): string[] {
+  return problemsOf(run3Names(), files, '8 run 3 screenshot names');
+}
