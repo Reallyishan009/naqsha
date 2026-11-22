@@ -13,3 +13,5 @@
 **State.** No code was changed. `src/ui/App.tsx` still falls back to `initialAppState.language` (`hi`) when nothing is stored.
 
 **Decision needed.** Change R12.2 and the design to "Hindi when the browser prefers Hindi, otherwise English", then implement the request above. Until then the default stays Hindi.
+
+Resolved: the default language decision was made (R12.2 changed). `chooseLanguage` and `browserLanguage` in `src/ui/platform/browser.ts` are implemented and wired in `src/ui/App.tsx`.

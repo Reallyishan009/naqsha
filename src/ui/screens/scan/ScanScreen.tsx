@@ -312,6 +312,18 @@ export type ScanScreenProps = {
   loadPixels?: LoadPixels;
 };
 
+/** Under this width the Scan layout is stacked (the same 1024 px as ScanScreen.module.css). */
+export const NARROW_VIEW_PX = 1024;
+/** Scrolls `target` to the top of the view on a narrow screen: instantly under reduced motion, smoothly otherwise. A null target or a wide screen does nothing. Never throws. */
+export function scrollResultIntoView(target: Pick<Element, 'scrollIntoView'> | null, windowWidthPx: number, reducedMotion: boolean): boolean {
+  if (target === null || !(windowWidthPx < NARROW_VIEW_PX)) return false;
+  try {
+    target.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
+    return true;
+  } catch {
+    return false;
+  }
+}
 export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) {
   const profile = state.profile.status === 'ready' ? state.profile.profile : null;
   const [scan, dispatchScan] = useReducer(scanReducer, initialScanState);
@@ -323,6 +335,7 @@ export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) 
   const [demoNotice, setDemoNotice] = useState<DemoNotice | null>(null);
   const counter = useRef(new RequestCounter());
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const scrollAfterRead = useRef(false);
   const [cameraEnv] = useState(browserCameraEnv);
   const [cameraDevice] = useState(browserCameraDevice);
 
@@ -373,6 +386,7 @@ export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) 
   const onDemo = useCallback(
     (image: DemoImage): void => {
       setDemoNotice(null);
+      scrollAfterRead.current = true;
       void fetchDemoImage(
         `${import.meta.env.BASE_URL}${image.path}`,
         demoFileName(image.path),
@@ -380,7 +394,10 @@ export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) 
         browserIsOnline,
       ).then((result) => {
         if (result.kind === 'file') onFile(result.file);
-        else setDemoNotice(result.kind);
+        else {
+          scrollAfterRead.current = false;
+          setDemoNotice(result.kind);
+        }
       });
     },
     [onFile],
@@ -437,6 +454,13 @@ export function ScanScreen({ state, dispatch, t, loadPixels }: ScanScreenProps) 
     }
   };
 
+  useEffect(() => {
+    if (!scrollAfterRead.current || scan.status === 'idle' || scan.status === 'reading') return;
+    scrollAfterRead.current = false;
+    if (scan.status === 'read') {
+      scrollResultIntoView(rootRef.current?.querySelector('[aria-labelledby="scan-read-title"]') ?? null, window.innerWidth, state.prefersReducedMotion);
+    }
+  }, [scan.status, state.prefersReducedMotion]);
   return (
     <div ref={rootRef}>
       <ScanView

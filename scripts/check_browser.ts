@@ -1341,6 +1341,32 @@ function buildSteps(ctx: Context): BrowserStep[] {
       },
     },
     {
+      name: 'Scan at 390 px: pressing the "Noisy and tilted" demo card scrolls the read result into the viewport',
+      async run() {
+        try {
+          await page.setViewport(390, 800);
+          await goTo(page, 'scan');
+          await page.waitFor(`!!document.querySelector('#scan-file')`, 'the photo chooser');
+          await page.ev(
+            `(()=>{if(document.querySelector('#scan-read-title'))[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===${JSON.stringify(EN['scan.discard'])})?.click()})()`,
+          );
+          await page.waitFor(`!document.querySelector('#scan-read-title')`, 'the earlier read to be discarded');
+          await page.ev(`window.scrollTo(0,0)`);
+          await page.waitFor(`!!document.querySelector('[data-demo="card-1-noisy-tilted.png"]')`, 'the "Noisy and tilted" demo card');
+          await page.click(`document.querySelector('[data-demo="card-1-noisy-tilted.png"]')`, 'the "Noisy and tilted" demo card');
+          await page.waitFor(`!!document.querySelector('#scan-read-title')`, 'the read result', 30_000);
+          const top = await page.waitFor<number>(
+            `(()=>{const e=document.querySelector('#scan-read-title');const t=e?e.getBoundingClientRect().top:null;return t!==null&&t>=0&&t<innerHeight?Math.round(t):null})()`,
+            'the read result to be scrolled into the viewport',
+            10_000,
+          );
+          return `the read result top is ${top} px in a ${390} px wide view`;
+        } finally {
+          await page.setViewport(900, 1000);
+        }
+      },
+    },
+    {
       name: 'Keep Demo card: "Download loom file" links give a BMP, 192 wide',
       async run() {
         await goTo(page, 'keep');

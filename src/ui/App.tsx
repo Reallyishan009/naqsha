@@ -6,6 +6,8 @@ import {
   browserPrefersDark,
   browserPrefersReducedMotion,
   browserStorage,
+  browserLanguage,
+  chooseLanguage,
   readStoredLanguage,
   readStoredTheme,
   setDocumentLanguage,
@@ -370,7 +372,7 @@ export function App({ fetchText = defaultFetchText, storage, prefersReducedMotio
   const store = storage === undefined ? browserStorage() : storage;
   const [state, dispatch] = useReducer(appReducer, undefined, () => ({
     ...initialAppState,
-    language: readStoredLanguage(store) ?? initialAppState.language,
+    language: chooseLanguage(readStoredLanguage(store), browserLanguage()),
     prefersReducedMotion: prefersReducedMotion ?? browserPrefersReducedMotion(),
   }));
 

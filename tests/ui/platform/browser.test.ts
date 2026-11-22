@@ -1,9 +1,12 @@
 import * as fc from 'fast-check';
+import type { Language } from '../../../src/ui/types.ts';
 import { describe, expect, it } from 'vitest';
 import {
   LANGUAGE_STORAGE_KEY,
   autoplay,
   cameraControl,
+  browserLanguage,
+  chooseLanguage,
   readStoredLanguage,
   storeLanguage,
 } from '../../../src/ui/platform/browser.ts';
@@ -84,5 +87,33 @@ describe('live camera decision', () => {
     expect(cameraControl({ isSecureContext: true, hasGetUserMedia: false })).toBe('hidden');
     expect(cameraControl({ isSecureContext: false, hasGetUserMedia: true })).toBe('hidden-with-note');
     expect(cameraControl({ isSecureContext: false, hasGetUserMedia: false })).toBe('hidden-with-note');
+  });
+});
+
+describe('default language', () => {
+  it('R12.2 a stored choice wins; otherwise Hindi only for a navigator language starting with hi', () => {
+    const cases: [Language | null, string | undefined, Language][] = [
+      [null, 'hi-IN', 'hi'], [null, 'en-US', 'en'], [null, 'en-IN', 'en'], [null, 'HI', 'hi'],
+      ['en', 'hi-IN', 'en'], ['hi', 'en-US', 'hi'], [null, undefined, 'en'], [null, '', 'en'],
+    ];
+    for (const [stored, nav, expected] of cases) expect(chooseLanguage(stored, nav)).toBe(expected);
+    fc.assert(
+      fc.property(fc.option(fc.constantFrom<Language>('hi', 'en'), { nil: null }), fc.string(), (stored, nav) => {
+        const out = chooseLanguage(stored, nav);
+        return stored !== null ? out === stored : out === (nav.toLowerCase().startsWith('hi') ? 'hi' : 'en');
+      }),
+      { numRuns: 100, seed: SEED },
+    );
+  });
+  it('R12.2 a throwing navigator.language reads as English', () => {
+    const original = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { get language(): string { throw new Error('no'); } } });
+    try {
+      expect(browserLanguage()).toBeUndefined();
+      expect(chooseLanguage(null, browserLanguage())).toBe('en');
+    } finally {
+      if (original) Object.defineProperty(globalThis, 'navigator', original);
+      else Reflect.deleteProperty(globalThis, 'navigator');
+    }
   });
 });
