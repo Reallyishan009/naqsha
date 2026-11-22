@@ -1,5 +1,6 @@
 .screen {
   max-width: 60rem;
+  margin-inline: auto;
 }
 .screenTitle,
 .sectionTitle {
@@ -146,6 +147,38 @@
   display: block;
   width: 100%;
   height: auto;
+}
+/* The sweep: a clip box over the photo with one band that crosses it once (transform only, 640 ms = 2 x --motion-long).
+   The band stops outside the photo, and under reduced motion nothing is drawn. */
+.sweep {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sweep::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 18%;
+  background: var(--zari);
+  opacity: 0.35;
+  transform: translateX(-100%);
+  animation: sweepAcross calc(var(--motion-long) * 2) ease-in-out 1 both;
+}
+@keyframes sweepAcross {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(560%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sweep {
+    display: none;
+  }
 }
 .marker {
   position: absolute;

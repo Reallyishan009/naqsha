@@ -311,7 +311,7 @@ export function Shell({ state, dispatch, onLanguageChosen, theme = 'day', onThem
           <LoadingState text={t('status.loading')} />
         </div>
       ) : null}
-      <main className={landingShowsProfile ? `${styles.main} ${styles.mainLanding}` : styles.main}>
+      <main data-screen={state.screen} className={landingShowsProfile ? `${styles.main} ${styles.mainLanding}` : styles.main}>
         <ScreenBoundary
           key={`${state.screen}:${screenAttempt}`}
           message={t(screenErrorKey(state.screen))}

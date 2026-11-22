@@ -18,12 +18,12 @@ Work list for run 2 (header, Weave, Keep, Scan and Code, motion). See brief.md i
   - [x] 3.1 Keep reskin and commit `keep: reskin with photo cards, timeline and segmented export`
     - Implement Part 2 of brief.md. Capture keep-versions (a design with 2 versions) day and night, 390 and 1280. Run the gate. Commit with the message `keep: reskin with photo cards, timeline and segmented export` and push.
 
-- [ ] 4. Part 3: Scan and Code
-  - [-] 4.1 Scan and Code reskin and commit `scan and code: reskin`
+- [x] 4. Part 3: Scan and Code
+  - [x] 4.1 Scan and Code reskin and commit `scan and code: reskin`
     - Implement Part 3 of brief.md. Capture scan (empty, and with a read card if the script can do it) and code-diff views, day and night, 390 and 1280. Run the gate. Commit with the message `scan and code: reskin` and push.
 
 - [ ] 5. Part 4: motion
-  - [~] 5.1 Motion and commit `motion: screen fade, scan sweep`
+  - [-] 5.1 Motion and commit `motion: screen fade, scan sweep`
     - Implement Part 4 of brief.md and the closing docs. Run the gate. Commit with the message `motion: screen fade, scan sweep` and push. Report bytes: entry chunk and lazy chunks gzipped, contrast tightest pairs.
 
 ## Notes

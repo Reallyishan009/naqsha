@@ -2,6 +2,7 @@
   /* One Line is as tall as a touch target, so its breakpoint button fits (R3.11). */
   --code-line-height: var(--touch-target);
   max-width: 60rem;
+  margin-inline: auto;
 }
 
 .titleLine {

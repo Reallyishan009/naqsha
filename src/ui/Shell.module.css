@@ -248,6 +248,41 @@
   padding: var(--space-2) var(--space-4) var(--space-4);
 }
 
+/* A change of Screen fades the main region in (opacity only, so nothing moves). Each Screen has its own animation name, so
+   changing the name starts the animation again without remounting main. Reduced motion gets none from the rule in tokens.css
+   (this sheet has no media query: a test keeps the header's wrapping free of one). */
+.main[data-screen='weave'] {
+  animation: fadeWeave var(--motion-short) ease-out;
+}
+.main[data-screen='keep'] {
+  animation: fadeKeep var(--motion-short) ease-out;
+}
+.main[data-screen='scan'] {
+  animation: fadeScan var(--motion-short) ease-out;
+}
+.main[data-screen='code'] {
+  animation: fadeCode var(--motion-short) ease-out;
+}
+@keyframes fadeWeave {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fadeKeep {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fadeScan {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fadeCode {
+  from {
+    opacity: 0;
+  }
+}
 /* The Landing ends in its own footer, which must reach the bottom of the page: no padding under it. */
 .mainLanding {
   padding-bottom: 0;

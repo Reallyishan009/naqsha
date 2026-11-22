@@ -268,6 +268,11 @@ Sources: `.kiro/specs/second-pass-run1/` (`brief.md`, `tasks.md`, `tasks.meta.js
 
 **Not verified.** Hindi full-page views, 320 px views of the new sections, the animated ProcessLoop, AVIF in browsers other than headless Chrome, real devices and the deployed site (list in `measurements.md`, "Not checked by eye").
 
+## 12. The second design pass, run 2 (work list `second-pass-run2`)
+Same method as run 1: `.kiro/specs/second-pass-run2/` holds `brief.md` (hard rules and five parts), `tasks.md` and `measurements.md`; one sub-agent task per part, each ending in the gate and one commit with an exact message. The orchestrator opened the screenshots; the sub-agents captured them and reported file lists.
+**Steering used.** The structure and glossary tests kept new code inside the module rules (the glossary test rejected "holes" in a comment of the sweep). The testing steering is why the one loosened browser check was restored and logged instead of kept: the Code view offline check had been weakened in Part 3 and was made deterministic in Part 4. No property test was added or weakened.
+**What the checks caught.** A width-change race in `check:browser` (the header picks its layout in JS, so a click could hit a button that then vanished), a Keep layout that pushed the primary Button below 844 px, and two style tests that fixed how the fade may be written (no media query in the Shell sheet; the global reduced-motion rule does the work).
+**Not verified.** Hindi and 320 px on Weave, Keep, Scan and Code, the fade and sweep as motion, real devices and the deployed site (list in `measurements.md`).
 ## Checks run for this file
 
 First written after `npm run test:run` (91 files, 730 tests), `npm run typecheck`, `npm run build` and `npm run check-bundle` (entry chunk 93,203 bytes gzipped, limit 204,800) all passed, with `npm run check:hooks` output in section 3.
@@ -277,3 +282,4 @@ Updated in task 8.5 after these real runs, all passing: `npm run test:run` (**97
 Updated in cards-as-code task 4.4 (2026-11-21), for section 10: `npm run build` and `npm run check-bundle` (entry chunk 109,570 bytes gzipped, Code view chunk 10,042 bytes, limit 204,800), `npm run check:browser` (19 of 19 steps) and `npx vitest run tests/codec-view/boundaries.test.ts` (23 tests) all passed. The full suite, `check:all`, `check:deployed` and `check:everything` were not run for that update.
 
 Updated for section 11 (second design pass, run 1, task 4.5, 2026-11-22), all exit 0: `npm run review-list`, `npm run typecheck`, `npm run test:run` (144 files, 1,947 tests), `npm run build`, `npm run check-bundle` (entry chunk 126,022 bytes gzipped), `npm run check:browser` (19 of 19 steps), `node scripts/contrast_report.ts` (84 pairs), `tests/scripts/precache.test.ts` (15 tests) and `npm run check:all` (9 PASS, 0 FAIL, 1 SKIPPED, 1 INFO). `check:deployed` and `check:hooks` were not run.
+Updated for section 12 (second design pass, run 2, task 5.1, 2026-11-22), all exit 0: `npm run review-list`, `npm run typecheck`, `npm run test:run` (145 files, 2,001 tests), `npm run build`, `npm run check-bundle` (entry chunk 127,876 bytes gzipped), `npm run check:browser` (20 of 20 steps), `node scripts/contrast_report.ts`, and `npm run check:all` (9 PASS, 0 FAIL, 1 SKIPPED, 1 INFO).

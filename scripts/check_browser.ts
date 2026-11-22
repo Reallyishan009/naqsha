@@ -1363,7 +1363,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
         };
         /**
          * R9.7: the first open of Code view in this page session, with Chrome offline and the preview server stopped. The listing is
-         * absent first; Diamond is chosen on Weave; the Code navigation item is clicked; the listing arrives (only the Precache can
+         * absent first; Diamond is chosen on Weave, paused and set to pick 1 of its count with the scrubber; the Code navigation item is clicked; the listing arrives (only the Precache can
          * give it); the screen shows the Diamond pick count; at most WINDOW_SIZE Lines are in the document; the Selected_Pick is 0 and
          * is 1 after one activation of the step forward control.
          */
@@ -1373,6 +1373,20 @@ function buildSteps(ctx: Context): BrowserStep[] {
           const current = `${lines}.filter(li=>li.getAttribute('aria-current')==='true').map(li=>li.getAttribute('data-pick'))`;
           expect(!(await page.ev<boolean>(`!!${listing}`)), 'the Code view listing is already in the document, so this is not the first open of Code view in this page session');
           const expected = await chooseSample(page, 'diamond');
+          // The sample plays on Weave and the Selected_Pick moves with each frame, so make the start deterministic: pause the cloth,
+          // set the Weave scrubber to 0 with a real input event, and wait until the screen shows pick 1 of the Diamond count.
+          await page.clickText('button', EN['weave.pause']!);
+          await page.waitFor(`${byText('button', EN['weave.pause']!)}?.disabled===true`, 'the cloth to be paused', 10_000);
+          const scrubber = `(()=>{const l=[...document.querySelectorAll('label')].find(l=>l.querySelector('span')?.textContent.trim()===${JSON.stringify(EN['weave.scrubber']!)});return l?l.querySelector('input[type="range"]'):null})()`;
+          await page.ev(
+            `(()=>{const i=${scrubber};if(!i)return false;Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(i,'0');i.dispatchEvent(new Event('input',{bubbles:true}));return true})()`,
+          );
+          const startText = format(EN['weave.pickPosition']!, { pick: 1, total: expected });
+          await page.waitFor(
+            `(()=>{const i=${scrubber};return !!i&&i.value==='0'&&[...document.querySelectorAll('main p')].some(p=>p.textContent.trim()===${JSON.stringify(startText)})})()`,
+            `the Weave screen to show "${startText}" with the scrubber at 0`,
+            10_000,
+          );
           await clickNavItem(page, EN['nav.code']!);
           await page.waitFor(`!!${listing}`, 'the Code view listing to arrive from the Precache', 20_000).catch(async (error: unknown) => {
             const state = await page.ev<string>(
@@ -1390,15 +1404,9 @@ function buildSteps(ctx: Context): BrowserStep[] {
           const count = await page.ev<number>(`${lines}.length`);
           expect(count >= 1 && count <= WINDOW_SIZE, `the listing holds ${count} Lines, expected 1 to ${WINDOW_SIZE} (WINDOW_SIZE)`);
           const before = await page.ev<(string | null)[]>(current);
-          // The sample starts playing on Weave and the Selected_Pick moves on with each frame shown, so the pick Code view opens
-          // at depends on how long the page took to get here (the first pick after a few frames at most). Exactly one Line must be
-          // marked, it must be a pick of the design, and one step forward must move it to the next pick.
-          const openedAt = Number(before[0]);
-          expect(
-            before.length === 1 && Number.isInteger(openedAt) && openedAt >= 0 && openedAt < expected - 1,
-            `before the step, the Lines marked aria-current="true" have data-pick ${JSON.stringify(before)}, expected exactly one pick from 0 to ${expected - 2}`,
-          );
-          const nextPick = String(openedAt + 1);
+          // The Selected_Pick was set to 0 on Weave before Code view opened (see below), so it is exactly pick 0 here.
+          expect(before.length === 1 && before[0] === '0', `before the step, the Lines marked aria-current="true" have data-pick ${JSON.stringify(before)}, expected ["0"]`);
+          const nextPick = '1';
           await page.clickText('button', EN['codeview.step.forward']!);
           const after = await page
             .waitFor<(string | null)[]>(`(()=>{const c=${current};return c.length===1&&c[0]===${JSON.stringify(nextPick)}?c:null})()`, `the Selected_Pick to move to pick ${nextPick} after one step forward`, 5_000)
