@@ -103,6 +103,27 @@
   .side {
     grid-area: side;
   }
+  /* The "No cards yet" panel is compact here so "More" stays in the first screen: a small drawing beside the two lines, less padding. */
+  .compactEmpty > div {
+    padding: var(--space-2) var(--space-4);
+  }
+  .compactEmpty [data-empty-state] {
+    display: grid;
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    align-items: center;
+    column-gap: var(--space-4);
+    row-gap: 0;
+  }
+  .compactEmpty [data-empty-state] > div:first-child {
+    grid-row: 1 / span 2;
+    grid-column: 1;
+  }
+  .compactEmpty [data-empty-state] > p {
+    grid-column: 2;
+  }
+  .compactEmpty [data-empty-state] svg {
+    width: 3.5rem;
+  }
 }
 .more {
   margin: 16px 0 0;

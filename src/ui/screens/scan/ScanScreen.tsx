@@ -184,7 +184,9 @@ export function ScanView(props: ScanViewProps) {
           </Panel>
           <ProfileNotice profile={profile} t={t} />
           {batch.length === 0 ? (
-            <StateMessage variant="empty" illustration={<NoCardsScannedIllustration />} message={t('scan.batch.empty')} next={t('scan.batch.empty.next')} t={t} />
+            <div className={styles.compactEmpty}>
+              <StateMessage variant="empty" illustration={<NoCardsScannedIllustration />} message={t('scan.batch.empty')} next={t('scan.batch.empty.next')} t={t} />
+            </div>
           ) : null}
         </>
       )}
