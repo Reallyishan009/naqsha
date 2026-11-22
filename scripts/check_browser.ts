@@ -133,6 +133,16 @@ async function goTo(page: Page, screen: Screen): Promise<void> {
   await page.waitFor(`document.querySelector('#screen-title')?.textContent.trim()===${JSON.stringify(EN[`nav.${screen}`])}`, `the ${screen} screen`);
 }
 
+/** Presses the Naqsha mark, whose name is the page language's `nav.home`, and waits for the home screen: its heading and the hero's loom slot. */
+async function goHome(page: Page): Promise<void> {
+  const language: Language = (await page.ev<string>('document.documentElement.lang')) === 'hi' ? 'hi' : 'en';
+  const words = WORDS[language];
+  await page.click(`document.querySelector('header button[aria-label=${JSON.stringify(words['nav.home'])}]')`, 'the Naqsha mark (home button)');
+  await page.waitFor(
+    `document.querySelector('#screen-title')?.textContent.trim()===${JSON.stringify(words['nav.home'])}&&!!document.querySelector('[data-hero-slot]')`,
+    `the home screen in ${language}`,
+  );
+}
 // ---------------------------------------------------------------- language, theme and font helpers (Stage A)
 
 const LANGUAGES = ['en', 'hi'] as const;
@@ -541,7 +551,7 @@ function buildSteps(ctx: Context): BrowserStep[] {
           `(()=>{const h=document.querySelector('#screen-title');if(!h)return null;const r=h.getBoundingClientRect();return r.width>0&&r.height>0?h.textContent.trim():null})()`,
           'a visible screen heading',
         );
-        expect(heading === EN['nav.weave'] || heading === HI['nav.weave'], `the first screen heading is "${heading}", expected the Weave screen`);
+        expect(heading === EN['nav.home'] || heading === HI['nav.home'], `the first screen heading is "${heading}", expected the home screen`);
         await page.waitFor(
           `[...document.querySelectorAll('[data-sample="diamond"]')].some(b=>!b.disabled)`,
           'the card profile to load (Try it buttons enabled)',
@@ -573,14 +583,14 @@ function buildSteps(ctx: Context): BrowserStep[] {
         await pressLanguage(page, HI['language.hi']!);
         await page.waitFor(`document.documentElement.lang==='hi'`, 'lang hi');
         const hi = { lang: await lang(), heading: await heading(), nav: await page.ev<string>(`document.querySelector('nav').innerText`) };
-        expect(en.heading === EN['nav.weave'], `English heading is "${en.heading}", expected "${EN['nav.weave']}"`);
-        expect(hi.heading === HI['nav.weave'], `Hindi heading is "${hi.heading}", expected "${HI['nav.weave']}"`);
+        expect(en.heading === EN['nav.home'], `English heading is "${en.heading}", expected "${EN['nav.home']}"`);
+        expect(hi.heading === HI['nav.home'], `Hindi heading is "${hi.heading}", expected "${HI['nav.home']}"`);
         expect(en.nav !== hi.nav, 'the navigation text did not change between hi and en');
         await pressLanguage(page, EN['language.en']!);
         await page.waitFor(`document.documentElement.lang==='en'`, 'lang back to en');
         await closeMenu(page);
         const back = await heading();
-        expect(back === EN['nav.weave'], `after switching back, the heading is "${back}"`);
+        expect(back === EN['nav.home'], `after switching back, the heading is "${back}"`);
         return `en: lang=${en.lang} "${en.heading}"; hi: lang=${hi.lang} "${hi.heading}"; back to en: "${back}"`;
       },
     },
@@ -1053,12 +1063,13 @@ function buildSteps(ctx: Context): BrowserStep[] {
       async run() {
         const lines: string[] = [];
         try {
-          // A reload empties the Current_Pattern, so the Weave screen shows the Landing.
+          // A reload empties the Current_Pattern and opens the home screen, which is the Landing.
           await page.hardReload();
           await page.waitFor(`!!document.querySelector('#screen-title')`, 'the app after the reload');
           await page.setViewport(PHONE.width, PHONE.height);
           for (const language of LANGUAGES) {
-            await showScreen(page, 'weave', language);
+            await ensureLanguage(page, language);
+            await goHome(page);
             await page.waitFor(`!!document.querySelector('[data-hero-slot]')&&document.querySelectorAll('main [data-sample]').length===3`, `the Landing with its three Sample_Tiles in ${language}`);
             await settleLayout(page);
             const words = WORDS[language];
@@ -1446,6 +1457,8 @@ function buildSteps(ctx: Context): BrowserStep[] {
          * check of the Hero_Loom svg and its shapes (second design pass, task 4.1: the hero now holds the live Process_Loop).
          */
         const landingLoads = async (): Promise<string> => {
+          // The page may be on a Screen from an earlier check: the Naqsha mark brings the Landing back.
+          await goHome(page);
           const language: Language = (await page.ev<string>('document.documentElement.lang')) === 'hi' ? 'hi' : 'en';
           const words = WORDS[language];
           const seen = await page

@@ -2,7 +2,8 @@ import type { CardGrid, CardProfile, Pattern, Violation } from '../codec/index.t
 import type { PixelData, Pose, ReadFailure as CardReadFailure } from '../reader/index.ts';
 import type { PreparedCloth, RenderSettings, SimFailure } from '../simulator/index.ts';
 
-export type Screen = 'weave' | 'keep' | 'scan' | 'code';
+/** 'home' is the Landing (not in the header navigation); the other four are the tools. */
+export type Screen = 'home' | 'weave' | 'keep' | 'scan' | 'code';
 export type Language = 'hi' | 'en';
 
 export type ProfileFailure =
@@ -31,7 +32,6 @@ export type CurrentPattern = { pattern: Pattern; origin: PatternOrigin };
 
 export type Confirm =
   | { kind: 'replace-with-sample'; design: SampleDesign; pattern: Pattern } // the sample waits here until accepted
-  | { kind: 'go-home' } // leave unsaved scanned cards for the Landing, once accepted
   | { kind: 'delete-design'; id: string }
   | { kind: 'remove-batch-card'; index: number }
   | { kind: 'commit-batch' }; // replace or append question (R11.8)
@@ -90,7 +90,7 @@ export type AppAction =
   | { type: 'profile-loaded'; state: ProfileState }
   | { type: 'set-language'; language: Language }
   | { type: 'request-sample'; design: SampleDesign; pattern: Pattern }
-  | { type: 'go-home' } // back to the Landing, after a question when scanned cards are unsaved
+  | { type: 'go-home' } // back to the Landing; the design, pick, breakpoints and cloth choices stay as they are
   | { type: 'confirm-accepted' }
   | { type: 'confirm-dismissed' }
   | { type: 'open-saved'; id: string; pattern: Pattern }

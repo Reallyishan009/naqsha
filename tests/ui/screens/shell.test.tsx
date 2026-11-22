@@ -26,8 +26,14 @@ describe('shell', () => {
       const ready = { ...initialAppState, language, profile: { status: 'ready' as const, profile: demoProfile() } };
       const weave = render({ ...ready, screen: 'weave' });
       expect(weave).toContain(`>${navLabel(language, 'weave')}</h2>`);
-      // The Landing's own words come first; the old one-line intro (weave.empty) is no longer on it.
-      expect(weave).toContain(t('landing.lead'));
+      // The Weave screen with no design is the Weave tool: its empty state and Try it, and not the Landing.
+      expect(weave).toContain(t('weave.empty').replaceAll('"', '&quot;'));
+      expect(weave).toContain(t('tryit.title'));
+      expect(weave).not.toContain(t('landing.lead'));
+      // The home screen is the Landing, under its own heading.
+      const home = render({ ...ready, screen: 'home' });
+      expect(home).toContain(t('landing.lead'));
+      expect(home).toContain(`>${t('nav.home')}</h2>`);
       const keep = render({ ...ready, screen: 'keep' });
       expect(keep).toContain(`>${navLabel(language, 'keep')}</h2>`);
       expect(keep).toContain(t('keep.export.button'));
@@ -66,11 +72,12 @@ describe('shell', () => {
     expect(SCREENS).toHaveLength(4);
   });
 
-  it('R1.2 the app starts on the Weave screen', () => {
-    expect(initialAppState.screen).toBe('weave');
+  it('R1.2 the app starts on the home screen, where no navigation item is current', () => {
+    expect(initialAppState.screen).toBe('home');
     const html = render({ ...initialAppState, language: 'en' });
-    expect(html).toContain('aria-current="page"');
-    expect(/aria-current="page"[^>]*>Weave</.test(html)).toBe(true);
+    expect(html).not.toContain('aria-current');
+    const weave = render({ ...initialAppState, language: 'en', screen: 'weave' });
+    expect(/aria-current="page"[^>]*>Weave</.test(weave)).toBe(true);
   });
 
   it('R1.3 four visible navigation controls on every screen, in both languages', () => {

@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { RiseSkipControl, WeaveScreen } from '../../../src/ui/screens/weave/WeaveScreen.tsx';
 import { WeavePlayer } from '../../../src/ui/screens/weave/WeavePlayer.tsx';
+import { HomeScreen } from '../../../src/ui/screens/home/HomeScreen.tsx';
 import { TryIt } from '../../../src/ui/screens/weave/TryIt.tsx';
 import { EN, HI, translator, DICTIONARIES } from '../../../src/ui/i18n/messages.ts';
 import type { Pattern } from '../../../src/codec/index.ts';
@@ -146,13 +147,6 @@ describe('weave screen', () => {
     expect(asking).toContain(EN['tryit.confirmReplace'] as string);
     expect(asking).toContain(EN['tryit.confirmYes'] as string);
     expect(asking).toContain(EN['tryit.confirmNo'] as string);
-    const leaving = renderToStaticMarkup(
-      <TryIt profile={demoProfile()} confirm={{ kind: 'go-home' }} dispatch={() => undefined} t={t} />,
-    );
-    expect(leaving).toContain(EN['home.confirm'] as string);
-    expect(leaving).toContain(EN['home.confirmYes'] as string);
-    expect(leaving).toContain(EN['tryit.confirmNo'] as string);
-    expect(leaving).not.toContain(EN['tryit.confirmReplace'] as string);
     const quiet = renderToStaticMarkup(
       <TryIt profile={demoProfile()} confirm={null} dispatch={() => undefined} t={t} />,
     );
@@ -224,10 +218,12 @@ describe('weave screen', () => {
       profile: { status: 'failed', failure: { reason: 'not-json' } },
     };
     const html = renderTryIt(failed);
-    // The Weave screen is the Landing here: it shows the failure and offers no sample tile.
-    const landing = render(failed);
-    expect(landing).toContain(translator(DICTIONARIES, 'en')('error.profile.not-json'));
+    // The home screen shows the failure and offers no sample tile; the Weave screen stays the tool, with Try it disabled.
+    const t = translator(DICTIONARIES, 'en');
+    const landing = renderToStaticMarkup(<HomeScreen state={failed} dispatch={() => undefined} t={t} />);
+    expect(landing).toContain(t('error.profile.not-json'));
     expect(landing).not.toContain('data-sample=');
+    expect(render({ ...failed, screen: 'weave' })).toContain(t('tryit.title'));
     expect((html.match(/<button[^>]*disabled[^>]*>(Diamond|Border|Floral)</g) ?? []).length).toBe(3);
   });
 });

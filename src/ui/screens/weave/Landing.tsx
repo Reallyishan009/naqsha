@@ -156,17 +156,12 @@ function showSamples(smooth: boolean): void {
   target.focus({ preventScroll: true });
 }
 
-/** Scrolls to the top of the page. */
-function scrollToTop(smooth: boolean): void {
-  if (typeof window.scrollTo === 'function') window.scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' });
-}
-
 /**
  * The first Screen, a scrolling page. The hero comes first: a loom photo under a deep-green tint, the headline, one
  * line of what the app does, "Scan a card" and "Try a sample", three facts, and the live Process_Loop on a tilted
  * card; a curved divider hands over to the page below. Seven sections in all: the hero, how it works, what you can do,
  * the samples, the Night section, the "Bring a card" band and the footer, all in one container with the hero's text, so every
- * left edge is the same. Shown while the Current_Pattern has no pick. The hero's text comes before the photo in the
+ * left edge is the same. Shown as the 'home' screen. The hero's text comes before the photo in the
  * markup, so the headline is read first.
  */
 export function Landing({ state, dispatch, t, onRetryProfile, theme = 'day', onThemeChosen, observeReveal = browserObserveReveal }: LandingProps) {
@@ -186,7 +181,7 @@ export function Landing({ state, dispatch, t, onRetryProfile, theme = 'day', onT
       <section aria-labelledby="screen-title" className={styles.screen}>
         <div className={styles.landing}>
           <h2 id="screen-title" className={styles.screenTitle}>
-            {t('nav.weave')}
+            {t('nav.home')}
           </h2>
           <div className={styles.hero} data-landing-section="hero">
             <div className={styles.heroInner}>
@@ -270,7 +265,7 @@ export function Landing({ state, dispatch, t, onRetryProfile, theme = 'day', onT
             onScan={() => dispatch({ type: 'navigate', screen: 'scan' })}
             onTrySample={() => showSamples(!state.prefersReducedMotion)}
           />
-          <LandingFooter t={t} dispatch={dispatch} onTop={() => scrollToTop(!state.prefersReducedMotion)} />
+          <LandingFooter t={t} dispatch={dispatch} />
         </div>
       </section>
     </RevealContext>

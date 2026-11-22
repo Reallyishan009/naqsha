@@ -155,7 +155,7 @@ describe('text names in both languages', () => {
     for (const language of LANGUAGES) {
       const shell = renderToStaticMarkup(
         <Shell
-          state={{ ...initialAppState, language, profile: { status: 'ready', profile }, current: { pattern, origin: { kind: 'sample', design: 'diamond' } } }}
+          state={{ ...initialAppState, screen: 'weave', language, profile: { status: 'ready', profile }, current: { pattern, origin: { kind: 'sample', design: 'diamond' } } }}
           dispatch={noop}
         />,
       );

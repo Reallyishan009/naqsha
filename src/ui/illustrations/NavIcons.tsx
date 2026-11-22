@@ -88,7 +88,7 @@ export function MenuIcon({ className }: IconProps) {
   );
 }
 
-const ICONS: Record<Screen, (props: IconProps) => ReactElement> = {
+const ICONS: Record<Exclude<Screen, 'home'>, (props: IconProps) => ReactElement> = {
   weave: WeaveIcon,
   keep: KeepIcon,
   scan: ScanIcon,
@@ -96,7 +96,7 @@ const ICONS: Record<Screen, (props: IconProps) => ReactElement> = {
 };
 
 /** The icon of one Screen. */
-export function NavIcon({ screen, className }: IconProps & { screen: Screen }) {
+export function NavIcon({ screen, className }: IconProps & { screen: Exclude<Screen, 'home'> }) {
   const Icon = ICONS[screen];
   return <Icon className={className} />;
 }

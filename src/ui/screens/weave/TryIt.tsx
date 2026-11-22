@@ -116,9 +116,7 @@ export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModu
     () => (profile === null ? null : SAMPLE_DESIGNS.map((design) => ({ design, pattern: generateSample(profile, design) }))),
     [profile],
   );
-  const asking = confirm !== null && (confirm.kind === 'replace-with-sample' || confirm.kind === 'go-home');
-  const questionKey = confirm?.kind === 'go-home' ? 'home.confirm' : 'tryit.confirmReplace';
-  const yesKey = confirm?.kind === 'go-home' ? 'home.confirmYes' : 'tryit.confirmYes';
+  const asking = confirm !== null && confirm.kind === 'replace-with-sample';
   return (
     <section aria-labelledby="tryit-title" className={styles.tryIt}>
       <h3 id="tryit-title" className={styles.sectionTitle}>
@@ -177,10 +175,10 @@ export function TryIt({ profile, confirm, dispatch, t, loadPrint = loadPrintModu
             <PrintControls key={design} design={design} profile={profile} pattern={pattern} t={t} loadPrint={loadPrint} />
           ))}
       {asking ? (
-        <Panel role="group" aria-label={t(questionKey)} className={styles.confirm}>
-          <p>{t(questionKey)}</p>
+        <Panel role="group" aria-label={t('tryit.confirmReplace')} className={styles.confirm}>
+          <p>{t('tryit.confirmReplace')}</p>
           <div className={styles.strip}>
-            <Button onClick={() => dispatch({ type: 'confirm-accepted' })}>{t(yesKey)}</Button>
+            <Button onClick={() => dispatch({ type: 'confirm-accepted' })}>{t('tryit.confirmYes')}</Button>
             <Button onClick={() => dispatch({ type: 'confirm-dismissed' })}>{t('tryit.confirmNo')}</Button>
           </div>
         </Panel>

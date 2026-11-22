@@ -90,8 +90,6 @@ export const ADDED_KEYS: readonly string[] = [
   'scan.demo.name.bradfordStack',
   'scan.demo.name.sari',
   'nav.home',
-  'home.confirm',
-  'home.confirmYes',
   'notice.information',
   'notice.success',
   'notice.warning',

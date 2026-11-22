@@ -9,8 +9,6 @@
 1,Header,nav.scan,Scan,स्कैन,,,
 1,Header,nav.scanCard,Scan a card,कार्ड स्कैन करें,,,
 1,Header,nav.weave,Weave,बुनाई,,,
-1,Landing,home.confirm,Your scanned cards are not saved. Leave them and go to the start?,आपके स्कैन किए कार्ड सहेजे नहीं गए हैं। क्या इन्हें छोड़कर शुरुआत पर जाएँ?,,,
-1,Landing,home.confirmYes,Go to the start,शुरुआत पर जाएँ,,,
 1,Landing,landing.band.heading,Bring a card,एक कार्ड लाइए,,,
 1,Landing,landing.band.heading.accent,card,कार्ड,,,
 1,Landing,landing.band.privacy,Your photos are read on this device. Nothing is uploaded.,आपकी फ़ोटो इसी डिवाइस पर पढ़ी जाती हैं। कुछ भी अपलोड नहीं होता।,,,
