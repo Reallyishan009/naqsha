@@ -52,4 +52,11 @@ None was read or partly read. All eight fail at the same step (the two large ali
 
 - Entry chunk: see the report of task 2.1 (limit 150,000 B gzipped).
 
+## Keep demo card (task 3.1)
+
+- Changed check: `scripts/check_browser.ts` step 21 (works with the network off) now also fetches `demo/loom-files/diamond-1bit.bmp` and `diamond-8bit.bmp` while offline and requires 'BM' and width 192. Nothing loosened.
+- Loom files vs the app's export: the two committed BMPs are 192 x 200 and are byte-identical to the app's export (`exportPatternBmp`, default options, through `runExport`) of `demoPattern(profile, 200)` (the diagonal pattern of `scripts/export_sample.ts`), not of the Diamond sample. The Diamond sample has 36 picks (926 B at 1 bit, 7,990 B at 8 bit against 4,862 B and 39,478 B), so the files are not byte-identical to a Diamond export. Files not altered. Same width (192). The links keep the names `diamond-*.bmp` as the brief says; the card text does not claim the files are the Diamond sample. Tested in `tests/ui/state/demoDesigns.test.tsx`.
+- Entry chunk after 3.1: 130,137 B gzipped by `check-bundle` (limit 150,000).
+- Demo name, weaver and place of the saved demo design are fixed English words (data of the saved design, not screen text), so the design can be found again in either language.
+
 ## Skipped

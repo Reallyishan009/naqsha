@@ -28,6 +28,11 @@
         "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795322088331
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795323415249
       }
     ],
     "3.1 Keep Demo card": [
@@ -35,6 +40,11 @@
         "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795321546241
+      },
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795323415375
       }
     ],
     "3.2 Code Demo card": [
@@ -63,6 +73,13 @@
         "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
         "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
         "timestamp": 1795322088286
+      }
+    ],
+    "2. Scan demo": [
+      {
+        "executionId": "8701c876-f5f4-4b0a-89d1-592c41610870",
+        "chatSessionId": "sess_f515a302-2cdf-48b1-8614-850b6c65540e",
+        "timestamp": 1795323415305
       }
     ]
   }

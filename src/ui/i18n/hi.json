@@ -2070,5 +2070,49 @@
   "scan.demo.name.sari": {
     "text": "साड़ी के कार्ड",
     "reviewed": false
+  },
+  "demo.chip": {
+    "text": "डेमो",
+    "reviewed": false
+  },
+  "keep.demo.title": {
+    "text": "डेमो डिज़ाइन",
+    "reviewed": false
+  },
+  "keep.demo.intro": {
+    "text": "अभी अपना डिज़ाइन नहीं है? ये बटन आपके लिए एक डिज़ाइन सहेज देते हैं, ताकि सूची, संस्करण और तुलना में कुछ दिखे।",
+    "reviewed": false
+  },
+  "keep.demo.save": {
+    "text": "डेमो डिज़ाइन सहेजें",
+    "reviewed": false
+  },
+  "keep.demo.edit": {
+    "text": "डेमो में बदलाव करें",
+    "reviewed": false
+  },
+  "keep.demo.saved": {
+    "text": "डेमो डिज़ाइन सहेजा गया। वह सूची में है।",
+    "reviewed": false
+  },
+  "keep.demo.edited": {
+    "text": "डेमो डिज़ाइन का नया संस्करण सहेजा गया, कुछ छेद बदलकर। सूची में उसके संस्करण खोलें।",
+    "reviewed": false
+  },
+  "keep.demo.editNote": {
+    "text": "डेमो बदलाव {count}: कुछ छेद बदले",
+    "reviewed": false
+  },
+  "keep.demo.loom.heading": {
+    "text": "करघे की फ़ाइल डाउनलोड करें",
+    "reviewed": false
+  },
+  "keep.demo.loom.note": {
+    "text": "नक्शा के अपने एक्सपोर्ट से बनी। किसी असली करघे पर जाँची नहीं गई।",
+    "reviewed": false
+  },
+  "keep.demo.loom.link": {
+    "text": "{name} डाउनलोड करें",
+    "reviewed": false
   }
 }

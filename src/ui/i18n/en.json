@@ -516,5 +516,16 @@
   "scan.demo.name.chain": "Chain of cards",
   "scan.demo.name.bradfordChain": "Bradford chain",
   "scan.demo.name.bradfordStack": "Bradford stack",
-  "scan.demo.name.sari": "Sari cards"
+  "scan.demo.name.sari": "Sari cards",
+  "demo.chip": "Demo",
+  "keep.demo.title": "Demo design",
+  "keep.demo.intro": "No design of your own yet? These buttons save one for you, so the list, the versions and Compare have something to show.",
+  "keep.demo.save": "Save a demo design",
+  "keep.demo.edit": "Make a demo edit",
+  "keep.demo.saved": "The demo design was saved. It is in the list.",
+  "keep.demo.edited": "A new version of the demo design was saved, with a few holes changed. Open its versions in the list.",
+  "keep.demo.editNote": "Demo edit {count}: a few holes changed",
+  "keep.demo.loom.heading": "Download loom file",
+  "keep.demo.loom.note": "Made with Naqsha's own export. Not tested on a physical loom.",
+  "keep.demo.loom.link": "Download {name}"
 }

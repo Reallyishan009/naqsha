@@ -39,6 +39,17 @@ export const STATE_MESSAGE_KEYS: readonly string[] = [
 
 /** The keys this pass added to both translation files (R11.7). */
 export const ADDED_KEYS: readonly string[] = [
+  'demo.chip',
+  'keep.demo.title',
+  'keep.demo.intro',
+  'keep.demo.save',
+  'keep.demo.edit',
+  'keep.demo.saved',
+  'keep.demo.edited',
+  'keep.demo.editNote',
+  'keep.demo.loom.heading',
+  'keep.demo.loom.note',
+  'keep.demo.loom.link',
   'scan.demo.title',
   'scan.demo.chip',
   'scan.demo.made.heading',

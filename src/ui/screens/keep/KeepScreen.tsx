@@ -34,6 +34,8 @@ import { WeftProgress } from '../../components/WeftProgress.tsx';
 import { PHOTOS } from '../../state/photos.ts';
 import { splitAtAccent } from '../../state/headline.ts';
 import type { AppAction, AppState, CompareChoice, Language, PatternOrigin } from '../../types.ts';
+import { saveDemoDesign, saveDemoEdit } from '../../state/demoDesigns.ts';
+import { DemoCard } from './DemoCard.tsx';
 import { DesignEntry } from './DesignEntry.tsx';
 import styles from './KeepScreen.module.css';
 
@@ -146,6 +148,11 @@ export type KeepViewProps = {
   repairedCount?: number;
   /** Repeats the operation that failed (a list refresh, or Save with the form as it is); without it the failure has no retry. */
   onRetry?: () => void;
+  /** The Demo card: shown when both are given. Save the demo design, and save a new version of it with a few punched holes changed. */
+  onDemoSave?: () => void;
+  onDemoEdit?: () => void;
+  /** The site base the loom file links start with. */
+  demoBase?: string;
 };
 
 /** What Keep draws. No state of its own, so tests can render every case (R5, R7, R22). */
@@ -332,6 +339,16 @@ export function KeepView(props: KeepViewProps) {
                   )}
                 </Disclosure>
               </div>
+
+              {props.onDemoSave === undefined || props.onDemoEdit === undefined ? null : (
+                <DemoCard
+                  t={t}
+                  onSave={props.onDemoSave}
+                  onEdit={props.onDemoEdit}
+                  disabled={profile === null || props.saving === true}
+                  base={props.demoBase ?? './'}
+                />
+              )}
             </div>
 
             <section aria-labelledby="keep-list-title" className={`${styles.surface} ${styles.archive}`}>
@@ -500,6 +517,31 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
     });
   };
 
+  // The Demo card's two saves. Each goes through the archive, then lists it again, so the new design or version shows.
+  const onDemo = (kind: 'save' | 'edit'): void => {
+    if (profile === null || saving) return;
+    setSavedText(null);
+    setSaving(true);
+    const run =
+      kind === 'save'
+        ? saveDemoDesign(profile, archiveDeps)
+        : saveDemoEdit(profile, (count) => t('keep.demo.editNote', { count }), archiveDeps);
+    void run.then(async (outcome) => {
+      setSaving(false);
+      if (outcome.ok) {
+        setFailureKey(null);
+        focusSavedRef.current = true;
+        setSavedText(t(kind === 'save' ? 'keep.demo.saved' : 'keep.demo.edited'));
+        await refresh();
+      } else {
+        const key = archiveFailureKey(outcome.failure);
+        setFailureKey(key);
+        setRetryKind(null);
+        dispatch({ type: 'announce', kind: 'error', messageKey: key });
+      }
+    });
+  };
+
   const onOpen = (id: string): void => {
     void runOpen(id, archiveDeps).then((outcome) => {
       if (outcome.ok) {
@@ -567,6 +609,9 @@ export function KeepScreen({ state, dispatch, t, archiveDeps, downloadDeps }: Ke
       onExport={onExport}
       onSave={onSave}
       onOpen={onOpen}
+      onDemoSave={() => onDemo('save')}
+      onDemoEdit={() => onDemo('edit')}
+      demoBase={import.meta.env.BASE_URL}
       language={state.language}
       origin={state.current.origin}
       repairedCount={state.repairs.picks.length}

@@ -1269,14 +1269,15 @@ function buildSteps(ctx: Context): BrowserStep[] {
          * and shows that the cache, not the network, is what keeps the app working.
          */
         const confirmOffline = async (): Promise<string> => {
-          const seen = await page.ev<{ onLine: boolean; probeFailed: boolean; probeError: string; profileOk: boolean }>(
-            `(async()=>{const probe='./never-cached-'+Date.now()+'.txt';let probeFailed=false,probeError='';try{const r=await fetch(probe,{cache:'no-store'});probeError='HTTP '+r.status}catch(e){probeFailed=true;probeError=String(e)}let profileOk=false;try{const r=await fetch('./profiles/demo-12x16.json');profileOk=r.ok&&!!(await r.json()).name}catch(e){profileOk=false}return {onLine:navigator.onLine,probeFailed,probeError,profileOk}})()`,
+          const seen = await page.ev<{ onLine: boolean; probeFailed: boolean; probeError: string; profileOk: boolean; loomFilesOk: boolean }>(
+            `(async()=>{const probe='./never-cached-'+Date.now()+'.txt';let probeFailed=false,probeError='';try{const r=await fetch(probe,{cache:'no-store'});probeError='HTTP '+r.status}catch(e){probeFailed=true;probeError=String(e)}let profileOk=false;try{const r=await fetch('./profiles/demo-12x16.json');profileOk=r.ok&&!!(await r.json()).name}catch(e){profileOk=false}let loomFilesOk=true;for(const name of ['diamond-1bit.bmp','diamond-8bit.bmp']){try{const r=await fetch('./demo/loom-files/'+name);const b=new DataView(await r.arrayBuffer());loomFilesOk=loomFilesOk&&r.ok&&b.getUint8(0)===66&&b.getUint8(1)===77&&b.getInt32(18,true)===192}catch(e){loomFilesOk=false}}return {onLine:navigator.onLine,probeFailed,probeError,profileOk,loomFilesOk}})()`,
           );
           expect(
             !seen.onLine && seen.probeFailed,
             `the network is not off for the page (navigator.onLine ${seen.onLine}, a request for an address in no cache ${seen.probeFailed ? 'failed' : `succeeded: ${seen.probeError}`})`,
           );
           expect(seen.profileOk, 'the card profile could not be read from the cache while the network was off');
+          expect(seen.loomFilesOk, 'a loom file of public/demo/loom-files did not open from the cache while the network was off');
           return `navigator.onLine false, a request for an uncached address failed (${seen.probeError}), the card profile came from the cache`;
         };
         /** The service worker that must serve the reload: it controls this page and its cache is in place. */
